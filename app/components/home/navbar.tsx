@@ -29,7 +29,7 @@ function Navbar({ className }: { className?: string }) {
             <ProductItem
               title="College Prep"
               href="/collegeprep"
-              src="https://images.unsplash.com/photo-1523050854058-8df90110c9a1?w=140&h=70&fit=crop"
+              src="https://images.unsplash.com/photo-1464983953574-0892a716854b?w=140&h=70&fit=crop"
               description="SAT, ACT, and college application guidance."
             />
             <ProductItem
