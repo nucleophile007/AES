@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -198,32 +199,7 @@ export default function SuccessStoriesSection() {
 
   const currentTestimonials = testimonialsByCategory[activeCategory] || [];
   const currentAdditionalTestimonials = additionalTestimonialsByCategory[activeCategory] || [];
-  const displayedTestimonials = showMore 
-    ? [...currentTestimonials, ...currentAdditionalTestimonials] 
-    : currentTestimonials;
-
-  // Reset showMore when category changes
-  React.useEffect(() => {
-    setShowMore(false);
-  }, [activeCategory]);
-
-  const handleShowMore = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (showMore) {
-      // When hiding testimonials, scroll to top of success section
-      const successSection = document.getElementById('success');
-      if (successSection) {
-        successSection.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'start'
-        });
-      }
-    }
-    
-    setShowMore(!showMore);
-  };
+  const displayedTestimonials = [...currentTestimonials, ...currentAdditionalTestimonials];
 
   return (
     <section ref={sectionRef} id="success" className="py-20 bg-gradient-to-br from-brand-light-blue/20 to-white">
@@ -265,51 +241,57 @@ export default function SuccessStoriesSection() {
             transition={{ duration: 0.4 }}
           >
             {displayedTestimonials.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {displayedTestimonials.map((testimonial, index) => (
-                  <Card key={`${testimonial.name}-${index}`} className="h-full hover:shadow-xl transition-all duration-300 group border-0 shadow-lg">
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center space-x-4">
-                        <Avatar className="border-2 border-brand-blue/20 h-12 w-12">
-                          <AvatarImage src={testimonial.image} />
-                          <AvatarFallback className="bg-gradient-to-br from-brand-blue to-brand-teal text-white text-sm">
-                            {testimonial.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .slice(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <CardTitle className="text-lg font-bold text-gray-900">{testimonial.name}</CardTitle>
-                          <CardDescription className="font-semibold text-brand-teal">{testimonial.achievement}</CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="p-3 bg-gradient-to-r from-brand-blue/10 to-brand-teal/10 rounded-lg border border-brand-blue/20">
-                        <div className="text-sm font-bold text-brand-blue text-center">{testimonial.highlight}</div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="text-center p-2 bg-brand-green/10 rounded-lg border border-brand-green/20">
-                          <div className="text-xs font-semibold text-brand-green">{testimonial.improvement}</div>
-                        </div>
-                        <div className="text-center p-2 bg-brand-orange/10 rounded-lg border border-brand-orange/20">
-                          <div className="text-xs font-semibold text-brand-orange">{testimonial.subject}</div>
-                        </div>
-                      </div>
-                      <blockquote className="text-sm text-gray-700 italic border-l-4 border-brand-teal pl-4 py-2 bg-gray-50 rounded-r-lg">
-                        &ldquo;{testimonial.testimonial}&rdquo;
-                      </blockquote>
-                      <div className="flex text-brand-orange justify-center">
-                        {[...Array(testimonial.rating)].map((_, i) => (
-                          <Star key={i} className="h-4 w-4 fill-current" />
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              <Carousel className="w-full" plugins={[Autoplay({ delay: 3500 })]}>
+                <CarouselContent>
+                  {displayedTestimonials.map((testimonial, index) => (
+                    <CarouselItem key={`${testimonial.name}-${index}`} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3 flex">
+                      <Card className="h-full hover:shadow-xl transition-all duration-300 group border-0 shadow-lg w-full">
+                        <CardHeader className="pb-4">
+                          <div className="flex items-center space-x-4">
+                            <Avatar className="border-2 border-brand-blue/20 h-12 w-12">
+                              <AvatarImage src={testimonial.image} />
+                              <AvatarFallback className="bg-gradient-to-br from-brand-blue to-brand-teal text-white text-sm">
+                                {testimonial.name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .slice(0, 2)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <CardTitle className="text-lg font-bold text-gray-900">{testimonial.name}</CardTitle>
+                              <CardDescription className="font-semibold text-brand-teal">{testimonial.achievement}</CardDescription>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="p-3 bg-gradient-to-r from-brand-blue/10 to-brand-teal/10 rounded-lg border border-brand-blue/20">
+                            <div className="text-sm font-bold text-brand-blue text-center">{testimonial.highlight}</div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="text-center p-2 bg-brand-green/10 rounded-lg border border-brand-green/20">
+                              <div className="text-xs font-semibold text-brand-green">{testimonial.improvement}</div>
+                            </div>
+                            <div className="text-center p-2 bg-brand-orange/10 rounded-lg border border-brand-orange/20">
+                              <div className="text-xs font-semibold text-brand-orange">{testimonial.subject}</div>
+                            </div>
+                          </div>
+                          <blockquote className="text-sm text-gray-700 italic border-l-4 border-brand-teal pl-4 py-2 bg-gray-50 rounded-r-lg">
+                            &ldquo;{testimonial.testimonial}&rdquo;
+                          </blockquote>
+                          <div className="flex text-brand-orange justify-center">
+                            {[...Array(testimonial.rating)].map((_, i) => (
+                              <Star key={i} className="h-4 w-4 fill-current" />
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious />
+                <CarouselNext />
+              </Carousel>
             ) : (
               <div className="text-center py-16">
                 <div className="text-gray-400 text-lg mb-4">Coming Soon</div>
@@ -324,28 +306,6 @@ export default function SuccessStoriesSection() {
           whileInView={{ opacity: 1, y: 0 }}
           className="text-center mt-12 space-y-6"
         >
-          {currentAdditionalTestimonials.length > 0 && (currentTestimonials.length + currentAdditionalTestimonials.length) > 5 && (
-            <div className="inline-block">
-              <button
-                onClick={handleShowMore}
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-brand-blue text-brand-blue hover:bg-brand-blue hover:text-white transition-all duration-300 bg-background px-3 py-2"
-                type="button"
-              >
-                {showMore ? (
-                  <>
-                    <ChevronUp className="mr-2 h-4 w-4" />
-                    Show Less Success Stories
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="mr-2 h-4 w-4" />
-                    See More Success Stories
-                  </>
-                )}
-              </button>
-            </div>
-          )}
-
           <div className="text-center">
             <Button
               size="lg"
@@ -356,12 +316,10 @@ export default function SuccessStoriesSection() {
               Leave a Testimonial
             </Button>
           </div>
-          
           <div className="text-center mt-8">
             <p className="text-lg font-semibold text-brand-blue mb-2">&ldquo;ACHARYA helps a lot&rdquo;</p>
             <p className="text-sm text-gray-600">Join hundreds of satisfied students who have transformed their academic journey</p>
           </div>
-          
           <TestimonialDialog open={testimonialOpen} setOpen={setTestimonialOpen} />
         </motion.div>
       </div>
