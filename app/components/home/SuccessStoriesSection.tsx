@@ -197,7 +197,9 @@ export default function SuccessStoriesSection() {
   const [showMore, setShowMore] = useState(false);
   const sectionRef = React.useRef<HTMLElement>(null);
 
-  const displayedTestimonials = testimonialsByCategory[activeCategory] || [];
+  const currentTestimonials = testimonialsByCategory[activeCategory] || [];
+  const currentAdditionalTestimonials = additionalTestimonialsByCategory[activeCategory] || [];
+  const displayedTestimonials = [...currentTestimonials, ...currentAdditionalTestimonials];
 
   return (
     <section ref={sectionRef} id="success" className="py-20 bg-gradient-to-br from-brand-light-blue/20 to-white">
