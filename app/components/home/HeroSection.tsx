@@ -5,8 +5,49 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowRight, Play } from "lucide-react";
+import { useState } from "react";
 
 export default function HeroSection() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [gradeLevel, setGradeLevel] = useState("");
+  const [subjectOfInterest, setSubjectOfInterest] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState("");
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setSuccess("");
+    setError("");
+    try {
+      const res = await fetch("/api/book-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          phone,
+          gradeLevel,
+          subjectOfInterest,
+        }),
+      });
+      if (res.ok) {
+        setSuccess("Session booked successfully! We'll contact you soon.");
+        setName(""); setEmail(""); setPhone(""); setGradeLevel(""); setSubjectOfInterest("");
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to book session.");
+      }
+    } catch {
+      setError("Failed to book session.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <section
       id="home"
@@ -69,15 +110,18 @@ export default function HeroSection() {
                     <h3 className="text-xl font-semibold">Free Assessment</h3>
                     <Badge className="bg-brand-green text-white">Limited Time</Badge>
                   </div>
-                  <div className="space-y-4">
-                    <Input placeholder="Student's Name" />
-                    <Input placeholder="Grade Level" />
-                    <Input placeholder="Parent Email" />
-                    <Input placeholder="Subject of Interest" />
-                    <Button className="w-full bg-gradient-to-r from-brand-blue to-brand-teal">
-                      Book Free Session
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <Input placeholder="Student's Name" value={name} onChange={e => setName(e.target.value)} required />
+                    <Input placeholder="Parent Email" value={email} onChange={e => setEmail(e.target.value)} type="email" required />
+                    <Input placeholder="Phone Number" value={phone} onChange={e => setPhone(e.target.value)} required />
+                    <Input placeholder="Grade Level" value={gradeLevel} onChange={e => setGradeLevel(e.target.value)} required />
+                    <Input placeholder="Subject of Interest" value={subjectOfInterest} onChange={e => setSubjectOfInterest(e.target.value)} required />
+                    <Button type="submit" className="w-full bg-gradient-to-r from-brand-blue to-brand-teal" disabled={loading}>
+                      {loading ? "Booking..." : "Book Free Session"}
                     </Button>
-                  </div>
+                    {success && <div className="text-green-600 text-sm pt-2">{success}</div>}
+                    {error && <div className="text-red-600 text-sm pt-2">{error}</div>}
+                  </form>
                 </div>
               </div>
             </div>

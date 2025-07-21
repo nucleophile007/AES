@@ -3,7 +3,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-
+import { NavbarDemo } from "./navbar";
 export default function Header() {
   return (
     <motion.header
@@ -27,12 +27,7 @@ export default function Header() {
           </div>
         </div>
         <nav className="hidden md:flex items-center space-x-8">
-          <a href="#home" className="text-foreground hover:text-brand-blue transition-colors">Home</a>
-          <a href="#programs" className="text-foreground hover:text-brand-blue transition-colors">Programs</a>
-          <a href="#mentors" className="text-foreground hover:text-brand-blue transition-colors">Mentors</a>
-          <a href="#success" className="text-foreground hover:text-brand-blue transition-colors">Success Stories</a>
-          <a href="#about" className="text-foreground hover:text-brand-blue transition-colors">About</a>
-          <a href="#contact" className="text-foreground hover:text-brand-blue transition-colors">Contact</a>
+         <NavbarDemo />
         </nav>
         <div className="flex items-center space-x-4">
           <Button variant="outline" className="hidden sm:inline-flex">Login</Button>
