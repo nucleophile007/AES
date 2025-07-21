@@ -14,8 +14,14 @@ import FeaturesGridSection from "@/components/home/FeaturesGridSection";
 import CTASection from "@/components/home/CTASection";
 import Chatbot from "@/components/home/Chatbot";
 import Footer from "@/components/home/Footer";
+import AdminDashboard from "@/components/home/AdminDashboard";
+import { usePathname } from "next/navigation";
 
 export default function HomePage() {
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+  if (pathname === "/admin") {
+    return <AdminDashboard />;
+  }
   return (
     <div className="min-h-screen bg-background">
       <Header />
