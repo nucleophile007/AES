@@ -146,7 +146,7 @@ export default function AcademicTutoringPage() {
       {/* Hero/Intro Section */}
       <section
         id="home"
-        className="pt-24 pb-20 bg-gradient-to-br from-brand-light-blue via-white to-brand-light-blue/50 overflow-hidden"
+        className="pt-24 pb-20 bg-gradient-to-br from-brand-light-blue via-white to-brand-light-blue/50 overflow-auto"
       >
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
