@@ -49,7 +49,7 @@ const blogCategories = [
 export default function BlogSection() {
   return (
     <section className="py-20 bg-gradient-to-br from-brand-light-blue/20 to-white">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}

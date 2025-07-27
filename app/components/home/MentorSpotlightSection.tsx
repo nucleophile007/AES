@@ -88,7 +88,7 @@ export default function MentorSpotlightSection() {
   ];
   return (
     <section id="mentors" className="py-20 bg-white">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
