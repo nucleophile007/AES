@@ -23,7 +23,7 @@ export default function HomePage() {
     return <AdminDashboard />;
   }
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background w-full overflow-x-hidden">
       <Header />
       <HeroSection />
       <MissionSection />

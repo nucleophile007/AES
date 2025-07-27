@@ -139,21 +139,21 @@ export default function ProgramsSection() {
     },
   ];
   return (
-    <section id="programs" className="py-20 bg-white">
-      <div className="container mx-auto px-4">
+    <section id="programs" className="py-12 sm:py-16 lg:py-20 bg-white">
+      <div className="container mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-12 sm:mb-16"
         >
-          <Badge className="mb-4 bg-brand-blue/10 text-brand-blue">
+          <Badge className="mb-4 bg-brand-blue/10 text-brand-blue text-xs sm:text-sm">
             Our Programs
           </Badge>
-          <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-text-dark mb-4 sm:mb-6">
             Enhanced Program & Service Showcasing
           </h2>
-          <p className="text-xl text-text-light max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg lg:text-xl text-text-light max-w-3xl mx-auto px-4">
             Comprehensive tutoring and mentorship programs designed to unlock
             your child&apos;s potential
           </p>
@@ -167,56 +167,56 @@ export default function ProgramsSection() {
             {programs.map((program, index) => (
               <CarouselItem
                 key={index}
-                className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3 flex"
+                className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3 flex"
               >
                 <div className="p-1 w-full flex">
                   <Card className="w-full flex flex-col hover:shadow-xl transition-all duration-300 border-2 hover:border-brand-blue/20 group relative">
-                    <CardHeader>
+                    <CardHeader className="pb-4">
                       {program.badge && (
                         <Badge className="absolute -top-2 -right-2 bg-brand-orange text-white text-xs">
                           {program.badge}
                         </Badge>
                       )}
-                      <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${program.color} flex items-center justify-center mb-4`}>
-                        <program.icon className="h-8 w-8 text-white" />
+                      <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br ${program.color} flex items-center justify-center mb-3 sm:mb-4`}>
+                        <program.icon className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
                       </div>
-                      <CardTitle className="text-xl">{program.title}</CardTitle>
-                      <CardDescription className="text-sm">{program.description}</CardDescription>
+                      <CardTitle className="text-lg sm:text-xl">{program.title}</CardTitle>
+                      <CardDescription className="text-xs sm:text-sm">{program.description}</CardDescription>
                     </CardHeader>
                     <CardContent className="flex-1 flex flex-col">
-                      <div className="space-y-4 flex-1">
+                      <div className="space-y-3 sm:space-y-4 flex-1">
                         <div>
-                          <h4 className="font-semibold text-sm mb-2 text-text-dark">What&apos;s Included:</h4>
-                          <div className="space-y-2">
-                            {program.subjects.slice(0, 4).map((subject, i) => (
+                          <h4 className="font-semibold text-xs sm:text-sm mb-2 text-text-dark">What&apos;s Included:</h4>
+                          <div className="space-y-1 sm:space-y-2">
+                            {program.subjects.slice(0, 3).map((subject, i) => (
                               <div key={i} className="flex items-start text-xs text-text-light">
                                 <CheckCircle className="h-3 w-3 text-brand-green mr-2 flex-shrink-0 mt-0.5" />
-                                {subject}
+                                <span className="line-clamp-2">{subject}</span>
                               </div>
                             ))}
-                            {program.subjects.length > 4 && (
+                            {program.subjects.length > 3 && (
                               <div className="text-xs text-brand-blue font-medium">
-                                +{program.subjects.length - 4} more subjects
+                                +{program.subjects.length - 3} more subjects
                               </div>
                             )}
                           </div>
                         </div>
                         <div>
-                          <h4 className="font-semibold text-sm mb-2 text-text-dark">Key Features:</h4>
+                          <h4 className="font-semibold text-xs sm:text-sm mb-2 text-text-dark">Key Features:</h4>
                           <div className="space-y-1">
-                            {program.features.slice(0, 3).map((feature, i) => (
+                            {program.features.slice(0, 2).map((feature, i) => (
                               <div key={i} className="flex items-start text-xs text-text-light">
                                 <Star className="h-3 w-3 text-brand-orange mr-2 flex-shrink-0 mt-0.5" />
-                                {feature}
+                                <span className="line-clamp-2">{feature}</span>
                               </div>
                             ))}
                           </div>
                         </div>
                       </div>
-                      <div className="border-t pt-4 mt-4">
-                        <p className="text-sm font-semibold text-brand-blue mb-3">{program.pricing}</p>
-                        <Button variant="outline" className="w-full group-hover:bg-brand-blue group-hover:text-white transition-colors">
-                          Learn More <ChevronRight className="ml-2 h-4 w-4" />
+                      <div className="border-t pt-3 sm:pt-4 mt-3 sm:mt-4">
+                        <p className="text-xs sm:text-sm font-semibold text-brand-blue mb-2 sm:mb-3">{program.pricing}</p>
+                        <Button variant="outline" className="w-full group-hover:bg-brand-blue group-hover:text-white transition-colors text-xs sm:text-sm">
+                          Learn More <ChevronRight className="ml-2 h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                       </div>
                     </CardContent>

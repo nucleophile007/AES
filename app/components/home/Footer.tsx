@@ -5,39 +5,39 @@ import Image from "next/image";
 
 export default function Footer() {
   return (
-    <footer className="bg-text-dark text-white py-16">
-      <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-4 gap-8">
-          <div>
-            <div className="flex items-center space-x-2 mb-6">
+    <footer className="bg-text-dark text-white py-12 sm:py-16">
+      <div className="container mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="sm:col-span-2 lg:col-span-1">
+            <div className="flex items-center space-x-2 mb-4 sm:mb-6">
               <Image
                 src="https://cdn.builder.io/api/v1/image/assets%2F5ed38136cd50447f928d11cc8bb6d314%2Ff894b9769d704ee88e744e40bde62d12?format=webp&width=800"
                 alt="ACHARYA Educational Services Logo"
-                className="w-10 h-10 rounded-full object-cover"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover"
                 width={40}
                 height={40}
                 priority
               />
               <div>
-                <h3 className="text-xl font-bold">ACHARYA</h3>
-                <p className="text-sm text-gray-400">Educational Services</p>
+                <h3 className="text-lg sm:text-xl font-bold">ACHARYA</h3>
+                <p className="text-xs sm:text-sm text-gray-400">Educational Services</p>
               </div>
             </div>
-            <p className="text-gray-400 mb-6">
+            <p className="text-sm sm:text-base text-gray-400 mb-4 sm:mb-6">
               Nurturing students&apos; intuitive abilities and guiding them
               toward academic excellence and future success.
             </p>
             <div className="flex space-x-4">
-              <Facebook className="h-5 w-5 text-gray-400 hover:text-white cursor-pointer" />
-              <Twitter className="h-5 w-5 text-gray-400 hover:text-white cursor-pointer" />
-              <Linkedin className="h-5 w-5 text-gray-400 hover:text-white cursor-pointer" />
-              <Instagram className="h-5 w-5 text-gray-400 hover:text-white cursor-pointer" />
-              <Youtube className="h-5 w-5 text-gray-400 hover:text-white cursor-pointer" />
+              <Facebook className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 hover:text-white cursor-pointer" />
+              <Twitter className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 hover:text-white cursor-pointer" />
+              <Linkedin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 hover:text-white cursor-pointer" />
+              <Instagram className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 hover:text-white cursor-pointer" />
+              <Youtube className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 hover:text-white cursor-pointer" />
             </div>
           </div>
           <div>
-            <h4 className="text-lg font-semibold mb-6">Programs</h4>
-            <ul className="space-y-3 text-gray-400">
+            <h4 className="text-base sm:text-lg font-semibold mb-4 sm:mb-6">Programs</h4>
+            <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base text-gray-400">
               <li>
                 <a href="#" className="hover:text-white transition-colors">
                   Mathematics Tutoring
@@ -66,8 +66,8 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="text-lg font-semibold mb-6">Resources</h4>
-            <ul className="space-y-3 text-gray-400">
+            <h4 className="text-base sm:text-lg font-semibold mb-4 sm:mb-6">Resources</h4>
+            <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base text-gray-400">
               <li>
                 <a href="#" className="hover:text-white transition-colors">
                   Study Materials
@@ -96,18 +96,18 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="text-lg font-semibold mb-6">Contact</h4>
-            <div className="space-y-3 text-gray-400">
+            <h4 className="text-base sm:text-lg font-semibold mb-4 sm:mb-6">Contact</h4>
+            <div className="space-y-2 sm:space-y-3 text-sm sm:text-base text-gray-400">
               <div className="flex items-center space-x-3">
-                <Phone className="h-4 w-4" />
+                <Phone className="h-4 w-4 flex-shrink-0" />
                 <span>+1 (555) 123-4567</span>
               </div>
               <div className="flex items-center space-x-3">
-                <Mail className="h-4 w-4" />
+                <Mail className="h-4 w-4 flex-shrink-0" />
                 <span>info@acharya-edu.com</span>
               </div>
               <div className="flex items-start space-x-3">
-                <MapPin className="h-4 w-4 mt-1" />
+                <MapPin className="h-4 w-4 mt-1 flex-shrink-0" />
                 <span>
                   123 Education Lane
                   <br />
@@ -117,7 +117,7 @@ export default function Footer() {
             </div>
           </div>
         </div>
-        <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
+        <div className="border-t border-gray-800 mt-8 sm:mt-12 pt-6 sm:pt-8 text-center text-sm sm:text-base text-gray-400">
           <p>&copy; 2024 ACHARYA Educational Services. All rights reserved.</p>
         </div>
       </div>
