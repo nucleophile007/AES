@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import Link from "next/link";
 import { NavbarDemo } from "./navbar";
 import { Menu, X } from "lucide-react";
 
@@ -65,12 +66,12 @@ export default function Header() {
         >
           <div className="container mx-auto px-4 py-6 space-y-4">
             <nav className="space-y-4">
-              <a href="/#home" className="block text-lg font-medium text-gray-900 hover:text-brand-blue transition-colors">Home</a>
-              <a href="/#programs" className="block text-lg font-medium text-gray-900 hover:text-brand-blue transition-colors">Programs</a>
-              <a href="/#mentors" className="block text-lg font-medium text-gray-900 hover:text-brand-blue transition-colors">Mentors</a>
-              <a href="/#success" className="block text-lg font-medium text-gray-900 hover:text-brand-blue transition-colors">Success Stories</a>
-              <a href="/#about" className="block text-lg font-medium text-gray-900 hover:text-brand-blue transition-colors">About</a>
-              <a href="/#contact" className="block text-lg font-medium text-gray-900 hover:text-brand-blue transition-colors">Contact</a>
+              <Link href="/#home" className="block text-lg font-medium text-gray-900 hover:text-brand-blue transition-colors">Home</Link>
+              <Link href="/#programs" className="block text-lg font-medium text-gray-900 hover:text-brand-blue transition-colors">Programs</Link>
+              <Link href="/#mentors" className="block text-lg font-medium text-gray-900 hover:text-brand-blue transition-colors">Mentors</Link>
+              <Link href="/#success" className="block text-lg font-medium text-gray-900 hover:text-brand-blue transition-colors">Success Stories</Link>
+              <Link href="/#about" className="block text-lg font-medium text-gray-900 hover:text-brand-blue transition-colors">About</Link>
+              <Link href="/#contact" className="block text-lg font-medium text-gray-900 hover:text-brand-blue transition-colors">Contact</Link>
             </nav>
             <div className="pt-4 border-t border-gray-200 space-y-3">
               <Button variant="outline" className="w-full">Login</Button>

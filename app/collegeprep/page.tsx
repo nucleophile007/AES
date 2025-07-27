@@ -10,6 +10,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
 import { BookOpen, Star, Target, Users, FileText, Trophy, Lightbulb, Globe, Calendar, ArrowRight, CheckIcon } from "lucide-react";
+import Image from "next/image";
 
 const goals = [
   {
@@ -368,7 +369,7 @@ export default function CollegePrepPage() {
                 className="flex flex-col items-center"
               >
                 <div className="w-20 h-20 bg-white rounded-full shadow-lg flex items-center justify-center mb-3 border border-brand-blue/10 hover:scale-110 hover:shadow-xl transition-transform duration-300">
-                  <img src={college.logo} alt={college.name} className="w-16 h-16 object-contain" />
+                  <Image src={college.logo} alt={college.name} width={64} height={64} className="w-16 h-16 object-contain" />
                 </div>
                 <span className="text-sm font-semibold text-text-dark text-center mt-2">{college.name}</span>
               </motion.div>
