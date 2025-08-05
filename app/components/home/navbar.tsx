@@ -18,6 +18,8 @@ function Navbar({ className }: { className?: string }) {
       <Menu setActive={setActive}>
         <MenuItem setActive={setActive} active={null} item="Home" href="/#home" className="text-foreground hover:text-brand-blue transition-colors font-medium">
         </MenuItem>
+        <MenuItem setActive={setActive} active={null} item="About" href="/#about" className="text-foreground hover:text-brand-blue transition-colors font-medium">
+        </MenuItem>
         <MenuItem setActive={setActive} active={active} item="Programs" href="/#programs" className="text-foreground hover:text-brand-blue transition-colors font-medium">
           <div className="text-sm grid grid-cols-2 gap-6 p-4 min-w-[400px]">
             <ProductItem
@@ -52,11 +54,33 @@ function Navbar({ className }: { className?: string }) {
             />
           </div>
         </MenuItem>
+        <MenuItem setActive={setActive} active={active} item="Profile Enrichment" href="/#profile-enrichment" className="text-foreground hover:text-brand-blue transition-colors font-medium">
+          <div className="text-sm grid grid-cols-1 gap-4 p-4 min-w-[300px]">
+            <ProductItem
+              title="AES Explorers"
+              href="/aes-explorers"
+              src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=140&h=70&fit=crop"
+              description="Research-based mentorship with Ph.D. experts."
+            />
+            <ProductItem
+              title="AES Champions"
+              href="/aes-champions"
+              src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=140&h=70&fit=crop"
+              description="Olympiad excellence and competition preparation."
+            />
+            <ProductItem
+              title="AES Creatorverse"
+              href="/aes-creatorverse"
+              src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=140&h=70&fit=crop"
+              description="Creative profile building and digital presence."
+            />
+          </div>
+        </MenuItem>
         <MenuItem setActive={setActive} active={null} item="Mentors" href="/#mentors" className="text-foreground hover:text-brand-blue transition-colors font-medium">
         </MenuItem>
-        <MenuItem setActive={setActive} active={null} item="Success Stories" href="/#success" className="text-foreground hover:text-brand-blue transition-colors font-medium">
+        <MenuItem setActive={setActive} active={null} item="Testimonials" href="/#testimonials" className="text-foreground hover:text-brand-blue transition-colors font-medium">
         </MenuItem>
-        <MenuItem setActive={setActive} active={null} item="About" href="/#about" className="text-foreground hover:text-brand-blue transition-colors font-medium">
+        <MenuItem setActive={setActive} active={null} item="Blog" href="/blog" className="text-foreground hover:text-brand-blue transition-colors font-medium">
         </MenuItem>
         <MenuItem setActive={setActive} active={null} item="Contact" href="/#contact" className="text-foreground hover:text-brand-blue transition-colors font-medium">
         </MenuItem>
