@@ -9,27 +9,137 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
-import { BookOpen, Star, Target, Users, FileText, Trophy, Lightbulb, Globe, Calendar, ArrowRight, CheckIcon, Timer, ListChecks, BarChart, ClipboardList, MessageCircle } from "lucide-react";
+import { BookOpen, Star, Target, Users, FileText, Trophy, Lightbulb, Globe, Calendar, ArrowRight, CheckIcon, Timer, ListChecks, BarChart, ClipboardList, MessageCircle, Play, TrendingUp, Check, Sparkles } from "lucide-react";
+import ImageVideoCard from "@/components/ui/image-video-card";
 import { Input } from "@/components/ui/input";
+import Image from "next/image";
+
+// EventCard Component to fix React Hooks rules
+const EventCard = ({ event, index }: { event: any; index: number }) => {
+  const [isVideoPlaying, setIsVideoPlaying] = React.useState(false);
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 50, scale: 0.9 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay: index * 0.2, duration: 0.6, type: "spring", stiffness: 100 }}
+      className="group"
+    >
+      <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden hover:shadow-3xl transition-all duration-500 hover:scale-105">
+        {/* Video Player - Full Card Coverage */}
+        {isVideoPlaying && (
+          <div className="relative w-full h-full min-h-[400px]">
+            <video
+              className="w-full h-full object-cover absolute inset-0"
+              autoPlay
+              loop
+              muted
+              playsInline
+              controls
+            >
+              <source src={event.video} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+            
+            {/* Close Button */}
+            <button
+              onClick={() => setIsVideoPlaying(false)}
+              className="absolute top-4 right-4 w-10 h-10 bg-black/70 text-white rounded-full flex items-center justify-center hover:bg-black/90 transition-colors z-10 text-xl font-bold"
+            >
+              ×
+            </button>
+            
+            {/* Video Overlay Content */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6">
+              <h3 className="font-bold text-xl text-white mb-2 leading-tight">
+                {event.title}
+              </h3>
+              <div className="text-yellow-300 text-sm font-medium mb-3">
+                {event.date}
+              </div>
+              <p className="text-white/90 text-base leading-relaxed mb-4">
+                {event.description}
+              </p>
+              
+              {/* Register Button */}
+              <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-black hover:from-yellow-300 hover:to-yellow-400 font-semibold">
+                <Calendar className="mr-2 h-4 w-4" />
+                Register
+              </Button>
+            </div>
+          </div>
+        )}
+        
+        {/* Background Image (when video is not playing) */}
+        {!isVideoPlaying && (
+          <div className="relative h-48 bg-cover bg-center" style={{ backgroundImage: `url(${event.image})` }}>
+            <div className="absolute inset-0 bg-black/20"></div>
+            
+            {/* Badge */}
+            <div className="absolute top-4 right-4">
+              <span className="bg-yellow-400 text-black text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                {event.badge}
+              </span>
+            </div>
+            
+            {/* Play Button Overlay */}
+            <button
+              onClick={() => setIsVideoPlaying(true)}
+              className="absolute inset-0 flex items-center justify-center cursor-pointer"
+            >
+              <div className="w-16 h-16 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-white/30 group-hover:scale-110 transition-transform duration-300">
+                <Play className="w-8 h-8 text-black" />
+              </div>
+            </button>
+          </div>
+        )}
+        
+        {/* Content - Only show when video is not playing */}
+        {!isVideoPlaying && (
+          <div className="p-6 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-b-2xl border-t border-blue-100/50">
+            <h3 className="font-bold text-xl text-gray-800 mb-2 leading-tight">
+              {event.title}
+            </h3>
+            <div className="text-indigo-600 text-sm font-medium mb-3">
+              {event.date}
+            </div>
+            <p className="text-gray-700 text-base leading-relaxed mb-4">
+              {event.description}
+            </p>
+            
+            {/* Register Button */}
+            <Button className="w-full bg-gradient-to-r from-indigo-400 to-purple-500 text-white hover:from-indigo-500 hover:to-purple-600 font-semibold shadow-md hover:shadow-lg transition-all duration-300">
+              <Calendar className="mr-2 h-4 w-4" />
+              Register
+            </Button>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+};
 
 const goals = [
   {
     icon: Target,
     title: "Personalized SAT Plan",
-    description: `Customized study plans based on a thorough diagnostic test and your unique strengths and weaknesses. We work with you to set realistic goals and milestones, then create a week-by-week roadmap for your SAT journey. Your plan adapts as you progress, ensuring you always focus on the areas that will yield the biggest score gains. Regular check-ins and adjustments keep you on track and motivated. You’ll never feel lost or overwhelmed—your coach is with you every step of the way.`,
+    description: `Customized study plans based on a thorough diagnostic test and your unique strengths and weaknesses. We work with you to set realistic goals and milestones, then create a week-by-week roadmap for your SAT journey. Your plan adapts as you progress, ensuring you always focus on the areas that will yield the biggest score gains. Regular check-ins and adjustments keep you on track and motivated. You'll never feel lost or overwhelmed—your coach is with you every step of the way.`,
     color: "from-blue-500 to-blue-600",
+    image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
   },
   {
     icon: BarChart,
-    title: "Score Improvement Focus",
-    description: `We identify your weakest SAT sections and target them with focused practice and proven strategies. You’ll receive custom assignments, drills, and timed mini-tests to build confidence and accuracy. We track your progress after every session and celebrate every improvement, no matter how small. Our approach is data-driven, so you’ll always know exactly where you stand and what to work on next. Many students see 150-300+ point improvements after completing our program.`,
+    title: "Comprehensive Test Strategies & Tactics",
+    description: `We identify your weakest SAT sections and target them with focused practice and proven strategies. You'll receive custom assignments, drills, and timed mini-tests to build confidence and accuracy. We track your progress after every session and celebrate every improvement, no matter how small. Our approach is data-driven, so you'll always know exactly where you stand and what to work on next. Many students see 150-300+ point improvements after completing our program.`,
     color: "from-teal-500 to-teal-600",
+    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
   },
   {
     icon: ClipboardList,
-    title: "Comprehensive Test Strategies",
-    description: `Master the SAT with our expert strategies for time management, question analysis, and test-day confidence. We teach you how to approach every question type, eliminate wrong answers, and manage your pacing for each section. You’ll practice with real SAT questions and full-length, timed exams to build stamina and reduce anxiety. Our coaches share insider tips and test-day routines to help you perform your best when it counts.`,
+    title: "Data-Driven Feedback",
+    description: `Master the SAT with our expert strategies for time management, question analysis, and test-day confidence. We teach you how to approach every question type, eliminate wrong answers, and manage your pacing for each section. You'll practice with real SAT questions and full-length, timed exams to build stamina and reduce anxiety. Our coaches share insider tips and test-day routines to help you perform your best when it counts.`,
     color: "from-orange-500 to-orange-600",
+    image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
   },
 ];
 
@@ -70,9 +180,33 @@ const timeline = [
 ];
 
 const events = [
-  { title: "SAT Bootcamp", date: "June 20, 2024", description: "Intensive 1-week SAT prep covering all sections with practice tests.", icon: Timer, badge: "Bootcamp" },
-  { title: "Practice Test Day", date: "July 10, 2024", description: "Simulated SAT test under real conditions with score analysis.", icon: ListChecks, badge: "Practice" },
-  { title: "Strategy Webinar", date: "August 1, 2024", description: "Live online session on SAT strategies and Q&A with experts.", icon: Lightbulb, badge: "Webinar" },
+  { 
+    title: "SAT Bootcamp", 
+    date: "June 20, 2024", 
+    description: "Intensive 1-week SAT prep covering all sections with practice tests.", 
+    icon: Timer, 
+    badge: "Bootcamp",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
+    video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+  },
+  { 
+    title: "Practice Test Day", 
+    date: "July 10, 2024", 
+    description: "Simulated SAT test under real conditions with score analysis.", 
+    icon: ListChecks, 
+    badge: "Practice",
+    image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
+    video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
+  },
+  { 
+    title: "Strategy Webinar", 
+    date: "August 1, 2024", 
+    description: "Live online session on SAT strategies and Q&A with experts.", 
+    icon: Lightbulb, 
+    badge: "Webinar",
+    image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
+    video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+  },
 ];
 
 const resources = [
@@ -83,11 +217,68 @@ const resources = [
 ];
 
 const faqs = [
-  { question: "How is your SAT program different?", answer: "We offer personalized plans, expert instruction, and ongoing feedback to maximize your score improvement." },
-  { question: "How many practice tests are included?", answer: "Our program includes multiple full-length, timed practice tests with detailed analysis." },
-  { question: "Is the coaching online or in-person?", answer: "We offer both online and in-person SAT coaching to fit your needs." },
+  { question: "How soon should I start prep?", answer: "Ideally 3–6 months before test day to allow for thorough practice and strategy refinement." },
+  { question: "Are materials included?", answer: "Yes! You'll receive digital access to official SAT/PSAT practice tests, worksheets, and strategy guides." },
+  { question: "Can I switch between online and in-person?", answer: "Absolutely, flexibility is built into every package." },
   { question: "What score improvements do students typically see?", answer: "Many students see 150-300+ point improvements after completing our program." },
-  { question: "How do I get started?", answer: "Book a free SAT consultation or download our SAT Prep Flyer for more information." },
+  { question: "How do I get started?", answer: "Schedule your free 30-minute consultation to get started on your SAT/PSAT prep journey." },
+];
+
+const packages = [
+  {
+    name: "Starter",
+    hours: "10 hours",
+    icon: Target,
+    description: "2 diagnostic sessions + 8 coaching sessions",
+    mentorPrice: 50,
+    selfStudyPrice: 30,
+    features: ["2 diagnostic sessions", "8 coaching sessions", "Basic study materials", "Email support"],
+    popular: false,
+    gradient: "from-emerald-500 to-teal-600",
+    accentColor: "emerald",
+    illustration: "/learning-journey-cartoon.png",
+  },
+  {
+    name: "Accelerator",
+    hours: "20 hours",
+    icon: TrendingUp,
+    description: "2 diagnostic sessions + 18 coaching sessions + 2 full-length mock tests",
+    mentorPrice: 45,
+    selfStudyPrice: 25,
+    features: [
+      "2 diagnostic sessions",
+      "18 coaching sessions",
+      "2 full-length mock tests",
+      "Priority email support",
+      "Study progress tracking",
+    ],
+    popular: true,
+    gradient: "from-blue-500 to-indigo-600",
+    accentColor: "blue",
+    illustration: "/progress-mountain-climb.png",
+  },
+     {
+     name: "Elite",
+     hours: "40 hours",
+     icon: Trophy,
+     description:
+       "2 diagnostic sessions + 34 coaching sessions + 4 detailed mock test feedback sessions + 4 full-length mock tests",
+     mentorPrice: 40,
+     selfStudyPrice: 20,
+     features: [
+       "2 diagnostic sessions",
+       "34 coaching sessions",
+       "4 detailed mock test feedback sessions",
+       "4 full-length mock tests",
+       "Priority scheduling",
+       "24/7 support",
+       "Custom study plan",
+     ],
+     popular: false,
+     gradient: "from-purple-500 to-pink-600",
+     accentColor: "purple",
+     illustration: "/successful-celebration.png",
+   },
 ];
 
 export default function SATCoachingPage() {
@@ -120,102 +311,271 @@ export default function SATCoachingPage() {
   return (
     <>
       <Header />
-      {/* Hero/Intro Section */}
-      <section className="pt-24 pb-20 bg-gradient-to-br from-brand-light-blue via-white to-brand-light-blue/50 overflow-auto">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              className="space-y-8"
-            >
-              <div className="space-y-4">
-                <Badge className="bg-brand-orange/10 text-brand-orange border-brand-orange/20">
-                  📝 SAT Coaching
-                </Badge>
-                <h1 className="text-5xl lg:text-6xl font-bold text-text-dark leading-tight">
-                  Achieve Your Best SAT Score with Personalized Coaching
-                </h1>
-                <blockquote className="text-xl text-brand-blue italic border-l-4 border-brand-blue pl-4">
-                  “Empowering students to reach their college dreams through proven SAT strategies.”
-                </blockquote>
-                <p className="text-xl text-text-light leading-relaxed">
-                  Our SAT program combines diagnostic testing, targeted practice, and expert feedback to help you maximize your score and confidence on test day.
-                </p>
-              </div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative space-y-8"
-            >
-              {/* SAT Approach Card */}
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-brand-blue/20 to-brand-teal/20 rounded-3xl transform rotate-6"></div>
-                <div className="relative bg-white p-8 rounded-3xl shadow-2xl border">
-                  <div className="space-y-6">
-                    <h3 className="text-xl font-semibold text-brand-blue">Our SAT Approach</h3>
-                    <p className="text-base text-text-light">
-                      We focus on building a strong foundation, mastering test strategies, and providing ongoing support so every student can achieve their personal best.
-                    </p>
-                    <div className="flex flex-row gap-4 justify-center">
-                      <Button className="bg-gradient-to-r from-brand-blue to-brand-teal px-6">
-                        <ArrowRight className="mr-2 h-5 w-5" /> Download SAT Prep Flyer
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="border-brand-blue text-brand-blue hover:bg-brand-blue hover:text-white px-6"
-                      >
-                        <Calendar className="mr-2 h-5 w-5" /> Book Free SAT Consultation
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {/* SAT Assessment Form Card (commented out for now) */}
-              {false && (
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-brand-blue/20 to-brand-teal/20 rounded-3xl transform rotate-6"></div>
-                  <div className="relative bg-white p-8 rounded-3xl shadow-2xl border">
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-xl font-semibold">Free SAT Assessment</h3>
-                        <Badge className="bg-brand-green text-white">Limited Time</Badge>
-                      </div>
-                      <form onSubmit={handleSubmit} className="space-y-4">
-                        <Input placeholder="Student's Name" value={name} onChange={e => setName(e.target.value)} required />
-                        <Input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} type="email" required />
-                        <Input placeholder="Phone Number" value={phone} onChange={e => setPhone(e.target.value)} required />
-                        <Input placeholder="Target SAT Date" value={satDate} onChange={e => setSatDate(e.target.value)} required />
-                        <Input placeholder="Current SAT Score (if any)" value={satScore} onChange={e => setSatScore(e.target.value)} />
-                        <Button type="submit" className="w-full bg-gradient-to-r from-brand-blue to-brand-teal" disabled={loading}>
-                          {loading ? "Booking..." : "Book Free SAT Session"}
-                        </Button>
-                        {success && <div className="text-green-600 text-sm pt-2">{success}</div>}
-                        {error && <div className="text-red-600 text-sm pt-2">{error}</div>}
-                      </form>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </motion.div>
+      
+      {/* Hero Section */}
+      <section className="theme-bg-dark py-16 lg:py-24 relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-20 left-10 w-20 h-20 bg-yellow-400 rounded-full opacity-10 animate-float"></div>
+          <div className="absolute top-40 right-20 w-16 h-16 bg-blue-400 rounded-full opacity-10 animate-float-reverse"></div>
+          <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-purple-400 rounded-full opacity-10 animate-float"></div>
+          <div className="absolute top-1/3 right-1/3 w-8 h-8 bg-green-400 rounded-full opacity-10 animate-float-reverse"></div>
+        </div>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center mb-12 animate-slide-in-bottom">
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
+              🎯 SAT & PSAT Coaching
+            </Badge>
+            <h1 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">
+              Boost Your SAT & PSAT Scores with Expert Coaching
+            </h1>
+            <p className="text-lg theme-text-muted max-w-4xl mx-auto animate-slide-in-bottom" style={{ animationDelay: '0.2s' }}>
+              Unlock Your Dream College Opportunities through personalized, data-driven SAT/PSAT prep designed to strengthen fundamentals, conquer weaknesses, and master advanced strategies.
+            </p>
           </div>
+          
+          {/* Action Buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="max-w-4xl mx-auto text-center"
+          >
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg">
+                <ArrowRight className="mr-2 h-5 w-5" /> Book Free Consultation
+              </Button>
+              <Button 
+                variant="outline" 
+                className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-[#1a2236] px-6"
+                onClick={() => {
+                  document.getElementById('packages')?.scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'start'
+                  });
+                }}
+              >
+                <BookOpen className="mr-2 h-5 w-5" /> Learn More About Our Programs
+              </Button>
+            </div>
+          </motion.div>
         </div>
       </section>
 
+             {/* Program Highlights Section - SAT Infographic */}
+       <section className="py-20 theme-bg-dark">
+         <div className="min-h-screen py-12 px-4 relative overflow-hidden" style={{ backgroundColor: "hsl(220, 45%, 20%)" }}>
+           <div className="absolute inset-0 overflow-hidden">
+             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
+             <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+             <div
+               className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-purple-500/5 to-blue-500/5 rounded-full blur-3xl animate-spin"
+               style={{ animationDuration: "20s" }}
+             ></div>
+           </div>
+
+           <div className="max-w-6xl mx-auto relative z-10">
+             <div className="text-center mb-16">
+               <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">Program Highlights</Badge>
+               <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">What Sets Our SAT Prep Apart</h2>
+               <p className="text-xl theme-text-muted max-w-3xl mx-auto">
+                 From diagnostic testing to expert feedback, our program is designed for real results.
+               </p>
+             </div>
+
+             <div className="flex items-end justify-center gap-12 mb-16">
+               {[
+                 {
+                   number: "1",
+                   title: "Personalized SAT Plan",
+                   points: ["Custom study schedule", "Current level assessment", "Target score planning", "Time optimization"],
+                   color: "bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600",
+                   height: "h-48",
+                   glowColor: "shadow-emerald-500/50",
+                 },
+                 {
+                   number: "2",
+                   title: "Comprehensive Test Strategies & Tactics",
+                   points: [
+                     "Section-specific techniques",
+                     "Time management skills",
+                     "Question approach methods",
+                     "Practice strategies",
+                   ],
+                   color: "bg-gradient-to-br from-teal-400 via-teal-500 to-cyan-600",
+                   height: "h-56",
+                   glowColor: "shadow-teal-500/50",
+                 },
+                 {
+                   number: "3",
+                   title: "Data-Driven Feedback",
+                   points: ["Performance analytics", "Strength identification", "Weakness targeting", "Progress tracking"],
+                   color: "bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-600",
+                   height: "h-64",
+                   glowColor: "shadow-purple-500/50",
+                 },
+                 {
+                   number: "4",
+                   title: "Targeted Score Improvement",
+                   points: ["High-impact focus areas", "Personalized practice", "Score maximization", "Final preparation"],
+                   color: "bg-gradient-to-br from-orange-400 via-orange-500 to-red-500",
+                   height: "h-72",
+                   glowColor: "shadow-orange-500/50",
+                 },
+                 {
+                   number: "5",
+                   title: "Success",
+                   points: ["Target score achieved"],
+                   color: "bg-gradient-to-br from-yellow-300 via-yellow-400 to-amber-500",
+                   height: "h-80",
+                   glowColor: "shadow-yellow-500/60",
+                   isSuccess: true,
+                 },
+               ].map((step, index) => (
+                 <div key={index} className="flex flex-col items-center relative group">
+                   {step.isSuccess && (
+                     <div className="mb-6 flex flex-col items-center relative">
+                       <div className="relative">
+                         <Trophy className="w-20 h-20 text-yellow-400 animate-bounce drop-shadow-2xl" />
+                         <div className="absolute inset-0 bg-yellow-400/30 rounded-full blur-xl animate-pulse"></div>
+                         <Sparkles className="absolute -top-2 -right-2 w-8 h-8 text-yellow-300 animate-spin" />
+                         <Sparkles className="absolute -bottom-1 -left-2 w-6 h-6 text-yellow-200 animate-ping" />
+                       </div>
+                       <span className="text-2xl font-black text-yellow-300 mt-2 drop-shadow-lg animate-pulse">
+                         Success!
+                       </span>
+                     </div>
+                   )}
+
+                                       <div className="absolute bottom-full mb-6 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none z-20 transform group-hover:scale-105">
+                      <div className="relative w-80">
+                        {/* Arrow pointing down */}
+                        <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-cyan-400"></div>
+                        
+                        {/* Main card */}
+                        <div className="bg-gradient-to-br from-cyan-900/95 via-slate-800/90 to-purple-900/95 backdrop-blur-xl border border-cyan-400/30 p-6 shadow-2xl rounded-2xl relative overflow-hidden">
+                          {/* Animated background pattern */}
+                          <div className="absolute inset-0 opacity-20">
+                            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-cyan-400/20 via-transparent to-purple-400/20"></div>
+                            <div className="absolute top-4 right-4 w-20 h-20 border border-cyan-400/30 rounded-full animate-spin" style={{ animationDuration: '8s' }}></div>
+                            <div className="absolute bottom-4 left-4 w-16 h-16 border border-purple-400/30 rounded-full animate-spin" style={{ animationDuration: '12s', animationDirection: 'reverse' }}></div>
+                          </div>
+                          
+                          {/* Glow effect */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-transparent to-purple-500/10 rounded-2xl blur-xl"></div>
+                          
+                          <div className="relative z-10">
+                            {/* Header with icon and title */}
+                            <div className="flex items-center gap-4 mb-4">
+                              <div className={`w-12 h-12 ${step.color} rounded-xl flex items-center justify-center text-white font-black text-lg flex-shrink-0 shadow-lg ring-2 ring-white/20 relative overflow-hidden`}>
+                                {/* Inner glow */}
+                                <div className="absolute inset-0 bg-white/20 rounded-xl"></div>
+                                {step.isSuccess ? <Trophy className="w-6 h-6 relative z-10" /> : <span className="relative z-10">{step.number}</span>}
+                              </div>
+                              <div className="flex-1">
+                                <h3 className="text-lg font-bold text-cyan-100 mb-1 leading-tight">{step.title}</h3>
+                                <div className="w-16 h-0.5 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full"></div>
+                              </div>
+                            </div>
+                            
+                            {/* Points list */}
+                            <div className="space-y-3">
+                              {step.points.map((point, pointIndex) => (
+                                <div key={pointIndex} className="flex items-center gap-3 group/item">
+                                  {/* Animated bullet point */}
+                                  <div className="relative">
+                                    <div className="w-2.5 h-2.5 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full animate-pulse"></div>
+                                    <div className="absolute inset-0 w-2.5 h-2.5 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full animate-ping opacity-75"></div>
+                                  </div>
+                                  
+                                  {/* Point text with hover effect */}
+                                  <span className="text-sm text-slate-300 group-hover/item:text-cyan-200 transition-colors duration-200 font-medium leading-relaxed">
+                                    {point}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                            
+                            {/* Bottom accent */}
+                            <div className="mt-4 pt-3 border-t border-cyan-400/20">
+                              <div className="flex items-center justify-between text-xs text-cyan-400/70">
+                                <span>Step {step.number}</span>
+                                <span className="flex items-center gap-1">
+                                  <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse"></div>
+                                  {/* <span>Hover for details</span> */}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                   <div className="relative">
+                     {/* Glow effect background */}
+                     <div
+                       className={`absolute inset-0 ${step.color} ${step.height} w-36 rounded-3xl blur-xl opacity-60 ${step.glowColor} shadow-2xl animate-pulse`}
+                     ></div>
+
+                     {/* Main bar */}
+                     <Card
+                       className={`${step.color} ${step.height} w-36 relative flex flex-col justify-center items-center p-6 text-white shadow-2xl hover:shadow-3xl transition-all duration-500 cursor-pointer hover:scale-110 hover:-translate-y-2 rounded-3xl border border-white/20 backdrop-blur-sm group-hover:animate-pulse`}
+                     >
+                       {/* Inner glow */}
+                       <div className="absolute inset-2 bg-white/10 rounded-2xl"></div>
+
+                       {/* Number with enhanced styling */}
+                       <span className="text-7xl font-black relative z-10 drop-shadow-2xl transform transition-transform duration-300 group-hover:scale-110">
+                         {step.number}
+                       </span>
+
+                       {/* Floating particles effect */}
+                       <div className="absolute inset-0 overflow-hidden rounded-3xl">
+                         {[...Array(6)].map((_, i) => (
+                           <div
+                             key={i}
+                             className="absolute w-1 h-1 bg-white/40 rounded-full animate-ping"
+                             style={{
+                               left: `${20 + i * 15}%`,
+                               top: `${30 + i * 10}%`,
+                               animationDelay: `${i * 500}ms`,
+                               animationDuration: "2s",
+                             }}
+                           ></div>
+                         ))}
+                       </div>
+
+                       {/* Shimmer effect */}
+                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-shimmer rounded-3xl"></div>
+                     </Card>
+                   </div>
+                 </div>
+               ))}
+             </div>
+           </div>
+
+           <style jsx>{`
+             @keyframes shimmer {
+               0% { transform: translateX(-100%) skewX(-12deg); }
+               100% { transform: translateX(200%) skewX(-12deg); }
+             }
+             .animate-shimmer {
+               animation: shimmer 3s infinite;
+             }
+           `}</style>
+         </div>
+       </section>
+
       {/* Approach/Goals Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 theme-bg-dark">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-brand-blue/10 text-brand-blue">Our Approach</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">How We Maximize Your SAT Success</h2>
-            <p className="text-xl text-text-light max-w-3xl mx-auto">
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">Our Approach</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">How We Achieve Your SAT Success</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">
               Our approach is designed to help students build confidence, master test strategies, and achieve their target SAT score.
             </p>
           </motion.div>
@@ -227,182 +587,463 @@ export default function SATCoachingPage() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 transition={{ delay: i * 0.1 }}
               >
-                <div className="relative bg-white rounded-2xl shadow-md border-t-4 border-brand-blue hover:border-brand-teal transition-all duration-300 flex flex-col items-center p-6 group min-h-[340px]">
-                  <div className="absolute -top-7 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-gradient-to-br from-brand-blue to-brand-teal flex items-center justify-center shadow-lg border-4 border-white z-10">
-                    <goal.icon className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="mt-8 font-semibold text-lg text-text-dark text-center mb-1">{goal.title}</div>
-                  <div className="text-sm text-text-light text-center">{goal.description}</div>
-                </div>
+                                 <div className="relative bg-gradient-to-br from-blue-50/90 via-indigo-50/80 to-blue-100/70 rounded-3xl shadow-2xl transition-all duration-500 flex flex-col items-center min-h-[300px] group overflow-hidden border border-blue-200/30 hover:shadow-3xl hover:-translate-y-2 hover:min-h-[500px]">
+                   {/* Top Accent Bar */}
+                   <div className={`absolute top-0 left-0 right-0 h-2 ${
+                     i === 0 
+                       ? "bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-600" 
+                       : i === 1 
+                       ? "bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-600"
+                       : "bg-gradient-to-r from-violet-400 via-purple-500 to-pink-600"
+                   }`}></div>
+                   
+                   {/* Beautiful AI Generated Image */}
+                   <div className="w-full h-32 mb-4 overflow-hidden rounded-t-3xl">
+                     <Image 
+                       src={goal.image} 
+                       alt={goal.title}
+                       width={400}
+                       height={128}
+                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                     />
+                     <div className="absolute inset-0 bg-gradient-to-t from-blue-900/20 to-transparent"></div>
+                   </div>
+                   
+                   {/* Background Pattern */}
+                   <div className="absolute inset-0 opacity-10">
+                     <div className="absolute top-8 right-8 w-24 h-24 border-2 border-blue-300/50 rounded-full"></div>
+                     <div className="absolute bottom-8 left-8 w-16 h-16 border border-blue-200/50 rounded-full"></div>
+                     <div className="absolute top-1/2 left-1/4 w-8 h-8 bg-blue-300/50 rounded-full"></div>
+                   </div>
+                   
+                   {/* Icon */}
+                   <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-100/80 to-indigo-100/80 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 border border-blue-200/50">
+                     <goal.icon className={`h-8 w-8 ${
+                       i === 0 
+                         ? "text-cyan-600" 
+                         : i === 1 
+                         ? "text-emerald-600"
+                         : "text-violet-600"
+                     }`} />
+                   </div>
+                   
+                   {/* Title */}
+                   <div className="font-bold text-xl text-blue-900 text-center mb-3 px-4">{goal.title}</div>
+                   
+                   {/* Description - Hidden by default, shows on hover */}
+                   <div className="text-sm text-blue-800/80 text-center leading-relaxed mb-6 flex-1 px-4 opacity-0 group-hover:opacity-100 transition-all duration-500 max-h-0 group-hover:max-h-96 overflow-hidden">
+                     {goal.description}
+                   </div>
+                   
+                   {/* Bottom Accent */}
+                   <div className={`absolute bottom-0 left-0 right-0 h-1 ${
+                     i === 0 
+                       ? "bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-600" 
+                       : i === 1 
+                       ? "bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600"
+                       : "bg-gradient-to-r from-violet-400 via-purple-500 to-pink-600"
+                   }`}></div>
+                 </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Program Highlights Section */}
-      <section className="py-20 bg-gradient-to-br from-brand-light-blue/30 to-white">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="text-center mb-16"
-          >
-            <Badge className="mb-4 bg-brand-orange/10 text-brand-orange">Program Highlights</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">What Sets Our SAT Prep Apart</h2>
-            <p className="text-xl text-text-light max-w-3xl mx-auto">From diagnostic testing to expert feedback, our program is designed for real results.</p>
-          </motion.div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {highlights.map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <div className="h-full flex flex-col items-center bg-gradient-to-br from-brand-light-blue/40 to-white rounded-xl shadow-md p-8 group transition-all duration-300 hover:shadow-xl hover:bg-brand-light-blue/60 min-h-[220px]">
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-brand-blue to-brand-teal flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-                    <item.icon className="h-7 w-7 text-white" />
-                  </div>
-                  <div className="text-lg font-bold text-text-dark text-center mb-2">{item.title}</div>
-                  <div className="text-base text-text-light text-center flex-1">{item.description}</div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* Timeline Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="text-center mb-16"
-          >
-            <Badge className="mb-4 bg-brand-blue/10 text-brand-blue">SAT Prep Journey</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">Your Path to SAT Success</h2>
-            <p className="text-xl text-text-light max-w-3xl mx-auto">Follow our proven step-by-step process to maximize your SAT score.</p>
-          </motion.div>
-          <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-8">
-            {timeline.map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.1 }}
+             {/* Packages Section */}
+       <section id="packages" className="py-20 theme-bg-dark">
+         <div className="container mx-auto px-4">
+           <motion.div
+             initial={{ opacity: 0, y: 30 }}
+             whileInView={{ opacity: 1, y: 0 }}
+             className="text-center mb-16"
+           >
+             <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">SAT Prep Journey</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Pathways to Choose</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Mentor-based coaching & self-study coaching packages designed for your learning style.</p>
+           </motion.div>
+           
+           {/* <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto relative"> */}
+             {/* Background decorative elements */}
+             {/* <div className="absolute -top-10 -left-10 w-32 h-32 bg-gradient-to-br from-blue-100/30 to-purple-100/30 rounded-full blur-3xl opacity-60"></div>
+             <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-gradient-to-br from-yellow-100/30 to-orange-100/30 rounded-full blur-3xl opacity-60"></div>
+             {packages.map((pkg, index) => {
+               const IconComponent = pkg.icon
+               return (
+                 <motion.div
+                   key={pkg.name}
+                   initial={{ opacity: 0, y: 30 }}
+                   whileInView={{ opacity: 1, y: 0 }}
+                   transition={{ delay: index * 0.1 }}
+                 >
+                                       <Card
+                      className={`relative overflow-hidden transition-all duration-500 hover:scale-[1.02] group flex flex-col h-full ${
+                        pkg.popular
+                          ? "ring-2 ring-blue-500/50 shadow-2xl scale-[1.02] bg-gradient-to-br from-blue-50 via-white to-indigo-50/40 border border-blue-200/30"
+                          : "shadow-xl hover:shadow-2xl bg-gradient-to-br from-slate-50 via-white to-gray-50/40 border border-slate-200/30"
+                      } border-0 backdrop-blur-sm`}
+                    >
+                     {pkg.popular && (
+                       <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 z-10">
+                         <Badge className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white font-bold px-6 py-2 text-sm shadow-lg animate-pulse">
+                           <Sparkles className="w-4 h-4 mr-1" />
+                           Most Popular
+                         </Badge>
+                       </div>
+                     )}
+
+                     <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-slate-100/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                     <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+
+                     <CardHeader className="text-center pb-6 pt-12 relative z-10">
+                       <div className="w-full h-48 mx-auto mb-6 rounded-2xl overflow-hidden shadow-xl group-hover:shadow-2xl transition-all duration-300 group-hover:scale-105 border border-slate-200/50">
+                         <Image
+                           src={pkg.illustration || "/placeholder.svg"}
+                           alt={`${pkg.name} package illustration`}
+                           width={400}
+                           height={192}
+                           className="w-full h-full object-cover"
+                         />
+                       </div>
+
+                                               <h3 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-2">{pkg.name}</h3>
+                        <p className="text-base text-slate-500 font-medium bg-slate-100/50 px-3 py-1 rounded-full inline-block">({pkg.hours})</p>
+                     </CardHeader>
+
+                     <CardContent className="flex-1 flex flex-col relative z-10">
+                       <div className="flex-1 space-y-8"> */}
+                                                   {/* <p className="text-slate-600 leading-relaxed text-center px-2 text-sm">{pkg.description}</p> */}
+
+                         {/* <div className="space-y-4">
+                           <div
+                             className={`relative p-4 bg-gradient-to-r from-${pkg.accentColor}-50 to-${pkg.accentColor}-100/50 rounded-xl border border-${pkg.accentColor}-200/50 shadow-sm hover:shadow-md transition-all duration-300 group-hover:scale-[1.02]`}
+                           >
+                             <div className="flex justify-between items-center">
+                               <span className="text-sm font-semibold text-slate-700">Mentor-based</span>
+                               <div className="text-right">
+                                 <span className="text-3xl font-bold text-slate-900">${pkg.mentorPrice}</span>
+                                 <span className="text-slate-600 text-sm">/hr</span>
+                               </div>
+                             </div>
+                           </div>
+
+                           <div className="relative p-4 bg-gradient-to-r from-slate-50 to-slate-100/50 rounded-xl border border-slate-200/50 shadow-sm hover:shadow-md transition-all duration-300 group-hover:scale-[1.02]">
+                             <div className="flex justify-between items-center">
+                               <span className="text-sm font-semibold text-slate-700">Self-Study</span>
+                               <div className="text-right">
+                                 <span className="text-3xl font-bold text-slate-900">${pkg.selfStudyPrice}</span>
+                                 <span className="text-slate-600 text-sm">/hr</span>
+                               </div>
+                             </div>
+                           </div>
+                         </div>
+
+                         <div className="space-y-4">
+                              <h4 className="font-bold text-slate-900 text-base border-b border-slate-200/50 pb-2 bg-gradient-to-r from-slate-50 to-transparent px-2 py-1 rounded-t-lg">
+                              What's included:
+                            </h4>
+                           <ul className="space-y-3">
+                             {pkg.features.map((feature, featureIndex) => (
+                               <li key={featureIndex} className="flex items-start text-slate-600 group/item p-2 rounded-lg hover:bg-slate-50/50 transition-all duration-200">
+                                 <div
+                                   className={`w-5 h-5 rounded-full bg-gradient-to-r ${pkg.gradient} flex items-center justify-center mr-3 mt-0.5 flex-shrink-0 group-hover/item:scale-110 transition-transform duration-200 shadow-sm`}
+                                 >
+                                   <Check className="w-3 h-3 text-white" />
+                                 </div>
+                                   <span className="leading-relaxed text-sm font-medium">{feature}</span>
+                               </li>
+                             ))}
+                           </ul>
+                         </div>
+                       </div>
+
+                       <div className="mt-8">
+                         <Button
+                              className={`w-full py-3 font-bold text-base transition-all duration-300 transform hover:scale-[1.02] focus:scale-[1.02] shadow-lg hover:shadow-xl border-0 ${
+                             pkg.popular
+                               ? "bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white shadow-blue-500/25"
+                               : `bg-gradient-to-r ${pkg.gradient} hover:shadow-2xl text-white shadow-slate-500/25`
+                           }`}
+                         >
+                           Get Started
+                         </Button>
+                       </div>
+                     </CardContent>
+                   </Card>
+                 </motion.div>
+               )
+             })}
+           </div> */}
+           <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {packages.map((pkg, index) => {
+            const IconComponent = pkg.icon
+            return (
+              <Card
+                key={pkg.name}
+                className={`relative overflow-hidden transition-all duration-500 hover:scale-[1.02] group flex flex-col ${
+                  pkg.popular
+                    ? "ring-2 ring-blue-400/50 shadow-2xl scale-[1.02] bg-slate-800/90 backdrop-blur-sm border border-blue-400/20"
+                    : "shadow-lg hover:shadow-2xl bg-slate-800/80 backdrop-blur-sm border border-slate-600/30 hover:border-slate-500/50"
+                }`}
               >
-                <div className="relative bg-white rounded-2xl shadow-md border-t-4 border-brand-blue hover:border-brand-teal transition-all duration-300 flex flex-col items-center p-6 group min-h-[260px]">
-                  <div className="absolute -top-7 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-gradient-to-br from-brand-blue to-brand-teal flex items-center justify-center shadow-lg border-4 border-white z-10">
-                    <item.icon className="h-6 w-6 text-white" />
+                {pkg.popular && (
+                  <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 z-10">
+                    <Badge className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white font-bold px-6 py-2 text-sm shadow-lg animate-pulse">
+                      <Sparkles className="w-4 h-4 mr-1" />
+                      Most Popular
+                    </Badge>
                   </div>
-                  <div className="mt-8 font-semibold text-lg text-text-dark text-center mb-1">{item.title}</div>
-                  <div className="text-sm text-text-light text-center">{item.description}</div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                )}
+
+                <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-slate-700/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                <CardHeader className="text-center pb-6 pt-12 relative z-10">
+                  <div className="w-full h-48 mx-auto mb-6 rounded-2xl overflow-hidden shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105 ring-1 ring-slate-600/20">
+                    <Image
+                      src={pkg.illustration || "/placeholder.svg"}
+                      alt={`${pkg.name} package illustration`}
+                      width={400}
+                      height={192}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <h3 className="text-3xl font-bold text-cyan-300 mb-2">{pkg.name}</h3>
+                  <p className="text-lg text-cyan-200 font-medium">({pkg.hours})</p>
+                </CardHeader>
+
+                <CardContent className="flex-1 flex flex-col relative z-10">
+                  <div className="flex-1 space-y-8">
+                    <div className="space-y-4">
+                      <div
+                        className={`relative p-4 bg-gradient-to-r from-${pkg.accentColor}-900/30 to-${pkg.accentColor}-800/20 rounded-xl border border-${pkg.accentColor}-500/30 backdrop-blur-sm`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-semibold text-cyan-200">Mentor-based</span>
+                          <div className="text-right">
+                            <span className="text-3xl font-bold text-cyan-300">${pkg.mentorPrice}</span>
+                            <span className="text-cyan-200 text-sm">/hr</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="relative p-4 bg-slate-700/50 rounded-xl border border-slate-600/30 backdrop-blur-sm">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-semibold text-cyan-200">Self-Study</span>
+                          <div className="text-right">
+                            <span className="text-3xl font-bold text-cyan-300">${pkg.selfStudyPrice}</span>
+                            <span className="text-cyan-200 text-sm">/hr</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h4 className="font-bold text-cyan-300 text-lg border-b border-slate-600/50 pb-2">
+                        What&apos;s included:
+                      </h4>
+                      <ul className="space-y-3">
+                        {pkg.features.map((feature, featureIndex) => (
+                          <li key={featureIndex} className="flex items-start text-cyan-200 group/item">
+                            <div
+                              className={`w-5 h-5 rounded-full bg-gradient-to-r ${pkg.gradient} flex items-center justify-center mr-3 mt-0.5 flex-shrink-0 group-hover/item:scale-110 transition-transform duration-200 shadow-lg`}
+                            >
+                              <Check className="w-3 h-3 text-white" />
+                            </div>
+                            <span className="leading-relaxed">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* <div className="mt-8">
+                    <Button
+                      className={`w-full py-4 font-bold text-lg transition-all duration-300 transform hover:scale-[1.02] focus:scale-[1.02] shadow-lg hover:shadow-xl ${
+                        pkg.popular
+                          ? "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-blue-500/25 hover:shadow-blue-500/40"
+                          : `bg-gradient-to-r ${pkg.gradient} hover:shadow-2xl text-white shadow-lg`
+                      }`}
+                    >
+                      Get Started
+                    </Button>
+                  </div> */}
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
-      </section>
+         </div>
+       </section>
 
       {/* Workshops & Events Section */}
-      <section className="py-20 bg-gradient-to-br from-brand-light-blue/30 to-white">
+      <section className="py-20 theme-bg-dark">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-brand-orange/10 text-brand-orange">Workshops & Events</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">Upcoming SAT Events</h2>
-            <p className="text-xl text-text-light max-w-3xl mx-auto">Join our expert-led SAT bootcamps, practice test days, and strategy webinars.</p>
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">Workshops & Events</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Upcoming SAT Events</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Join our expert-led SAT bootcamps, practice test days, and strategy webinars.</p>
           </motion.div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {events.map((event, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <div className="relative bg-white/70 backdrop-blur-md rounded-3xl shadow-lg flex flex-col items-center p-8 min-h-[340px] group transition-all duration-300 hover:shadow-2xl hover:bg-white/90">
-                  <div className="absolute -top-7 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full bg-gradient-to-br from-brand-blue to-brand-teal flex items-center justify-center shadow-lg border-4 border-white z-10">
-                    <event.icon className="h-8 w-8 text-white" />
-                  </div>
-                  <Badge className="absolute top-4 left-4 bg-brand-orange text-white text-xs shadow">{event.badge}</Badge>
-                  <div className="mt-10 font-bold text-xl text-text-dark text-center">{event.title}</div>
-                  <div className="italic text-brand-blue text-sm text-center mb-2">{event.date}</div>
-                  <div className="text-base text-text-light text-center mb-6 flex-1">{event.description}</div>
-                  <Button className="rounded-full bg-gradient-to-r from-brand-blue to-brand-teal text-white px-8 py-2 shadow-md hover:shadow-lg transition-all focus:ring-2 focus:ring-brand-blue/50">Register</Button>
-                </div>
-              </motion.div>
+              <EventCard key={i} event={event} index={i} />
             ))}
           </div>
         </div>
       </section>
 
       {/* Downloadable Resources Section */}
-      <section className="py-20 bg-gradient-to-br from-brand-light-blue/30 to-white">
+      <section className="py-20 theme-bg-dark">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-brand-blue/10 text-brand-blue">Downloadable Resources</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">Helpful SAT Guides & Checklists</h2>
-            <p className="text-xl text-text-light max-w-3xl mx-auto">Access our most popular SAT resources to support your prep journey.</p>
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">Downloadable Resources</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Helpful SAT Guides & Checklists</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Access our most popular SAT resources to support your prep journey.</p>
           </motion.div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {resources.map((resource, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <div className="h-full flex flex-col items-center bg-gradient-to-br from-brand-light-blue/40 to-white rounded-xl shadow-md p-8 group transition-all duration-300 hover:shadow-xl hover:bg-brand-light-blue/60 min-h-[220px]">
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-brand-blue to-brand-teal flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-                    <resource.icon className="h-7 w-7 text-white" />
+            {resources.map((resource, i) => {
+              // Define unique color schemes for each card
+              const colorSchemes = [
+                "from-fuchsia-500 via-pink-500 to-rose-500", // Card 1: SAT Prep Flyer
+                "from-emerald-500 via-teal-500 to-cyan-500", // Card 2: SAT Checklist  
+                "from-violet-500 via-indigo-500 to-blue-500", // Card 3: Practice Test Guide
+                "from-amber-500 via-orange-500 to-red-500", // Card 4: Time Management Tips
+              ];
+              
+              const buttonColors = [
+                "from-fuchsia-400 to-pink-400", // Button 1
+                "from-emerald-400 to-teal-400", // Button 2
+                "from-violet-400 to-indigo-400", // Button 3
+                "from-amber-400 to-orange-400", // Button 4
+              ];
+              
+              const textColors = [
+                "text-fuchsia-100", // Text 1
+                "text-emerald-100", // Text 2
+                "text-violet-100", // Text 3
+                "text-amber-100", // Text 4
+              ];
+              
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="group"
+                >
+                  <div className={`h-full flex flex-col items-center bg-gradient-to-br ${colorSchemes[i]} rounded-3xl shadow-2xl p-8 transition-all duration-500 hover:shadow-3xl hover:scale-105 hover:-translate-y-2 relative overflow-hidden min-h-[280px]`}>
+                    {/* Animated background elements */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
+                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/20 rounded-full group-hover:scale-125 transition-transform duration-700"></div>
+                    
+                    {/* Icon container with unique styling */}
+                    <div className="w-20 h-20 bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 border border-white/30 relative z-10">
+                      <resource.icon className="h-10 w-10 text-white drop-shadow-lg" />
+                    </div>
+                    
+                    {/* Title with better styling */}
+                    <div className="text-xl font-bold text-white text-center mb-4 drop-shadow-lg leading-tight">{resource.name}</div>
+                    
+                                         {/* Removed download button */}
                   </div>
-                  <div className="text-lg font-bold text-text-dark text-center mb-4">{resource.name}</div>
-                  <Button className="w-full rounded-full bg-gradient-to-r from-brand-blue to-brand-teal text-white px-6 py-2 shadow-md hover:shadow-lg transition-all focus:ring-2 focus:ring-brand-blue/50 mt-auto" asChild>
-                    <a href={resource.link} download>
-                      Download
-                    </a>
-                  </Button>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Success Stories Section */}
+      <section className="py-20 theme-bg-dark">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="text-center mb-16"
+          >
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">Success Stories</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Student Success Stories</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Hear from our successful students about their SAT prep journey and score improvements.</p>
+          </motion.div>
+          
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-gradient-to-br from-[#1a2236]/90 to-[#1a2236]/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-yellow-400/20">
+              <div className="text-center space-y-6">
+                <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center mx-auto">
+                  <Star className="h-10 w-10 text-white" />
                 </div>
-              </motion.div>
-            ))}
+                <h3 className="text-2xl font-bold theme-text-light">Atreya&apos;s SAT Success Story</h3>
+                <div className="bg-gradient-to-br from-[#1a2236]/90 to-[#1a2236]/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-yellow-400/20">
+                  <p className="text-lg theme-text-muted leading-relaxed mb-4">
+                    &quot;The personalized approach and expert guidance helped me improve my SAT score significantly. The mock tests and feedback sessions were game-changers for my confidence on test day.&quot;
+                  </p>
+                  <div className="flex items-center justify-center gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-yellow-400">Before</div>
+                      <div className="text-lg theme-text-muted">1200</div>
+                    </div>
+                    <div className="text-3xl text-yellow-400">→</div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-yellow-400">After</div>
+                      <div className="text-lg theme-text-muted">1450</div>
+                    </div>
+                  </div>
+                </div>
+                                 {/* Embedded Video */}
+                 <div className="w-full max-w-2xl mx-auto">
+                   <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl border-2 border-yellow-400/30">
+                     <iframe
+                       src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+                       title="Atreya's SAT Success Story"
+                       className="w-full h-full"
+                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                       allowFullScreen
+                     ></iframe>
+                   </div>
+                   <p className="text-sm theme-text-muted mt-3 text-center">
+                     Watch Atreya share his SAT journey and score improvement story
+                   </p>
+                 </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* FAQ Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 theme-bg-dark">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-brand-blue/10 text-brand-blue">FAQ</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">Frequently Asked SAT Questions</h2>
-            <p className="text-xl text-text-light max-w-3xl mx-auto">Find answers to common questions about our SAT coaching, practice tests, and more.</p>
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">FAQ</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Frequently Asked Questions</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Find answers to common questions about our SAT/PSAT coaching, practice tests, and more.</p>
           </motion.div>
           <div className="max-w-3xl mx-auto space-y-8">
             {faqs.map((faq, i) => (
               <Accordion type="single" collapsible key={i}>
                 <AccordionItem value={`faq-${i}`} className="border-none">
                   <div>
-                    <AccordionTrigger className="flex items-center gap-4 px-6 py-4 bg-brand-light-blue/30 rounded-full font-bold text-lg text-brand-blue hover:bg-brand-blue/10 hover:no-underline transition-all">
-                      <div className="w-8 h-8 rounded-full bg-brand-blue flex items-center justify-center text-white font-bold">Q</div>
+                    <AccordionTrigger className="flex items-center gap-4 px-6 py-4 bg-yellow-400/10 rounded-full font-bold text-lg text-yellow-400 hover:bg-yellow-400/20 hover:no-underline transition-all">
+                      <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-[#1a2236] font-bold">Q</div>
                       <span className="text-left">{faq.question}</span>
                     </AccordionTrigger>
                     <AccordionContent className="relative px-0 pb-4 pt-0">
-                      <div className="relative bg-white rounded-2xl shadow-lg p-6 text-base font-medium text-text-dark mt-2 ml-10">
-                        <div className="absolute -left-4 top-6 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-white"></div>
+                      <div className="relative bg-gradient-to-br from-[#1a2236]/90 to-[#1a2236]/80 backdrop-blur-xl rounded-2xl shadow-lg p-6 text-base font-medium theme-text-light mt-2 ml-10 border border-yellow-400/20">
+                        <div className="absolute -left-4 top-6 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-[#1a2236]"></div>
                         {faq.answer}
                       </div>
                     </AccordionContent>
@@ -415,39 +1056,100 @@ export default function SATCoachingPage() {
       </section>
 
       {/* Call to Action Section */}
-      <section className="py-20 bg-gradient-to-r from-brand-blue to-brand-teal">
-        <div className="container mx-auto px-4 text-center">
+      <section className="py-20 theme-bg-dark relative overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-yellow-400/5 via-yellow-500/10 to-yellow-400/5"></div>
+          <div className="absolute top-20 left-10 w-32 h-32 bg-yellow-400/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 right-10 w-40 h-40 bg-blue-400/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-purple-400/5 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2"></div>
+        </div>
+        
+        <div className="container mx-auto px-4 text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
-            className="max-w-4xl mx-auto text-white space-y-8"
+            className="max-w-4xl mx-auto space-y-8"
           >
-            <h2 className="text-4xl lg:text-5xl font-bold">
-              Ready to Boost Your SAT Score?
-            </h2>
-            <p className="text-xl opacity-90">
-              Book your free SAT consultation or download our SAT Prep Flyer to get started on your path to success.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                size="lg"
-                variant="secondary"
-                className="bg-white text-brand-blue hover:bg-gray-100"
-              >
-                <ArrowRight className="mr-2 h-5 w-5" /> Download SAT Prep Flyer
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="bg-white text-brand-blue hover:bg-gray-100 hover:text-brand-blue"
-              >
-                <Calendar className="mr-2 h-5 w-5" /> Book Free SAT Consultation
-              </Button>
+            {/* Main CTA Card */}
+            <div className="bg-gradient-to-br from-[#1a2236]/90 to-[#1a2236]/80 backdrop-blur-xl rounded-3xl p-12 border border-yellow-400/20 shadow-2xl">
+              <div className="space-y-8">
+                <div className="space-y-4">
+                  <Badge className="bg-yellow-400/20 text-yellow-400 border-yellow-400/30 px-4 py-2 text-sm font-semibold">
+                    🚀 Start Your SAT Journey Today
+                  </Badge>
+                  <h2 className="text-3xl lg:text-4xl font-bold theme-text-light">
+                    Ready to Crush the SAT & PSAT?
+                  </h2>
+                  <p className="text-lg theme-text-muted max-w-3xl mx-auto leading-relaxed">
+                    Transform weaknesses into strengths with one chapter at a time. Experience the difference of personalized SAT/PSAT coaching. Unlock your potential now!
+                  </p>
+                </div>
+                
+                {/* Three Steps */}
+                <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
+                  <div className="flex items-center gap-3 text-left">
+                    <div className="w-8 h-8 bg-yellow-400/20 rounded-full flex items-center justify-center">
+                      <CheckIcon className="h-5 w-5 text-yellow-400" />
+                    </div>
+                    <span className="text-sm theme-text-light">Schedule a Free Consultation</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-left">
+                    <div className="w-8 h-8 bg-yellow-400/20 rounded-full flex items-center justify-center">
+                      <CheckIcon className="h-5 w-5 text-yellow-400" />
+                    </div>
+                    <span className="text-sm theme-text-light">Get Matched with the Right Coach</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-left">
+                    <div className="w-8 h-8 bg-yellow-400/20 rounded-full flex items-center justify-center">
+                      <CheckIcon className="h-5 w-5 text-yellow-400" />
+                    </div>
+                    <span className="text-sm theme-text-light">Watch Your Score Improve</span>
+                  </div>
+                </div>
+                
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button
+                    size="lg"
+                    className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 py-2 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                  >
+                    <ArrowRight className="mr-2 h-5 w-5" /> Get Started Today
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-2 border-yellow-400/50 text-yellow-400 hover:bg-yellow-400/10 hover:border-yellow-400 px-6 py-2 text-base font-semibold backdrop-blur-sm transition-all duration-300 transform hover:scale-105"
+                  >
+                    <BookOpen className="mr-2 h-5 w-5" /> Learn More
+                  </Button>
+                </div>
+                
+                {/* Trust Indicators */}
+                <div className="pt-6 border-t border-yellow-400/20">
+                  <p className="text-xs theme-text-muted mb-3">Trusted by 500+ students and families</p>
+                  <div className="flex items-center justify-center gap-4 text-yellow-400/60">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
+                      <span className="text-xs">100% Free Initial Session</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
+                      <span className="text-xs">No Commitment Required</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
+                      <span className="text-xs">Expert SAT Coaching</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>
       </section>
+      
       <Footer />
       <Chatbot />
     </>
