@@ -6,7 +6,7 @@ import { Calendar, MessageCircle } from "lucide-react";
 
 export default function CTASection() {
   return (
-    <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-r from-brand-blue to-brand-teal">
+    <section id="cta" className="py-12 sm:py-16 lg:py-20 bg-gradient-to-r from-brand-blue to-brand-teal">
       <div className="container mx-auto text-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}

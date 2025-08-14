@@ -16,12 +16,12 @@ function Navbar({ className }: { className?: string }) {
   return (
     <div className={cn("relative", className)}>
       <Menu setActive={setActive}>
-        <MenuItem setActive={setActive} active={null} item="Home" href="/#home" className="text-foreground hover:text-brand-blue transition-colors font-medium">
+        <MenuItem setActive={setActive} active={null} item="Home" href="/#home" className="text-yellow-400/90 hover:text-yellow-300 transition-colors font-medium">
         </MenuItem>
-        <MenuItem setActive={setActive} active={null} item="About" href="/#about" className="text-foreground hover:text-brand-blue transition-colors font-medium">
+        <MenuItem setActive={setActive} active={null} item="About" href="/#about" className="text-yellow-400/90 hover:text-yellow-300 transition-colors font-medium">
         </MenuItem>
-        <MenuItem setActive={setActive} active={active} item="Programs" href="/#programs" className="text-foreground hover:text-brand-blue transition-colors font-medium">
-          <div className="text-sm grid grid-cols-2 gap-6 p-4 min-w-[400px]">
+        <MenuItem setActive={setActive} active={active} item="Programs" href="/#programs" className="text-yellow-400/90 hover:text-yellow-300 transition-colors font-medium">
+          <div className="text-sm grid grid-cols-1 gap-4 p-6 min-w-[300px] bg-gradient-to-br from-[#1a2236]/90 to-[#1a2236]/95">
             <ProductItem
               title="Academic Tutoring"
               href="/academictutoring"
@@ -35,18 +35,6 @@ function Navbar({ className }: { className?: string }) {
               description="SAT, ACT, and college application guidance."
             />
             <ProductItem
-              title="Math Competition"
-              href="/mathcompetition"
-              src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=140&h=70&fit=crop"
-              description="Competition math and advanced problem solving."
-            />
-            <ProductItem
-              title="Research Programs"
-              href="/researchprogram"
-              src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=140&h=70&fit=crop"
-              description="Scientific research and project development."
-            />
-            <ProductItem
               title="SAT Coaching"
               href="/satcoaching"
               src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=140&h=70&fit=crop"
@@ -54,8 +42,8 @@ function Navbar({ className }: { className?: string }) {
             />
           </div>
         </MenuItem>
-        <MenuItem setActive={setActive} active={active} item="Profile Enrichment" href="/#profile-enrichment" className="text-foreground hover:text-brand-blue transition-colors font-medium">
-          <div className="text-sm grid grid-cols-1 gap-4 p-4 min-w-[300px]">
+        <MenuItem setActive={setActive} active={active} item="Profile Enrichment" href="/#profile-enrichment" className="text-yellow-400/90 hover:text-yellow-300 transition-colors font-medium">
+          <div className="text-sm grid grid-cols-2 gap-4 p-6 min-w-[500px] bg-gradient-to-br from-[#1a2236]/90 to-[#1a2236]/95">
             <ProductItem
               title="AES Explorers"
               href="/aes-explorers"
@@ -74,15 +62,27 @@ function Navbar({ className }: { className?: string }) {
               src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=140&h=70&fit=crop"
               description="Creative profile building and digital presence."
             />
+            <ProductItem
+              title="Math Competition"
+              href="/mathcompetition"
+              src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=140&h=70&fit=crop"
+              description="Competition math and advanced problem solving."
+            />
+            <ProductItem
+              title="Research Programs"
+              href="/researchprogram"
+              src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=140&h=70&fit=crop"
+              description="Scientific research and project development."
+            />
           </div>
         </MenuItem>
-        <MenuItem setActive={setActive} active={null} item="Mentors" href="/#mentors" className="text-foreground hover:text-brand-blue transition-colors font-medium">
+        <MenuItem setActive={setActive} active={null} item="Mentors" href="/#mentors" className="text-yellow-400/90 hover:text-yellow-300 transition-colors font-medium">
         </MenuItem>
-        <MenuItem setActive={setActive} active={null} item="Testimonials" href="/#testimonials" className="text-foreground hover:text-brand-blue transition-colors font-medium">
+        <MenuItem setActive={setActive} active={null} item="Testimonials" href="/#animatedtestimonials" className="text-yellow-400/90 hover:text-yellow-300 transition-colors font-medium">
         </MenuItem>
-        <MenuItem setActive={setActive} active={null} item="Blog" href="/blog" className="text-foreground hover:text-brand-blue transition-colors font-medium">
+        <MenuItem setActive={setActive} active={null} item="Blog" href="/blog" className="text-yellow-400/90 hover:text-yellow-300 transition-colors font-medium">
         </MenuItem>
-        <MenuItem setActive={setActive} active={null} item="Contact" href="/#contact" className="text-foreground hover:text-brand-blue transition-colors font-medium">
+        <MenuItem setActive={setActive} active={null} item="Contact" href="/#cta" className="text-yellow-400/90 hover:text-yellow-300 transition-colors font-medium">
         </MenuItem>
       </Menu>
     </div>
