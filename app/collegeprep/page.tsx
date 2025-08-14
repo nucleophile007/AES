@@ -9,47 +9,466 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
-import { BookOpen, Star, Target, Users, FileText, Trophy, Lightbulb, Globe, Calendar, ArrowRight, CheckIcon } from "lucide-react";
+import { BookOpen, Star, Target, Users, FileText, Trophy, Lightbulb, Globe, Calendar, ArrowRight, CheckIcon, ChevronDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
+import { CardStack } from "@/components/ui/card-stack";
+import { Highlight } from "@/components/ui/highlight";
+import ImageVideoCard from "@/components/ui/image-video-card";
+import StepCard from "@/components/ui/step-card";
+import { DraggableCardBody, DraggableCardContainer } from "@/components/ui/draggable-card";
 
-const goals = [
+// CollegePillars Component
+const CollegePillars = () => {
+  const [selectedPillar, setSelectedPillar] = React.useState<number | null>(null)
+  const containerRef = React.useRef<HTMLDivElement>(null)
+
+  const handlePillarClick = (pillarId: number) => {
+    setSelectedPillar(selectedPillar === pillarId ? null : pillarId)
+  }
+
+  const handleBackgroundClick = (event: React.MouseEvent) => {
+    // Check if the click target is not a pillar or pillar content
+    const target = event.target as HTMLElement
+    const isPillarClick = target.closest('[data-pillar]') || target.closest('[data-pillar-content]')
+    
+    if (!isPillarClick && selectedPillar !== null) {
+      setSelectedPillar(null)
+    }
+  }
+
+  const pillars = [
+    {
+      id: 1,
+      title: "Strength-Based Discovery",
+      icon: Search,
+      color: "from-emerald-400 via-emerald-500 to-emerald-700",
+      bgColor: "bg-emerald-500",
+      borderColor: "border-emerald-500",
+      glowColor: "shadow-emerald-500/50",
+      points: [
+        "Identify core academic and personal strengths using assessments and mentorship",
+        "Help students understand who they are and what drives them",
+        "Align emerging interests with long-term capabilities",
+      ],
+    },
+    {
+      id: 2,
+      title: "Research & Competitive Excellence",
+      icon: Trophy,
+      color: "from-blue-400 via-blue-500 to-blue-700",
+      bgColor: "bg-blue-500",
+      borderColor: "border-blue-500",
+      glowColor: "shadow-blue-500/50",
+      points: [
+        "We handpick high-impact competitions and research opportunities that match the student's strengths and aspirations",
+        "Support for national and international Olympiads, science fairs, hackathons, business case competitions, social impact initiatives, and more",
+        "Personalized research mentorship for students to publish original work or present at top student conferences, thus showcasing their intellectual curiosity and leadership",
+      ],
+    },
+    {
+      id: 3,
+      title: "Strategic College Planning",
+      icon: Target,
+      color: "from-purple-400 via-purple-500 to-purple-700",
+      bgColor: "bg-purple-500",
+      borderColor: "border-purple-500",
+      glowColor: "shadow-purple-500/50",
+      points: [
+        "Curate a balanced college list tailored to academic, personal, and financial fit",
+        "Timeline-driven, step-by-step guidance from early high school to application submission",
+        "Expert coaching on college essays, interviews, extracurricular positioning, and letters of recommendation",
+      ],
+    },
+  ]
+
+  return (
+    <div ref={containerRef} className="w-full max-w-7xl mx-auto flex flex-col justify-center" onClick={handleBackgroundClick}>
+      <div
+        className={`flex items-start justify-center transition-all duration-700 ease-in-out ${
+          selectedPillar ? "gap-20" : "gap-0"
+        }`}
+      >
+        <div
+          className={`relative flex-shrink-0 transition-all duration-700 ease-in-out ${
+            selectedPillar ? "transform scale-90" : "transform scale-100"
+          }`}
+        >
+          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-r from-amber-100 via-amber-50 to-amber-100 rounded-xl shadow-2xl border-4 border-amber-200 backdrop-blur-sm">
+            <div className="absolute inset-0 bg-gradient-to-t from-amber-200/40 to-transparent rounded-xl"></div>
+            <div className="absolute inset-x-4 top-3 h-3 bg-gradient-to-r from-transparent via-amber-300/80 to-transparent rounded-full"></div>
+            <div className="absolute inset-x-8 bottom-2 h-2 bg-gradient-to-r from-amber-400/60 via-amber-300/80 to-amber-400/60 rounded-full"></div>
+          </div>
+
+          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 w-full max-w-lg">
+            <div className="relative">
+              <div
+                className="h-28 bg-gradient-to-b from-blue-400 via-blue-500 to-blue-600 shadow-2xl border-4 border-blue-300"
+                style={{
+                  clipPath: "polygon(5% 100%, 50% 0%, 95% 100%)",
+                }}
+              >
+                <div
+                  className="absolute inset-0 bg-gradient-to-t from-blue-700/30 to-blue-200/20"
+                  style={{
+                    clipPath: "polygon(5% 100%, 50% 0%, 95% 100%)",
+                  }}
+                ></div>
+                <div
+                  className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent"
+                  style={{
+                    clipPath: "polygon(5% 100%, 50% 0%, 95% 100%)",
+                  }}
+                ></div>
+              </div>
+              <div className="absolute top-10 left-1/2 transform -translate-x-1/2 w-20 h-20 bg-gradient-to-br from-yellow-300 via-yellow-400 to-amber-500 rounded-full flex items-center justify-center shadow-2xl border-4 border-white ring-4 ring-yellow-400/40">
+                <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600 rounded-full flex items-center justify-center shadow-xl border-2 border-white/50">
+                  <div className="w-6 h-6 bg-gradient-to-br from-white via-yellow-100 to-white rounded-full shadow-inner animate-pulse ring-2 ring-emerald-300/50"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-center items-end gap-16 pt-32 pb-16">
+            {pillars.map((pillar) => {
+              const Icon = pillar.icon
+              const isSelected = selectedPillar === pillar.id
+
+              return (
+                <div
+                  key={pillar.id}
+                  className="flex flex-col items-center group cursor-pointer"
+                  data-pillar={pillar.id}
+                  onClick={() => handlePillarClick(pillar.id)}
+                >
+                  <div
+                    className={`
+                    relative w-28 h-80 bg-gradient-to-b ${pillar.color} 
+                    rounded-t-2xl shadow-2xl transform transition-all duration-500 ease-out
+                    ${isSelected ? `scale-110 ${pillar.glowColor} shadow-3xl ring-4 ring-white/30` : "hover:scale-105 hover:shadow-3xl"}
+                    border-4 border-white/20 backdrop-blur-sm
+                  `}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-black/20 rounded-t-2xl"></div>
+                    <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-white/40 to-transparent rounded-t-2xl"></div>
+
+                    <div className="absolute inset-x-2 top-4 bottom-8 space-y-1">
+                      {[...Array(12)].map((_, i) => (
+                        <div key={i} className="h-6 bg-white/10 rounded-full border border-white/20"></div>
+                      ))}
+                    </div>
+
+                    <div className="absolute inset-x-4 top-8 bottom-12 bg-white/20 rounded-xl backdrop-blur-md border border-white/30 shadow-inner">
+                      <div className="h-full flex flex-col items-center justify-center p-4">
+                        <div className="w-16 h-16 bg-white/30 rounded-full flex items-center justify-center mb-6 backdrop-blur-sm border-2 border-white/40 shadow-xl">
+                          <Icon className="w-9 h-9 text-white drop-shadow-2xl" />
+                        </div>
+                        <div className="text-white text-sm font-bold text-center leading-tight drop-shadow-2xl">
+                          {pillar.title.split(" ").map((word, i) => (
+                            <div key={i} className="mb-1">
+                              {word}</div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="absolute -top-2 left-0 right-0 h-4 bg-gradient-to-b from-gray-100 to-gray-300 rounded-t-2xl border-2 border-gray-400 shadow-lg"></div>
+                    <div className="absolute -bottom-4 left-0 right-0 h-8 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-600 rounded-b-2xl border-4 border-gray-500 shadow-xl"></div>
+
+                    <div
+                      className={`absolute -bottom-12 left-1/2 transform -translate-x-1/2 transition-all duration-300 ${
+                        isSelected ? "opacity-100 scale-100" : "opacity-0 scale-75"
+                      }`}
+                    >
+                      <div
+                        className={`w-4 h-4 ${pillar.bgColor} rounded-full animate-pulse shadow-lg ring-2 ring-white/50`}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        <div
+          className={`transition-all duration-700 ease-in-out ${
+            selectedPillar
+              ? "flex-1 max-w-3xl opacity-100 translate-x-0"
+              : "w-0 opacity-0 translate-x-8 overflow-hidden"
+          }`}
+          data-pillar-content={selectedPillar}
+        >
+          <div className="relative p-6">
+            {pillars.map((pillar) => {
+              const isActive = selectedPillar === pillar.id
+
+              return (
+                <div
+                  key={pillar.id}
+                  className={`absolute inset-0 transition-all duration-500 ease-out ${
+                    isActive ? "opacity-100 translate-x-0" : "opacity-0 translate-x-8"
+                  }`}
+                >
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-6 mb-8 p-6 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20">
+                      <div
+                        className={`w-20 h-20 ${pillar.bgColor} rounded-2xl flex items-center justify-center shadow-2xl ring-4 ring-white/30 ${pillar.glowColor} transform hover:scale-105 transition-transform duration-300`}
+                      >
+                        <pillar.icon className="w-10 h-10 text-white drop-shadow-lg" />
+                      </div>
+                      <div>
+                        <h3 className="text-3xl font-black theme-text-light drop-shadow-lg mb-2">{pillar.title}</h3>
+                        <div className={`h-1 w-24 ${pillar.bgColor} rounded-full ${pillar.glowColor}`}></div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      {pillar.points.map((point, index) => (
+                        <div
+                          key={index}
+                          className={`flex items-start gap-4 transform transition-all duration-500 ${
+                            isActive ? "translate-x-0 opacity-100" : "translate-x-8 opacity-0"
+                          }`}
+                          style={{ transitionDelay: `${index * 100}ms` }}
+                        >
+                          <div className="flex-shrink-0">
+                            <div
+                              className={`w-12 h-12 ${pillar.bgColor} rounded-full flex items-center justify-center shadow-lg ${pillar.glowColor} ring-2 ring-white/30`}
+                            >
+                              <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+                                <div className={`w-3 h-3 rounded-full ${pillar.bgColor}`}></div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div
+                            className={`bg-gradient-to-br from-white via-white/98 to-white/95 backdrop-blur-md rounded-xl shadow-lg p-4 flex-1 transform transition-all duration-300 hover:shadow-xl hover:scale-[1.01] border-l-4 ${pillar.borderColor} ring-1 ring-gray-200/50`}
+                          >
+                            <p className="text-gray-800 text-base leading-relaxed font-medium">{point}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// TestimonialsSection Component
+// // TestimonialsSection Component
+const TestimonialsSection = () => {
+  const [selectedTestimonial, setSelectedTestimonial] = React.useState(testimonialCards[0])
+  const [isVisible, setIsVisible] = React.useState(false)
+  const [currentIndex, setCurrentIndex] = React.useState(0)
+  const [animatingIndex, setAnimatingIndex] = React.useState(0)
+
+  const intervalRef = React.useRef<NodeJS.Timeout | null>(null)
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), 300)
+    return () => clearTimeout(timer)
+  }, [])
+
+  const startAutoRotation = React.useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+    }
+    intervalRef.current = setInterval(() => {
+      setCurrentIndex((prevIndex) => {
+        const nextIndex = (prevIndex + 1) % testimonialCards.length
+        setSelectedTestimonial(testimonialCards[nextIndex])
+        setAnimatingIndex(nextIndex)
+        return nextIndex
+      })
+    }, 5500)
+  }, [])
+
+  React.useEffect(() => {
+    startAutoRotation()
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
+    }
+  }, [startAutoRotation])
+
+  const handleAvatarClick = (testimonial: typeof testimonialCards[0], index: number) => {
+    setSelectedTestimonial(testimonial)
+    setCurrentIndex(index)
+    setAnimatingIndex(index)
+    startAutoRotation()
+  }
+
+  const goToPrevious = () => {
+    const prevIndex = currentIndex === 0 ? testimonialCards.length - 1 : currentIndex - 1
+    setSelectedTestimonial(testimonialCards[prevIndex])
+    setCurrentIndex(prevIndex)
+    setAnimatingIndex(prevIndex)
+    startAutoRotation()
+  }
+
+  const goToNext = () => {
+    const nextIndex = (currentIndex + 1) % testimonialCards.length
+    setSelectedTestimonial(testimonialCards[nextIndex])
+    setCurrentIndex(nextIndex)
+    setAnimatingIndex(nextIndex)
+    startAutoRotation()
+  }
+
+  return (
+    <div className="w-full relative z-10">
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="relative flex flex-col lg:flex-row items-center justify-center gap-16">
+          <div className="relative w-[600px] h-[600px] lg:w-[700px] lg:h-[700px]">
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] lg:w-[500px] lg:h-[500px] border-2 border-dashed border-yellow-400/30 rounded-full" />
+            
+                        {/* Testimonials positioned around the circle */}
+            {testimonialCards.map((testimonial, index) => {
+              // Calculate angle so that active testimonial is always at rightmost (0 degrees)
+              const angle = (index - currentIndex) * (360 / testimonialCards.length)
+              const radius = 250 // Increased radius for more spacing between avatars
+              const x = Math.cos((angle * Math.PI) / 180) * radius
+              const y = Math.sin((angle * Math.PI) / 180) * radius
+
+              const isActive = currentIndex === index
+              const isAnimating = animatingIndex === index
+
+              return (
+                <div
+                  key={testimonial.id}
+                  className="absolute cursor-pointer hover:scale-110 z-10 transition-all duration-300"
+                  style={{
+                    left: "50%",
+                    top: "50%",
+                    transform: `translate(${x - 50}px, ${y - 50}px)`,
+                  }}
+                  onClick={() => handleAvatarClick(testimonial, index)}
+                >
+                  <Avatar
+                    className={`w-20 h-20 lg:w-24 lg:h-24 ring-2 shadow-lg transition-all duration-500 ${
+                      isActive ? "ring-yellow-400 ring-4 scale-110" : "ring-white hover:ring-yellow-300"
+                    } ${isAnimating ? "animate-pulse" : ""}`}
+                  >
+                    <AvatarImage src={testimonial.avatar || "/placeholder.svg"} alt={testimonial.name} />
+                    <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-[#1a2236] font-semibold">
+                      {testimonial.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  {isActive && (
+                    <div className="absolute inset-0 rounded-full border-2 border-yellow-400 animate-ping opacity-75" />
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="flex-1 max-w-lg">
+            <div
+              key={selectedTestimonial.id}
+              className="bg-gradient-to-br from-[#1a2236]/95 to-[#2a3246]/90 backdrop-blur-xl rounded-2xl p-8 shadow-2xl border border-yellow-400/30 animate-in fade-in-50 slide-in-from-right-5 duration-500 relative overflow-hidden"
+            >
+              {/* Content Background Glow */}
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 via-transparent to-blue-400/5 rounded-2xl"></div>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-400/10 rounded-full blur-3xl"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-400/10 rounded-full blur-3xl"></div>
+              <div className="relative z-10">
+              <div className="flex gap-1 mb-4">
+                {[...Array(selectedTestimonial.rating || 5)].map((_, i) => (
+                  <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                ))}
+              </div>
+
+              <blockquote className="theme-text-light text-lg leading-relaxed mb-6 font-medium">
+                {selectedTestimonial.content}
+              </blockquote>
+
+              <div className="flex items-center gap-4">
+                <Avatar className="w-12 h-12 ring-2 ring-yellow-100">
+                  <AvatarImage src={selectedTestimonial.avatar || "/placeholder.svg"} alt={selectedTestimonial.name} />
+                  <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-[#1a2236] font-semibold">
+                    {selectedTestimonial.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="font-semibold theme-text-light">{selectedTestimonial.name}</div>
+                  <div className="text-yellow-400 text-sm font-medium">{selectedTestimonial.designation}</div>
+                </div>
+              </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-center gap-8 mt-16">
+          <button
+            onClick={goToPrevious}
+            className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg hover:bg-yellow-500 transition-all duration-200 hover:scale-110 active:scale-95"
+            aria-label="Previous testimonial"
+          >
+            <ChevronLeft className="w-6 h-6 text-[#1a2236]" />
+          </button>
+          <button
+            onClick={goToNext}
+            className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg hover:bg-yellow-500 transition-all duration-200 hover:scale-110 active:scale-105"
+            aria-label="Next testimonial"
+          >
+            <ChevronRight className="w-6 h-6 text-[#1a2236]" />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const approachItems = [
   {
+    title: "Strength-Based Discovery",
     icon: Target,
-    title: "Strength-based Discovery",
-    description: "Identify each student’s core strengths, define their academic direction, and guide them to align evolving interests with these strengths.",
-    color: "from-blue-500 to-blue-600",
+    content: [
+      "Identify core academic and personal strengths using assessments and mentorship",
+      "Help students understand who they are and what drives them",
+      "Align emerging interests with long-term capabilities"
+    ]
   },
   {
-    icon: Lightbulb,
     title: "Research & Competitive Excellence",
-    description: "Build standout profiles through research projects, Olympiads, science fairs, coding competitions, and social impact initiatives.",
-    color: "from-teal-500 to-teal-600",
+    icon: Trophy,
+    content: [
+      "We handpick high-impact competitions and research opportunities that match the student's strengths and aspirations",
+      "Support for national and international Olympiads, science fairs, hackathons, business case competitions, social impact initiatives, and more",
+      "Personalized research mentorship for students to publish original work or present at top student conferences, thus showcasing their intellectual curiosity and leadership"
+    ]
   },
   {
-    icon: FileText,
     title: "Strategic College Planning",
-    description: "Curate a balanced college list, craft compelling essays, and help students articulate their stories for admissions success.",
-    color: "from-orange-500 to-orange-600",
-  },
+    icon: FileText,
+    content: [
+      "Curate a balanced college list tailored to academic, personal, and financial fit",
+      "Timeline-driven, step-by-step guidance from early high school to application submission",
+      "Expert coaching on college essays, interviews, extracurricular positioning, and letters of recommendation"
+    ]
+  }
 ];
 
 const highlights = [
   {
-    icon: Trophy,
-    title: "Olympiads & Competitions",
-    description: "National and international Olympiads, science fairs, and coding competitions to showcase excellence.",
-    color: "from-yellow-500 to-yellow-600",
-  },
-  {
-    icon: BookOpen,
-    title: "Research Projects",
-    description: "Original research projects that demonstrate intellectual curiosity and initiative.",
-    color: "from-green-500 to-green-600",
-  },
-  {
     icon: Users,
-    title: "Social Impact Initiatives",
-    description: "Leadership and community service projects to build a well-rounded profile.",
+    title: "Profile Enrichment",
+    description: "Comprehensive profile building through strategic activities and leadership development.",
     color: "from-purple-500 to-purple-600",
   },
   {
@@ -64,302 +483,780 @@ const highlights = [
     description: "Personalized guidance to select best-fit institutions that reflect both personality and potential.",
     color: "from-teal-500 to-teal-600",
   },
-];
-
-const faqs = [
   {
-    question: "What is the UACHIEVE program?",
-    answer: "UACHIEVE is our flagship college prep program designed to empower students to reach their college dreams through strength-based discovery, research, and strategic planning.",
+    icon: BookOpen,
+    title: "Dedicated Counseling Sessions",
+    description: "One-on-one personalized guidance throughout your college journey.",
+    color: "from-green-500 to-green-600",
   },
   {
-    question: "How do you help with college essays?",
-    answer: "We guide students in brainstorming, drafting, and refining essays to ensure their authentic story shines through.",
+    icon: Star,
+    title: "Personalized Profile Roadmap",
+    description: "Custom strategic plan tailored to your unique strengths and goals.",
+    color: "from-orange-500 to-orange-600",
   },
   {
-    question: "What types of competitions do you support?",
-    answer: "We support participation in Olympiads, science fairs, coding competitions, and other academic contests.",
-  },
-  {
-    question: "Can you help with college selection?",
-    answer: "Yes, we help curate a balanced college list tailored to each student’s strengths and aspirations.",
-  },
-  {
-    question: "How do I get started?",
-    answer: "Book a free 60-min counseling session or download our College Prep Flyer for more information.",
+    icon: Calendar,
+    title: "Head Start Advantage for Middle School",
+    description: "Early preparation and guidance for middle school students.",
+    color: "from-red-500 to-red-600",
   },
 ];
 
-// Merged FAQ data
-const mergedFaqs = [
-  { question: "How do I choose a college essay topic?", answer: "We help you brainstorm topics that reflect your unique story and strengths." },
-  { question: "How many drafts should I write?", answer: "Most students go through 3-5 drafts with our expert feedback before finalizing." },
-  { question: "When should I start my applications?", answer: "We recommend starting in the summer before senior year, but earlier is even better!" },
-  { question: "Do you help with Common App and UC applications?", answer: "Yes, we guide you through all major application platforms." },
-  { question: "Do you help with FAFSA and scholarships?", answer: "Yes, we provide resources and guidance for financial aid and scholarship applications." },
-  { question: "What is the CSS Profile?", answer: "The CSS Profile is an additional financial aid form required by some colleges. We help you understand and complete it." },
-  { question: "What is the ideal college prep timeline?", answer: "We provide a personalized timeline, but generally recommend starting in 10th or 11th grade." },
-  { question: "Can I join the program in my senior year?", answer: "Yes, but starting earlier allows for more comprehensive support." },
-  { question: "How do I get started?", answer: "Book a free 60-min counseling session or download our College Prep Flyer for more information." },
-  { question: "Is the program online or in-person?", answer: "We offer both online and in-person options to fit your needs." },
-];
-
-// Downloadable Resources data
-const resources = [
-  { name: "College Prep Flyer", link: "#", icon: FileText },
-  { name: "Application Checklist", link: "#", icon: CheckIcon },
-  { name: "Essay Brainstorming Guide", link: "#", icon: Lightbulb },
-  { name: "Financial Aid Guide", link: "#", icon: BookOpen },
-];
-
-// Sample College List/Acceptances data
-const colleges = [
-  { name: "Stanford University", logo: "/college-logos/stanford.png" },
-  { name: "UC Berkeley", logo: "/college-logos/berkeley.png" },
-  { name: "MIT", logo: "/college-logos/mit.png" },
-  { name: "Harvard University", logo: "/college-logos/harvard.png" },
-  { name: "UCLA", logo: "/college-logos/ucla.png" },
-  { name: "Princeton University", logo: "/college-logos/princeton.png" },
-  { name: "Yale University", logo: "/college-logos/yale.png" },
-  { name: "Caltech", logo: "/college-logos/caltech.png" },
-];
-
-// Workshops & Events data
 const events = [
-  { title: "Essay Bootcamp", date: "July 15, 2024", description: "Intensive workshop to help you brainstorm, draft, and polish your college essays.", icon: FileText, badge: "Workshop", color: "from-blue-500 to-blue-600" },
-  { title: "College Application Webinar", date: "August 5, 2024", description: "Live Q&A and walkthrough of the Common App and UC application process.", icon: Globe, badge: "Webinar", color: "from-teal-500 to-teal-600" },
-  { title: "Financial Aid Night", date: "September 10, 2024", description: "Learn about FAFSA, scholarships, and maximizing your aid package.", icon: BookOpen, badge: "Info Session", color: "from-orange-500 to-orange-600" },
+  { 
+    title: "Essay Bootcamp", 
+    date: "July 15, 2024", 
+    description: "Intensive workshop to help you brainstorm, draft, and polish your college essays.", 
+    icon: FileText, 
+    badge: "Workshop", 
+    color: "from-blue-500 to-blue-600",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
+    video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    features: ["Essay Writing", "Brainstorming", "Editing Tips"]
+  },
+  { 
+    title: "College Application Webinar", 
+    date: "August 5, 2024", 
+    description: "Live Q&A and walkthrough of the Common App and UC application process.", 
+    icon: Globe, 
+    badge: "Webinar", 
+    color: "from-teal-500 to-teal-600",
+    image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
+    video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+    features: ["Common App", "UC Apps", "Live Q&A"]
+  },
+  { 
+    title: "Financial Aid Night", 
+    date: "September 10, 2024", 
+    description: "Learn about FAFSA, scholarships, and maximizing your aid package.", 
+    icon: BookOpen, 
+    badge: "Info Session", 
+    color: "from-orange-500 to-orange-600",
+    image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
+    video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    features: ["FAFSA Guide", "Scholarships", "Aid Tips"]
+  },
 ];
 
-// Timeline data
-const timeline = [
-  { step: "1", title: "Strengths Assessment", description: "Discover your academic and extracurricular strengths.", icon: Star },
-  { step: "2", title: "College List Curation", description: "Build a balanced list of best-fit colleges.", icon: Globe },
-  { step: "3", title: "Profile Building", description: "Engage in research, competitions, and leadership activities.", icon: Trophy },
-  { step: "4", title: "Essay & Application Guidance", description: "Craft compelling essays and complete applications.", icon: FileText },
-  { step: "5", title: "Financial Aid & Scholarships", description: "Apply for aid and scholarships with expert support.", icon: BookOpen },
-  { step: "6", title: "Decision & Transition", description: "Choose your college and prepare for the next chapter!", icon: Calendar },
+const colleges = [
+  { name: "UWash Seattle", logo: "/college-logos/uwash.png" },
+  { name: "UC Davis", logo: "/college-logos/ucdavis.png" },
+  { name: "UC Santa Cruz", logo: "/college-logos/ucsc.png" },
+  { name: "UC Irvine", logo: "/college-logos/uci.png" },
+  { name: "UC Riverside", logo: "/college-logos/ucr.png" },
+  { name: "UC Santa Barbara", logo: "/college-logos/ucsb.png" },
+  { name: "UC Merced", logo: "/college-logos/ucm.png" },
+];
+
+const testimonialCards = [
+  {
+    id: 0,
+    name: "Eesha's Parent: Srinivas Eerpina",
+    designation: "Parent of High School Senior",
+    grade: "Parent of High School Senior",
+    title: "College Essay Excellence",
+    description: "Outstanding guidance in college essay writing and application strategy",
+    icon: "👨‍👩‍👧‍👦",
+    color: "from-purple-500 to-purple-600",
+    bgColor: "bg-purple-50",
+    textColor: "text-purple-700",
+    rating: 5,
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
+    content: (
+      <p>
+        Our daughter is a now a high school senior. She took college preparatory courses at ACHARYA. I am pleased to say that she really enjoyed working with Shanti Swaroop, who assisted her in writing five essays. His coaching helped her identify and outline her <Highlight>strengths, extra curricular activities, achievements and challenges</Highlight> in the correct format. Shanti Swaroop maintains a <Highlight>different strategy for each college</Highlight> that the students wants to apply. Depending on the college and the major she wants to apply for, he summarizes what is important to capture in the essay and how to narrate the story. He usually takes a couple of days for corrections. This strategy worked well and all her essays turned out excellent. Shanti Swaroop and his team has <Highlight>deep knowledge of the college admission process</Highlight> and a very talented in Maths and Science subjects. Although we didn&apos;t get a chance to work with ACHARYA for a long time, I recommend and encourage others to engage with them as early as possible and seek mentorship from them.
+      </p>
+    ),
+  },
+  {
+    id: 1,
+    name: "Athreya",
+    designation: "Student",
+    grade: "High School Student",
+    title: "Comprehensive College Guidance",
+    description: "Complete support from course selection to career planning",
+    icon: "🎓",
+    color: "from-blue-500 to-blue-600",
+    bgColor: "bg-blue-50",
+    textColor: "text-blue-700",
+    rating: 5,
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
+    content: (
+      <p>
+        I have been working with Shanti Swaroop for about half a year at the time of this testimonial. I attended one of his talks at a stage where he talked about <Highlight>college admissions and what colleges look for in a student</Highlight>. Later on, we scheduled a meeting to talk about my college needs and what I should be looking for. Not long after, my mother enrolled me for counseling. Throughout this journey, he has helped me with everything from <Highlight>volunteering at the library</Highlight>, to helping me select my courses for the next 4 years. Not only that, he has given me guidance on <Highlight>career matters and big picture ambitions</Highlight>.
+      </p>
+    ),
+  },
+  {
+    id: 2,
+    name: "Sahasra",
+    designation: "Student",
+    grade: "College Applicant",
+    title: "Personalized University Selection",
+    description: "Expert guidance in choosing the right universities and majors",
+    icon: "🎯",
+    color: "from-emerald-500 to-emerald-600",
+    bgColor: "bg-emerald-50",
+    textColor: "text-emerald-700",
+    rating: 5,
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
+    content: (
+      <p>
+        Dr. Shanti Swaroop&apos;s guidance was essential to our understanding of the college application process. His <Highlight>patience and constant encouragement and attention</Highlight> are what truly make him stand apart from other counselors. He helped us narrow down the <Highlight>potential universities I should apply to</Highlight> based on my major and is currently working with me on making my application stand out.
+      </p>
+    ),
+  },
 ];
 
 export default function CollegePrepPage() {
+  const [roadProgress, setRoadProgress] = React.useState(0)
+  const [selectedMilestone, setSelectedMilestone] = React.useState<number | null>(null)
+
+  React.useEffect(() => {
+    const roadTimer = setInterval(() => {
+      setRoadProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(roadTimer)
+          return 100
+        }
+        return prev + 2
+      })
+    }, 50)
+
+    return () => clearInterval(roadTimer)
+  }, [])
+
+  // Handle clicking outside to close milestone details
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      // Check if click is outside milestone elements
+      if (!target.closest('[data-milestone]') && !target.closest('[data-milestone-content]')) {
+        setSelectedMilestone(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
-    <>
+    <main className="min-h-screen theme-bg-dark flex flex-col">
       <Header />
+      
       {/* Hero/Intro Section */}
-      <section className="pt-24 pb-20 bg-gradient-to-br from-brand-light-blue via-white to-brand-light-blue/50 overflow-auto">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              className="space-y-8"
-            >
-              <div className="space-y-4">
-                <Badge className="bg-brand-orange/10 text-brand-orange border-brand-orange/20">
-                  🎓 College Prep
-                </Badge>
-                <h1 className="text-5xl lg:text-6xl font-bold text-text-dark leading-tight">
-                  UACHIEVE: Empowering Students to Reach Their College Dreams
-                </h1>
-                <blockquote className="text-xl text-brand-blue italic border-l-4 border-brand-blue pl-4">
-                  “To help students discover their strengths, understand who they are, and align their aspirations with the right educational path.”
-                </blockquote>
-                <p className="text-xl text-text-light leading-relaxed">
-                  Through our UACHIEVE program, we guide students to identify best-fit institutions that reflect both their personality and potential. Our approach is rooted in strength-based discovery, research, and strategic planning.
-                </p>
-              </div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative"
-            >
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-brand-blue/20 to-brand-teal/20 rounded-3xl transform rotate-6"></div>
-                <div className="relative bg-white p-8 rounded-3xl shadow-2xl border">
-                  <div className="space-y-6">
-                    <h3 className="text-xl font-semibold text-brand-blue">Our Mission</h3>
-                    <p className="text-base text-text-light">
-                      To help students discover their strengths, understand who they are, and align their aspirations with the right educational path. Interests may evolve, but strengths nurtured through years of dedication form a reliable foundation for success.
-                    </p>
-                    <div className="flex flex-row gap-4 justify-center">
-                      <Button className="bg-gradient-to-r from-brand-blue to-brand-teal px-6">
-                        <ArrowRight className="mr-2 h-5 w-5" /> Download College Prep Flyer
-                      </Button>
-                      <Button variant="outline" className="border-brand-blue text-brand-blue hover:bg-brand-blue hover:text-white px-6">
-                        <Calendar className="mr-2 h-5 w-5" /> Book Free 60-min Counseling Session
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+      <section className="theme-bg-dark py-16 lg:py-24 relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-20 left-10 w-20 h-20 bg-yellow-400 rounded-full opacity-10 animate-float"></div>
+          <div className="absolute top-40 right-20 w-16 h-16 bg-blue-400 rounded-full opacity-10 animate-float-reverse"></div>
+          <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-purple-400 rounded-full opacity-10 animate-float"></div>
+          <div className="absolute top-1/3 right-1/3 w-8 h-8 bg-green-400 rounded-full opacity-10 animate-float-reverse"></div>
+        </div>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center mb-12 animate-slide-in-bottom">
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
+              🎓 College Prep
+            </Badge>
+            <h1 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">
+              Empowering Students to Achieve Their College Dreams
+            </h1>
+            <p className="text-lg theme-text-muted max-w-4xl mx-auto animate-slide-in-bottom" style={{ animationDelay: '0.2s' }}>
+              UACHIEVE is more than just college counseling. It&apos;s a guided journey of self-discovery, competitive distinction, and strategic planning, crafted to help students unlock their true potential and gain admission to best-fit colleges and unfold their untold stories.
+            </p>
           </div>
+          
+          {/* Action Buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="max-w-4xl mx-auto text-center"
+          >
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg">
+                <ArrowRight className="mr-2 h-5 w-5" /> Download College Prep Flyer
+              </Button>
+              <Button variant="outline" className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-[#1a2236] px-6">
+                <Calendar className="mr-2 h-5 w-5" /> Book a Free 60-min Discovery Session
+              </Button>
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Approach/Goals Section */}
-      <section className="py-20 bg-white">
+      {/* 3-Pillar Approach Section */}
+      <section className="py-20 theme-bg-dark">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            className="text-center mb-16"
+            className="text-center mb-20"
           >
-            <Badge className="mb-4 bg-brand-blue/10 text-brand-blue">Our Approach</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">How We Guide Your College Journey</h2>
-            <p className="text-xl text-text-light max-w-3xl mx-auto">
-              Our approach is designed to help students build standout profiles, showcase intellectual curiosity, and achieve competitive excellence through research, competitions, and strategic planning.
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Our Approach</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">How We Guide Your College Journey</h2>
+            <p className="text-xl theme-text-muted max-w-4xl mx-auto">
+              The 3-Pillar Approach: We help students build standout profiles, showcase intellectual curiosity, and achieve competitive excellence through research, competitions, and strategic planning.
             </p>
           </motion.div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {goals.map((goal, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <Card className="h-full flex flex-col items-center bg-gradient-to-br from-brand-blue/10 to-brand-teal/10 border-2 border-brand-blue/10 hover:border-brand-blue/30 hover:shadow-xl transition-all duration-300 group rounded-2xl">
-                  <CardHeader className="flex flex-col items-center pt-8 pb-4">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-blue to-brand-teal flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-                      <goal.icon className="h-8 w-8 text-white" />
-                    </div>
-                    <Badge className="mb-2 bg-brand-blue/10 text-brand-blue text-xs px-3 py-1 rounded-full font-semibold">{goal.title}</Badge>
-                  </CardHeader>
-                  <CardContent className="flex-1 flex flex-col items-center justify-center pb-8">
-                    <p className="text-base font-semibold text-text-dark text-center mb-2">{goal.description}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+          <CollegePillars />
         </div>
       </section>
 
-      {/* Program Highlights Section */}
-      <section className="py-20 bg-gradient-to-br from-brand-light-blue/30 to-white">
+      {/* Program Highlights Section - Replaced with Draggable Cards */}
+      <section className="py-20 theme-bg-dark">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-brand-orange/10 text-brand-orange">Program Highlights</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">What Sets Our College Prep Apart</h2>
-            <p className="text-xl text-text-light max-w-3xl mx-auto">From research projects to essay guidance, we help students build a profile that stands out to top colleges.</p>
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Program Highlights</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">What Sets Our College Prep Apart</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">From profile enrichment to essay guidance, we help students build a profile that stands out to top colleges.</p>
           </motion.div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {highlights.map((item, i) => (
+          
+          {/* Simple Grid Cards Container */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="max-w-6xl mx-auto"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {/* Profile Enrichment Card */}
               <motion.div
-                key={i}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.1 }}
+                transition={{ delay: 0.1 }}
+                className="group"
               >
-                <Card className="h-full flex flex-col items-center bg-white border-2 border-brand-blue/10 hover:border-brand-blue/30 hover:shadow-xl transition-all duration-300 group rounded-2xl">
-                  <CardHeader className="flex flex-col items-center pt-8 pb-4">
-                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-4 group-hover:scale-105 transition-transform`}>
-                      <item.icon className="h-7 w-7 text-white" />
-                    </div>
-                    <CardTitle className="text-lg font-semibold text-center mb-1 text-text-dark">{item.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-1 flex flex-col items-center justify-center pb-8">
-                    <p className="text-base font-medium text-text-light text-center">{item.description}</p>
-                  </CardContent>
-                </Card>
+                                 <div className="bg-gradient-to-br from-red-400 via-pink-400 to-rose-400 rounded-3xl p-8 shadow-2xl h-full flex flex-col items-center justify-center text-center hover:shadow-3xl transition-all duration-500 hover:-translate-y-2 relative overflow-hidden">
+                   {/* Animated background elements */}
+                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
+                   <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/20 rounded-full group-hover:scale-125 transition-transform duration-700"></div>
+                   
+                   <div className="w-20 h-20 bg-white/30 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                    <Users className="h-10 w-10 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-4 drop-shadow-lg">Profile Enrichment</h3>
+                  <p className="text-indigo-100 text-base leading-relaxed">
+                    Comprehensive profile building through strategic activities and leadership development.
+                  </p>
+                </div>
               </motion.div>
-            ))}
-          </div>
+
+              {/* Essay Guidance Card */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 }}
+                className="group"
+              >
+                                 <div className="bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 rounded-3xl p-8 shadow-2xl h-full flex flex-col items-center justify-center text-center hover:shadow-3xl transition-all duration-500 hover:-translate-y-2 relative overflow-hidden">
+                   {/* Animated background elements */}
+                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
+                   <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/20 rounded-full group-hover:scale-125 transition-transform duration-700"></div>
+                   
+                   <div className="w-20 h-20 bg-white/30 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                    <FileText className="h-10 w-10 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-4 drop-shadow-lg">Essay Guidance</h3>
+                  <p className="text-emerald-100 text-base leading-relaxed">
+                    Expert help in crafting authentic, compelling application essays.
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* College List Curation Card */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3 }}
+                className="group"
+              >
+                                 <div className="bg-gradient-to-br from-rose-500 via-pink-500 to-purple-500 rounded-3xl p-8 shadow-2xl h-full flex flex-col items-center justify-center text-center hover:shadow-3xl transition-all duration-500 hover:-translate-y-2 relative overflow-hidden">
+                   {/* Animated background elements */}
+                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
+                   <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/20 rounded-full group-hover:scale-125 transition-transform duration-700"></div>
+                   
+                   <div className="w-20 h-20 bg-white/30 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                    <Globe className="h-10 w-10 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-4 drop-shadow-lg">College List Curation</h3>
+                  <p className="text-rose-100 text-base leading-relaxed">
+                    Personalized guidance to select best-fit institutions that reflect both personality and potential.
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* Dedicated Counseling Card */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.4 }}
+                className="group"
+              >
+                                 <div className="bg-gradient-to-br from-violet-500 via-indigo-500 to-blue-500 rounded-3xl p-8 shadow-2xl h-full flex flex-col items-center justify-center text-center hover:shadow-3xl transition-all duration-500 hover:-translate-y-2 relative overflow-hidden">
+                   {/* Animated background elements */}
+                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
+                   <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/20 rounded-full group-hover:scale-125 transition-transform duration-700"></div>
+                   
+                   <div className="w-20 h-20 bg-white/30 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                    <BookOpen className="h-10 w-10 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-4 drop-shadow-lg">Dedicated Counseling</h3>
+                  <p className="text-violet-100 text-base leading-relaxed">
+                    One-on-one personalized guidance throughout your college journey.
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* Personalized Roadmap Card */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.5 }}
+                className="group"
+              >
+                                 <div className="bg-gradient-to-br from-yellow-400 via-orange-400 to-red-400 rounded-3xl p-8 shadow-2xl h-full flex flex-col items-center justify-center text-center hover:shadow-3xl transition-all duration-500 hover:-translate-y-2 relative overflow-hidden">
+                   {/* Animated background elements */}
+                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
+                   <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/20 rounded-full group-hover:scale-125 transition-transform duration-700"></div>
+                   
+                   <div className="w-20 h-20 bg-white/30 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                    <Star className="h-10 w-10 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-4 drop-shadow-lg">Personalized Roadmap</h3>
+                  <p className="text-amber-100 text-base leading-relaxed">
+                    Custom strategic plan tailored to your unique strengths and goals.
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* Research Excellence Card */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.6 }}
+                className="group"
+              >
+                                 <div className="bg-gradient-to-br from-purple-400 via-violet-400 to-fuchsia-400 rounded-3xl p-8 shadow-2xl h-full flex flex-col items-center justify-center text-center hover:shadow-3xl transition-all duration-500 hover:-translate-y-2 relative overflow-hidden">
+                   {/* Animated background elements */}
+                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
+                   <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/20 rounded-full group-hover:scale-125 transition-transform duration-700"></div>
+                   
+                   <div className="w-20 h-20 bg-white/30 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                    <Trophy className="h-10 w-10 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-4 drop-shadow-lg">Research Excellence</h3>
+                  <p className="text-sky-100 text-base leading-relaxed">
+                    High-impact research opportunities and competition support for standout profiles.
+                  </p>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Timeline Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 theme-bg-dark">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            className="text-center mb-16"
+            className="text-center mb-20"
           >
-            <Badge className="mb-4 bg-brand-blue/10 text-brand-blue">College Prep Journey</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">Your Path to College Success</h2>
-            <p className="text-xl text-text-light max-w-3xl mx-auto">Follow our proven step-by-step process to maximize your college admissions potential.</p>
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20 px-4 py-2 text-sm font-semibold">
+              🚀 Strategic College Prep Journey
+            </Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">
+            Proven Path to College Success
+            </h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto leading-relaxed">
+              Navigate through strategic levels of college preparation, each building upon the previous to create a comprehensive roadmap to your dream college.
+            </p>
           </motion.div>
-          <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-8">
-            {timeline.map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <div className="relative bg-white rounded-2xl shadow-md border-t-4 border-brand-blue hover:border-brand-teal transition-all duration-300 flex flex-col items-center p-6 group min-h-[320px]">
-                  <div className="absolute -top-7 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-gradient-to-br from-brand-blue to-brand-teal flex items-center justify-center shadow-lg border-4 border-white z-10">
-                    <span className="text-xl font-bold text-white">{item.step}</span>
-                  </div>
-                  <div className="mt-8 mb-3 w-10 h-10 rounded-full bg-gradient-to-br from-brand-blue to-brand-teal flex items-center justify-center">
-                    <item.icon className="h-5 w-5 text-white" />
-                  </div>
-                  <div className="font-semibold text-lg text-text-dark text-center mb-1">{item.title}</div>
-                  <div className="text-sm text-text-light text-center">{item.description}</div>
-                </div>
-              </motion.div>
-            ))}
+          
+          {/* College Prep Timeline */}
+          <div className="max-w-7xl mx-auto relative">
+            <div className="relative h-[700px] w-full">
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="roadGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#374151" />
+                    <stop offset="25%" stopColor="#4b5563" />
+                    <stop offset="50%" stopColor="#6b7280" />
+                    <stop offset="75%" stopColor="#4b5563" />
+                    <stop offset="100%" stopColor="#374151" />
+                  </linearGradient>
+
+                  <linearGradient id="roadEdge" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#1f2937" />
+                    <stop offset="100%" stopColor="#111827" />
+                  </linearGradient>
+
+                  <filter id="roadShadow">
+                    <feDropShadow dx="0" dy="3" stdDeviation="2" floodColor="rgba(0,0,0,0.4)" />
+                  </filter>
+
+
+                </defs>
+
+                <path
+                  d="M 8 88 C 15 82, 25 78, 35 72 C 45 66, 55 58, 65 50 C 75 42, 85 32, 92 22"
+                  stroke="rgba(0,0,0,0.5)"
+                  strokeWidth="12"
+                  fill="none"
+                  transform="translate(1, 1)"
+                />
+
+                <path
+                  d="M 8 88 C 15 82, 25 78, 35 72 C 45 66, 55 58, 65 50 C 75 42, 85 32, 92 22"
+                  stroke="url(#roadGradient)"
+                  strokeWidth="10"
+                  fill="none"
+                  strokeDasharray="300"
+                  strokeDashoffset={300 - roadProgress * 3}
+                  className="transition-all duration-100 ease-out"
+                  filter="url(#roadShadow)"
+                />
+
+                <path
+                  d="M 8 88 C 15 82, 25 78, 35 72 C 45 66, 55 58, 65 50 C 75 42, 85 32, 92 22"
+                  stroke="url(#roadEdge)"
+                  strokeWidth="12"
+                  fill="none"
+                  strokeDasharray="300"
+                  strokeDashoffset={300 - roadProgress * 3}
+                  className="transition-all duration-100 ease-out"
+                  opacity="0.6"
+                />
+
+                <path
+                  d="M 8 88 C 15 82, 25 78, 35 72 C 45 66, 55 58, 65 50 C 75 42, 85 32, 92 22"
+                  stroke="#fbbf24"
+                  strokeWidth="1"
+                  fill="none"
+                  strokeDasharray="4 3"
+                  strokeDashoffset={300 - roadProgress * 3}
+                  className="transition-all duration-100 ease-out"
+                  opacity={roadProgress > 30 ? 0.9 : 0}
+                />
+
+                <path
+                  d="M 8 88 C 15 82, 25 78, 35 72 C 45 66, 55 58, 65 50 C 75 42, 85 32, 92 22"
+                  stroke="url(#roadGradient)"
+                  strokeWidth="10"
+                  fill="none"
+                  strokeDasharray="300"
+                  strokeDashoffset={300 - roadProgress * 3}
+                  className="transition-all duration-100 ease-out"
+                  opacity="0.3"
+                />
+
+                <polygon
+                  points="90,20 94,22 90,24 92,22"
+                  fill="#fbbf24"
+                  opacity={roadProgress > 90 ? 1 : 0}
+                  className="transition-all duration-500"
+                  filter="url(#roadShadow)"
+                />
+              </svg>
+
+              {[
+                {
+                  id: 1,
+                  grade: "Grade 7 – 10",
+                  title: "Candidacy Building",
+                  description: "Build strong academic foundation and explore interests",
+                  icon: "🎯",
+                  color: "from-purple-500 to-purple-600",
+                  bgColor: "bg-purple-50",
+                  textColor: "text-purple-700",
+                  details: [
+                    "Identify academic & EC strengths",
+                    "Start building EC profile & leadership projects",
+                    "Focus on research project",
+                    "Prepare for Competitive Math"
+                  ]
+                },
+                {
+                  id: 2,
+                  grade: "Grade 10 – 11",
+                  title: "Candidacy Application",
+                  description: "Begin standardized testing and college research",
+                  icon: "📚",
+                  color: "from-blue-500 to-blue-600",
+                  bgColor: "bg-blue-50",
+                  textColor: "text-blue-700",
+                  details: [
+                    "Strengthen EC & academics",
+                    "Deep exploration of areas of interest",
+                    "Submitting research paper to a journal",
+                    "Top 5% of AMC10, AMC 12",
+                    "Top 5% of F = ma",
+                    "Take SAT/ACT"
+                  ]
+                },
+                {
+                  id: 3,
+                  grade: "Grade 11 Spring",
+                  title: "Application Preparation",
+                  description: "Finalize college list and prepare application materials",
+                  icon: "📝",
+                  color: "from-emerald-500 to-emerald-600",
+                  bgColor: "bg-emerald-50",
+                  textColor: "text-emerald-700",
+                  details: [
+                    "Retake SAT/ACT (if required)",
+                    "Giving AIME Exam",
+                    "Consider your application strategy: school list and deadlines"
+                  ]
+                },
+                {
+                  id: 4,
+                  grade: "Grade 12 Summer, Fall",
+                  title: "Application Assembly",
+                  description: "Submit applications and complete requirements",
+                  icon: "📤",
+                  color: "from-orange-500 to-orange-600",
+                  bgColor: "bg-orange-50",
+                  textColor: "text-orange-700",
+                  details: [
+                    "Decide on essay topics and start drafting them over summer",
+                    "Edit the essays and make them camera ready by the fall break",
+                    "Compile academic/EC achievements & information",
+                    "Recommendations"
+                  ]
+                },
+                {
+                  id: 5,
+                  grade: "Grade 12 Spring",
+                  title: "Decision Released",
+                  description: "Receive admissions decisions and make final choice",
+                  icon: "🎓",
+                  color: "from-rose-500 to-rose-600",
+                  bgColor: "bg-rose-50",
+                  textColor: "text-rose-700",
+                  details: [
+                    "Review admission offers",
+                    "Compare financial aid packages",
+                    "Make final college decision",
+                    "Submit enrollment deposit"
+                  ]
+                },
+              ].map((milestone, index) => {
+                const getPositionOnCurve = (index: number) => {
+                  const progress = index * 25
+                  const t = progress / 100
+                  let x =
+                    Math.pow(1 - t, 4) * 8 +
+                    4 * Math.pow(1 - t, 3) * t * 20 +
+                    6 * Math.pow(1 - t, 2) * Math.pow(t, 2) * 45 +
+                    4 * (1 - t) * Math.pow(t, 3) * 75 +
+                    Math.pow(t, 4) * 92
+
+                  let y =
+                    Math.pow(1 - t, 4) * 88 +
+                    4 * Math.pow(1 - t, 3) * t * 75 +
+                    6 * Math.pow(1 - t, 2) * Math.pow(t, 2) * 55 +
+                    4 * (1 - t) * Math.pow(t, 3) * 35 +
+                    Math.pow(t, 4) * 22
+
+                  if (progress === 0) {
+                    y -= 15 // Grade 7-10: moved up by 2 units (was -12, now -14)
+                  } else if (progress === 25) {
+                    x+=4
+                    y -= 13 // Grade 10-11: moved down by 4 units (was -12, now -8)
+                  } else if (progress === 50) {
+                    x+=3
+                    y -= 9 // Grade 11 Spring: moved down by 12 units (was -14, now -2)
+                  } else if (progress === 75) {
+                    y -= 7
+                    x-=2 // Grade 12 Summer/Fall: moved down by 12 units (was -14, now -2)
+                  } else                   if (progress === 100) {
+                    y -= 10 // Grade 12 Spring: moved down by 1 unit (was -14, now -13)
+                    x -= 5 // Grade 12 Spring: moved left by 2 more units (was -3, now -5)
+                  }
+
+                  return { x: `${x}%`, y: `${y}%` }
+                }
+
+                const position = getPositionOnCurve(index)
+                return (
+                  <motion.div
+                    key={milestone.id}
+                    data-milestone={milestone.id}
+                    initial={{ opacity: 0, scale: 0.75 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.3, duration: 0.7 }}
+                    className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 hover:scale-110 transition-all duration-500"
+                    style={{
+                      left: position.x,
+                      top: position.y,
+                    }}
+                  >
+                    <div className="relative">
+                      <div
+                        className={`absolute inset-0 bg-gradient-to-r ${milestone.color} rounded-full blur-xl transition-all duration-500 opacity-40 scale-125 animate-pulse`}
+                      ></div>
+
+                      <div
+                        className={`relative w-16 h-16 bg-gradient-to-br ${milestone.color} rounded-full border-3 ${
+                          selectedMilestone === milestone.id ? 'border-yellow-400 shadow-yellow-400/50' : 'border-white'
+                        } shadow-xl flex items-center justify-center transition-all duration-500`}
+                      >
+                        <div className="text-xl">{milestone.icon}</div>
+                      </div>
+
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-8 bg-gradient-to-b from-gray-500 to-gray-700 shadow-lg"></div>
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 translate-y-8 w-6 h-2 bg-gradient-to-b from-gray-600 to-gray-800 rounded-sm"></div>
+                    </div>
+
+                    <motion.div
+                      data-milestone-content={milestone.id}
+                      initial={{ opacity: 0, translateY: 4 }}
+                      whileInView={{ opacity: 1, translateY: 0 }}
+                      transition={{ delay: index * 0.3 + 0.5, duration: 0.7 ,width: { duration: 0.4, ease: "easeInOut" }}}
+                      className="absolute left-1/2 transform -translate-x-1/2 cursor-pointer"
+                      style={{
+                        top: "80px",
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                      }}
+                      animate={{
+                        width: selectedMilestone === milestone.id ? "250px" : "200px",
+                      }}
+                      // transition={{
+                      //   duration: 0.4,
+                      //   ease: "easeInOut"
+                      // }}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent click from bubbling up to background
+                        setSelectedMilestone(selectedMilestone === milestone.id ? null : milestone.id);
+                      }}
+                    >
+                      <div
+                        className={`relative ${milestone.bgColor} backdrop-blur-sm rounded-lg shadow-xl p-3 border border-white/30 overflow-hidden transition-all duration-300 ${
+                          selectedMilestone === milestone.id ? 'border-yellow-400/50 shadow-yellow-400/25' : ''
+                        }`}
+                      >
+                        <div className="relative text-center">
+                          <div
+                            className={`inline-flex items-center px-2 py-1 bg-gradient-to-r ${milestone.color} text-white text-xs font-semibold rounded-full mb-2`}
+                          >
+                            {milestone.grade}
+                          </div>
+
+                          <h4 className={`font-bold ${milestone.textColor} text-sm mb-1`}>{milestone.title}</h4>
+
+                          {selectedMilestone === milestone.id ? (
+                            <motion.div 
+                              className="space-y-2"
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.3, delay: 0.1 }}
+                            >
+                              <p className="text-gray-600 text-xs leading-relaxed mb-3">{milestone.description}</p>
+                              <div className="space-y-1">
+                                {milestone.details.map((detail, detailIndex) => (
+                                  <motion.div 
+                                    key={detailIndex} 
+                                    className="flex items-start gap-2 text-left"
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ duration: 0.2, delay: 0.2 + detailIndex * 0.1 }}
+                                  >
+                                    <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full mt-1.5 flex-shrink-0"></div>
+                                    <span className="text-gray-600 text-xs leading-relaxed">{detail}</span>
+                                  </motion.div>
+                                ))}
+                              </div>
+                            </motion.div>
+                          ) : (
+                            <motion.p 
+                              className="text-gray-600 text-xs leading-relaxed"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              {milestone.description}
+                            </motion.p>
+                          )}
+                        </div>
+
+                        <div
+                          className={`absolute left-1/2 transform -translate-x-1/2 w-3 h-3 ${milestone.bgColor} rotate-45 border border-white/30 top-[-6px]`}
+                        ></div>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )
+              })}
+            </div>
+
+            {/* <div className="mt-12 text-center">
+              <div className="inline-flex items-center space-x-3 bg-white/10 backdrop-blur-sm rounded-full px-6 py-3 border border-white/20">
+                <div className="w-3 h-3 bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full animate-pulse"></div>
+                <span className="text-white font-semibold text-sm">
+                  🎉 Journey Complete! Ready for College!
+                </span>
+              </div>
+            </div> */}
           </div>
         </div>
       </section>
 
       {/* Workshops & Events Section */}
-      <section className="py-20 bg-gradient-to-br from-brand-light-blue/30 to-white">
+      <section className="py-20 theme-bg-dark">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-brand-orange/10 text-brand-orange">Workshops & Events</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">Upcoming College Prep Events</h2>
-            <p className="text-xl text-text-light max-w-3xl mx-auto">Join our expert-led workshops and webinars to boost your college application success.</p>
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Workshops & Events</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Upcoming College Prep Events</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Join our expert-led workshops and webinars to boost your college application success.</p>
           </motion.div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
             {events.map((event, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.1 }}
+                initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ delay: i * 0.2, duration: 0.6, type: "spring", stiffness: 100 }}
               >
-                <div className="relative bg-white/70 backdrop-blur-md rounded-3xl shadow-lg flex flex-col items-center p-8 min-h-[340px] group transition-all duration-300 hover:shadow-2xl hover:bg-white/90">
-                  <div className="absolute -top-7 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full bg-gradient-to-br from-brand-blue to-brand-teal flex items-center justify-center shadow-lg border-4 border-white z-10">
-                    <event.icon className="h-8 w-8 text-white" />
-                  </div>
-                  <Badge className="absolute top-4 left-4 bg-brand-orange text-white text-xs shadow">{event.badge}</Badge>
-                  <div className="mt-10 font-bold text-xl text-text-dark text-center">{event.title}</div>
-                  <div className="italic text-brand-blue text-sm text-center mb-2">{event.date}</div>
-                  <div className="text-base text-text-light text-center mb-6 flex-1">{event.description}</div>
-                  <Button className="rounded-full bg-gradient-to-r from-brand-blue to-brand-teal text-white px-8 py-2 shadow-md hover:shadow-lg transition-all focus:ring-2 focus:ring-brand-blue/50">Register</Button>
-                </div>
+                <ImageVideoCard
+                  title={event.title}
+                  description={event.description}
+                  imageUrl={event.image}
+                  videoUrl={event.video}
+                  badge={event.badge}
+                  className="w-full max-w-sm"
+                />
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Sample College List/Acceptances Section */}
-      <section className="py-20 bg-white">
+      {/* College Acceptances Section */}
+      <section className="py-20 theme-bg-dark">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-brand-green/10 text-brand-green">College Acceptances</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">Where Our Students Have Been Accepted</h2>
-            <p className="text-xl text-text-light max-w-3xl mx-auto">Our students have gained admission to top colleges and universities across the country.</p>
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">College Acceptances</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Where Our Students Have Been Accepted</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Our students have gained admission to top colleges and universities across the country.</p>
           </motion.div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 items-center justify-center">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-8 items-center justify-center">
             {colleges.map((college, i) => (
               <motion.div
                 key={i}
@@ -368,126 +1265,243 @@ export default function CollegePrepPage() {
                 transition={{ delay: i * 0.05 }}
                 className="flex flex-col items-center"
               >
-                <div className="w-20 h-20 bg-white rounded-full shadow-lg flex items-center justify-center mb-3 border border-brand-blue/10 hover:scale-110 hover:shadow-xl transition-transform duration-300">
-                  <Image src={college.logo} alt={college.name} width={64} height={64} className="w-16 h-16 object-contain" />
+                <div className="w-20 h-20 bg-white rounded-full shadow-lg flex items-center justify-center mb-3 border-2 border-yellow-400/20 hover:scale-110 hover:shadow-xl transition-transform duration-300 overflow-hidden">
+                  <Image
+                    src={college.logo}
+                    alt={college.name}
+                    width={60}
+                    height={60}
+                    className="object-contain"
+                  />
                 </div>
-                <span className="text-sm font-semibold text-text-dark text-center mt-2">{college.name}</span>
+                <span className="text-sm font-semibold theme-text-light text-center mt-2">{college.name}</span>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Downloadable Resources Section */}
-      <section className="py-20 bg-gradient-to-br from-brand-light-blue/30 to-white">
-        <div className="container mx-auto px-4">
+      {/* Testimonials Section */}
+      {/* <section className="py-20 relative overflow-hidden bg-gradient-to-br from-[#1a2236] via-[#1a2236] to-[#2a3246]"> */}
+        {/* Background Pattern */}
+        {/* <div className="absolute inset-0 opacity-5">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+                              radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.1) 1px, transparent 1px)`,
+            backgroundSize: '50px 50px'
+          }} />
+        </div> */}
+        
+        {/* Subtle Glow Effects */}
+        {/* <div className="absolute top-20 left-20 w-40 h-40 bg-yellow-400/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-20 w-32 h-32 bg-blue-400/5 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-purple-400/5 rounded-full blur-3xl"></div>
+
+        <div className="container mx-auto px-4 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-brand-blue/10 text-brand-blue">Downloadable Resources</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">Helpful Guides & Checklists</h2>
-            <p className="text-xl text-text-light max-w-3xl mx-auto">Access our most popular resources to support your college application journey.</p>
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Student Success</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">What Parents & Students Say</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Hear from our successful students and their parents about their UACHIEVE experience.</p>
+          </motion.div> */}
+          
+          {/* Rotating Circular Testimonials */}
+          {/* <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8 }}
+            className="max-w-6xl mx-auto relative"
+          >
+            <TestimonialsSection />
           </motion.div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {resources.map((resource, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <div className="h-full flex flex-col items-center bg-gradient-to-br from-brand-light-blue/40 to-white rounded-xl shadow-md p-8 group transition-all duration-300 hover:shadow-xl hover:bg-brand-light-blue/60 min-h-[260px]">
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-brand-blue to-brand-teal flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-                    <resource.icon className="h-7 w-7 text-white" />
-                  </div>
-                  <div className="text-lg font-bold text-text-dark text-center mb-4">{resource.name}</div>
-                  <Button className="w-full rounded-full bg-gradient-to-r from-brand-blue to-brand-teal text-white px-6 py-2 shadow-md hover:shadow-lg transition-all focus:ring-2 focus:ring-brand-blue/50 mt-auto" asChild>
-                    <a href={resource.link} download>
-                      Download
-                    </a>
-                  </Button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
         </div>
-      </section>
+      </section> */}
+                  {/* Testimonials Section */}
+      <section className="py-20 theme-bg-dark">
 
-      {/* FAQ Section (merged, speech bubble style) */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-brand-blue/10 text-brand-blue">FAQ</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">Frequently Asked College Prep Questions</h2>
-            <p className="text-xl text-text-light max-w-3xl mx-auto">Find answers to common questions about our college prep services, application process, and more.</p>
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Student Success</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">What Parents & Students Say</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Hear from our successful students and their parents about their AES tutoring experience.</p>
           </motion.div>
-          <div className="max-w-3xl mx-auto">
-            <Accordion type="single" collapsible>
-              <div className="space-y-6">
-                {mergedFaqs.map((faq, i) => (
-                  <AccordionItem key={i} value={`faq-${i}`} className="border-none">
-                    <div>
-                      <AccordionTrigger className="flex items-center gap-4 px-6 py-4 bg-brand-light-blue/30 rounded-full font-bold text-lg text-brand-blue hover:bg-brand-blue/10 hover:no-underline transition-all">
-                        <div className="w-8 h-8 rounded-full bg-brand-blue flex items-center justify-center text-white font-bold">Q</div>
-                        <span className="text-left">{faq.question}</span>
-                      </AccordionTrigger>
-                      <AccordionContent className="relative px-0 pb-4 pt-0">
-                        <div className="relative bg-white rounded-2xl shadow-lg p-6 text-base font-medium text-text-dark mt-2 ml-10">
-                          <div className="absolute -left-4 top-6 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-white"></div>
-                          {faq.answer}
-                        </div>
-                      </AccordionContent>
-                    </div>
-                  </AccordionItem>
-                ))}
-              </div>
-            </Accordion>
-          </div>
-        </div>
-      </section>
-
-      {/* Call to Action Section */}
-      <section className="py-20 bg-gradient-to-r from-brand-blue to-brand-teal">
-        <div className="container mx-auto px-4 text-center">
+          
+          {/* Rotating Circular Testimonials */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
-            className="max-w-4xl mx-auto text-white space-y-8"
+            className="max-w-6xl mx-auto relative"
           >
-            <h2 className="text-4xl lg:text-5xl font-bold">
-              Ready to Start Your College Journey?
-            </h2>
-            <p className="text-xl opacity-90">
-              Book your free 60-min counseling session or download our College Prep Flyer to learn more about how we can help you achieve your college dreams.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                size="lg"
-                variant="secondary"
-                className="bg-white text-brand-blue hover:bg-gray-100"
-              >
-                <ArrowRight className="mr-2 h-5 w-5" /> Download College Prep Flyer
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="bg-white text-brand-blue hover:bg-gray-100 hover:text-brand-blue"
-              >
-                <Calendar className="mr-2 h-5 w-5" /> Book Free 60-min Counseling Session
-              </Button>
+            <TestimonialsSection />
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Call to Action Section */}
+      <section className="py-20 theme-bg-dark relative overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-yellow-400/5 via-yellow-500/10 to-yellow-400/5"></div>
+          <div className="absolute top-20 left-10 w-32 h-32 bg-yellow-400/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 right-10 w-40 h-40 bg-blue-400/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-purple-400/5 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2"></div>
+        </div>
+        
+        <div className="container mx-auto px-4 text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8 }}
+            className="max-w-4xl mx-auto space-y-8"
+          >
+            {/* Main CTA Card */}
+            <div className="bg-gradient-to-br from-[#1a2236]/90 to-[#1a2236]/80 backdrop-blur-xl rounded-3xl p-12 border border-yellow-400/20 shadow-2xl">
+              <div className="space-y-8">
+                <div className="space-y-4">
+                  <Badge className="bg-yellow-400/20 text-yellow-400 border-yellow-400/30 px-4 py-2 text-sm font-semibold">
+                    🚀 Start Your Journey Today
+                  </Badge>
+                  <h2 className="text-3xl lg:text-4xl font-bold theme-text-light">
+                    Ready to Discover Your Potential?
+                  </h2>
+                  <p className="text-lg theme-text-muted max-w-3xl mx-auto leading-relaxed">
+                    Schedule a FREE Discovery Session with a UACHIEVE Mentor and explore how we can help you build a future that reflects your true potential.
+                  </p>
+                </div>
+                
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button
+                    size="lg"
+                    className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 py-2 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                  >
+                    <Calendar className="mr-2 h-5 w-5" /> Book a Free Consultation
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-2 border-yellow-400/50 text-yellow-400 hover:bg-yellow-400/10 hover:border-yellow-400 px-6 py-2 text-base font-semibold backdrop-blur-sm transition-all duration-300 transform hover:scale-105"
+                  >
+                    <ArrowRight className="mr-2 h-5 w-5" /> Learn More
+                  </Button>
+                </div>
+                
+                {/* Trust Indicators */}
+                <div className="pt-6 border-t border-yellow-400/20">
+                  <p className="text-xs theme-text-muted mb-3">Trusted by 500+ students and families</p>
+                  <div className="flex items-center justify-center gap-4 text-yellow-400/60">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
+                      <span className="text-xs">100% Free Initial Session</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
+                      <span className="text-xs">No Commitment Required</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
+                      <span className="text-xs">Expert Mentorship</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>
       </section>
+      
       <Footer />
       <Chatbot />
-    </>
+
+      {/* Animations */}
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 1s;
+        }
+        @keyframes fadeInDown {
+          from { opacity: 0; transform: translateY(-30px);}
+          to { opacity: 1; transform: translateY(0);}
+        }
+        .animate-fadeInDown {
+          animation: fadeInDown 0.7s;
+        }
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(30px);}
+          to { opacity: 1; transform: translateY(0);}
+        }
+        .animate-fadeInUp {
+          animation: fadeInUp 1s;
+        }
+        @keyframes slideInBottom {
+          from { opacity: 0; transform: translateY(60px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-in-bottom {
+          animation: slideInBottom 1s;
+        }
+        @keyframes slideInRight {
+          from { opacity: 0; transform: translateX(40px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        .animate-slide-in-right {
+          animation: slideInRight 0.7s;
+        }
+        @keyframes morphing {
+          0% { border-radius: 2rem 2rem 2rem 2rem; }
+          50% { border-radius: 2.5rem 1.5rem 2.5rem 1.5rem; }
+          100% { border-radius: 2rem 2rem 2rem 2rem; }
+        }
+        .animate-morphing {
+          animation: morphing 6s infinite alternate ease-in-out;
+        }
+        @keyframes shimmer {
+          0% { background-position: -400px 0; }
+          100% { background-position: 400px 0; }
+        }
+        .animate-shimmer {
+          background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+          background-size: 400px 100%;
+          animation: shimmer 2s infinite;
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-16px); }
+        }
+        .animate-float {
+          animation: float 4s ease-in-out infinite;
+        }
+        @keyframes floatReverse {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(16px); }
+        }
+        .animate-float-reverse {
+          animation: floatReverse 4s ease-in-out infinite;
+        }
+        .glass-effect {
+          background: rgba(26, 34, 54, 0.8);
+          backdrop-filter: blur(12px) saturate(120%);
+          box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+        @keyframes road-flow {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        .animate-road-flow {
+          animation: road-flow 3s linear infinite;
+        }
+      `}</style>
+    </main>
   );
 }
