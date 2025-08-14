@@ -175,7 +175,7 @@ export default function AESBlogPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-12 animate-slide-in-bottom">
             <h1 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">
-              Welcome to the Acharya Blog
+              Acharya Blog
             </h1>
             <p className="text-lg theme-text-muted max-w-3xl mx-auto animate-slide-in-bottom" style={{ animationDelay: '0.2s' }}>
               Based on our experience at some of the top research institutions, the Acharya team and community have a lot of insights to offer you on all sorts of topics!
