@@ -659,9 +659,12 @@ export default function CollegePrepPage() {
             <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
               🎓 College Prep
             </Badge>
-            <h1 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">
-              Empowering Students to Achieve Their College Dreams
+            <h1 className="text-6xl lg:text-7xl font-black bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent mb-4 animate-slide-in-bottom">
+              UACHIEVE
             </h1>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">
+              Empowering Students to Achieve Their College Dreams
+            </h2>
             <p className="text-lg theme-text-muted max-w-4xl mx-auto animate-slide-in-bottom" style={{ animationDelay: '0.2s' }}>
               UACHIEVE is more than just college counseling. It&apos;s a guided journey of self-discovery, competitive distinction, and strategic planning, crafted to help students unlock their true potential and gain admission to best-fit colleges and unfold their untold stories.
             </p>
