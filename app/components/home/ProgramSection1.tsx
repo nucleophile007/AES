@@ -165,7 +165,7 @@ const ProgramsSection = memo(() => {
         </motion.div>
 
         {/* Additional call-to-action for better engagement */}
-                  <motion.div
+                  {/* <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.5, duration: 0.8 }}
@@ -203,7 +203,7 @@ const ProgramsSection = memo(() => {
                 Learn More
               </button>
             </div>
-          </motion.div>
+          </motion.div> */}
       </div>
     </section>
   );
