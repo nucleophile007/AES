@@ -18,245 +18,381 @@ import ImageVideoCard from "@/components/ui/image-video-card";
 import StepCard from "@/components/ui/step-card";
 import { DraggableCardBody, DraggableCardContainer } from "@/components/ui/draggable-card";
 
-// CollegePillars Component
-const CollegePillars = () => {
-  const [selectedPillar, setSelectedPillar] = React.useState<number | null>(null)
-  const containerRef = React.useRef<HTMLDivElement>(null)
+// StrengthBasedDiscoveryInfographic Component
+const StrengthBasedDiscoveryInfographic = () => {
+  const [hoveredPillar, setHoveredPillar] = React.useState<number | null>(null)
 
-  const handlePillarClick = (pillarId: number) => {
-    setSelectedPillar(selectedPillar === pillarId ? null : pillarId)
-  }
-
-  const handleBackgroundClick = (event: React.MouseEvent) => {
-    // Check if the click target is not a pillar or pillar content
-    const target = event.target as HTMLElement
-    const isPillarClick = target.closest('[data-pillar]') || target.closest('[data-pillar-content]')
-    
-    if (!isPillarClick && selectedPillar !== null) {
-      setSelectedPillar(null)
+  const createPillar = (centerX: number, pillarIndex: number) => {
+    const getGradientIds = (index: number) => {
+      switch (index) {
+        case 0:
+          return {
+            column: "columnGradient",
+            capital: "capitalGradient",
+            title: "titleGradient",
+            stroke: "#c2410c",
+          }
+        case 1:
+          return {
+            column: "blueColumnGradient",
+            capital: "blueCapitalGradient",
+            title: "blueTitleGradient",
+            stroke: "#1e40af",
+          }
+        case 2:
+          return {
+            column: "greenColumnGradient",
+            capital: "greenCapitalGradient",
+            title: "greenTitleGradient",
+            stroke: "#059669",
+          }
+        default:
+          return {
+            column: "columnGradient",
+            capital: "capitalGradient",
+            title: "titleGradient",
+            stroke: "#c2410c",
+          }
+      }
     }
+
+    const gradients = getGradientIds(pillarIndex)
+
+    return (
+      <g
+        className="cursor-pointer transition-all duration-300 hover:brightness-110"
+        onMouseEnter={() => setHoveredPillar(pillarIndex)}
+        onMouseLeave={() => setHoveredPillar(null)}
+      >
+        <circle
+          cx={centerX}
+          cy="80"
+          r="45"
+          fill={`url(#${gradients.capital})`}
+          stroke={gradients.stroke}
+          strokeWidth="3"
+          filter="url(#shadow)"
+        />
+
+        <rect
+          x={centerX - 75}
+          y="115"
+          width="150"
+          height="10"
+          rx="5"
+          fill={`url(#${gradients.capital})`}
+          stroke={gradients.stroke}
+          strokeWidth="2"
+        />
+
+        <rect
+          x={centerX - 65}
+          y="135"
+          width="130"
+          height="8"
+          rx="4"
+          fill={`url(#${gradients.column})`}
+          stroke={gradients.stroke}
+          strokeWidth="1"
+        />
+        <rect
+          x={centerX - 65}
+          y="148"
+          width="130"
+          height="6"
+          rx="3"
+          fill={`url(#${gradients.column})`}
+          stroke={gradients.stroke}
+          strokeWidth="1"
+        />
+
+        <rect
+          x={centerX - 60}
+          y="160"
+          width="120"
+          height="350"
+          fill={`url(#${gradients.column})`}
+          stroke={gradients.stroke}
+          strokeWidth="3"
+          filter="url(#shadow)"
+        />
+
+        <line
+          x1={centerX - 35}
+          y1="165"
+          x2={centerX - 35}
+          y2="505"
+          stroke={gradients.stroke}
+          strokeWidth="1.5"
+          opacity="0.6"
+        />
+        <line
+          x1={centerX - 15}
+          y1="165"
+          x2={centerX - 15}
+          y2="505"
+          stroke={gradients.stroke}
+          strokeWidth="1.5"
+          opacity="0.6"
+        />
+        <line x1={centerX} y1="165" x2={centerX} y2="505" stroke={gradients.stroke} strokeWidth="2" opacity="0.8" />
+        <line
+          x1={centerX + 15}
+          y1="165"
+          x2={centerX + 15}
+          y2="505"
+          stroke={gradients.stroke}
+          strokeWidth="1.5"
+          opacity="0.6"
+        />
+        <line
+          x1={centerX + 35}
+          y1="165"
+          x2={centerX + 35}
+          y2="505"
+          stroke={gradients.stroke}
+          strokeWidth="1.5"
+          opacity="0.6"
+        />
+
+        <rect
+          x={centerX - 75}
+          y="510"
+          width="150"
+          height="20"
+          rx="3"
+          fill={`url(#${gradients.capital})`}
+          stroke={gradients.stroke}
+          strokeWidth="3"
+          filter="url(#shadow)"
+        />
+
+        <rect
+          x={centerX - 100}
+          y="550"
+          width="200"
+          height="70"
+          rx="20"
+          ry="20"
+          fill={`url(#${gradients.title})`}
+          filter="url(#shadow)"
+        />
+
+        <text
+          x={centerX}
+          y="575"
+          textAnchor="middle"
+          fill="white"
+          fontSize="18"
+          fontWeight="700"
+          fontFamily="system-ui, -apple-system, sans-serif"
+        >
+          {pillarIndex === 1 ? "Research &" : pillarIndex === 2 ? "Strategic College" : "Strength-Based"}
+        </text>
+        <text
+          x={centerX}
+          y="600"
+          textAnchor="middle"
+          fill="white"
+          fontSize="18"
+          fontWeight="700"
+          fontFamily="system-ui, -apple-system, sans-serif"
+        >
+          {pillarIndex === 1 ? "Competitive Excellence" : pillarIndex === 2 ? "Planning" : "Discovery"}
+        </text>
+
+        {/* Base foundation with more padding */}
+        <rect
+          x={centerX - 120}
+          y="640"
+          width="240"
+          height="40"
+          rx="20"
+          ry="20"
+          fill={`url(#${gradients.capital})`}
+          stroke={gradients.stroke}
+          strokeWidth="2"
+          filter="url(#shadow)"
+        />
+      </g>
+    )
   }
 
-  const pillars = [
-    {
-      id: 1,
-      title: "Strength-Based Discovery",
-      icon: Search,
-      color: "from-emerald-400 via-emerald-500 to-emerald-700",
-      bgColor: "bg-emerald-500",
-      borderColor: "border-emerald-500",
-      glowColor: "shadow-emerald-500/50",
-      points: [
-        "Identify core academic and personal strengths using assessments and mentorship",
-        "Help students understand who they are and what drives them",
-        "Align emerging interests with long-term capabilities",
-      ],
-    },
-    {
-      id: 2,
-      title: "Research & Competitive Excellence",
-      icon: Trophy,
-      color: "from-blue-400 via-blue-500 to-blue-700",
-      bgColor: "bg-blue-500",
-      borderColor: "border-blue-500",
-      glowColor: "shadow-blue-500/50",
-      points: [
-        "We handpick high-impact competitions and research opportunities that match the student's strengths and aspirations",
-        "Support for national and international Olympiads, science fairs, hackathons, business case competitions, social impact initiatives, and more",
-        "Personalized research mentorship for students to publish original work or present at top student conferences, thus showcasing their intellectual curiosity and leadership",
-      ],
-    },
-    {
-      id: 3,
-      title: "Strategic College Planning",
-      icon: Target,
-      color: "from-purple-400 via-purple-500 to-purple-700",
-      bgColor: "bg-purple-500",
-      borderColor: "border-purple-500",
-      glowColor: "shadow-purple-500/50",
-      points: [
-        "Curate a balanced college list tailored to academic, personal, and financial fit",
-        "Timeline-driven, step-by-step guidance from early high school to application submission",
-        "Expert coaching on college essays, interviews, extracurricular positioning, and letters of recommendation",
-      ],
-    },
-  ]
+  const createCards = (centerX: number, pillarIndex: number) => {
+    const isHovered = hoveredPillar === pillarIndex
 
-  return (
-    <div ref={containerRef} className="w-full max-w-7xl mx-auto flex flex-col justify-center" onClick={handleBackgroundClick}>
-      <div
-        className={`flex items-start justify-center transition-all duration-700 ease-in-out ${
-          selectedPillar ? "gap-20" : "gap-0"
-        }`}
-      >
-        <div
-          className={`relative flex-shrink-0 transition-all duration-700 ease-in-out ${
-            selectedPillar ? "transform scale-90" : "transform scale-100"
-          }`}
-        >
-          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-r from-amber-100 via-amber-50 to-amber-100 rounded-xl shadow-2xl border-4 border-amber-200 backdrop-blur-sm">
-            <div className="absolute inset-0 bg-gradient-to-t from-amber-200/40 to-transparent rounded-xl"></div>
-            <div className="absolute inset-x-4 top-3 h-3 bg-gradient-to-r from-transparent via-amber-300/80 to-transparent rounded-full"></div>
-            <div className="absolute inset-x-8 bottom-2 h-2 bg-gradient-to-r from-amber-400/60 via-amber-300/80 to-amber-400/60 rounded-full"></div>
-          </div>
+    const getCardContent = (cardIndex: number) => {
+      if (pillarIndex === 1) {
+        // Pillar 2 content
+        switch (cardIndex) {
+          case 0:
+            return "We handpick high-impact competitions and research opportunities that match the student's strengths and aspirations"
+          case 1:
+            return "Support for national and international Olympiads, science fairs, hackathons, business case competitions, social impact initiatives, and more"
+          case 2:
+            return "Personalized research mentorship for students to publish original work or present at top student conferences, thus showcasing their intellectual curiosity and leadership"
+          default:
+            return ""
+        }
+      }
+      if (pillarIndex === 0) {
+        switch (cardIndex) {
+          case 0:
+            return "Align emerging interests with long-term capabilities"
+          case 1:
+            return "Identify core academic and personal strengths using assessments and mentorship"
+          case 2:
+            return "Help students understand who they are and what drives them"
+          default:
+            return ""
+        }
+      }
+      if (pillarIndex === 2) {
+        switch (cardIndex) {
+          case 0:
+            return "Curate a balanced college list tailored to academic, personal, and financial fit"
+          case 1:
+            return "Timeline-driven, step-by-step guidance from early high school to application submission"
+          case 2:
+            return "Expert coaching on college essays, interviews, extracurricular positioning, and letters of recommendation"
+          default:
+            return ""
+        }
+      }
+      return ""
+    }
 
-          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 w-full max-w-lg">
-            <div className="relative">
-              <div
-                className="h-28 bg-gradient-to-b from-blue-400 via-blue-500 to-blue-600 shadow-2xl border-4 border-blue-300"
-                style={{
-                  clipPath: "polygon(5% 100%, 50% 0%, 95% 100%)",
-                }}
-              >
-                <div
-                  className="absolute inset-0 bg-gradient-to-t from-blue-700/30 to-blue-200/20"
-                  style={{
-                    clipPath: "polygon(5% 100%, 50% 0%, 95% 100%)",
-                  }}
-                ></div>
-                <div
-                  className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent"
-                  style={{
-                    clipPath: "polygon(5% 100%, 50% 0%, 95% 100%)",
-                  }}
-                ></div>
-              </div>
-              <div className="absolute top-10 left-1/2 transform -translate-x-1/2 w-20 h-20 bg-gradient-to-br from-yellow-300 via-yellow-400 to-amber-500 rounded-full flex items-center justify-center shadow-2xl border-4 border-white ring-4 ring-yellow-400/40">
-                <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600 rounded-full flex items-center justify-center shadow-xl border-2 border-white/50">
-                  <div className="w-6 h-6 bg-gradient-to-br from-white via-yellow-100 to-white rounded-full shadow-inner animate-pulse ring-2 ring-emerald-300/50"></div>
-                </div>
-              </div>
+    if (pillarIndex === 1 || pillarIndex === 0 || pillarIndex === 2) {
+      return (
+        <>
+          {/* 12 o'clock Card (Top) */}
+          <div
+            className={`absolute w-48 transition-all duration-500 ${
+              isHovered ? "opacity-100 scale-110 shadow-2xl z-10" : "opacity-0 scale-0"
+            }`}
+            style={{
+              top: pillarIndex === 2 ? "-4%" : pillarIndex === 1 ? "-11%" : "-1%",
+              left: pillarIndex === 2 ? `${(centerX - 132) / 16}%` : pillarIndex === 1 ? `${(centerX - 106) / 16}%` : `${(centerX - 96) / 16}%`,
+              transform: isHovered ? "translate(0px, -20px)" : `translate(0px, 60px)`,
+            }}
+          >
+            <div className="bg-gradient-to-br from-cyan-50 to-blue-100 border-2 border-cyan-200 rounded-2xl p-4 shadow-xl backdrop-blur-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-12 h-12 bg-gradient-to-br from-cyan-200 to-blue-300 rounded-full -translate-y-6 translate-x-6 opacity-30"></div>
+              <p className="text-xs text-slate-800 text-center leading-relaxed font-semibold relative z-10">
+                {getCardContent(0)}
+              </p>
             </div>
           </div>
 
-          <div className="flex justify-center items-end gap-16 pt-32 pb-16">
-            {pillars.map((pillar) => {
-              const Icon = pillar.icon
-              const isSelected = selectedPillar === pillar.id
-
-              return (
-                <div
-                  key={pillar.id}
-                  className="flex flex-col items-center group cursor-pointer"
-                  data-pillar={pillar.id}
-                  onClick={() => handlePillarClick(pillar.id)}
-                >
-                  <div
-                    className={`
-                    relative w-28 h-80 bg-gradient-to-b ${pillar.color} 
-                    rounded-t-2xl shadow-2xl transform transition-all duration-500 ease-out
-                    ${isSelected ? `scale-110 ${pillar.glowColor} shadow-3xl ring-4 ring-white/30` : "hover:scale-105 hover:shadow-3xl"}
-                    border-4 border-white/20 backdrop-blur-sm
-                  `}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-black/20 rounded-t-2xl"></div>
-                    <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-white/40 to-transparent rounded-t-2xl"></div>
-
-                    <div className="absolute inset-x-2 top-4 bottom-8 space-y-1">
-                      {[...Array(12)].map((_, i) => (
-                        <div key={i} className="h-6 bg-white/10 rounded-full border border-white/20"></div>
-                      ))}
-                    </div>
-
-                    <div className="absolute inset-x-4 top-8 bottom-12 bg-white/20 rounded-xl backdrop-blur-md border border-white/30 shadow-inner">
-                      <div className="h-full flex flex-col items-center justify-center p-4">
-                        <div className="w-16 h-16 bg-white/30 rounded-full flex items-center justify-center mb-6 backdrop-blur-sm border-2 border-white/40 shadow-xl">
-                          <Icon className="w-9 h-9 text-white drop-shadow-2xl" />
-                        </div>
-                        <div className="text-white text-sm font-bold text-center leading-tight drop-shadow-2xl">
-                          {pillar.title.split(" ").map((word, i) => (
-                            <div key={i} className="mb-1">
-                              {word}</div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="absolute -top-2 left-0 right-0 h-4 bg-gradient-to-b from-gray-100 to-gray-300 rounded-t-2xl border-2 border-gray-400 shadow-lg"></div>
-                    <div className="absolute -bottom-4 left-0 right-0 h-8 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-600 rounded-b-2xl border-4 border-gray-500 shadow-xl"></div>
-
-                    <div
-                      className={`absolute -bottom-12 left-1/2 transform -translate-x-1/2 transition-all duration-300 ${
-                        isSelected ? "opacity-100 scale-100" : "opacity-0 scale-75"
-                      }`}
-                    >
-                      <div
-                        className={`w-4 h-4 ${pillar.bgColor} rounded-full animate-pulse shadow-lg ring-2 ring-white/50`}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
+          {/* 3 o'clock Card (Right) */}
+          <div
+            className={`absolute w-48 transition-all duration-500 ${
+              isHovered ? "opacity-100 scale-110 shadow-2xl z-10" : "opacity-0 scale-0"
+            }`}
+            style={{
+              top: "22%",
+              left: pillarIndex === 1 ? `${(centerX + 50) / 16}%` : pillarIndex === 2 ? `${(centerX + 22) / 16}%` : `${(centerX + 80) / 16}%`,
+              transform: isHovered ? "translate(30px, 0px)" : `translate(-40px, 0px)`,
+            }}
+          >
+            <div className="bg-gradient-to-br from-emerald-50 to-green-100 border-2 border-emerald-200 rounded-2xl p-4 shadow-xl backdrop-blur-sm relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-10 h-10 bg-gradient-to-br from-emerald-200 to-green-300 rounded-full -translate-y-5 -translate-x-5 opacity-30"></div>
+              <p className="text-xs text-slate-800 text-center leading-relaxed font-semibold relative z-10">
+                {getCardContent(1)}
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div
-          className={`transition-all duration-700 ease-in-out ${
-            selectedPillar
-              ? "flex-1 max-w-3xl opacity-100 translate-x-0"
-              : "w-0 opacity-0 translate-x-8 overflow-hidden"
-          }`}
-          data-pillar-content={selectedPillar}
-        >
-          <div className="relative p-6">
-            {pillars.map((pillar) => {
-              const isActive = selectedPillar === pillar.id
-
-              return (
-                <div
-                  key={pillar.id}
-                  className={`absolute inset-0 transition-all duration-500 ease-out ${
-                    isActive ? "opacity-100 translate-x-0" : "opacity-0 translate-x-8"
-                  }`}
-                >
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-6 mb-8 p-6 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20">
-                      <div
-                        className={`w-20 h-20 ${pillar.bgColor} rounded-2xl flex items-center justify-center shadow-2xl ring-4 ring-white/30 ${pillar.glowColor} transform hover:scale-105 transition-transform duration-300`}
-                      >
-                        <pillar.icon className="w-10 h-10 text-white drop-shadow-lg" />
-                      </div>
-                      <div>
-                        <h3 className="text-3xl font-black theme-text-light drop-shadow-lg mb-2">{pillar.title}</h3>
-                        <div className={`h-1 w-24 ${pillar.bgColor} rounded-full ${pillar.glowColor}`}></div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      {pillar.points.map((point, index) => (
-                        <div
-                          key={index}
-                          className={`flex items-start gap-4 transform transition-all duration-500 ${
-                            isActive ? "translate-x-0 opacity-100" : "translate-x-8 opacity-0"
-                          }`}
-                          style={{ transitionDelay: `${index * 100}ms` }}
-                        >
-                          <div className="flex-shrink-0">
-                            <div
-                              className={`w-12 h-12 ${pillar.bgColor} rounded-full flex items-center justify-center shadow-lg ${pillar.glowColor} ring-2 ring-white/30`}
-                            >
-                              <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
-                                <div className={`w-3 h-3 rounded-full ${pillar.bgColor}`}></div>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div
-                            className={`bg-gradient-to-br from-white via-white/98 to-white/95 backdrop-blur-md rounded-xl shadow-lg p-4 flex-1 transform transition-all duration-300 hover:shadow-xl hover:scale-[1.01] border-l-4 ${pillar.borderColor} ring-1 ring-gray-200/50`}
-                          >
-                            <p className="text-gray-800 text-base leading-relaxed font-medium">{point}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
+          {/* 9 o'clock Card (Left) */}
+          <div
+            className={`absolute w-48 transition-all duration-500 ${
+              isHovered ? "opacity-100 scale-110 shadow-2xl z-10" : "opacity-0 scale-0"
+            }`}
+            style={{
+              top: "22%",
+              left: pillarIndex === 1 ? `${(centerX - 292) / 16}%` : pillarIndex === 2 ? `${(centerX - 304) / 16}%` : `${(centerX - 272) / 16}%`,
+              transform: isHovered ? "translate(-30px, 0px)" : `translate(40px, 0px)`,
+            }}
+          >
+            <div className="bg-gradient-to-br from-violet-50 to-purple-100 border-2 border-violet-200 rounded-2xl p-4 shadow-xl backdrop-blur-sm relative overflow-hidden">
+              <div className="absolute bottom-0 right-0 w-8 h-8 bg-gradient-to-tl from-purple-200 to-violet-300 rounded-full translate-y-4 translate-x-4 opacity-30"></div>
+              <p className="text-xs text-slate-800 text-center leading-relaxed font-semibold relative z-10">
+                {getCardContent(2)}
+              </p>
+            </div>
           </div>
-        </div>
-      </div>
+        </>
+      )
+    }
+
+    return null
+  }
+
+  return (
+    <div className="relative w-full max-w-7xl mx-auto theme-bg-dark rounded-2xl p-8">
+      <svg viewBox="0 0 1600 700" className="w-full h-auto" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="columnGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#fed7aa" />
+            <stop offset="50%" stopColor="#fb923c" />
+            <stop offset="100%" stopColor="#ea580c" />
+          </linearGradient>
+
+          <linearGradient id="capitalGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#fdba74" />
+            <stop offset="100%" stopColor="#f97316" />
+          </linearGradient>
+
+          <linearGradient id="titleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#f97316" />
+            <stop offset="100%" stopColor="#ea580c" />
+          </linearGradient>
+
+          <linearGradient id="blueColumnGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#bfdbfe" />
+            <stop offset="50%" stopColor="#3b82f6" />
+            <stop offset="100%" stopColor="#1e40af" />
+          </linearGradient>
+
+          <linearGradient id="blueCapitalGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#93c5fd" />
+            <stop offset="100%" stopColor="#2563eb" />
+          </linearGradient>
+
+          <linearGradient id="blueTitleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#2563eb" />
+            <stop offset="100%" stopColor="#1e40af" />
+          </linearGradient>
+
+          <linearGradient id="greenColumnGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#a7f3d0" />
+            <stop offset="50%" stopColor="#10b981" />
+            <stop offset="100%" stopColor="#059669" />
+          </linearGradient>
+
+          <linearGradient id="greenCapitalGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#6ee7b7" />
+            <stop offset="100%" stopColor="#059669" />
+          </linearGradient>
+
+          <linearGradient id="greenTitleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#10b981" />
+            <stop offset="100%" stopColor="#059669" />
+          </linearGradient>
+
+          <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="#000000" floodOpacity="0.15" />
+          </filter>
+        </defs>
+
+        {createPillar(250, 0)}
+        {createPillar(800, 1)}
+        {createPillar(1350, 2)}
+      </svg>
+
+      {createCards(250, 0)}
+      {createCards(800, 1)}
+      {createCards(1350, 2)}
     </div>
   )
 }
@@ -702,7 +838,7 @@ export default function CollegePrepPage() {
               The 3-Pillar Approach: We help students build standout profiles, showcase intellectual curiosity, and achieve competitive excellence through research, competitions, and strategic planning.
             </p>
           </motion.div>
-          <CollegePillars />
+          <StrengthBasedDiscoveryInfographic />
         </div>
       </section>
 
@@ -885,7 +1021,11 @@ export default function CollegePrepPage() {
           {/* College Prep Timeline */}
           <div className="max-w-7xl mx-auto relative">
             <div className="relative h-[700px] w-full">
-              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <svg
+                className="absolute inset-0 w-full h-full"
+                viewBox="0 0 300 450"
+                preserveAspectRatio="none"
+              >
                 <defs>
                   <linearGradient id="roadGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" stopColor="#374151" />
@@ -907,65 +1047,79 @@ export default function CollegePrepPage() {
 
                 </defs>
 
+                {/* Shadow path for depth */}
                 <path
-                  d="M 8 88 C 15 82, 25 78, 35 72 C 45 66, 55 58, 65 50 C 75 42, 85 32, 92 22"
+                  d="M 10 380 
+                    C 75 350, 140 320, 180 280 
+                    C 220 240, 180 200, 140 170 
+                    C 100 140, 140 100, 180 70 
+                    C 220 40, 240 20, 260 10"
                   stroke="rgba(0,0,0,0.5)"
-                  strokeWidth="12"
+                  strokeWidth="40"
                   fill="none"
                   transform="translate(1, 1)"
                 />
 
+                {/* Main road path */}
                 <path
-                  d="M 8 88 C 15 82, 25 78, 35 72 C 45 66, 55 58, 65 50 C 75 42, 85 32, 92 22"
+                  d="M 10 380 
+                    C 75 350, 140 320, 180 280 
+                    C 220 240, 180 200, 140 170 
+                    C 100 140, 140 100, 180 70 
+                    C 220 40, 240 20, 260 10"
                   stroke="url(#roadGradient)"
-                  strokeWidth="10"
+                  strokeWidth="40"
                   fill="none"
-                  strokeDasharray="300"
-                  strokeDashoffset={300 - roadProgress * 3}
-                  className="transition-all duration-100 ease-out"
                   filter="url(#roadShadow)"
                 />
 
+                {/* Road edge for definition */}
                 <path
-                  d="M 8 88 C 15 82, 25 78, 35 72 C 45 66, 55 58, 65 50 C 75 42, 85 32, 92 22"
+                  d="M 10 380 
+                    C 75 350, 140 320, 180 280 
+                    C 220 240, 180 200, 140 170 
+                    C 100 140, 140 100, 180 70 
+                    C 220 40, 240 20, 260 10"
                   stroke="url(#roadEdge)"
-                  strokeWidth="12"
+                  strokeWidth="40"
                   fill="none"
-                  strokeDasharray="300"
-                  strokeDashoffset={300 - roadProgress * 3}
-                  className="transition-all duration-100 ease-out"
                   opacity="0.6"
                 />
 
+                {/* Yellow dashed line */}
                 <path
-                  d="M 8 88 C 15 82, 25 78, 35 72 C 45 66, 55 58, 65 50 C 75 42, 85 32, 92 22"
+                  d="M 10 380
+                    C 75 350, 140 320, 180 280 
+                    C 220 240, 180 200, 140 170 
+                    C 100 140, 140 100, 180 70 
+                    C 220 40, 240 20, 260 10"
                   stroke="#fbbf24"
-                  strokeWidth="1"
+                  strokeWidth="3"
                   fill="none"
                   strokeDasharray="4 3"
-                  strokeDashoffset={300 - roadProgress * 3}
-                  className="transition-all duration-100 ease-out"
-                  opacity={roadProgress > 30 ? 0.9 : 0}
+                  opacity="0.9"
                 />
 
+                {/* Road texture overlay */}
                 <path
-                  d="M 8 88 C 15 82, 25 78, 35 72 C 45 66, 55 58, 65 50 C 75 42, 85 32, 92 22"
+                  d="M 10 380 
+                    C 75 350, 140 320, 180 280 
+                    C 220 240, 180 200, 140 170 
+                    C 100 140, 140 100, 180 70 
+                    C 220 40, 240 20, 260 10"
                   stroke="url(#roadGradient)"
-                  strokeWidth="10"
+                  strokeWidth="40"
                   fill="none"
-                  strokeDasharray="300"
-                  strokeDashoffset={300 - roadProgress * 3}
-                  className="transition-all duration-100 ease-out"
                   opacity="0.3"
                 />
-
-                <polygon
+                
+                {/* <polygon
                   points="90,20 94,22 90,24 92,22"
                   fill="#fbbf24"
                   opacity={roadProgress > 90 ? 1 : 0}
                   className="transition-all duration-500"
                   filter="url(#roadShadow)"
-                />
+                /> */}
               </svg>
 
               {[
@@ -1069,19 +1223,20 @@ export default function CollegePrepPage() {
                     Math.pow(t, 4) * 22
 
                   if (progress === 0) {
-                    y -= 15 // Grade 7-10: moved up by 2 units (was -12, now -14)
+                    x+=2
+                    y -= 20 // Grade 7-10: moved up by 2 units (was -12, now -14)
                   } else if (progress === 25) {
-                    x+=4
-                    y -= 13 // Grade 10-11: moved down by 4 units (was -12, now -8)
+                    x+=13
+                    y -= 15 // Grade 10-11: moved down by 4 units (was -12, now -8)
                   } else if (progress === 50) {
-                    x+=3
-                    y -= 9 // Grade 11 Spring: moved down by 12 units (was -14, now -2)
+                    x+=14
+                    y -= 20 // Grade 11 Spring: moved down by 12 units (was -14, now -2)
                   } else if (progress === 75) {
-                    y -= 7
-                    x-=2 // Grade 12 Summer/Fall: moved down by 12 units (was -14, now -2)
+                    y -= 28
+                    x-=26 // Grade 12 Summer/Fall: moved down by 12 units (was -14, now -2)
                   } else                   if (progress === 100) {
-                    y -= 10 // Grade 12 Spring: moved down by 1 unit (was -14, now -13)
-                    x -= 5 // Grade 12 Spring: moved left by 2 more units (was -3, now -5)
+                    y -= 30 // Grade 12 Spring: moved down by 1 unit (was -14, now -13)
+                    x -= 15 // Grade 12 Spring: moved left by 2 more units (was -3, now -5)
                   }
 
                   return { x: `${x}%`, y: `${y}%` }
@@ -1095,7 +1250,7 @@ export default function CollegePrepPage() {
                     initial={{ opacity: 0, scale: 0.75 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     transition={{ delay: index * 0.3, duration: 0.7 }}
-                    className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 hover:scale-110 transition-all duration-500"
+                    className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 hover:scale-110 transition-all duration-500 group"
                     style={{
                       left: position.x,
                       top: position.y,
@@ -1109,7 +1264,7 @@ export default function CollegePrepPage() {
                       <div
                         className={`relative w-16 h-16 bg-gradient-to-br ${milestone.color} rounded-full border-3 ${
                           selectedMilestone === milestone.id ? 'border-yellow-400 shadow-yellow-400/50' : 'border-white'
-                        } shadow-xl flex items-center justify-center transition-all duration-500`}
+                        } shadow-xl flex items-center justify-center transition-all duration-500 hover:scale-125 group-hover:scale-125 z-20`}
                       >
                         <div className="text-xl">{milestone.icon}</div>
                       </div>
@@ -1123,11 +1278,12 @@ export default function CollegePrepPage() {
                       initial={{ opacity: 0, translateY: 4 }}
                       whileInView={{ opacity: 1, translateY: 0 }}
                       transition={{ delay: index * 0.3 + 0.5, duration: 0.7 ,width: { duration: 0.4, ease: "easeInOut" }}}
-                      className="absolute left-1/2 transform -translate-x-1/2 cursor-pointer"
+                      className="absolute cursor-pointer"
                       style={{
-                        top: "80px",
-                        left: "50%",
-                        transform: "translateX(-50%)",
+                        // Position details card above and to the left for 4th milestone to avoid road overlap
+                        top: index === 3 ? "-120px" : "80px",
+                        left: index === 3 ? "-180px" : "50%",
+                        transform: index === 3 ? "translateX(0%)" : "translateX(-50%)",
                       }}
                       animate={{
                         width: selectedMilestone === milestone.id ? "250px" : "200px",
