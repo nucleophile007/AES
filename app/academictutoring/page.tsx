@@ -790,49 +790,52 @@ export default function AcademicTutoringPage() {
           </div>
         </div>
       </section> */}
-            {/* Learning Features Section */}
-            <section className="py-20 theme-bg-dark">
+                  {/* Learning Features Section */}
+      <section className="py-20 theme-bg-dark">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Learning Approach</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Stay ahead with our personalized tutoring</h2>
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
+              ✨ Learning Approach
+            </Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">
+              Stay ahead with our personalized tutoring
+            </h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto leading-relaxed">
               Discover our comprehensive suite of educational tools designed to accelerate your learning journey with
               modern, effective methods.
             </p>
           </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* First 3 cards in top row */}
+          {/* Main Grid - 3 Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
             {[
               {
                 title: "Build Strong Foundations",
-                description:
-                  "Establish solid fundamentals with our comprehensive learning approach that ensures deep understanding.",
-                illustration: "/placeholder.svg",
-                icon: "🏗️",
-                color: "from-blue-500 to-purple-600",
-                accentColor: "from-blue-400/20 to-purple-400/20"
+                description: "Establish solid fundamentals with our comprehensive learning approach that ensures deep understanding.",
+                icon: BookOpen,
+                color: "from-blue-500 to-indigo-600",
+                features: ["Step-by-step learning", "Concept mastery", "Progress tracking"],
+                stats: "95% retention rate"
               },
               {
                 title: "Custom Worksheets",
                 description: "Personalized practice materials tailored to your learning style and progress for better results.",
-                illustration: "/placeholder.svg",
-                icon: "📋",
-                color: "from-green-500 to-teal-600",
-                accentColor: "from-green-400/20 to-teal-400/20"
+                icon: FileText,
+                color: "from-emerald-500 to-teal-600",
+                features: ["Adaptive difficulty", "Personalized content", "Instant feedback"],
+                stats: "3x faster progress"
               },
               {
                 title: "Mock Exams & Feedback",
                 description: "Realistic practice tests with detailed feedback and performance analytics to track improvement.",
-                illustration: "/placeholder.svg",
-                icon: "📊",
+                icon: Target,
                 color: "from-orange-500 to-red-600",
-                accentColor: "from-orange-400/20 to-red-400/20"
+                features: ["Real exam simulation", "Detailed analytics", "Performance insights"],
+                stats: "100% exam readiness"
               },
             ].map((feature, index) => (
               <motion.div
@@ -843,128 +846,145 @@ export default function AcademicTutoringPage() {
                 className="group"
               >
                 <div className="relative h-full">
-                  {/* Glow Effect */}
-                  <div className={`absolute inset-0 bg-gradient-to-r ${feature.color} rounded-3xl blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500 scale-105`}></div>
+                  {/* Subtle Glow Effect */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} rounded-2xl blur-xl opacity-5 group-hover:opacity-20 transition-all duration-500`}></div>
                   
                   {/* Main Card */}
-                  <Card className="relative bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-xl border border-gray-700/50 rounded-3xl overflow-hidden h-[420px] flex flex-col group-hover:border-yellow-400/40 transition-all duration-500 hover:transform hover:scale-105 hover:shadow-2xl">
-                    {/* Floating Elements */}
-                    <div className="absolute top-4 right-4 w-12 h-12 bg-gradient-to-br from-yellow-400/20 to-amber-400/20 rounded-full blur-sm group-hover:scale-150 transition-all duration-700"></div>
-                    <div className="absolute bottom-4 left-4 w-8 h-8 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-sm group-hover:scale-125 transition-all duration-700"></div>
+                  <div className="relative bg-gradient-to-br from-[#1a2236] to-[#2a3246] border border-yellow-400/20 rounded-2xl overflow-hidden h-full flex flex-col group-hover:border-yellow-400/40 group-hover:shadow-2xl transition-all duration-500 hover:transform hover:scale-[1.02] hover:-translate-y-1">
                     
-                    {/* Content */}
-                    <CardHeader className="flex-1 p-8 pb-4 relative z-10">
-                      {/* Icon */}
-                      <div className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
-                        <span className="text-2xl">{feature.icon}</span>
+                    {/* Top Icon Section */}
+                    <div className="p-6 pb-4">
+                      <div className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                        <feature.icon className="h-8 w-8 text-white" />
                       </div>
                       
-                      <CardTitle className="text-xl font-bold theme-text-light mb-4 leading-tight group-hover:text-yellow-400 transition-colors duration-300">
+                      {/* Title */}
+                      <h3 className="text-xl font-bold theme-text-light mb-3 group-hover:text-yellow-400 transition-colors duration-300">
                         {feature.title}
-                      </CardTitle>
+                      </h3>
                       
-                      <CardDescription className="theme-text-muted text-base leading-relaxed">
+                      {/* Description */}
+                      <p className="text-sm theme-text-muted leading-relaxed mb-4">
                         {feature.description}
-                      </CardDescription>
-                    </CardHeader>
+                      </p>
+                    </div>
 
-                    <CardContent className="p-0 mt-auto relative z-10">
-                      <div className="h-32 w-full overflow-hidden bg-gradient-to-br from-gray-800/50 to-gray-900/50">
-                        <div className="h-full w-full flex items-center justify-center">
-                          <div className={`w-24 h-24 bg-gradient-to-br ${feature.color} rounded-full flex items-center justify-center opacity-30 group-hover:opacity-60 transition-opacity duration-300`}>
-                            <span className="text-3xl">{feature.icon}</span>
+                    {/* Features List */}
+                    <div className="px-6 pb-4 flex-1">
+                      <div className="space-y-2">
+                        {feature.features.map((item, idx) => (
+                          <div key={idx} className="flex items-center space-x-3">
+                            <div className={`w-1.5 h-1.5 bg-gradient-to-r ${feature.color} rounded-full flex-shrink-0`}></div>
+                            <span className="text-xs theme-text-muted group-hover:theme-text-light transition-colors duration-300">
+                              {item}
+                            </span>
                           </div>
-                        </div>
+                        ))}
                       </div>
-                    </CardContent>
+                    </div>
                     
-                    {/* Bottom Accent Line */}
-                    <div className={`absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r ${feature.color} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left`}></div>
-                  </Card>
+                    {/* Bottom Stats */}
+                    <div className="px-6 pb-6 mt-auto">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-yellow-400 bg-yellow-400/10 px-3 py-1 rounded-full">
+                          {feature.stats}
+                        </span>
+                        <ArrowRight className="h-4 w-4 text-yellow-400 group-hover:translate-x-1 transition-transform duration-300" />
+                      </div>
+                    </div>
+                    
+                    {/* Hover Border Effect */}
+                    <div className={`absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r ${feature.color} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left`}></div>
+                  </div>
                 </div>
               </motion.div>
             ))}
           </div>
 
-          <div className="flex justify-center mt-12">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl">
-              {[
-                {
-                  title: "Targeted Practice",
-                  description: "Focus on your weak areas with intelligent practice sessions that adapt to your specific needs.",
-                  illustration: "/placeholder.svg",
-                  icon: "🎯",
-                  color: "from-pink-500 to-rose-600",
-                  accentColor: "from-pink-400/20 to-rose-400/20"
-                },
-                {
-                  title: "Comprehensive Curriculum",
-                  description:
-                    "Complete learning pathway covering all essential topics with structured progression from basics to advanced.",
-                  illustration: "/placeholder.svg",
-                  icon: "📚",
-                  color: "from-indigo-500 to-blue-600",
-                  accentColor: "from-indigo-400/20 to-blue-400/20"
-                },
-              ].map((feature, index) => (
-                <motion.div
-                  key={index + 3}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: (index + 3) * 0.1 }}
-                  className="group"
-                >
-                  <div className="relative h-full">
-                    {/* Glow Effect */}
-                    <div className={`absolute inset-0 bg-gradient-to-r ${feature.color} rounded-3xl blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500 scale-105`}></div>
+          {/* Bottom 2 Cards - Wider Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {[
+              {
+                title: "Targeted Practice",
+                description: "Focus on your weak areas with intelligent practice sessions that adapt to your specific needs.",
+                icon: Target,
+                color: "from-pink-500 to-rose-600",
+                features: ["Adaptive difficulty", "Weak area focus", "Progress monitoring"],
+                highlight: "AI-powered"
+              },
+              {
+                title: "Comprehensive Curriculum",
+                description: "Complete learning pathway covering all essential topics with structured progression from basics to advanced.",
+                icon: BookOpen,
+                color: "from-indigo-500 to-blue-600",
+                features: ["Structured learning", "Topic coverage", "Advanced progression"],
+                highlight: "Complete"
+              },
+            ].map((feature, index) => (
+              <motion.div
+                key={index + 3}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: (index + 3) * 0.1 }}
+                className="group"
+              >
+                <div className="relative h-full">
+                  {/* Subtle Glow Effect */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} rounded-2xl blur-xl opacity-5 group-hover:opacity-20 transition-all duration-500`}></div>
+                  
+                  {/* Main Card */}
+                  <div className="relative bg-gradient-to-br from-[#1a2236] to-[#2a3246] border border-yellow-400/20 rounded-2xl overflow-hidden h-full flex flex-col group-hover:border-yellow-400/40 group-hover:shadow-2xl transition-all duration-500 hover:transform hover:scale-[1.02] hover:-translate-y-1">
                     
-                    {/* Main Card */}
-                    <Card className="relative bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-xl border border-gray-700/50 rounded-3xl overflow-hidden h-[420px] flex flex-col group-hover:border-yellow-400/40 transition-all duration-500 hover:transform hover:scale-105 hover:shadow-2xl">
-                      {/* Floating Elements */}
-                      <div className="absolute top-4 right-4 w-12 h-12 bg-gradient-to-br from-yellow-400/20 to-amber-400/20 rounded-full blur-sm group-hover:scale-150 transition-all duration-700"></div>
-                      <div className="absolute bottom-4 left-4 w-8 h-8 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-sm group-hover:scale-125 transition-all duration-700"></div>
+                                         {/* Header with Icon */}
+                     <div className="p-6 pb-4">
+                       <div className="flex justify-end items-start mb-4">
+                         <div className={`w-14 h-14 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                           <feature.icon className="h-7 w-7 text-white" />
+                         </div>
+                       </div>
                       
-                      {/* Content */}
-                      <CardHeader className="flex-1 p-8 pb-4 relative z-10">
-                        {/* Icon */}
-                        <div className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
-                          <span className="text-2xl">{feature.icon}</span>
-                        </div>
-                        
-                        <CardTitle className="text-xl font-bold theme-text-light mb-4 leading-tight group-hover:text-yellow-400 transition-colors duration-300">
-                          {feature.title}
-                        </CardTitle>
-                        
-                        <CardDescription className="theme-text-muted text-base leading-relaxed">
-                          {feature.description}
-                        </CardDescription>
-                      </CardHeader>
+                      {/* Title */}
+                      <h3 className="text-2xl font-bold theme-text-light mb-3 group-hover:text-yellow-400 transition-colors duration-300">
+                        {feature.title}
+                      </h3>
+                      
+                      {/* Description */}
+                      <p className="text-base theme-text-muted leading-relaxed mb-4">
+                        {feature.description}
+                      </p>
+                    </div>
 
-                      <CardContent className="p-0 mt-auto relative z-10">
-                        <div className="h-32 w-full overflow-hidden bg-gradient-to-br from-gray-800/50 to-gray-900/50">
-                          <div className="h-full w-full flex items-center justify-center">
-                            <div className={`w-24 h-24 bg-gradient-to-br ${feature.color} rounded-full flex items-center justify-center opacity-30 group-hover:opacity-60 transition-opacity duration-300`}>
-                              <span className="text-3xl">{feature.icon}</span>
-                            </div>
+                    {/* Features List */}
+                    <div className="px-6 pb-4 flex-1">
+                      <div className="space-y-3">
+                        {feature.features.map((item, idx) => (
+                          <div key={idx} className="flex items-center space-x-3">
+                            <div className={`w-2 h-2 bg-gradient-to-r ${feature.color} rounded-full flex-shrink-0`}></div>
+                            <span className="text-sm theme-text-muted group-hover:theme-text-light transition-colors duration-300">
+                              {item}
+                            </span>
                           </div>
-                        </div>
-                      </CardContent>
-                      
-                      {/* Bottom Accent Line */}
-                      <div className={`absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r ${feature.color} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left`}></div>
-                    </Card>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Bottom CTA */}
+                    <div className="px-6 pb-6 mt-auto">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-yellow-400">
+                          Learn more →
+                        </span>
+                        <ArrowRight className="h-5 w-5 text-yellow-400 group-hover:translate-x-1 transition-transform duration-300" />
+                      </div>
+                    </div>
+                    
+                    {/* Hover Border Effect */}
+                    <div className={`absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r ${feature.color} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left`}></div>
                   </div>
-                </motion.div>
-              ))}
-            </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
-
-          {/* <div className="text-center mt-20">
-            <div className="inline-flex items-center gap-3 px-8 py-4 bg-yellow-400/10 backdrop-blur-sm rounded-full border border-yellow-400/20">
-              <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>
-              <span className="theme-text-light font-medium">Ready to revolutionize your learning journey</span>
-            </div>
-          </div> */}
         </div>
       </section>
 
