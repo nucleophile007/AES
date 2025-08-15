@@ -1281,8 +1281,8 @@ export default function CollegePrepPage() {
                       className="absolute cursor-pointer"
                       style={{
                         // Position details card above and to the left for 4th milestone to avoid road overlap
-                        top: index === 3 ? "-120px" : "80px",
-                        left: index === 3 ? "-180px" : "50%",
+                        top: "80px",
+                        left: index === 3 ? "-185px" : "50%",
                         transform: index === 3 ? "translateX(0%)" : "translateX(-50%)",
                       }}
                       animate={{
