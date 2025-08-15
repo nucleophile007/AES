@@ -114,12 +114,12 @@ export default function AboutPage() {
                 📖 About Us
               </Badge>
               <div>
-                <h1 className="text-6xl lg:text-7xl font-black bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent mb-4 animate-slide-in-bottom">
-                  AES
+                <h1 className="text-4xl lg:text-5xl font-black bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent mb-4 animate-slide-in-bottom">
+                  About AcharyaES
                 </h1>
-                <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">
-                  Nurturing Students&apos; Intuitive Abilities
-                </h2>
+                                 <h2 className="text-3xl lg:text-4xl font-bold theme-text-light mb-6">
+                   Nurturing Students&apos; Intuitive Abilities
+                 </h2>
                 <p className="text-lg theme-text-muted max-w-2xl animate-slide-in-bottom" style={{ animationDelay: '0.2s' }}>
                   ACHARYA Educational Services is a California-based organization dedicated to guiding students toward academic excellence and future success. We ignite a passion for core concepts and emerging technologies, helping students build lasting connections to the knowledge shaping our world today.
                 </p>
