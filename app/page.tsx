@@ -26,6 +26,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-background w-full overflow-x-hidden">
       <Header />
       <HeroSection />
+      <MissionSection />
       <ProgramsSection />
       <HowItWorksSection />
       <AnimatedTestimonials />
