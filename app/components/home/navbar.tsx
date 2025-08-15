@@ -18,7 +18,7 @@ function Navbar({ className }: { className?: string }) {
       <Menu setActive={setActive}>
         <MenuItem setActive={setActive} active={null} item="Home" href="/#home" className="text-yellow-400/90 hover:text-yellow-300 transition-colors font-medium">
         </MenuItem>
-        <MenuItem setActive={setActive} active={null} item="About" href="/#about" className="text-yellow-400/90 hover:text-yellow-300 transition-colors font-medium">
+        <MenuItem setActive={setActive} active={null} item="About" href="/about" className="text-yellow-400/90 hover:text-yellow-300 transition-colors font-medium">
         </MenuItem>
         <MenuItem setActive={setActive} active={active} item="Programs" href="/#programs" className="text-yellow-400/90 hover:text-yellow-300 transition-colors font-medium">
           <div className="text-sm grid grid-cols-1 gap-4 p-6 min-w-[300px] bg-gradient-to-br from-[#1a2236]/90 to-[#1a2236]/95">
