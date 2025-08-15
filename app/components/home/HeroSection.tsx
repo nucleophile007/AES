@@ -1,12 +1,13 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Play } from "lucide-react";
+import { ArrowRight, Play, X } from "lucide-react";
 import Image from "next/image";
 
 export default function HeroSection() {
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
 
   return (
     <section
@@ -55,9 +56,13 @@ export default function HeroSection() {
                 <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg">
                   <ArrowRight className="h-5 w-5" /> Get Free 60-Min Session
                 </Button>
-                <Button variant="outline" className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-[#1a2236] px-6">
-                  <Play className="mr-2 h-5 w-5" /> Watch How It Works
-                </Button>
+                                 <Button 
+                   variant="outline" 
+                   className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-[#1a2236] px-6"
+                   onClick={() => setIsVideoOpen(true)}
+                 >
+                   <Play className="mr-2 h-5 w-5" /> Watch How It Works
+                 </Button>
               </div>
             </motion.div>
           </motion.div>
@@ -78,8 +83,40 @@ export default function HeroSection() {
                 />
               </div>
           </motion.div>
-        </div>
-      </div>
-    </section>
-  );
-} 
+                 </div>
+       </div>
+
+       {/* Video Modal */}
+       {isVideoOpen && (
+         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+           <motion.div
+             initial={{ opacity: 0, scale: 0.8 }}
+             animate={{ opacity: 1, scale: 1 }}
+             exit={{ opacity: 0, scale: 0.8 }}
+             className="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full"
+           >
+             {/* Close Button */}
+             <button
+               onClick={() => setIsVideoOpen(false)}
+               className="absolute -top-4 -right-4 w-10 h-10 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-colors z-10"
+             >
+               <X className="w-5 h-5" />
+             </button>
+             
+             {/* Video Container */}
+             <div className="relative w-full h-0 pb-[56.25%] rounded-2xl overflow-hidden">
+               <iframe
+                 src="https://www.youtube.com/embed/BvbIhNgQ6DE?autoplay=1"
+                 title="How It Works - ACHARYA Education"
+                 className="absolute top-0 left-0 w-full h-full"
+                 frameBorder="0"
+                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                 allowFullScreen
+               />
+             </div>
+           </motion.div>
+         </div>
+       )}
+     </section>
+   );
+ }  
