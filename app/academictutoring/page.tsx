@@ -814,101 +814,146 @@ export default function AcademicTutoringPage() {
                 description:
                   "Establish solid fundamentals with our comprehensive learning approach that ensures deep understanding.",
                 illustration: "/placeholder.svg",
+                icon: "🏗️",
+                color: "from-blue-500 to-purple-600",
+                accentColor: "from-blue-400/20 to-purple-400/20"
               },
               {
                 title: "Custom Worksheets",
                 description: "Personalized practice materials tailored to your learning style and progress for better results.",
                 illustration: "/placeholder.svg",
+                icon: "📋",
+                color: "from-green-500 to-teal-600",
+                accentColor: "from-green-400/20 to-teal-400/20"
               },
               {
                 title: "Mock Exams & Feedback",
                 description: "Realistic practice tests with detailed feedback and performance analytics to track improvement.",
                 illustration: "/placeholder.svg",
+                icon: "📊",
+                color: "from-orange-500 to-red-600",
+                accentColor: "from-orange-400/20 to-red-400/20"
               },
             ].map((feature, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
+                className="group"
               >
-                <Card
-                  className="group bg-gradient-to-br from-indigo-900/80 via-purple-900/70 to-pink-900/80 backdrop-blur-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-indigo-400/30 rounded-3xl overflow-hidden h-[400px] flex flex-col relative"
-                >
-                  {/* Animated background elements */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-400/20 to-purple-400/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-br from-pink-400/20 to-purple-400/20 rounded-full blur-xl group-hover:scale-125 transition-transform duration-700"></div>
-                  <CardHeader className="flex-1 p-8 pb-4">
-                    <CardTitle className="text-xl font-bold text-white mb-4 leading-tight drop-shadow-lg">{feature.title}</CardTitle>
-                    <CardDescription className="text-indigo-100 text-base leading-relaxed">
-                      {feature.description}
-                    </CardDescription>
-                  </CardHeader>
-
-                  <CardContent className="p-0 mt-auto">
-                                          <div className="h-40 w-full overflow-hidden">
-                        <Image
-                          src={feature.illustration}
-                          alt={`${feature.title} illustration`}
-                          width={400}
-                          height={300}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
+                <div className="relative h-full">
+                  {/* Glow Effect */}
+                  <div className={`absolute inset-0 bg-gradient-to-r ${feature.color} rounded-3xl blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500 scale-105`}></div>
+                  
+                  {/* Main Card */}
+                  <Card className="relative bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-xl border border-gray-700/50 rounded-3xl overflow-hidden h-[420px] flex flex-col group-hover:border-yellow-400/40 transition-all duration-500 hover:transform hover:scale-105 hover:shadow-2xl">
+                    {/* Floating Elements */}
+                    <div className="absolute top-4 right-4 w-12 h-12 bg-gradient-to-br from-yellow-400/20 to-amber-400/20 rounded-full blur-sm group-hover:scale-150 transition-all duration-700"></div>
+                    <div className="absolute bottom-4 left-4 w-8 h-8 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-sm group-hover:scale-125 transition-all duration-700"></div>
+                    
+                    {/* Content */}
+                    <CardHeader className="flex-1 p-8 pb-4 relative z-10">
+                      {/* Icon */}
+                      <div className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                        <span className="text-2xl">{feature.icon}</span>
                       </div>
-                  </CardContent>
-                </Card>
+                      
+                      <CardTitle className="text-xl font-bold theme-text-light mb-4 leading-tight group-hover:text-yellow-400 transition-colors duration-300">
+                        {feature.title}
+                      </CardTitle>
+                      
+                      <CardDescription className="theme-text-muted text-base leading-relaxed">
+                        {feature.description}
+                      </CardDescription>
+                    </CardHeader>
+
+                    <CardContent className="p-0 mt-auto relative z-10">
+                      <div className="h-32 w-full overflow-hidden bg-gradient-to-br from-gray-800/50 to-gray-900/50">
+                        <div className="h-full w-full flex items-center justify-center">
+                          <div className={`w-24 h-24 bg-gradient-to-br ${feature.color} rounded-full flex items-center justify-center opacity-30 group-hover:opacity-60 transition-opacity duration-300`}>
+                            <span className="text-3xl">{feature.icon}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                    
+                    {/* Bottom Accent Line */}
+                    <div className={`absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r ${feature.color} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left`}></div>
+                  </Card>
+                </div>
               </motion.div>
             ))}
           </div>
 
-          <div className="flex justify-center mt-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl">
+          <div className="flex justify-center mt-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl">
               {[
                 {
                   title: "Targeted Practice",
                   description: "Focus on your weak areas with intelligent practice sessions that adapt to your specific needs.",
                   illustration: "/placeholder.svg",
+                  icon: "🎯",
+                  color: "from-pink-500 to-rose-600",
+                  accentColor: "from-pink-400/20 to-rose-400/20"
                 },
                 {
                   title: "Comprehensive Curriculum",
                   description:
                     "Complete learning pathway covering all essential topics with structured progression from basics to advanced.",
                   illustration: "/placeholder.svg",
+                  icon: "📚",
+                  color: "from-indigo-500 to-blue-600",
+                  accentColor: "from-indigo-400/20 to-blue-400/20"
                 },
               ].map((feature, index) => (
                 <motion.div
                   key={index + 3}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
                   transition={{ delay: (index + 3) * 0.1 }}
+                  className="group"
                 >
-                  <Card
-                    className="group bg-gradient-to-br from-emerald-900/80 via-teal-900/70 to-cyan-900/80 backdrop-blur-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-emerald-400/30 rounded-3xl overflow-hidden h-[400px] flex flex-col w-80 relative"
-                  >
-                    {/* Animated background elements */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-400/20 to-teal-400/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-br from-cyan-400/20 to-teal-400/20 rounded-full blur-xl group-hover:scale-125 transition-transform duration-700"></div>
-                    <CardHeader className="flex-1 p-8 pb-4">
-                      <CardTitle className="text-xl font-bold text-white mb-4 leading-tight drop-shadow-lg">{feature.title}</CardTitle>
-                      <CardDescription className="text-emerald-100 text-base leading-relaxed">
-                        {feature.description}
-                      </CardDescription>
-                    </CardHeader>
+                  <div className="relative h-full">
+                    {/* Glow Effect */}
+                    <div className={`absolute inset-0 bg-gradient-to-r ${feature.color} rounded-3xl blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500 scale-105`}></div>
+                    
+                    {/* Main Card */}
+                    <Card className="relative bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-xl border border-gray-700/50 rounded-3xl overflow-hidden h-[420px] flex flex-col group-hover:border-yellow-400/40 transition-all duration-500 hover:transform hover:scale-105 hover:shadow-2xl">
+                      {/* Floating Elements */}
+                      <div className="absolute top-4 right-4 w-12 h-12 bg-gradient-to-br from-yellow-400/20 to-amber-400/20 rounded-full blur-sm group-hover:scale-150 transition-all duration-700"></div>
+                      <div className="absolute bottom-4 left-4 w-8 h-8 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-sm group-hover:scale-125 transition-all duration-700"></div>
+                      
+                      {/* Content */}
+                      <CardHeader className="flex-1 p-8 pb-4 relative z-10">
+                        {/* Icon */}
+                        <div className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                          <span className="text-2xl">{feature.icon}</span>
+                        </div>
+                        
+                        <CardTitle className="text-xl font-bold theme-text-light mb-4 leading-tight group-hover:text-yellow-400 transition-colors duration-300">
+                          {feature.title}
+                        </CardTitle>
+                        
+                        <CardDescription className="theme-text-muted text-base leading-relaxed">
+                          {feature.description}
+                        </CardDescription>
+                      </CardHeader>
 
-                    <CardContent className="p-0 mt-auto">
-                      <div className="h-40 w-full overflow-hidden">
-                        <Image
-                          src={feature.illustration}
-                          alt={`${feature.title} illustration`}
-                          width={400}
-                          height={300}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
+                      <CardContent className="p-0 mt-auto relative z-10">
+                        <div className="h-32 w-full overflow-hidden bg-gradient-to-br from-gray-800/50 to-gray-900/50">
+                          <div className="h-full w-full flex items-center justify-center">
+                            <div className={`w-24 h-24 bg-gradient-to-br ${feature.color} rounded-full flex items-center justify-center opacity-30 group-hover:opacity-60 transition-opacity duration-300`}>
+                              <span className="text-3xl">{feature.icon}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                      
+                      {/* Bottom Accent Line */}
+                      <div className={`absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r ${feature.color} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left`}></div>
+                    </Card>
+                  </div>
                 </motion.div>
               ))}
             </div>
@@ -1005,96 +1050,98 @@ export default function AcademicTutoringPage() {
       </section>
 
       {/* Call to Action Section */}
-      <section className="py-20 theme-bg-dark relative overflow-hidden">
-        {/* Background Elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-yellow-400/5 via-yellow-500/10 to-yellow-400/5"></div>
-          <div className="absolute top-20 left-10 w-32 h-32 bg-yellow-400/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 right-10 w-40 h-40 bg-blue-400/10 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-purple-400/5 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2"></div>
+      <section className="py-12 sm:py-16 lg:py-20 theme-bg-dark relative overflow-hidden">
+        {/* Enhanced Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-20 left-10 w-32 h-32 bg-yellow-400 rounded-full opacity-5 animate-float"></div>
+          <div className="absolute bottom-20 right-20 w-24 h-24 bg-blue-400 rounded-full opacity-5 animate-float-reverse"></div>
+          <div className="absolute top-1/2 left-1/3 w-20 h-20 bg-purple-400 rounded-full opacity-5 animate-float"></div>
+          <div className="absolute bottom-32 left-1/4 w-16 h-16 bg-green-400 rounded-full opacity-5 animate-float-reverse"></div>
         </div>
         
-        <div className="container mx-auto px-4 text-center relative z-10">
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/10 via-transparent to-amber-500/10"></div>
+        
+        <div className="container mx-auto text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
-            className="max-w-4xl mx-auto space-y-8"
+            className="max-w-4xl mx-auto space-y-6 sm:space-y-8"
           >
-            {/* Main CTA Card */}
-            <div className="bg-gradient-to-br from-[#1a2236]/90 to-[#1a2236]/80 backdrop-blur-xl rounded-3xl p-12 border border-yellow-400/20 shadow-2xl">
-              <div className="space-y-8">
-                <div className="space-y-4">
-                  <Badge className="bg-yellow-400/20 text-yellow-400 border-yellow-400/30 px-4 py-2 text-sm font-semibold">
-                    🚀 Start Your Journey Today
-                  </Badge>
-                  <h2 className="text-3xl lg:text-4xl font-bold theme-text-light">
-                    Ready to Begin?
-                  </h2>
-                  <p className="text-lg theme-text-muted max-w-3xl mx-auto leading-relaxed">
-                    Let&apos;s help your student ACHIEVE their goals.
-                  </p>
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
+              🚀 Start Your Journey Today
+            </Badge>
+            
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold theme-text-light leading-tight">
+              Ready to Begin?
+            </h2>
+            
+            <p className="text-base sm:text-lg lg:text-xl theme-text-muted px-4 leading-relaxed max-w-3xl mx-auto">
+              Let&apos;s help your student ACHIEVE their goals.
+            </p>
+            
+            {/* Three Steps */}
+            <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto pt-4">
+              <div className="flex items-center gap-3 text-left">
+                <div className="w-8 h-8 bg-yellow-400/20 rounded-full flex items-center justify-center">
+                  <CheckIcon className="h-5 w-5 text-yellow-400" />
                 </div>
-                
-                {/* Three Steps */}
-                <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
-                  <div className="flex items-center gap-3 text-left">
-                    <div className="w-8 h-8 bg-yellow-400/20 rounded-full flex items-center justify-center">
-                      <CheckIcon className="h-5 w-5 text-yellow-400" />
-                    </div>
-                    <span className="text-sm theme-text-light">Schedule a Free Consultation</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-left">
-                    <div className="w-8 h-8 bg-yellow-400/20 rounded-full flex items-center justify-center">
-                      <CheckIcon className="h-5 w-5 text-yellow-400" />
-                    </div>
-                    <span className="text-sm theme-text-light">Get Matched with the Right Tutor</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-left">
-                    <div className="w-8 h-8 bg-yellow-400/20 rounded-full flex items-center justify-center">
-                      <CheckIcon className="h-5 w-5 text-yellow-400" />
-                    </div>
-                    <span className="text-sm theme-text-light">Watch the Confidence Grow</span>
-                  </div>
+                <span className="text-sm theme-text-light">Schedule a Free Consultation</span>
+              </div>
+              <div className="flex items-center gap-3 text-left">
+                <div className="w-8 h-8 bg-yellow-400/20 rounded-full flex items-center justify-center">
+                  <CheckIcon className="h-5 w-5 text-yellow-400" />
                 </div>
-                
-                {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button
-                    size="lg"
-                    className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 py-2 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                  >
-                    <ArrowRight className="mr-2 h-5 w-5" /> Get Started Today
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="border-2 border-yellow-400/50 text-yellow-400 hover:bg-yellow-400/10 hover:border-yellow-400 px-6 py-2 text-base font-semibold backdrop-blur-sm transition-all duration-300 transform hover:scale-105"
-                  >
-                    <BookOpen className="mr-2 h-5 w-5" /> Learn More
-                  </Button>
+                <span className="text-sm theme-text-light">Get Matched with the Right Tutor</span>
+              </div>
+              <div className="flex items-center gap-3 text-left">
+                <div className="w-8 h-8 bg-yellow-400/20 rounded-full flex items-center justify-center">
+                  <CheckIcon className="h-5 w-5 text-yellow-400" />
                 </div>
-                
-                {/* Trust Indicators */}
-                <div className="pt-6 border-t border-yellow-400/20">
-                  <p className="text-xs theme-text-muted mb-3">Trusted by 500+ students and families</p>
-                  <div className="flex items-center justify-center gap-4 text-yellow-400/60">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
-                      <span className="text-xs">100% Free Initial Session</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
-                      <span className="text-xs">No Commitment Required</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
-                      <span className="text-xs">Expert Mentorship</span>
-                    </div>
-                  </div>
-                </div>
+                <span className="text-sm theme-text-light">Watch the Confidence Grow</span>
               </div>
             </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center pt-4">
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 hover:from-yellow-300 hover:to-yellow-400 text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-4 shadow-xl hover:shadow-2xl transition-all duration-300 font-semibold"
+              >
+                <ArrowRight className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Get Started Today
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-gray-900 text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-4 border-2 transition-all duration-300 font-semibold"
+              >
+                <BookOpen className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                Learn More
+              </Button>
+            </div>
+            
+            {/* Trust Indicators */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="pt-8 border-t border-gray-700/30"
+            >
+              <div className="flex flex-wrap justify-center items-center gap-6 sm:gap-8 text-sm theme-text-muted">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span>100% Free Initial Session</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                  <span>No Commitment Required</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <span>Expert Mentorship</span>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         </div>
       </section>

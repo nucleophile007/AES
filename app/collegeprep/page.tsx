@@ -1349,74 +1349,76 @@ export default function CollegePrepPage() {
       </section>
 
       {/* Call to Action Section */}
-      <section className="py-20 theme-bg-dark relative overflow-hidden">
-        {/* Background Elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-yellow-400/5 via-yellow-500/10 to-yellow-400/5"></div>
-          <div className="absolute top-20 left-10 w-32 h-32 bg-yellow-400/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 right-10 w-40 h-40 bg-blue-400/10 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-purple-400/5 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2"></div>
+      <section className="py-12 sm:py-16 lg:py-20 theme-bg-dark relative overflow-hidden">
+        {/* Enhanced Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-20 left-10 w-32 h-32 bg-yellow-400 rounded-full opacity-5 animate-float"></div>
+          <div className="absolute bottom-20 right-20 w-24 h-24 bg-blue-400 rounded-full opacity-5 animate-float-reverse"></div>
+          <div className="absolute top-1/2 left-1/3 w-20 h-20 bg-purple-400 rounded-full opacity-5 animate-float"></div>
+          <div className="absolute bottom-32 left-1/4 w-16 h-16 bg-green-400 rounded-full opacity-5 animate-float-reverse"></div>
         </div>
         
-        <div className="container mx-auto px-4 text-center relative z-10">
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/10 via-transparent to-amber-500/10"></div>
+        
+        <div className="container mx-auto text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
-            className="max-w-4xl mx-auto space-y-8"
+            className="max-w-4xl mx-auto space-y-6 sm:space-y-8"
           >
-            {/* Main CTA Card */}
-            <div className="bg-gradient-to-br from-[#1a2236]/90 to-[#1a2236]/80 backdrop-blur-xl rounded-3xl p-12 border border-yellow-400/20 shadow-2xl">
-              <div className="space-y-8">
-                <div className="space-y-4">
-                  <Badge className="bg-yellow-400/20 text-yellow-400 border-yellow-400/30 px-4 py-2 text-sm font-semibold">
-                    🚀 Start Your Journey Today
-                  </Badge>
-                  <h2 className="text-3xl lg:text-4xl font-bold theme-text-light">
-                    Ready to Discover Your Potential?
-                  </h2>
-                  <p className="text-lg theme-text-muted max-w-3xl mx-auto leading-relaxed">
-                    Schedule a FREE Discovery Session with a UACHIEVE Mentor and explore how we can help you build a future that reflects your true potential.
-                  </p>
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
+              🚀 Start Your Journey Today
+            </Badge>
+            
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold theme-text-light leading-tight">
+              Ready to Discover Your Potential?
+            </h2>
+            
+            <p className="text-base sm:text-lg lg:text-xl theme-text-muted px-4 leading-relaxed max-w-3xl mx-auto">
+              Schedule a FREE Discovery Session with a UACHIEVE Mentor and explore how we can help you build a future that reflects your true potential.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center pt-4">
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 hover:from-yellow-300 hover:to-yellow-400 text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-4 shadow-xl hover:shadow-2xl transition-all duration-300 font-semibold"
+              >
+                <Calendar className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Book a Free Consultation
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-gray-900 text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-4 border-2 transition-all duration-300 font-semibold"
+              >
+                <ArrowRight className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                Learn More
+              </Button>
+            </div>
+            
+            {/* Trust Indicators */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="pt-8 border-t border-gray-700/30"
+            >
+              <div className="flex flex-wrap justify-center items-center gap-6 sm:gap-8 text-sm theme-text-muted">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span>100% Free Initial Session</span>
                 </div>
-                
-                {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button
-                    size="lg"
-                    className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 py-2 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                  >
-                    <Calendar className="mr-2 h-5 w-5" /> Book a Free Consultation
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="border-2 border-yellow-400/50 text-yellow-400 hover:bg-yellow-400/10 hover:border-yellow-400 px-6 py-2 text-base font-semibold backdrop-blur-sm transition-all duration-300 transform hover:scale-105"
-                  >
-                    <ArrowRight className="mr-2 h-5 w-5" /> Learn More
-                  </Button>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                  <span>No Commitment Required</span>
                 </div>
-                
-                {/* Trust Indicators */}
-                <div className="pt-6 border-t border-yellow-400/20">
-                  <p className="text-xs theme-text-muted mb-3">Trusted by 500+ students and families</p>
-                  <div className="flex items-center justify-center gap-4 text-yellow-400/60">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
-                      <span className="text-xs">100% Free Initial Session</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
-                      <span className="text-xs">No Commitment Required</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
-                      <span className="text-xs">Expert Mentorship</span>
-                    </div>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <span>Expert Mentorship</span>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         </div>
       </section>
