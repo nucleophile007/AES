@@ -74,6 +74,9 @@ export default function MissionSection() {
                 &quot;Every student can learn, just not on the same day, or in
                 the same way.&quot;
               </p>
+              <p className="text-xs sm:text-sm text-yellow-400/70 mt-1 text-right">
+                — George Evans
+              </p>
               <p className="text-xs sm:text-sm theme-text-muted mt-2 sm:mt-3">
                 We craft personalized, student-centric approaches rooted in
                 decades of combined academic expertise from our team of IIT
