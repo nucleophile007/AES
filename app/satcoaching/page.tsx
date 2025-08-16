@@ -982,38 +982,41 @@ export default function SATCoachingPage() {
                 <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center mx-auto">
                   <Star className="h-10 w-10 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold theme-text-light">Atreya&apos;s SAT Success Story</h3>
+                <h3 className="text-2xl font-bold theme-text-light">Coming Soon!</h3>
                 <div className="bg-gradient-to-br from-[#1a2236]/90 to-[#1a2236]/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-yellow-400/20">
                   <p className="text-lg theme-text-muted leading-relaxed mb-4">
-                    &quot;The personalized approach and expert guidance helped me improve my SAT score significantly. The mock tests and feedback sessions were game-changers for my confidence on test day.&quot;
+                    We&apos;re currently collecting success stories from our SAT prep students. Check back soon to read inspiring stories about score improvements and college admissions success!
                   </p>
                   <div className="flex items-center justify-center gap-4">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-yellow-400">Before</div>
-                      <div className="text-lg theme-text-muted">1200</div>
+                      <div className="text-2xl font-bold text-yellow-400">Stay Tuned</div>
+                      <div className="text-lg theme-text-muted">More stories coming</div>
                     </div>
-                    <div className="text-3xl text-yellow-400">→</div>
+                    <div className="text-3xl text-yellow-400">✨</div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-yellow-400">After</div>
-                      <div className="text-lg theme-text-muted">1450</div>
+                      <div className="text-2xl font-bold text-yellow-400">Success</div>
+                      <div className="text-lg theme-text-muted">Stories ahead</div>
                     </div>
                   </div>
                 </div>
-                                 {/* Embedded Video */}
-                 <div className="w-full max-w-2xl mx-auto">
-                   <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl border-2 border-yellow-400/30">
-                     <iframe
-                       src="https://www.youtube.com/embed/dQw4w9WgXcQ"
-                       title="Atreya's SAT Success Story"
-                       className="w-full h-full"
-                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                       allowFullScreen
-                     ></iframe>
-                   </div>
-                   <p className="text-sm theme-text-muted mt-3 text-center">
-                     Watch Atreya share his SAT journey and score improvement story
-                   </p>
-                 </div>
+                
+                {/* Coming Soon Message */}
+                <div className="w-full max-w-2xl mx-auto">
+                  <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl border-2 border-yellow-400/30 bg-gradient-to-br from-yellow-400/10 to-orange-400/10 flex items-center justify-center">
+                    <div className="text-center space-y-4">
+                      <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mx-auto animate-pulse">
+                        <Star className="h-8 w-8 text-white" />
+                      </div>
+                      <h4 className="text-xl font-bold text-yellow-400">Testimonials Coming Soon</h4>
+                      <p className="text-yellow-300/80 text-sm">
+                        We&apos;re gathering amazing success stories from our SAT students
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-sm theme-text-muted mt-3 text-center">
+                    Check back soon for inspiring SAT success stories and score improvements
+                  </p>
+                </div>
               </div>
             </div>
           </div>
