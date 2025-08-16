@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { Facebook, Twitter, Linkedin, Instagram, Youtube, Phone, Mail, MapPin, ArrowRight } from "lucide-react";
+import { Facebook, Twitter,X, Linkedin, Instagram, Youtube, Phone, Mail, MapPin, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 
@@ -48,7 +48,7 @@ export default function Footer() {
                          <div className="flex space-x-4">
                {[
                  { icon: Facebook, href: "https://www.facebook.com/acharyafolsom/" },
-                 { icon: Twitter, href: "https://x.com/ACHARYAfm" },
+                 { icon: X, href: "https://x.com/ACHARYAfm" },
                  { icon: Instagram, href: "https://www.instagram.com/acharyaes/" },
                  { icon: Youtube, href: "https://www.youtube.com/@acharyaesfm" }
                ].map((social, index) => (
@@ -152,8 +152,8 @@ export default function Footer() {
             </h4>
             <div className="space-y-4">
               {[
-                { icon: Phone, text: "+1 (555) 123-4567" },
-                { icon: Mail, text: "info@acharya-edu.com" },
+                { icon: Phone, text: "+1 (209) 920-7147" },
+                { icon: Mail, text: "acharya.folsom@gmail.com },
                 { icon: MapPin, text: "123 Education Lane\nCalifornia, CA 90210" }
               ].map((contact, index) => (
                 <motion.div

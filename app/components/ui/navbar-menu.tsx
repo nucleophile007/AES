@@ -3,6 +3,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { ChevronDown } from "lucide-react";
 
 export const MenuItem = ({
   setActive,
@@ -32,7 +33,10 @@ export const MenuItem = ({
     >
       {href ? (
         <a href={href} className={className || "cursor-pointer text-yellow-400/90 hover:text-yellow-300 transition-all duration-300 py-2 px-3 rounded-lg hover:bg-white/10 backdrop-blur-sm relative overflow-hidden"}>
-          <span className="relative z-10">{item}</span>
+          <span className="relative z-10 flex items-center gap-1">
+            {item}
+            {children && <ChevronDown className="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" />}
+          </span>
           <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-400/60 transition-all duration-300 group-hover:w-full"></span>
         </a>
       ) : (
@@ -40,7 +44,10 @@ export const MenuItem = ({
           transition={{ duration: 0.3 }}
           className={className || "cursor-pointer text-yellow-400/90 hover:text-yellow-300 transition-all duration-300 py-2 px-3 rounded-lg hover:bg-white/10 backdrop-blur-sm relative overflow-hidden"}
         >
-          <span className="relative z-10">{item}</span>
+          <span className="relative z-10 flex items-center gap-1">
+            {item}
+            {children && <ChevronDown className="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" />}
+          </span>
           <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-400/60 transition-all duration-300 group-hover:w-full"></span>
         </motion.p>
       )}
