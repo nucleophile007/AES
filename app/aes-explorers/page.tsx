@@ -4,7 +4,8 @@ import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, BookOpen, Award, Star, Globe, Clock, Target, TrendingUp, Lightbulb, Briefcase, Heart, Zap, GraduationCap, Microscope, Rocket, Brain } from "lucide-react";
+import { Users, BookOpen, Award, Star, Globe, Clock, Target, TrendingUp, Lightbulb, Briefcase, Heart, Zap, GraduationCap, Microscope, Rocket, Brain, Check } from "lucide-react";
+import Image from "next/image";
 import Footer from "@/components/home/Footer";
 import Chatbot from "@/components/home/Chatbot";
 import Header from "@/components/home/Header";
@@ -77,6 +78,7 @@ const programTiers = [
       gp: "$150/week"
     },
     color: "from-orange-500 to-orange-600",
+    illustration: "/learning-journey-cartoon.png",
   },
   {
     name: "ELEVATE",
@@ -94,6 +96,7 @@ const programTiers = [
       gp: "$100/week"
     },
     color: "from-blue-500 to-blue-600",
+    illustration: "/progress-mountain-climb.png",
   },
   {
     name: "TRANSFORM",
@@ -110,6 +113,7 @@ const programTiers = [
       gp: "$100/week"
     },
     color: "from-purple-500 to-purple-600",
+    illustration: "/successful-celebration.png",
   },
 ];
 
@@ -191,9 +195,9 @@ export default function AESExplorersPage() {
                 <Badge className="bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
                   🔬 AES EXPLORERS
                 </Badge>
-                <h1 className="text-4xl lg:text-5xl font-bold theme-text-light leading-tight">
-                  Research-Based Mentorship Program
-                </h1>
+                                 <h1 className="text-4xl lg:text-5xl font-bold theme-text-light leading-tight">
+                   Research-Based Mentorship Program
+                 </h1>
                 <blockquote className="text-xl theme-text-light italic border-l-4 border-yellow-400 pl-4">
                   &quot;The best way to predict the future is to invent it.&quot;
                   <span className="block text-sm theme-text-muted mt-2">- Alan Kay</span>
@@ -242,7 +246,7 @@ export default function AESExplorersPage() {
             className="text-center mb-16"
           >
             <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Program Information</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Research Excellence at Your Fingertips</h2>
+                         <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Research Excellence at Your Fingertips</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">
               Personalized research problems based on student interests, conducted entirely online with expert mentorship from leading academics and industry professionals.
             </p>
@@ -281,7 +285,7 @@ export default function AESExplorersPage() {
             className="text-center mb-16"
           >
             <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Enrollment Options</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Choose Your Research Journey</h2>
+                         <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Choose Your Research Journey</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">Flexible enrollment options to match your learning style and goals.</p>
           </motion.div>
           <div className="grid md:grid-cols-2 gap-8">
@@ -330,10 +334,10 @@ export default function AESExplorersPage() {
             className="text-center mb-16"
           >
             <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Program Tiers</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-4 leading-tight">
-              Three Levels of 
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500"> Research Excellence</span>
-            </h2>
+                         <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-4 leading-tight">
+               Three Levels of 
+               <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500"> Research Excellence</span>
+             </h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">
               Choose the tier that best fits your research goals and timeline.
             </p>
@@ -348,98 +352,118 @@ export default function AESExplorersPage() {
                 transition={{ delay: i * 0.2, duration: 0.6 }}
                 className="relative group h-full"
               >
-                {/* Background glow effect */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${tier.color} rounded-3xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity duration-500`}></div>
-                
-                                 <Card className="relative h-full flex flex-col bg-[#1a2236]/90 backdrop-blur-sm border border-yellow-400/20 shadow-2xl hover:shadow-3xl transition-all duration-500 group-hover:scale-105 rounded-3xl overflow-hidden">
-                  {/* Header with gradient background */}
-                  <div className="relative bg-gradient-to-br from-[#1a2236] to-[#2a3246] p-8 theme-text-light">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-400/10 rounded-full -translate-y-16 translate-x-16"></div>
-                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-yellow-400/10 rounded-full translate-y-12 -translate-x-12"></div>
-                    
-                    <div className="relative z-10 text-center">
-                      <div className="inline-flex items-center justify-center w-14 h-14 bg-yellow-400/20 rounded-2xl mb-3 backdrop-blur-sm">
-                        <h3 className="text-xl font-black text-yellow-400">{tier.name}</h3>
-                      </div>
-                      <h3 className="text-2xl font-bold mb-2 theme-text-light">{tier.name}</h3>
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-yellow-400/20 rounded-full text-xs font-semibold backdrop-blur-sm text-yellow-400">
-                        <Clock className="w-3 h-3" />
-                        {tier.timeline}
-                      </div>
+                <Card
+                  className={`relative overflow-hidden transition-all duration-500 hover:scale-[1.02] group flex flex-col h-full ${
+                    i === 1
+                      ? "ring-2 ring-blue-400/50 shadow-2xl scale-[1.02] bg-slate-800/90 backdrop-blur-sm border border-blue-400/20"
+                      : "shadow-lg hover:shadow-2xl bg-slate-800/80 backdrop-blur-sm border border-slate-600/30 hover:border-slate-500/50"
+                  }`}
+                >
+                  {i === 1 && (
+                    <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 z-10">
+                      <Badge className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white font-bold px-6 py-2 text-sm shadow-lg animate-pulse">
+                        <Star className="w-4 h-4 mr-1" />
+                        Most Popular
+                      </Badge>
                     </div>
-                  </div>
-                  
-                                     <CardContent className="flex-1 flex flex-col p-8">
-                     {/* Session Details */}
-                     <div className="space-y-3 mb-6">
-                       <h4 className="text-base font-bold theme-text-light mb-3 flex items-center gap-2">
-                         <Users className="w-4 h-4 text-yellow-400" />
-                         Session Details
-                       </h4>
-                       <div className="grid grid-cols-1 gap-3">
-                         <div className="flex justify-between items-center p-3 bg-yellow-400/10 rounded-xl border border-yellow-400/20">
-                           <span className="text-sm font-semibold theme-text-light">Mentor Sessions</span>
-                           <Badge className="bg-yellow-400 text-[#1a2236] font-bold px-3 py-1 rounded-full">{tier.mentorSessions}</Badge>
-                         </div>
-                         <div className="flex justify-between items-center p-3 bg-yellow-400/10 rounded-xl border border-yellow-400/20">
-                           <span className="text-sm font-semibold theme-text-light">Tech Writer Sessions</span>
-                           <Badge className="bg-yellow-400 text-[#1a2236] font-bold px-3 py-1 rounded-full">{tier.techWriterSessions}</Badge>
-                         </div>
-                         <div className="flex justify-between items-center p-3 bg-yellow-400/10 rounded-xl border border-yellow-400/20">
-                           <span className="text-sm font-semibold theme-text-light">Director Sessions</span>
-                           <Badge className="bg-yellow-400 text-[#1a2236] font-bold px-3 py-1 rounded-full">{tier.directorSessions}</Badge>
+                  )}
+
+                  <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-slate-700/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                                     <CardHeader className="text-center pb-6 pt-12 relative z-10">
+                     <div className="w-full h-48 mx-auto mb-6 rounded-2xl overflow-hidden shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105 ring-1 ring-slate-600/20">
+                       <Image
+                         src={tier.illustration || "/placeholder.svg"}
+                         alt={`${tier.name} program illustration`}
+                         width={400}
+                         height={192}
+                         className="w-full h-full object-cover"
+                       />
+                     </div>
+
+                     <h3 className="text-3xl font-bold text-cyan-300 mb-2">{tier.name}</h3>
+                     <p className="text-lg text-cyan-200 font-medium">({tier.timeline})</p>
+                   </CardHeader>
+
+                  <CardContent className="flex-1 flex flex-col relative z-10">
+                    <div className="flex-1 space-y-8">
+                      {/* Session Details */}
+                      <div className="space-y-4">
+                        <h4 className="font-bold text-cyan-300 text-lg border-b border-slate-600/50 pb-2">
+                          Session Details:
+                        </h4>
+                        <div className="space-y-3">
+                          <div className="relative p-4 bg-slate-700/50 rounded-xl border border-slate-600/30 backdrop-blur-sm">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-semibold text-cyan-200">Mentor Sessions</span>
+                              <div className="text-right">
+                                <span className="text-xl font-bold text-cyan-300">{tier.mentorSessions}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="relative p-4 bg-slate-700/50 rounded-xl border border-slate-600/30 backdrop-blur-sm">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-semibold text-cyan-200">Tech Writer Sessions</span>
+                              <div className="text-right">
+                                <span className="text-xl font-bold text-cyan-300">{tier.techWriterSessions}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="relative p-4 bg-slate-700/50 rounded-xl border border-slate-600/30 backdrop-blur-sm">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-semibold text-cyan-200">Director Sessions</span>
+                              <div className="text-right">
+                                <span className="text-xl font-bold text-cyan-300">{tier.directorSessions}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Deliverables */}
+                      <div className="space-y-4">
+                        <h4 className="font-bold text-cyan-300 text-lg border-b border-slate-600/50 pb-2">
+                          What&apos;s included:
+                        </h4>
+                                                 <ul className="space-y-3">
+                           {tier.deliverables.map((deliverable, index) => (
+                             <li key={index} className="flex items-start text-cyan-200 group/item">
+                               <div
+                                 className={`w-5 h-5 rounded-full bg-gradient-to-r ${tier.color} flex items-center justify-center mr-3 mt-0.5 flex-shrink-0 group-hover/item:scale-110 transition-transform duration-200 shadow-lg`}
+                               >
+                                                                   <Check className="w-3 h-3 text-white" />
+                               </div>
+                               <span className="leading-relaxed">{deliverable}</span>
+                             </li>
+                           ))}
+                         </ul>
+                       </div>
+
+                       {/* Investment */}
+                       <div className="space-y-4">
+                         <h4 className="font-bold text-cyan-300 text-lg border-b border-slate-600/50 pb-2">
+                           Investment:
+                         </h4>
+                         <div className="space-y-3">
+                           <div className="relative p-4 bg-slate-700/50 rounded-xl border border-slate-600/30 backdrop-blur-sm">
+                             <div className="flex justify-between items-center">
+                               <span className="text-sm font-semibold text-cyan-200">Individual Contributor</span>
+                               <div className="text-right">
+                                 <span className="text-xl font-bold text-cyan-300">{tier.fees.ic}</span>
+                               </div>
+                             </div>
+                           </div>
+                           <div className="relative p-4 bg-slate-700/50 rounded-xl border border-slate-600/30 backdrop-blur-sm">
+                             <div className="flex justify-between items-center">
+                               <span className="text-sm font-semibold text-cyan-200">Group Project</span>
+                               <div className="text-right">
+                                 <span className="text-xl font-bold text-cyan-300">{tier.fees.gp}</span>
+                               </div>
+                             </div>
+                           </div>
                          </div>
                        </div>
                      </div>
-                     
-                     {/* Deliverables */}
-                     <div className="space-y-3 mb-6">
-                       <h4 className="text-base font-bold theme-text-light mb-3 flex items-center gap-2">
-                         <Award className="w-4 h-4 text-yellow-400" />
-                         Deliverables
-                       </h4>
-                       <ul className="space-y-3">
-                         {tier.deliverables.map((deliverable, index) => (
-                           <li key={index} className="flex items-start gap-3 p-3 bg-[#1a2236]/50 rounded-xl border border-yellow-400/20">
-                             <div className="w-2 h-2 rounded-full bg-gradient-to-r from-yellow-400 to-amber-500 mt-2 flex-shrink-0"></div>
-                             <span className="text-sm font-medium theme-text-light">{deliverable}</span>
-                           </li>
-                         ))}
-                       </ul>
-                     </div>
-                     
-                     {/* Fees */}
-                     <div className="space-y-3 mb-6">
-                       <h4 className="text-base font-bold theme-text-light mb-3 flex items-center gap-2">
-                         <Briefcase className="w-4 h-4 text-yellow-400" />
-                         Investment
-                       </h4>
-                       <div className="space-y-3">
-                         <div className="flex justify-between items-center p-4 bg-yellow-400/10 rounded-xl border border-yellow-400/20">
-                           <div>
-                             <span className="text-sm font-semibold theme-text-light">Individual Contributor</span>
-                             <p className="text-xs theme-text-muted">One-on-one mentorship</p>
-                           </div>
-                           <span className="font-bold text-xl text-yellow-400">{tier.fees.ic}</span>
-                         </div>
-                         <div className="flex justify-between items-center p-4 bg-yellow-400/10 rounded-xl border border-yellow-400/20">
-                           <div>
-                             <span className="text-sm font-semibold theme-text-light">Group Project</span>
-                             <p className="text-xs theme-text-muted">Team collaboration</p>
-                           </div>
-                           <span className="font-bold text-xl text-yellow-400">{tier.fees.gp}</span>
-                         </div>
-                       </div>
-                     </div>
-                     
-                     {/* Spacer to push button to bottom */}
-                     <div className="flex-1"></div>
-                     
-                     {/* CTA Button */}
-                     <Button className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:scale-105 transition-all duration-300 text-[#1a2236] font-bold py-4 rounded-xl shadow-lg hover:shadow-xl mt-auto">
-                       <Zap className="w-5 h-5 mr-2" />
-                       Enroll Now
-                     </Button>
                    </CardContent>
                 </Card>
               </motion.div>
