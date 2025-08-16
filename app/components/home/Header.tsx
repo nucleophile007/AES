@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
 import { NavbarDemo } from "./navbar";
-import { Menu, X, Sparkles } from "lucide-react";
+import { Menu, X, Sparkles, ChevronDown } from "lucide-react";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   return (
     <motion.header
@@ -61,7 +62,7 @@ export default function Header() {
         <div className="hidden md:flex items-center space-x-4">
           <Button 
             variant="outline" 
-            className="hidden sm:inline-flex border-yellow-400/20 text-yellow-400/90 hover:bg-yellow-400/5 hover:border-yellow-400/30 backdrop-blur-md transition-all duration-300 bg-white/5 hover:bg-white/10"
+            className="hidden sm:inline-flex border-yellow-400/20 text-yellow-400/90 hover:bg-yellow-400/10 hover:border-yellow-400/30 backdrop-blur-md transition-all duration-300 bg-white/5"
           >
             Login
           </Button>
@@ -78,11 +79,11 @@ export default function Header() {
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="lg:hidden p-2 rounded-xl hover:bg-white/10 transition-all duration-300 border border-yellow-400/15 hover:border-yellow-400/30 backdrop-blur-md bg-white/5"
         >
-          {isMobileMenuOpen ? (
-            <X className="h-6 w-6 text-yellow-400/90" />
-          ) : (
-            <Menu className="h-6 w-6 text-yellow-400/90" />
-          )}
+          <div className="w-6 h-6 flex flex-col justify-center items-center">
+            <div className={`w-6 h-0.5 bg-yellow-400/90 rounded-full transition-all duration-300 transform ${isMobileMenuOpen ? 'rotate-45 translate-y-1' : ''}`}></div>
+            <div className={`w-6 h-0.5 bg-yellow-400/90 rounded-full transition-all duration-300 my-1 ${isMobileMenuOpen ? 'opacity-0' : 'opacity-100'}`}></div>
+            <div className={`w-6 h-0.5 bg-yellow-400/90 rounded-full transition-all duration-300 transform ${isMobileMenuOpen ? '-rotate-45 -translate-y-1' : ''}`}></div>
+          </div>
         </button>
       </div>
 
@@ -92,16 +93,55 @@ export default function Header() {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
           exit={{ opacity: 0, height: 0 }}
-          className="lg:hidden bg-gradient-to-b from-[#1a2236]/60 to-[#1a2236]/80 backdrop-blur-3xl border-t border-yellow-400/10 shadow-2xl"
+          className="lg:hidden bg-gradient-to-b from-[#1a2236]/60 to-[#1a2236]/80 backdrop-blur-3xl border-t border-yellow-400/10 shadow-2xl relative z-40"
         >
           <div className="container mx-auto px-4 py-6 space-y-4">
             <nav className="space-y-4">
               <Link href="/#home" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Home</Link>
-              <Link href="/#programs" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Programs</Link>
+              <Link href="/about" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">About</Link>
+              
+              {/* Programs Dropdown */}
+              <div className="space-y-2">
+                <button 
+                  onClick={() => setOpenDropdown(openDropdown === 'programs' ? null : 'programs')}
+                  className="flex items-center justify-between w-full text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm"
+                >
+                  Programs
+                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${openDropdown === 'programs' ? 'rotate-180' : ''}`} />
+                </button>
+                {openDropdown === 'programs' && (
+                  <div className="pl-6 space-y-2">
+                    <Link href="/academictutoring" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">Academic Tutoring</Link>
+                    <Link href="/collegeprep" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">College Prep</Link>
+                    <Link href="/satcoaching" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">SAT Coaching</Link>
+                  </div>
+                )}
+              </div>
+
+              {/* Profile Enrichment Dropdown */}
+              <div className="space-y-2">
+                <button 
+                  onClick={() => setOpenDropdown(openDropdown === 'profile' ? null : 'profile')}
+                  className="flex items-center justify-between w-full text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm"
+                >
+                  Profile Enrichment
+                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${openDropdown === 'profile' ? 'rotate-180' : ''}`} />
+                </button>
+                {openDropdown === 'profile' && (
+                  <div className="pl-6 space-y-2">
+                    <Link href="/aes-explorers" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">AES Explorers</Link>
+                    <Link href="/aes-champions" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">AES Champions</Link>
+                    <Link href="/aes-creatorverse" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">AES Creatorverse</Link>
+                    <Link href="/mathcompetition" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">Math Competition</Link>
+                    <Link href="/researchprogram" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">Research Programs</Link>
+                  </div>
+                )}
+              </div>
+
               <Link href="/#mentors" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Mentors</Link>
-              <Link href="/#success" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Success Stories</Link>
-              <Link href="/#about" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">About</Link>
-              <Link href="/#contact" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Contact</Link>
+              <Link href="/#animatedtestimonials" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Testimonials</Link>
+              <Link href="/blog" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Blog</Link>
+              <Link href="/#cta" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Contact</Link>
             </nav>
             <div className="pt-4 border-t border-yellow-400/10 space-y-3">
               <Button variant="outline" className="w-full border-yellow-400/20 text-yellow-400/90 hover:bg-white/10 hover:border-yellow-400/30 backdrop-blur-md bg-white/5">Login</Button>

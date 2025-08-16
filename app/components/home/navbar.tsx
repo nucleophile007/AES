@@ -20,7 +20,7 @@ function Navbar({ className }: { className?: string }) {
         </MenuItem>
         <MenuItem setActive={setActive} active={null} item="About" href="/about" className="text-yellow-400/90 hover:text-yellow-300 transition-colors font-medium">
         </MenuItem>
-        <MenuItem setActive={setActive} active={active} item="Programs" href="/#programs" className="text-yellow-400/90 hover:text-yellow-300 transition-colors font-medium">
+        <MenuItem setActive={setActive} active={active} item="Programs" className="text-yellow-400/90 hover:text-yellow-300 transition-colors font-medium">
           <div className="text-sm grid grid-cols-1 gap-4 p-6 min-w-[300px] bg-gradient-to-br from-[#1a2236]/90 to-[#1a2236]/95">
             <ProductItem
               title="Academic Tutoring"
@@ -42,7 +42,7 @@ function Navbar({ className }: { className?: string }) {
             />
           </div>
         </MenuItem>
-        <MenuItem setActive={setActive} active={active} item="Profile Enrichment" href="/#profile-enrichment" className="text-yellow-400/90 hover:text-yellow-300 transition-colors font-medium">
+        <MenuItem setActive={setActive} active={active} item="Profile Enrichment" className="text-yellow-400/90 hover:text-yellow-300 transition-colors font-medium">
           <div className="text-sm grid grid-cols-2 gap-4 p-6 min-w-[500px] bg-gradient-to-br from-[#1a2236]/90 to-[#1a2236]/95">
             <ProductItem
               title="AES Explorers"
