@@ -100,11 +100,11 @@ export default function Footer() {
             <div className="space-y-2 sm:space-y-3 text-sm sm:text-base text-gray-400">
               <div className="flex items-center space-x-3">
                 <Phone className="h-4 w-4 flex-shrink-0" />
-                <span>+1 (555) 123-4567</span>
+                <span>+1 (209) 920-7147</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="h-4 w-4 flex-shrink-0" />
-                <span>info@acharya-edu.com</span>
+                <span>acharya.folsom@gmail.com</span>
               </div>
               <div className="flex items-start space-x-3">
                 <MapPin className="h-4 w-4 mt-1 flex-shrink-0" />
