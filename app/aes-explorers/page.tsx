@@ -164,14 +164,22 @@ const faqs = [
 
 export default function AESExplorersPage() {
   return (
-    <>
+    <main className="min-h-screen theme-bg-dark flex flex-col">
       <Header />
       {/* Hero Section */}
       <section
         id="home"
-        className="pt-24 pb-20 bg-gradient-to-br from-brand-light-blue via-white to-brand-light-blue/50"
+        className="py-16 lg:py-24 theme-bg-dark relative overflow-hidden"
       >
-        <div className="container mx-auto">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-20 left-10 w-20 h-20 bg-yellow-400 rounded-full opacity-10 animate-float"></div>
+          <div className="absolute top-40 right-20 w-16 h-16 bg-blue-400 rounded-full opacity-10 animate-float-reverse"></div>
+          <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-purple-400 rounded-full opacity-10 animate-float"></div>
+          <div className="absolute top-1/3 right-1/3 w-8 h-8 bg-green-400 rounded-full opacity-10 animate-float-reverse"></div>
+        </div>
+        
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             <motion.div
               initial={{ opacity: 0, x: -50 }}
@@ -180,17 +188,17 @@ export default function AESExplorersPage() {
               className="space-y-8"
             >
               <div className="space-y-4">
-                <Badge className="bg-brand-orange/10 text-brand-orange border-brand-orange/20">
+                <Badge className="bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
                   🔬 AES EXPLORERS
                 </Badge>
-                <h1 className="text-5xl lg:text-6xl font-bold text-text-dark leading-tight">
+                <h1 className="text-4xl lg:text-5xl font-bold theme-text-light leading-tight">
                   Research-Based Mentorship Program
                 </h1>
-                <blockquote className="text-xl text-brand-blue italic border-l-4 border-brand-blue pl-4">
+                <blockquote className="text-xl theme-text-light italic border-l-4 border-yellow-400 pl-4">
                   &quot;The best way to predict the future is to invent it.&quot;
-                  <span className="block text-sm text-text-light mt-2">- Alan Kay</span>
+                  <span className="block text-sm theme-text-muted mt-2">- Alan Kay</span>
                 </blockquote>
-                <p className="text-xl text-text-light leading-relaxed">
+                <p className="text-lg theme-text-muted leading-relaxed">
                   Our flagship program introduces middle and high school students to graduate-level research methodology, critical thinking, and academic publishing. Work with Ph.D. mentors on personalized research problems that match your interests.
                 </p>
               </div>
@@ -202,18 +210,18 @@ export default function AESExplorersPage() {
               className="relative"
             >
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-brand-blue/20 to-brand-teal/20 rounded-3xl transform rotate-6"></div>
-                <div className="relative bg-white p-8 rounded-3xl shadow-2xl border">
+                <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-amber-400/20 rounded-3xl transform rotate-6"></div>
+                <div className="relative bg-[#1a2236]/90 backdrop-blur-sm p-8 rounded-3xl shadow-2xl border border-yellow-400/20">
                   <div className="space-y-6">
-                    <h3 className="text-xl font-semibold text-brand-blue">Research Domains</h3>
+                    <h3 className="text-xl font-semibold text-yellow-400">Research Domains</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {domains.map((domain, i) => (
-                        <Card key={i} className="flex flex-col items-center p-4 bg-gradient-to-br from-white to-brand-light-blue/10 border-brand-blue/10 hover:scale-105 hover:shadow-xl transition-transform transition-shadow duration-300">
+                        <Card key={i} className="flex flex-col items-center p-4 bg-gradient-to-br from-[#1a2236] to-[#2a3246] border-yellow-400/20 hover:scale-105 hover:shadow-xl transition-all duration-300">
                           <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${domain.color} flex items-center justify-center mb-3`}>
                             <domain.icon className="h-6 w-6 text-white" />
                           </div>
-                          <CardTitle className="text-lg text-center mb-1">{domain.title}</CardTitle>
-                          <CardDescription className="text-xs text-center">{domain.description}</CardDescription>
+                          <CardTitle className="text-lg text-center mb-1 theme-text-light">{domain.title}</CardTitle>
+                          <CardDescription className="text-xs text-center theme-text-muted">{domain.description}</CardDescription>
                         </Card>
                       ))}
                     </div>
@@ -226,16 +234,16 @@ export default function AESExplorersPage() {
       </section>
 
       {/* Program Info Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto">
+      <section className="py-20 theme-bg-dark">
+        <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-brand-blue/10 text-brand-blue">Program Information</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">Research Excellence at Your Fingertips</h2>
-            <p className="text-xl text-text-light max-w-3xl mx-auto">
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Program Information</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Research Excellence at Your Fingertips</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">
               Personalized research problems based on student interests, conducted entirely online with expert mentorship from leading academics and industry professionals.
             </p>
           </motion.div>
@@ -247,15 +255,15 @@ export default function AESExplorersPage() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="h-full flex flex-col justify-center bg-white border-l-8 border-brand-blue shadow-md rounded-xl hover:shadow-xl hover:border-brand-teal transition-all duration-300 group p-0">
+                <Card className="h-full flex flex-col justify-center bg-[#1a2236]/90 backdrop-blur-sm border border-yellow-400/20 shadow-md rounded-xl hover:shadow-xl hover:border-yellow-400/40 transition-all duration-300 group p-0">
                   <div className="flex items-center gap-4 px-6 pt-8 pb-2">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-blue to-brand-teal flex items-center justify-center group-hover:scale-105 transition-transform">
-                      <mentor.icon className="h-6 w-6 text-white" />
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <mentor.icon className="h-6 w-6 text-[#1a2236]" />
                     </div>
-                    <span className="text-lg font-bold text-text-dark">{mentor.title}</span>
+                    <span className="text-lg font-bold theme-text-light">{mentor.title}</span>
                   </div>
                   <div className="px-6 pb-8 pt-2 flex-1 flex flex-col justify-center">
-                    <p className="text-base text-text-light font-medium text-left">{mentor.description}</p>
+                    <p className="text-base theme-text-muted font-medium text-left">{mentor.description}</p>
                   </div>
                 </Card>
               </motion.div>
@@ -265,16 +273,16 @@ export default function AESExplorersPage() {
       </section>
 
       {/* Enrollment Options Section */}
-      <section className="py-20 bg-gradient-to-br from-brand-light-blue/30 to-white">
-        <div className="container mx-auto">
+      <section className="py-20 theme-bg-dark">
+        <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-brand-green/10 text-brand-green">Enrollment Options</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">Choose Your Research Journey</h2>
-            <p className="text-xl text-text-light max-w-3xl mx-auto">Flexible enrollment options to match your learning style and goals.</p>
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Enrollment Options</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Choose Your Research Journey</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Flexible enrollment options to match your learning style and goals.</p>
           </motion.div>
           <div className="grid md:grid-cols-2 gap-8">
             {enrollmentOptions.map((option, i) => (
@@ -284,25 +292,25 @@ export default function AESExplorersPage() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 transition={{ delay: i * 0.1 }}
               >
-                <Card className="h-full flex flex-col hover:shadow-xl transition-all duration-300 border-2 hover:border-brand-blue/20 group relative">
+                <Card className="h-full flex flex-col bg-[#1a2236]/90 backdrop-blur-sm border border-yellow-400/20 hover:shadow-xl hover:border-yellow-400/40 transition-all duration-300 group relative">
                   <CardHeader className="pb-2">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-blue to-brand-teal flex items-center justify-center mb-4 mx-auto">
-                      <option.icon className="h-7 w-7 text-white" />
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center mb-4 mx-auto">
+                      <option.icon className="h-7 w-7 text-[#1a2236]" />
                     </div>
-                    <CardTitle className="text-xl font-semibold text-center mb-2 text-text-dark">{option.type}</CardTitle>
-                    <p className="text-sm text-text-light text-center mb-4 font-medium">{option.description}</p>
+                    <CardTitle className="text-xl font-semibold text-center mb-2 theme-text-light">{option.type}</CardTitle>
+                    <p className="text-sm theme-text-muted text-center mb-4 font-medium">{option.description}</p>
                   </CardHeader>
                   <CardContent className="flex-1 flex flex-col">
                     <ul className="space-y-2 mb-4">
                       {option.features.map((feature, index) => (
-                        <li key={index} className="flex items-start gap-2 text-sm text-text-light">
-                          <div className="w-2 h-2 rounded-full bg-brand-blue mt-2 flex-shrink-0"></div>
+                        <li key={index} className="flex items-start gap-2 text-sm theme-text-muted">
+                          <div className="w-2 h-2 rounded-full bg-yellow-400 mt-2 flex-shrink-0"></div>
                           <span>{feature}</span>
                         </li>
                       ))}
                     </ul>
                     <div className="flex-1" />
-                    <Button variant="outline" className="w-full group-hover:bg-brand-blue group-hover:text-white transition-colors mt-2">
+                    <Button variant="outline" className="w-full border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-[#1a2236] transition-colors mt-2">
                       Learn More
                     </Button>
                   </CardContent>
@@ -314,22 +322,19 @@ export default function AESExplorersPage() {
       </section>
 
       {/* Program Tiers Section */}
-      <section className="py-20 bg-gradient-to-br from-slate-50 to-blue-50/30">
-        <div className="container mx-auto">
+      <section className="py-20 theme-bg-dark">
+        <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-semibold rounded-full mb-4 shadow-lg">
-              <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-              Program Tiers
-            </div>
-            <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Program Tiers</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-4 leading-tight">
               Three Levels of 
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> Research Excellence</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500"> Research Excellence</span>
             </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto font-medium">
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">
               Choose the tier that best fits your research goals and timeline.
             </p>
           </motion.div>
@@ -346,18 +351,18 @@ export default function AESExplorersPage() {
                 {/* Background glow effect */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${tier.color} rounded-3xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity duration-500`}></div>
                 
-                                 <Card className="relative h-full flex flex-col bg-white/80 backdrop-blur-sm border-0 shadow-2xl hover:shadow-3xl transition-all duration-500 group-hover:scale-105 rounded-3xl overflow-hidden">
+                                 <Card className="relative h-full flex flex-col bg-[#1a2236]/90 backdrop-blur-sm border border-yellow-400/20 shadow-2xl hover:shadow-3xl transition-all duration-500 group-hover:scale-105 rounded-3xl overflow-hidden">
                   {/* Header with gradient background */}
-                  <div className={`relative bg-gradient-to-br ${tier.color} p-8 text-white`}>
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-12 -translate-x-12"></div>
+                  <div className="relative bg-gradient-to-br from-[#1a2236] to-[#2a3246] p-8 theme-text-light">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-400/10 rounded-full -translate-y-16 translate-x-16"></div>
+                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-yellow-400/10 rounded-full translate-y-12 -translate-x-12"></div>
                     
                     <div className="relative z-10 text-center">
-                      <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 rounded-2xl mb-3 backdrop-blur-sm">
-                        <h3 className="text-xl font-black text-white">{tier.name}</h3>
+                      <div className="inline-flex items-center justify-center w-14 h-14 bg-yellow-400/20 rounded-2xl mb-3 backdrop-blur-sm">
+                        <h3 className="text-xl font-black text-yellow-400">{tier.name}</h3>
                       </div>
-                      <h3 className="text-2xl font-bold mb-2">{tier.name}</h3>
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/20 rounded-full text-xs font-semibold backdrop-blur-sm">
+                      <h3 className="text-2xl font-bold mb-2 theme-text-light">{tier.name}</h3>
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-yellow-400/20 rounded-full text-xs font-semibold backdrop-blur-sm text-yellow-400">
                         <Clock className="w-3 h-3" />
                         {tier.timeline}
                       </div>
@@ -367,37 +372,37 @@ export default function AESExplorersPage() {
                                      <CardContent className="flex-1 flex flex-col p-8">
                      {/* Session Details */}
                      <div className="space-y-3 mb-6">
-                       <h4 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
-                         <Users className="w-4 h-4 text-blue-600" />
+                       <h4 className="text-base font-bold theme-text-light mb-3 flex items-center gap-2">
+                         <Users className="w-4 h-4 text-yellow-400" />
                          Session Details
                        </h4>
                        <div className="grid grid-cols-1 gap-3">
-                         <div className="flex justify-between items-center p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl">
-                           <span className="text-sm font-semibold text-gray-700">Mentor Sessions</span>
-                           <Badge className="bg-blue-600 text-white font-bold px-3 py-1 rounded-full">{tier.mentorSessions}</Badge>
+                         <div className="flex justify-between items-center p-3 bg-yellow-400/10 rounded-xl border border-yellow-400/20">
+                           <span className="text-sm font-semibold theme-text-light">Mentor Sessions</span>
+                           <Badge className="bg-yellow-400 text-[#1a2236] font-bold px-3 py-1 rounded-full">{tier.mentorSessions}</Badge>
                          </div>
-                         <div className="flex justify-between items-center p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl">
-                           <span className="text-sm font-semibold text-gray-700">Tech Writer Sessions</span>
-                           <Badge className="bg-green-600 text-white font-bold px-3 py-1 rounded-full">{tier.techWriterSessions}</Badge>
+                         <div className="flex justify-between items-center p-3 bg-yellow-400/10 rounded-xl border border-yellow-400/20">
+                           <span className="text-sm font-semibold theme-text-light">Tech Writer Sessions</span>
+                           <Badge className="bg-yellow-400 text-[#1a2236] font-bold px-3 py-1 rounded-full">{tier.techWriterSessions}</Badge>
                          </div>
-                         <div className="flex justify-between items-center p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
-                           <span className="text-sm font-semibold text-gray-700">Director Sessions</span>
-                           <Badge className="bg-purple-600 text-white font-bold px-3 py-1 rounded-full">{tier.directorSessions}</Badge>
+                         <div className="flex justify-between items-center p-3 bg-yellow-400/10 rounded-xl border border-yellow-400/20">
+                           <span className="text-sm font-semibold theme-text-light">Director Sessions</span>
+                           <Badge className="bg-yellow-400 text-[#1a2236] font-bold px-3 py-1 rounded-full">{tier.directorSessions}</Badge>
                          </div>
                        </div>
                      </div>
                      
                      {/* Deliverables */}
                      <div className="space-y-3 mb-6">
-                       <h4 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
-                         <Award className="w-4 h-4 text-green-600" />
+                       <h4 className="text-base font-bold theme-text-light mb-3 flex items-center gap-2">
+                         <Award className="w-4 h-4 text-yellow-400" />
                          Deliverables
                        </h4>
                        <ul className="space-y-3">
                          {tier.deliverables.map((deliverable, index) => (
-                           <li key={index} className="flex items-start gap-3 p-3 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100">
-                             <div className="w-2 h-2 rounded-full bg-gradient-to-r from-green-500 to-blue-500 mt-2 flex-shrink-0"></div>
-                             <span className="text-sm font-medium text-gray-700">{deliverable}</span>
+                           <li key={index} className="flex items-start gap-3 p-3 bg-[#1a2236]/50 rounded-xl border border-yellow-400/20">
+                             <div className="w-2 h-2 rounded-full bg-gradient-to-r from-yellow-400 to-amber-500 mt-2 flex-shrink-0"></div>
+                             <span className="text-sm font-medium theme-text-light">{deliverable}</span>
                            </li>
                          ))}
                        </ul>
@@ -405,24 +410,24 @@ export default function AESExplorersPage() {
                      
                      {/* Fees */}
                      <div className="space-y-3 mb-6">
-                       <h4 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
-                         <Briefcase className="w-4 h-4 text-orange-600" />
+                       <h4 className="text-base font-bold theme-text-light mb-3 flex items-center gap-2">
+                         <Briefcase className="w-4 h-4 text-yellow-400" />
                          Investment
                        </h4>
                        <div className="space-y-3">
-                         <div className="flex justify-between items-center p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border border-orange-100">
+                         <div className="flex justify-between items-center p-4 bg-yellow-400/10 rounded-xl border border-yellow-400/20">
                            <div>
-                             <span className="text-sm font-semibold text-gray-700">Individual Contributor</span>
-                             <p className="text-xs text-gray-500">One-on-one mentorship</p>
+                             <span className="text-sm font-semibold theme-text-light">Individual Contributor</span>
+                             <p className="text-xs theme-text-muted">One-on-one mentorship</p>
                            </div>
-                           <span className="font-bold text-xl text-orange-600">{tier.fees.ic}</span>
+                           <span className="font-bold text-xl text-yellow-400">{tier.fees.ic}</span>
                          </div>
-                         <div className="flex justify-between items-center p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
+                         <div className="flex justify-between items-center p-4 bg-yellow-400/10 rounded-xl border border-yellow-400/20">
                            <div>
-                             <span className="text-sm font-semibold text-gray-700">Group Project</span>
-                             <p className="text-xs text-gray-500">Team collaboration</p>
+                             <span className="text-sm font-semibold theme-text-light">Group Project</span>
+                             <p className="text-xs theme-text-muted">Team collaboration</p>
                            </div>
-                           <span className="font-bold text-xl text-blue-600">{tier.fees.gp}</span>
+                           <span className="font-bold text-xl text-yellow-400">{tier.fees.gp}</span>
                          </div>
                        </div>
                      </div>
@@ -431,7 +436,7 @@ export default function AESExplorersPage() {
                      <div className="flex-1"></div>
                      
                      {/* CTA Button */}
-                     <Button className={`w-full bg-gradient-to-r ${tier.color} hover:scale-105 transition-all duration-300 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl mt-auto`}>
+                     <Button className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:scale-105 transition-all duration-300 text-[#1a2236] font-bold py-4 rounded-xl shadow-lg hover:shadow-xl mt-auto">
                        <Zap className="w-5 h-5 mr-2" />
                        Enroll Now
                      </Button>
@@ -444,16 +449,16 @@ export default function AESExplorersPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-20 bg-gradient-to-br from-brand-light-blue/30 to-white">
-        <div className="container mx-auto">
+      <section className="py-20 theme-bg-dark">
+        <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-brand-blue/10 text-brand-blue">FAQ</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">Frequently Asked Questions</h2>
-            <p className="text-xl text-text-light max-w-3xl mx-auto">Find answers to common questions about the AES EXPLORERS program.</p>
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">FAQ</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Frequently Asked Questions</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Find answers to common questions about the AES EXPLORERS program.</p>
           </motion.div>
           <div className="max-w-2xl mx-auto">
             <Accordion type="single" collapsible>
@@ -461,13 +466,13 @@ export default function AESExplorersPage() {
                 {faqs.map((faq, i) => (
                   <AccordionItem key={i} value={`faq-${i}`} className="border-none">
                     <div>
-                      <AccordionTrigger className="flex items-center gap-4 px-6 py-4 bg-brand-light-blue/30 rounded-full font-bold text-lg text-brand-blue hover:bg-brand-blue/10 hover:no-underline transition-all">
-                        <div className="w-8 h-8 rounded-full bg-brand-blue flex items-center justify-center text-white font-bold">Q</div>
+                      <AccordionTrigger className="flex items-center gap-4 px-6 py-4 bg-[#1a2236]/90 backdrop-blur-sm border border-yellow-400/20 rounded-full font-bold text-lg text-yellow-400 hover:bg-yellow-400/10 hover:no-underline transition-all">
+                        <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-[#1a2236] font-bold">Q</div>
                         <span className="text-left">{faq.question}</span>
                       </AccordionTrigger>
                       <AccordionContent className="relative px-0 pb-4 pt-0">
-                        <div className="relative bg-white rounded-2xl shadow-lg p-6 text-base font-medium text-text-dark mt-2 ml-10">
-                          <div className="absolute -left-4 top-6 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-white"></div>
+                        <div className="relative bg-[#1a2236]/90 backdrop-blur-sm border border-yellow-400/20 rounded-2xl shadow-lg p-6 text-base font-medium theme-text-light mt-2 ml-10">
+                          <div className="absolute -left-4 top-6 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-[#1a2236]"></div>
                           {faq.answer}
                         </div>
                       </AccordionContent>
@@ -481,33 +486,42 @@ export default function AESExplorersPage() {
       </section>
 
       {/* Call to Action Section */}
-      <section className="py-20 bg-gradient-to-r from-brand-blue to-brand-teal">
-        <div className="container mx-auto text-center">
+      <section className="py-12 sm:py-16 lg:py-20 theme-bg-dark relative overflow-hidden">
+        {/* Enhanced Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-20 left-10 w-32 h-32 bg-yellow-400 rounded-full opacity-5 animate-float"></div>
+          <div className="absolute bottom-20 right-20 w-24 h-24 bg-blue-400 rounded-full opacity-5 animate-float-reverse"></div>
+          <div className="absolute top-1/2 left-1/3 w-20 h-20 bg-purple-400 rounded-full opacity-5 animate-float"></div>
+          <div className="absolute bottom-32 left-1/4 w-16 h-16 bg-green-400 rounded-full opacity-5 animate-float-reverse"></div>
+        </div>
+        
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/10 via-transparent to-amber-500/10"></div>
+        
+        <div className="container mx-auto text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
-            className="max-w-4xl mx-auto text-white space-y-8"
+            className="max-w-4xl mx-auto theme-text-light space-y-6 sm:space-y-8"
           >
-            <h2 className="text-4xl lg:text-5xl font-bold">
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
+              🚀 Start Your Research Journey
+            </Badge>
+            
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold theme-text-light leading-tight">
               Ready to Start Your Research Journey?
             </h2>
-            <p className="text-xl opacity-90">
+            
+            <p className="text-base sm:text-lg lg:text-xl theme-text-muted px-4 leading-relaxed max-w-3xl mx-auto">
               Join AES EXPLORERS and work with leading researchers to publish your own academic work.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                size="lg"
-                variant="secondary"
-                className="bg-white text-brand-blue hover:bg-gray-100"
-              >
+            
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center pt-4">
+              <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg font-bold">
                 Apply Now
               </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="bg-white text-brand-blue hover:bg-gray-100 hover:text-brand-blue"
-              >
+              <Button variant="outline" className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-[#1a2236] px-6 font-bold">
                 Schedule Consultation
               </Button>
             </div>
@@ -516,6 +530,6 @@ export default function AESExplorersPage() {
       </section>
       <Footer />
       <Chatbot />
-    </>
+    </main>
   );
 } 

@@ -190,14 +190,19 @@ const faqs = [
 
 export default function AESCreatorversePage() {
   return (
-    <>
+    <main className="min-h-screen theme-bg-dark flex flex-col">
       <Header />
       {/* Hero Section */}
-      <section
-        id="home"
-        className="pt-24 pb-20 bg-gradient-to-br from-brand-light-blue via-white to-brand-light-blue/50"
-      >
-        <div className="container mx-auto">
+      <section className="py-16 lg:py-24 theme-bg-dark relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-20 left-10 w-20 h-20 bg-yellow-400 rounded-full opacity-10 animate-float"></div>
+          <div className="absolute top-40 right-20 w-16 h-16 bg-blue-400 rounded-full opacity-10 animate-float-reverse"></div>
+          <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-purple-400 rounded-full opacity-10 animate-float"></div>
+          <div className="absolute top-1/3 right-1/3 w-8 h-8 bg-green-400 rounded-full opacity-10 animate-float-reverse"></div>
+        </div>
+        
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             <motion.div
               initial={{ opacity: 0, x: -50 }}
@@ -206,17 +211,17 @@ export default function AESCreatorversePage() {
               className="space-y-8"
             >
               <div className="space-y-4">
-                <Badge className="bg-brand-orange/10 text-brand-orange border-brand-orange/20">
+                <Badge className="bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
                   ✨ AES CREATORVERSE
                 </Badge>
-                <h1 className="text-5xl lg:text-6xl font-bold text-text-dark leading-tight">
+                <h1 className="text-5xl lg:text-6xl font-bold theme-text-light leading-tight">
                   Creative Profile Building Program
                 </h1>
-                <blockquote className="text-xl text-brand-blue italic border-l-4 border-brand-blue pl-4">
+                <blockquote className="text-xl theme-text-light italic border-l-4 border-yellow-400 pl-4">
                   &quot;Where ACHARYA leads, creativity flows beyond horizons&quot;
-                  <span className="block text-sm text-text-light mt-2">- AES Motto</span>
+                  <span className="block text-sm theme-text-muted mt-2">- AES Motto</span>
                 </blockquote>
-                <p className="text-xl text-text-light leading-relaxed">
+                <p className="text-xl theme-text-muted leading-relaxed">
                   A creative and interactive program to build your social and community profile by helping you drive campaigns, raise your voice through digital media, and host shows of your interest.
                 </p>
               </div>
@@ -228,18 +233,18 @@ export default function AESCreatorversePage() {
               className="relative"
             >
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-brand-blue/20 to-brand-teal/20 rounded-3xl transform rotate-6"></div>
-                <div className="relative bg-white p-8 rounded-3xl shadow-2xl border">
+                <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-amber-400/20 rounded-3xl transform rotate-6"></div>
+                <div className="relative bg-[#1a2236]/90 backdrop-blur-sm p-8 rounded-3xl shadow-2xl border border-yellow-400/20">
                   <div className="space-y-6">
-                    <h3 className="text-xl font-semibold text-brand-blue">Focus Skills</h3>
+                    <h3 className="text-xl font-semibold text-yellow-400">Focus Skills</h3>
                     <div className="grid grid-cols-2 gap-4">
                       {focusSkills.map((skill, i) => (
-                        <Card key={i} className="flex flex-col items-center p-4 bg-gradient-to-br from-white to-brand-light-blue/10 border-brand-blue/10 hover:scale-105 hover:shadow-xl transition-transform transition-shadow duration-300">
+                        <Card key={i} className="flex flex-col items-center p-4 bg-gradient-to-br from-[#1a2236] to-[#2a3246] border-yellow-400/20 hover:scale-105 hover:shadow-xl transition-all duration-300">
                           <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${skill.color} flex items-center justify-center mb-3`}>
                             <skill.icon className="h-6 w-6 text-white" />
                           </div>
-                          <CardTitle className="text-lg text-center mb-1">{skill.title}</CardTitle>
-                          <CardDescription className="text-xs text-center">{skill.description}</CardDescription>
+                          <CardTitle className="text-lg text-center mb-1 theme-text-light">{skill.title}</CardTitle>
+                          <CardDescription className="text-xs text-center theme-text-muted">{skill.description}</CardDescription>
                         </Card>
                       ))}
                     </div>
@@ -252,16 +257,16 @@ export default function AESCreatorversePage() {
       </section>
 
       {/* Program Features Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto">
+      <section className="py-20 theme-bg-dark">
+        <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-brand-blue/10 text-brand-blue">Program Features</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">Comprehensive Creative Development</h2>
-            <p className="text-xl text-text-light max-w-3xl mx-auto">
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Program Features</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Comprehensive Creative Development</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">
               Our structured approach helps you build a compelling social profile and establish your unique voice in the digital world.
             </p>
           </motion.div>
@@ -273,15 +278,15 @@ export default function AESCreatorversePage() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="h-full flex flex-col justify-center bg-white border-l-8 border-brand-blue shadow-md rounded-xl hover:shadow-xl hover:border-brand-teal transition-all duration-300 group p-0">
+                <Card className="h-full flex flex-col justify-center bg-[#1a2236]/90 backdrop-blur-sm border border-yellow-400/20 shadow-md rounded-xl hover:shadow-xl hover:border-yellow-400/40 transition-all duration-300 group p-0">
                   <div className="flex items-center gap-4 px-6 pt-8 pb-2">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-blue to-brand-teal flex items-center justify-center group-hover:scale-105 transition-transform">
-                      <feature.icon className="h-6 w-6 text-white" />
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <feature.icon className="h-6 w-6 text-[#1a2236]" />
                     </div>
-                    <span className="text-lg font-bold text-text-dark">{feature.title}</span>
+                    <span className="text-lg font-bold theme-text-light">{feature.title}</span>
                   </div>
                   <div className="px-6 pb-8 pt-2 flex-1 flex flex-col justify-center">
-                    <p className="text-base text-text-light font-medium text-left">{feature.description}</p>
+                    <p className="text-base theme-text-muted font-medium text-left">{feature.description}</p>
                   </div>
                 </Card>
               </motion.div>
@@ -291,16 +296,16 @@ export default function AESCreatorversePage() {
       </section>
 
       {/* Program Packages Section */}
-      <section className="py-20 bg-gradient-to-br from-brand-light-blue/30 to-white">
-        <div className="container mx-auto">
+      <section className="py-20 theme-bg-dark">
+        <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-brand-green/10 text-brand-green">Program Packages</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">Choose Your Creative Journey</h2>
-            <p className="text-xl text-text-light max-w-3xl mx-auto">Flexible packages designed to match your goals and timeline.</p>
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Program Packages</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Choose Your Creative Journey</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Flexible packages designed to match your goals and timeline.</p>
           </motion.div>
           <div className="grid md:grid-cols-1 lg:grid-cols-3 gap-8">
             {programPackages.map((pkg, i) => (
@@ -310,33 +315,33 @@ export default function AESCreatorversePage() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 transition={{ delay: i * 0.1 }}
               >
-                <Card className="h-full flex flex-col bg-gradient-to-br from-brand-blue/10 to-brand-teal/10 border-2 border-brand-blue/10 hover:border-brand-blue/30 hover:shadow-xl transition-all duration-300 group rounded-2xl">
+                <Card className="h-full flex flex-col bg-[#1a2236]/90 backdrop-blur-sm border-2 border-yellow-400/20 hover:border-yellow-400/40 hover:shadow-xl transition-all duration-300 group rounded-2xl">
                   <CardHeader className="flex flex-col items-center pt-8 pb-4">
                     <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${pkg.color} flex items-center justify-center mb-4 group-hover:scale-105 transition-transform`}>
                       <h3 className="text-lg font-bold text-white text-center">{pkg.name}</h3>
                     </div>
-                    <CardTitle className="text-xl font-semibold text-center mb-2">{pkg.name}</CardTitle>
-                    <Badge className="bg-brand-blue/10 text-brand-blue text-xs px-3 py-1 rounded-full font-semibold">{pkg.timeline}</Badge>
+                    <CardTitle className="text-xl font-semibold text-center mb-2 theme-text-light">{pkg.name}</CardTitle>
+                    <Badge className="bg-yellow-400/10 text-yellow-400 border-yellow-400/20 text-xs px-3 py-1 rounded-full font-semibold">{pkg.timeline}</Badge>
                   </CardHeader>
                   <CardContent className="flex-1 flex flex-col pb-8">
                     <div className="space-y-4 mb-6">
                       <div className="text-center">
-                        <h4 className="font-bold text-brand-blue text-2xl mb-1">{pkg.fees}</h4>
-                        <p className="text-sm text-text-light">{pkg.duration} program</p>
+                        <h4 className="font-bold text-yellow-400 text-2xl mb-1">{pkg.fees}</h4>
+                        <p className="text-sm theme-text-muted">{pkg.duration} program</p>
                       </div>
                       <div className="space-y-3">
-                        <h4 className="font-semibold text-text-dark">Features:</h4>
+                        <h4 className="font-semibold theme-text-light">Features:</h4>
                         <ul className="space-y-2">
                           {pkg.features.map((feature, index) => (
-                            <li key={index} className="flex items-start gap-2 text-sm text-text-light">
-                              <div className="w-2 h-2 rounded-full bg-brand-blue mt-2 flex-shrink-0"></div>
+                            <li key={index} className="flex items-start gap-2 text-sm theme-text-muted">
+                              <div className="w-2 h-2 rounded-full bg-yellow-400 mt-2 flex-shrink-0"></div>
                               <span>{feature}</span>
                             </li>
                           ))}
                         </ul>
                       </div>
                     </div>
-                    <Button className="w-full group-hover:bg-brand-blue group-hover:text-white transition-colors">
+                    <Button className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 transition-colors font-bold">
                       Enroll Now
                     </Button>
                   </CardContent>
@@ -348,16 +353,16 @@ export default function AESCreatorversePage() {
       </section>
 
       {/* Success Examples Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto">
+      <section className="py-20 theme-bg-dark">
+        <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-brand-orange/10 text-brand-orange">Success Examples</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">What Our Students Achieve</h2>
-            <p className="text-xl text-text-light max-w-3xl mx-auto">Real examples of how students have built their profiles and made an impact.</p>
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Success Examples</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">What Our Students Achieve</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Real examples of how students have built their profiles and made an impact.</p>
           </motion.div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {successExamples.map((category, i) => (
@@ -367,24 +372,24 @@ export default function AESCreatorversePage() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 transition={{ delay: i * 0.1 }}
               >
-                <Card className="h-full flex flex-col hover:shadow-xl transition-all duration-300 border-2 hover:border-brand-blue/20 group relative">
+                <Card className="h-full flex flex-col bg-[#1a2236]/90 backdrop-blur-sm border border-yellow-400/20 hover:shadow-xl hover:border-yellow-400/40 transition-all duration-300 group relative">
                   <CardHeader className="pb-2">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-blue to-brand-teal flex items-center justify-center mb-4 mx-auto">
-                      <category.icon className="h-7 w-7 text-white" />
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center mb-4 mx-auto">
+                      <category.icon className="h-7 w-7 text-[#1a2236]" />
                     </div>
-                    <CardTitle className="text-lg font-semibold text-center mb-2 text-text-dark">{category.category}</CardTitle>
+                    <CardTitle className="text-lg font-semibold text-center mb-2 theme-text-light">{category.category}</CardTitle>
                   </CardHeader>
                   <CardContent className="flex-1 flex flex-col">
                     <ul className="space-y-2 mb-4">
                       {category.examples.map((example, index) => (
-                        <li key={index} className="flex items-start gap-2 text-sm text-text-light">
-                          <div className="w-2 h-2 rounded-full bg-brand-blue mt-2 flex-shrink-0"></div>
+                        <li key={index} className="flex items-start gap-2 text-sm theme-text-muted">
+                          <div className="w-2 h-2 rounded-full bg-yellow-400 mt-2 flex-shrink-0"></div>
                           <span>{example}</span>
                         </li>
                       ))}
                     </ul>
                     <div className="flex-1" />
-                    <Button variant="outline" className="w-full group-hover:bg-brand-blue group-hover:text-white transition-colors mt-2">
+                    <Button variant="outline" className="w-full border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-[#1a2236] transition-colors mt-2">
                       Learn More
                     </Button>
                   </CardContent>
@@ -396,16 +401,16 @@ export default function AESCreatorversePage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-20 bg-gradient-to-br from-brand-light-blue/30 to-white">
-        <div className="container mx-auto">
+      <section className="py-20 theme-bg-dark">
+        <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-brand-blue/10 text-brand-blue">FAQ</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">Frequently Asked Questions</h2>
-            <p className="text-xl text-text-light max-w-3xl mx-auto">Find answers to common questions about the AES CREATORVERSE program.</p>
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">FAQ</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Frequently Asked Questions</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Find answers to common questions about the AES CREATORVERSE program.</p>
           </motion.div>
           <div className="max-w-2xl mx-auto">
             <Accordion type="single" collapsible>
@@ -413,13 +418,13 @@ export default function AESCreatorversePage() {
                 {faqs.map((faq, i) => (
                   <AccordionItem key={i} value={`faq-${i}`} className="border-none">
                     <div>
-                      <AccordionTrigger className="flex items-center gap-4 px-6 py-4 bg-brand-light-blue/30 rounded-full font-bold text-lg text-brand-blue hover:bg-brand-blue/10 hover:no-underline transition-all">
-                        <div className="w-8 h-8 rounded-full bg-brand-blue flex items-center justify-center text-white font-bold">Q</div>
+                      <AccordionTrigger className="flex items-center gap-4 px-6 py-4 bg-[#1a2236]/90 backdrop-blur-sm border border-yellow-400/20 rounded-full font-bold text-lg text-yellow-400 hover:bg-yellow-400/10 hover:no-underline transition-all">
+                        <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-[#1a2236] font-bold">Q</div>
                         <span className="text-left">{faq.question}</span>
                       </AccordionTrigger>
                       <AccordionContent className="relative px-0 pb-4 pt-0">
-                        <div className="relative bg-white rounded-2xl shadow-lg p-6 text-base font-medium text-text-dark mt-2 ml-10">
-                          <div className="absolute -left-4 top-6 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-white"></div>
+                        <div className="relative bg-[#1a2236]/90 backdrop-blur-sm border border-yellow-400/20 rounded-2xl shadow-lg p-6 text-base font-medium theme-text-light mt-2 ml-10">
+                          <div className="absolute -left-4 top-6 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-[#1a2236]"></div>
                           {faq.answer}
                         </div>
                       </AccordionContent>
@@ -433,33 +438,42 @@ export default function AESCreatorversePage() {
       </section>
 
       {/* Call to Action Section */}
-      <section className="py-20 bg-gradient-to-r from-brand-blue to-brand-teal">
-        <div className="container mx-auto text-center">
+      <section className="py-12 sm:py-16 lg:py-20 theme-bg-dark relative overflow-hidden">
+        {/* Enhanced Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-20 left-10 w-32 h-32 bg-yellow-400 rounded-full opacity-5 animate-float"></div>
+          <div className="absolute bottom-20 right-20 w-24 h-24 bg-blue-400 rounded-full opacity-5 animate-float-reverse"></div>
+          <div className="absolute top-1/2 left-1/3 w-20 h-20 bg-purple-400 rounded-full opacity-5 animate-float"></div>
+          <div className="absolute bottom-32 left-1/4 w-16 h-16 bg-green-400 rounded-full opacity-5 animate-float-reverse"></div>
+        </div>
+        
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/10 via-transparent to-amber-500/10"></div>
+        
+        <div className="container mx-auto text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
-            className="max-w-4xl mx-auto text-white space-y-8"
+            className="max-w-4xl mx-auto theme-text-light space-y-6 sm:space-y-8"
           >
-            <h2 className="text-4xl lg:text-5xl font-bold">
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
+              🚀 Start Your Creative Journey
+            </Badge>
+            
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold theme-text-light leading-tight">
               Ready to Create Your Digital Presence?
             </h2>
-            <p className="text-xl opacity-90">
+            
+            <p className="text-base sm:text-lg lg:text-xl theme-text-muted px-4 leading-relaxed max-w-3xl mx-auto">
               Join AES CREATORVERSE and build a compelling social profile that showcases your creativity and leadership.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                size="lg"
-                variant="secondary"
-                className="bg-white text-brand-blue hover:bg-gray-100"
-              >
+            
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center pt-4">
+              <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg font-bold">
                 Start Creating
               </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="bg-white text-brand-blue hover:bg-gray-100 hover:text-brand-blue"
-              >
+              <Button variant="outline" className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-[#1a2236] px-6 font-bold">
                 Schedule Consultation
               </Button>
             </div>
@@ -468,6 +482,6 @@ export default function AESCreatorversePage() {
       </section>
       <Footer />
       <Chatbot />
-    </>
+    </main>
   );
 } 
