@@ -634,56 +634,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Team Philosophy Section */}
-      <section className="py-20 theme-bg-dark">
-        <div className="container mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="relative overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/5 to-amber-500/5 rounded-3xl border border-yellow-400/10"></div>
-            <div className="absolute inset-0 bg-gradient-to-br from-[#1a2236]/90 to-[#1a2236]/80 backdrop-blur-sm rounded-3xl"></div>
-            <div className="relative z-10 text-center p-12 space-y-8">
-              <div className="space-y-4">
-                <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-                  Our Philosophy
-                </Badge>
-                <h3 className="text-3xl lg:text-4xl font-bold theme-text-light">
-                  Our Teaching Philosophy
-                </h3>
-              </div>
-              <div className="max-w-4xl mx-auto space-y-6">
-                <blockquote className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent italic">
-                  &quot;Every student can learn, just not on the same day, or in the same way.&quot;
-                </blockquote>
-                <p className="text-lg theme-text-muted leading-relaxed">
-                  Our diverse team of educators brings together academic excellence, research experience, and industry insights to create personalized learning experiences that nurture each student&apos;s unique potential and guide them toward future success.
-                </p>
-              </div>
-              <div className="grid md:grid-cols-3 gap-6 mt-12">
-                {pillars.map((pillar, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="bg-gradient-to-br from-[#1a2236]/90 to-[#1a2236]/80 backdrop-blur-xl p-6 rounded-2xl border border-yellow-400/10 hover:border-yellow-400/20 transition-all duration-300"
-                  >
-                    <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-xl flex items-center justify-center mx-auto mb-4">
-                      <pillar.icon className="h-6 w-6 text-[#1a2236]" />
-                    </div>
-                    <h4 className="font-semibold theme-text-light mb-2">
-                      {pillar.title}
-                    </h4>
-                    <p className="text-sm theme-text-muted">{pillar.description}</p>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+
       
       <Chatbot />
       <Footer />
