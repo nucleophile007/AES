@@ -10,7 +10,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
 import { BookOpen, Star, Target, Users, FileText, Trophy, Lightbulb, Globe, Calendar, ArrowRight, CheckIcon, ChevronDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Image from "next/image";
 import Link from "next/link";
 import { CardStack } from "@/components/ui/card-stack";
@@ -546,9 +546,8 @@ const TestimonialsSection = () => {
                       isActive ? "ring-yellow-400 ring-4 scale-110" : "ring-white hover:ring-yellow-300"
                     } ${isAnimating ? "animate-pulse" : ""}`}
                   >
-                    <AvatarImage src={testimonial.avatar || "/placeholder.svg"} alt={testimonial.name} />
                     <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-[#1a2236] font-semibold">
-                      {testimonial.name
+                      {testimonial.initials || testimonial.name
                         .split(" ")
                         .map((n) => n[0])
                         .join("")}
@@ -585,9 +584,8 @@ const TestimonialsSection = () => {
 
               <div className="flex items-center gap-4">
                 <Avatar className="w-12 h-12 ring-2 ring-yellow-100">
-                  <AvatarImage src={selectedTestimonial.avatar || "/placeholder.svg"} alt={selectedTestimonial.name} />
                   <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-[#1a2236] font-semibold">
-                    {selectedTestimonial.name
+                    {selectedTestimonial.initials || selectedTestimonial.name
                       .split(" ")
                       .map((n) => n[0])
                       .join("")}
@@ -703,6 +701,16 @@ const colleges = [
   { name: "UC Merced", logo: "/college-logos/ucm.png" },
 ];
 
+// Helper function to generate initials from name
+const getInitials = (name: string) => {
+  return name
+    .split(' ')
+    .map(word => word[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2); // Take max 2 initials
+}
+
 const testimonialCards = [
   {
     id: 0,
@@ -716,7 +724,7 @@ const testimonialCards = [
     bgColor: "bg-purple-50",
     textColor: "text-purple-700",
     rating: 5,
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
+    initials: getInitials("Eesha's Parent: Srinivas Eerpina"),
     content: (
       <p>
         Our daughter is a now a high school senior. She took college preparatory courses at ACHARYA. I am pleased to say that she really enjoyed working with Shanti Swaroop, who assisted her in writing five essays. His coaching helped her identify and outline her <Highlight>strengths, extra curricular activities, achievements and challenges</Highlight> in the correct format. Shanti Swaroop maintains a <Highlight>different strategy for each college</Highlight> that the students wants to apply. Depending on the college and the major she wants to apply for, he summarizes what is important to capture in the essay and how to narrate the story. He usually takes a couple of days for corrections. This strategy worked well and all her essays turned out excellent. Shanti Swaroop and his team has <Highlight>deep knowledge of the college admission process</Highlight> and a very talented in Maths and Science subjects. Although we didn&apos;t get a chance to work with ACHARYA for a long time, I recommend and encourage others to engage with them as early as possible and seek mentorship from them.
@@ -735,7 +743,7 @@ const testimonialCards = [
     bgColor: "bg-blue-50",
     textColor: "text-blue-700",
     rating: 5,
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
+    initials: getInitials("Athreya"),
     content: (
       <p>
         I have been working with Shanti Swaroop for about half a year at the time of this testimonial. I attended one of his talks at a stage where he talked about <Highlight>college admissions and what colleges look for in a student</Highlight>. Later on, we scheduled a meeting to talk about my college needs and what I should be looking for. Not long after, my mother enrolled me for counseling. Throughout this journey, he has helped me with everything from <Highlight>volunteering at the library</Highlight>, to helping me select my courses for the next 4 years. Not only that, he has given me guidance on <Highlight>career matters and big picture ambitions</Highlight>.
@@ -754,7 +762,7 @@ const testimonialCards = [
     bgColor: "bg-emerald-50",
     textColor: "text-emerald-700",
     rating: 5,
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
+    initials: getInitials("Sahasra"),
     content: (
       <p>
         Dr. Shanti Swaroop&apos;s guidance was essential to our understanding of the college application process. His <Highlight>patience and constant encouragement and attention</Highlight> are what truly make him stand apart from other counselors. He helped us narrow down the <Highlight>potential universities I should apply to</Highlight> based on my major and is currently working with me on making my application stand out.
