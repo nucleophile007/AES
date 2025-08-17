@@ -1072,10 +1072,10 @@ export default function CollegePrepPage() {
           </motion.div>
           
           {/* College Prep Timeline */}
-          <div className="max-w-7xl mx-auto relative">
+          <div className="max-w-7xl mx-auto relative ">
             <div className="relative h-[700px] w-full">
             <svg
-                className="absolute inset-0 w-full h-full"
+                className="absolute inset-0 w-full h-full overflow-visible "
                 viewBox="0 0 300 450"
                 preserveAspectRatio="none"
               >
@@ -1165,6 +1165,236 @@ export default function CollegePrepPage() {
                   fill="none"
                   opacity="0.3"
                 />
+
+                {/* University Building SVG Icon at the end of the road - TOP LAYER */}
+                          <defs>
+            {/* 3D Gradients for depth */}
+            <linearGradient id="buildingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#6366f1" />
+              <stop offset="50%" stopColor="#4f46e5" />
+              <stop offset="100%" stopColor="#3730a3" />
+            </linearGradient>
+
+            <linearGradient id="roofGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#ef4444" />
+              <stop offset="50%" stopColor="#dc2626" />
+              <stop offset="100%" stopColor="#b91c1c" />
+            </linearGradient>
+
+            <linearGradient id="sideGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#312e81" />
+              <stop offset="100%" stopColor="#1e1b4b" />
+            </linearGradient>
+
+            <linearGradient id="windowGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#fbbf24" />
+              <stop offset="100%" stopColor="#f59e0b" />
+            </linearGradient>
+
+            {/* Shadow filter */}
+            <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+              <feDropShadow dx="3" dy="6" stdDeviation="4" floodColor="rgba(0,0,0,0.3)" />
+            </filter>
+          </defs>
+
+          {/* Ground shadow */}
+          <ellipse cx="280" cy="-15" rx="50" ry="20" fill="rgba(0,0,0,0.2)" />
+
+          <g
+            transform="translate(280,-60) scale(0.4)"
+            filter="url(#shadow)"
+            style={{
+              overflow: "visible", // Ensure group elements can extend beyond boundaries
+            }}
+          >
+            {/* Foundation - 3D base with enhanced depth */}
+            <g>
+              <rect x="-80" y="80" width="160" height="15" fill="#8b5cf6" rx="3" />
+              <polygon points="-80,80 -60,60 100,60 80,80" fill="#a855f7" />
+              <polygon points="80,80 100,60 100,75 80,95" fill="#7c3aed" />
+            </g>
+
+            {/* Left Wing - Enhanced 3D depth */}
+            <g>
+              {/* Front face */}
+              <rect x="-75" y="30" width="35" height="50" fill="url(#buildingGradient)" rx="2" />
+              <polygon points="-40,30 -20,10 -20,60 -40,80" fill="url(#sideGradient)" />
+              {/* Top face with more depth */}
+              <polygon points="-75,30 -55,10 -20,10 -40,30" fill="#818cf8" />
+
+              {/* Roof with enhanced 3D */}
+              <polygon points="-75,30 -55,5 -20,10 -40,30" fill="url(#roofGradient)" />
+              <polygon points="-55,5 -35,-10 -10,0 -20,10" fill="#f87171" />
+            </g>
+
+            {/* Right Wing - Enhanced 3D depth */}
+            <g>
+              {/* Front face */}
+              <rect x="40" y="30" width="35" height="50" fill="url(#buildingGradient)" rx="2" />
+              <polygon points="75,30 95,10 95,60 75,80" fill="url(#sideGradient)" />
+              {/* Top face with enhanced depth */}
+              <polygon points="40,30 60,10 95,10 75,30" fill="#818cf8" />
+
+              {/* Roof with enhanced 3D */}
+              <polygon points="40,30 60,5 95,10 75,30" fill="url(#roofGradient)" />
+              <polygon points="60,5 80,-10 105,0 95,10" fill="#f87171" />
+            </g>
+
+            {/* Main Central Building - Enhanced 3D */}
+            <g>
+              {/* Front face */}
+              <rect x="-40" y="0" width="80" height="80" fill="url(#buildingGradient)" rx="3" />
+              <polygon points="40,0 70,-30 70,50 40,80" fill="url(#sideGradient)" />
+              {/* Top face with enhanced perspective */}
+              <polygon points="-40,0 -10,-30 70,-30 40,0" fill="#818cf8" />
+            </g>
+
+            {/* Clock Tower - Enhanced 3D */}
+            <g>
+              {/* Front face */}
+              <rect x="-8" y="-40" width="16" height="50" fill="#4338ca" rx="2" />
+              <polygon points="8,-40 16,-48 16,2 8,10" fill="#312e81" />
+              {/* Top face with depth */}
+              <polygon points="-8,-40 0,-48 16,-48 8,-40" fill="#6366f1" />
+
+              {/* Clock face - 3D with depth */}
+              <circle cx="0" cy="-15" r="8" fill="url(#windowGlow)" />
+              <circle cx="4" cy="-19" r="8" fill="#fbbf24" opacity="0.8" />
+
+              {/* Clock hands */}
+              <line x1="0" y1="-15" x2="0" y2="-20" stroke="#374151" strokeWidth="1.5" />
+              <line x1="0" y1="-15" x2="4" y2="-15" stroke="#374151" strokeWidth="1" />
+
+              {/* Spire - Enhanced 3D */}
+              <polygon points="-8,-40 0,-60 8,-40" fill="#7c3aed" />
+              <polygon points="0,-60 8,-68 16,-48 8,-40" fill="#6b46c1" />
+            </g>
+
+            {/* Main Building Roof - Enhanced 3D */}
+            <polygon points="-40,0 0,-30 40,0" fill="url(#roofGradient)" />
+            <polygon points="0,-30 30,-60 70,-30 40,0" fill="#f87171" />
+            <polygon points="0,-30 30,-60 20,-50 -10,-20" fill="#fca5a5" />
+
+            {/* Entrance Portico - Enhanced 3D */}
+            <g>
+              <rect x="-20" y="40" width="40" height="40" fill="#5b21b6" rx="2" />
+              <polygon points="20,40 35,25 35,65 20,80" fill="#4c1d95" />
+              <polygon points="-20,40 -5,25 35,25 20,40" fill="#7c3aed" />
+            </g>
+
+            {/* Classical Columns - Enhanced 3D */}
+            <g>
+              {/* Column 1 with depth */}
+              <rect x="-15" y="40" width="6" height="35" fill="#e5e7eb" />
+              <polygon points="-9,40 -3,34 -3,69 -9,75" fill="#d1d5db" />
+              <rect x="-16" y="38" width="8" height="4" fill="#f3f4f6" />
+
+              {/* Column 2 with depth */}
+              <rect x="-3" y="40" width="6" height="35" fill="#e5e7eb" />
+              <polygon points="3,40 9,34 9,69 3,75" fill="#d1d5db" />
+              <rect x="-4" y="38" width="8" height="4" fill="#f3f4f6" />
+
+              {/* Column 3 with depth */}
+              <rect x="9" y="40" width="6" height="35" fill="#e5e7eb" />
+              <polygon points="15,40 21,34 21,69 15,75" fill="#d1d5db" />
+              <rect x="8" y="38" width="8" height="4" fill="#f3f4f6" />
+            </g>
+
+            {/* Windows with 3D glow effect */}
+            <g>
+              {/* Main building windows */}
+              <rect x="-30" y="15" width="8" height="12" fill="url(#windowGlow)" rx="1" />
+              <rect x="-30" y="15" width="6" height="10" fill="#fbbf24" rx="1" transform="translate(1,1)" />
+
+              <rect x="-10" y="15" width="8" height="12" fill="url(#windowGlow)" rx="1" />
+              <rect x="-10" y="15" width="6" height="10" fill="#fbbf24" rx="1" transform="translate(1,1)" />
+
+              <rect x="10" y="15" width="8" height="12" fill="url(#windowGlow)" rx="1" />
+              <rect x="10" y="15" width="6" height="10" fill="#fbbf24" rx="1" transform="translate(1,1)" />
+
+              <rect x="30" y="15" width="8" height="12" fill="url(#windowGlow)" rx="1" />
+              <rect x="30" y="15" width="6" height="10" fill="#fbbf24" rx="1" transform="translate(1,1)" />
+            </g>
+
+            {/* Left wing windows */}
+            <g>
+              <rect x="-65" y="40" width="6" height="8" fill="url(#windowGlow)" rx="1" />
+              <rect x="-55" y="40" width="6" height="8" fill="url(#windowGlow)" rx="1" />
+              <rect x="-65" y="55" width="6" height="8" fill="url(#windowGlow)" rx="1" />
+              <rect x="-55" y="55" width="6" height="8" fill="url(#windowGlow)" rx="1" />
+            </g>
+
+            {/* Right wing windows */}
+            <g>
+              <rect x="50" y="40" width="6" height="8" fill="url(#windowGlow)" rx="1" />
+              <rect x="60" y="40" width="6" height="8" fill="url(#windowGlow)" rx="1" />
+              <rect x="50" y="55" width="6" height="8" fill="url(#windowGlow)" rx="1" />
+              <rect x="60" y="55" width="6" height="8" fill="url(#windowGlow)" rx="1" />
+            </g>
+
+            {/* Grand Entrance Door - Enhanced 3D */}
+            <g>
+              <rect x="-6" y="60" width="12" height="20" fill="#374151" rx="6" />
+              <polygon points="6,60 10,56 10,76 6,80" fill="#1f2937" />
+              <circle cx="3" cy="70" r="1" fill="#fbbf24" />
+            </g>
+
+            {/* University Banner - Enhanced 3D */}
+            <g>
+              <rect x="-25" y="-5" width="50" height="8" fill="#7c3aed" rx="1" />
+              <polygon points="25,-5 35,-15 35,-7 25,3" fill="#6b46c1" />
+              <text
+                x="0"
+                y="1"
+                textAnchor="middle"
+                fill="white"
+                fontSize="6"
+                fontWeight="bold"
+                fontFamily="Arial, sans-serif"
+              >
+                COLLAGE
+              </text>
+              <text
+                x="0.5"
+                y="1.5"
+                textAnchor="middle"
+                fill="rgba(0,0,0,0.3)"
+                fontSize="6"
+                fontWeight="bold"
+                fontFamily="Arial, sans-serif"
+              >
+                COLLAGE
+              </text>
+            </g>
+
+            {/* Campus Flag - Enhanced 3D */}
+            <g>
+              <line x1="45" y1="-20" x2="45" y2="10" stroke="#6b7280" strokeWidth="2" />
+              <polygon points="45,-20 65,-18 65,-8 45,-10" fill="#dc2626" />
+              <polygon points="45,-15 65,-13 65,-11 45,-13" fill="#fbbf24" />
+              <polygon points="65,-18 70,-23 70,-13 65,-8" fill="#b91c1c" />
+            </g>
+
+            {/* Ceremonial Steps - Enhanced 3D */}
+            <g>
+              <rect x="-35" y="78" width="70" height="4" fill="#9ca3af" />
+              <polygon points="35,78 50,63 50,67 35,82" fill="#6b7280" />
+
+              <rect x="-40" y="82" width="80" height="4" fill="#9ca3af" />
+              <polygon points="40,82 55,67 55,71 40,86" fill="#6b7280" />
+
+              <rect x="-45" y="86" width="90" height="4" fill="#9ca3af" />
+              <polygon points="45,86 60,71 60,75 45,90" fill="#6b7280" />
+            </g>
+
+            {/* Decorative Elements with glow */}
+            <circle cx="-20" cy="65" r="2" fill="#fbbf24" opacity="0.9">
+              <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite" />
+            </circle>
+            <circle cx="20" cy="65" r="2" fill="#fbbf24" opacity="0.9">
+              <animate attributeName="opacity" values="1;0.7;1" dur="2s" repeatCount="indefinite" />
+            </circle>
+          </g>
                 
                 {/* <polygon
                   points="90,20 94,22 90,24 92,22"
