@@ -504,75 +504,16 @@ export default function AcademicTutoringPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="max-w-4xl mx-auto text-center"
           >
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+             <div className="flex justify-center">
               <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg">
                 <ArrowRight className="mr-2 h-5 w-5" /> Book Free Consultation
-              </Button>
-              <Button variant="outline" className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-[#1a2236] px-6">
-                <BookOpen className="mr-2 h-5 w-5" /> Learn More About Our Programs
               </Button>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* About Us Section */}
-      <section className="py-20 theme-bg-dark">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              className="space-y-6"
-            >
-              <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">About Us</h2>
-              <p className="text-lg theme-text-muted leading-relaxed">
-                Our mission is to provide exceptional academic support that goes beyond traditional tutoring. We believe every student has unique potential and learning needs. Our experienced tutors work closely with each student to develop personalized strategies that build confidence, strengthen foundational knowledge, and foster a genuine love for learning.
-              </p>
-              <p className="text-lg theme-text-muted leading-relaxed">
-                Whether your child needs help catching up, staying on track, or accelerating ahead, our comprehensive approach ensures they receive the support they need to excel academically and develop essential study skills for lifelong success.
-              </p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative"
-            >
-              <div className="bg-gradient-to-br from-[#1a2236]/90 to-[#1a2236]/80 backdrop-blur-xl rounded-3xl p-8 border border-yellow-400/20 shadow-2xl">
-                <h3 className="text-2xl font-bold text-yellow-400 mb-6 text-center">Why Choose AES Tutoring?</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
-                      <CheckIcon className="h-5 w-5 text-[#1a2236]" />
-                    </div>
-                    <span className="theme-text-light font-medium">Personalized Learning Plans</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
-                      <CheckIcon className="h-5 w-5 text-[#1a2236]" />
-                    </div>
-                    <span className="theme-text-light font-medium">Expert Subject Specialists</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
-                      <CheckIcon className="h-5 w-5 text-[#1a2236]" />
-                    </div>
-                    <span className="theme-text-light font-medium">Flexible Scheduling Options</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
-                      <CheckIcon className="h-5 w-5 text-[#1a2236]" />
-                    </div>
-                    <span className="theme-text-light font-medium">Proven Track Record</span>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
+
 
       {/* Subjects Section */}
       <section className="py-20 theme-bg-dark">
@@ -790,8 +731,8 @@ export default function AcademicTutoringPage() {
           </div>
         </div>
       </section> */}
-                  {/* Learning Features Section */}
-      <section className="py-20 theme-bg-dark">
+            {/* Learning Features Section */}
+            <section className="py-20 theme-bg-dark">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -880,18 +821,17 @@ export default function AcademicTutoringPage() {
                             </span>
                           </div>
                         ))}
+                        </div>
                       </div>
-                    </div>
                     
-                    {/* Bottom Stats */}
-                    <div className="px-6 pb-6 mt-auto">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-yellow-400 bg-yellow-400/10 px-3 py-1 rounded-full">
-                          {feature.stats}
-                        </span>
-                        <ArrowRight className="h-4 w-4 text-yellow-400 group-hover:translate-x-1 transition-transform duration-300" />
-                      </div>
-                    </div>
+                                         {/* Bottom Stats */}
+                     <div className="px-6 pb-6 mt-auto">
+                       <div className="flex items-center justify-center">
+                         <span className="text-xs font-medium text-yellow-400 bg-yellow-400/10 px-3 py-1 rounded-full">
+                           {feature.stats}
+                         </span>
+                       </div>
+                     </div>
                     
                     {/* Hover Border Effect */}
                     <div className={`absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r ${feature.color} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left`}></div>
@@ -903,36 +843,36 @@ export default function AcademicTutoringPage() {
 
           {/* Bottom 2 Cards - Wider Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {[
-              {
-                title: "Targeted Practice",
-                description: "Focus on your weak areas with intelligent practice sessions that adapt to your specific needs.",
-                icon: Target,
-                color: "from-pink-500 to-rose-600",
-                features: ["Adaptive difficulty", "Weak area focus", "Progress monitoring"],
-                highlight: "AI-powered"
-              },
-              {
-                title: "Comprehensive Curriculum",
-                description: "Complete learning pathway covering all essential topics with structured progression from basics to advanced.",
-                icon: BookOpen,
-                color: "from-indigo-500 to-blue-600",
-                features: ["Structured learning", "Topic coverage", "Advanced progression"],
-                highlight: "Complete"
-              },
-            ].map((feature, index) => (
-              <motion.div
-                key={index + 3}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: (index + 3) * 0.1 }}
-                className="group"
-              >
-                <div className="relative h-full">
+              {[
+                {
+                  title: "Targeted Practice",
+                  description: "Focus on your weak areas with intelligent practice sessions that adapt to your specific needs.",
+                 icon: Target,
+                  color: "from-pink-500 to-rose-600",
+                 features: ["Adaptive difficulty", "Weak area focus", "Progress monitoring"],
+                 stats: "Smart targeting"
+                },
+                {
+                  title: "Comprehensive Curriculum",
+                 description: "Complete learning pathway covering all essential topics with structured progression from basics to advanced.",
+                 icon: BookOpen,
+                  color: "from-indigo-500 to-blue-600",
+                 features: ["Structured learning", "Topic coverage", "Advanced progression"],
+                 stats: "Full coverage"
+                },
+              ].map((feature, index) => (
+                <motion.div
+                  key={index + 3}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: (index + 3) * 0.1 }}
+                  className="group"
+                >
+                  <div className="relative h-full">
                   {/* Subtle Glow Effect */}
                   <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} rounded-2xl blur-xl opacity-5 group-hover:opacity-20 transition-all duration-500`}></div>
-                  
-                  {/* Main Card */}
+                    
+                    {/* Main Card */}
                   <div className="relative bg-gradient-to-br from-[#1a2236] to-[#2a3246] border border-yellow-400/20 rounded-2xl overflow-hidden h-full flex flex-col group-hover:border-yellow-400/40 group-hover:shadow-2xl transition-all duration-500 hover:transform hover:scale-[1.02] hover:-translate-y-1">
                     
                                          {/* Header with Icon */}
@@ -941,16 +881,16 @@ export default function AcademicTutoringPage() {
                          <div className={`w-14 h-14 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
                            <feature.icon className="h-7 w-7 text-white" />
                          </div>
-                       </div>
-                      
+                        </div>
+                        
                       {/* Title */}
                       <h3 className="text-2xl font-bold theme-text-light mb-3 group-hover:text-yellow-400 transition-colors duration-300">
-                        {feature.title}
+                          {feature.title}
                       </h3>
-                      
+                        
                       {/* Description */}
                       <p className="text-base theme-text-muted leading-relaxed mb-4">
-                        {feature.description}
+                          {feature.description}
                       </p>
                     </div>
 
@@ -963,24 +903,23 @@ export default function AcademicTutoringPage() {
                             <span className="text-sm theme-text-muted group-hover:theme-text-light transition-colors duration-300">
                               {item}
                             </span>
-                          </div>
+                            </div>
                         ))}
-                      </div>
-                    </div>
+                          </div>
+                        </div>
                     
-                    {/* Bottom CTA */}
-                    <div className="px-6 pb-6 mt-auto">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-yellow-400">
-                          Learn more →
-                        </span>
-                        <ArrowRight className="h-5 w-5 text-yellow-400 group-hover:translate-x-1 transition-transform duration-300" />
-                      </div>
-                    </div>
-                    
+                                         {/* Bottom Stats */}
+                     <div className="px-6 pb-6 mt-auto">
+                       <div className="flex items-center justify-center">
+                         <span className="text-xs font-medium text-yellow-400 bg-yellow-400/10 px-3 py-1 rounded-full">
+                           {feature.stats}
+                         </span>
+            </div>
+          </div>
+
                     {/* Hover Border Effect */}
                     <div className={`absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r ${feature.color} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left`}></div>
-                  </div>
+            </div>
                 </div>
               </motion.div>
             ))}
