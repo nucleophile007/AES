@@ -203,7 +203,7 @@ export default function BookSessionPage() {
     "Research Program": {
        "8/17/2025": ["10:00 AM","11:00 AM","12:00 PM", "1:00 PM"]
     },
-    "AES Creatoverse": {
+    "AES Creatorverse": {
      "8/17/2025": ["10:00 AM","11:00 AM","12:00 PM", "1:00 PM"]
     }
   }
@@ -217,7 +217,7 @@ export default function BookSessionPage() {
     "College Prep",
     "Olympiads",
     "Research Program",
-    "AES Creatoverse"
+    "AES Creatorverse"
   ]
 
   // Grade options
