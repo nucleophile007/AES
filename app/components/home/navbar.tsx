@@ -25,19 +25,19 @@ function Navbar({ className }: { className?: string }) {
             <ProductItem
               title="Academic Tutoring"
               href="/academictutoring"
-              src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=140&h=70&fit=crop"
+              src="/nav-acad.png"
               description="Personalized tutoring across all subjects."
             />
             <ProductItem
               title="College Prep"
               href="/collegeprep"
-              src="https://images.unsplash.com/photo-1464983953574-0892a716854b?w=140&h=70&fit=crop"
+              src="/nav-college.png"
               description="SAT, ACT, and college application guidance."
             />
             <ProductItem
               title="SAT Coaching"
               href="/satcoaching"
-              src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=140&h=70&fit=crop"
+              src="/nav-sat.png"
               description="Comprehensive SAT preparation and strategies."
             />
           </div>
