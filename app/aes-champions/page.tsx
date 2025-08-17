@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, BookOpen, Award, Star, Globe, Clock, Target, TrendingUp, Lightbulb, Briefcase, Heart, Zap, Trophy, Brain, Calculator, Atom, Users2, Calendar, FileText, Crown } from "lucide-react";
+import { Users, BookOpen, Award, Star, Globe, Clock, Target, TrendingUp, Lightbulb, Briefcase, Heart, Zap, Trophy, Brain, Calculator, Atom, Users2, Calendar, FileText, Crown, ArrowRight, FlaskConical, Code } from "lucide-react";
 import Footer from "@/components/home/Footer";
 import Chatbot from "@/components/home/Chatbot";
 import Header from "@/components/home/Header";
@@ -182,7 +182,10 @@ export default function AESChampionsPage() {
     <main className="min-h-screen theme-bg-dark flex flex-col">
       <Header />
       {/* Hero Section */}
-      <section className="py-16 lg:py-24 theme-bg-dark relative overflow-hidden">
+      <section
+        id="home"
+        className="py-16 lg:py-24 theme-bg-dark relative overflow-hidden"
+      >
         {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-20 left-10 w-20 h-20 bg-yellow-400 rounded-full opacity-10 animate-float"></div>
@@ -192,97 +195,298 @@ export default function AESChampionsPage() {
         </div>
         
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              className="space-y-8"
-            >
-              <div className="space-y-4">
-                <Badge className="bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-                  🏆 AES CHAMPIONS
-                </Badge>
-                <h1 className="text-5xl lg:text-6xl font-bold theme-text-light leading-tight">
-                  Olympiad Excellence Program
-                </h1>
-                <blockquote className="text-xl theme-text-light italic border-l-4 border-yellow-400 pl-4">
-                  &quot;Excellence is not a skill. It&apos;s an attitude.&quot;
-                  <span className="block text-sm theme-text-muted mt-2">- Ralph Marston</span>
-                </blockquote>
-                <p className="text-xl theme-text-muted leading-relaxed">
-                  A structured, cohort-based program designed to equip students with the skills and strategies to excel in national-level Olympiad competitions. Master AMC8, AMC10, AMC12, and F=ma with expert guidance.
-                </p>
-              </div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative"
-            >
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-amber-400/20 rounded-3xl transform rotate-6"></div>
-                <div className="relative bg-[#1a2236]/90 backdrop-blur-sm p-8 rounded-3xl shadow-2xl border border-yellow-400/20">
-                  <div className="space-y-6">
-                    <h3 className="text-xl font-semibold text-yellow-400">Competition Tracks</h3>
-                    <div className="grid grid-cols-1 gap-4">
-                      {competitionTracks.map((track, i) => (
-                        <Card key={i} className="flex flex-col items-center p-4 bg-gradient-to-br from-[#1a2236] to-[#2a3246] border-yellow-400/20 hover:scale-105 hover:shadow-xl transition-all duration-300">
-                          <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${track.color} flex items-center justify-center mb-3`}>
-                            <track.icon className="h-6 w-6 text-white" />
-                          </div>
-                          <CardTitle className="text-lg text-center mb-1 theme-text-light">{track.title}</CardTitle>
-                          <CardDescription className="text-xs text-center theme-text-muted">{track.description}</CardDescription>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+          <div className="text-center mb-12 animate-slide-in-bottom">
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
+              🏆 AES CHAMPIONS
+            </Badge>
+            <h1 className="text-6xl lg:text-7xl font-black bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent mb-4 animate-slide-in-bottom">
+              AES CHAMPIONS
+            </h1>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">
+              Olympiad Excellence Program
+            </h2>
+            <p className="text-lg theme-text-muted max-w-4xl mx-auto animate-slide-in-bottom" style={{ animationDelay: '0.2s' }}>
+              A structured, cohort-based program designed to equip students with the skills and strategies to excel in national-level Olympiad competitions. Master AMC8, AMC10, AMC12, and F=ma with expert guidance.
+            </p>
           </div>
-        </div>
-      </section>
-
-      {/* Program Features Section */}
-      <section className="py-20 theme-bg-dark">
-        <div className="container mx-auto px-4">
+          
+          {/* Action Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            className="text-center mb-16"
+            className="max-w-4xl mx-auto text-center"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Program Features</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Comprehensive Olympiad Preparation</h2>
-            <p className="text-xl theme-text-muted max-w-3xl mx-auto">
-              Our structured approach combines academic excellence with essential life skills for competitive success.
-            </p>
+            <div className="flex justify-center">
+              <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg">
+                <ArrowRight className="mr-2 h-5 w-5" /> Book Free Session
+              </Button>
+            </div>
           </motion.div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {programFeatures.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card className="h-full flex flex-col justify-center bg-[#1a2236]/90 backdrop-blur-sm border border-yellow-400/20 shadow-md rounded-xl hover:shadow-xl hover:border-yellow-400/40 transition-all duration-300 group p-0">
-                  <div className="flex items-center gap-4 px-6 pt-8 pb-2">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center group-hover:scale-105 transition-transform">
-                      <feature.icon className="h-6 w-6 text-[#1a2236]" />
-                    </div>
-                    <span className="text-lg font-bold theme-text-light">{feature.title}</span>
-                  </div>
-                  <div className="px-6 pb-8 pt-2 flex-1 flex flex-col justify-center">
-                    <p className="text-base theme-text-muted font-medium text-left">{feature.description}</p>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
         </div>
       </section>
+
+             {/* Competition Tracks Section */}
+       <section className="py-20 theme-bg-dark relative overflow-hidden">
+         {/* Enhanced Background Elements */}
+         <div className="absolute inset-0 overflow-hidden pointer-events-none">
+           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-full blur-3xl"></div>
+           <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-to-br from-green-400/5 to-yellow-500/5 rounded-full blur-3xl"></div>
+           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-br from-red-400/3 to-orange-500/3 rounded-full blur-3xl"></div>
+         </div>
+         
+         <div className="container mx-auto px-4 relative z-10">
+           <motion.div
+             initial={{ opacity: 0, y: 40 }}
+             whileInView={{ opacity: 1, y: 0 }}
+             transition={{ duration: 0.8 }}
+             className="text-center mb-20"
+           >
+             <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-yellow-400/20 via-amber-400/20 to-yellow-400/20 backdrop-blur-sm border border-yellow-400/30 rounded-full mb-6 shadow-lg shadow-yellow-400/10">
+               <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+               <span className="text-yellow-400 font-bold text-sm tracking-wide">COMPETITION TRACKS</span>
+               <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+             </div>
+             
+                           <h2 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black theme-text-light mb-8 leading-tight">
+                <span className="bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 bg-clip-text text-transparent">Competition</span>
+                <br />
+                <span className="text-white">Tracks</span>
+              </h2>
+             
+             <p className="text-xl lg:text-2xl theme-text-muted leading-relaxed mb-6 max-w-4xl mx-auto">
+               Choose from our comprehensive competition tracks designed to prepare students for national and international olympiads.
+             </p>
+           </motion.div>
+           
+                       {/* Competition Tracks Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 max-w-7xl mx-auto">
+              {/* Math Track */}
+              <motion.div
+                initial={{ opacity: 0, y: 60, scale: 0.8 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.8, type: "spring", stiffness: 100 }}
+                className="group"
+              >
+                <div className="relative h-full">
+                  <div className="absolute -inset-0.5 bg-gradient-to-br from-blue-400/50 via-blue-500/30 to-blue-600/50 rounded-2xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  
+                  <Card className="relative h-full flex flex-col bg-gradient-to-br from-[#0f1629] via-[#1a2236] to-[#0f1629] border border-blue-400/20 rounded-2xl overflow-hidden transform-gpu transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-2xl group-hover:shadow-blue-500/10 group-hover:border-blue-400/40">
+                    {/* Header with Image */}
+                    <div className="relative h-32 bg-gradient-to-br from-blue-400/20 to-blue-600/20 flex items-center justify-center overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-400/10 to-blue-600/10"></div>
+                      <div className="relative z-10 w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform duration-300">
+                        <Calculator className="w-10 h-10 text-white" />
+                      </div>
+                    </div>
+                    
+                    <div className="p-6 pb-4">
+                      <h3 className="text-xl font-bold theme-text-light mb-4 text-center">Math</h3>
+                      
+                      {/* Competitions List */}
+                      <div className="space-y-3">
+                        {[
+                          "AMC 8/10/12",
+                          "AIME",
+                          "USA(J)MO / USAMO"
+                        ].map((competition, i) => (
+                          <motion.div
+                            key={i}
+                            initial={{ opacity: 0, x: -20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.2 + i * 0.1, duration: 0.5 }}
+                            className="px-3 py-2 bg-blue-400/5 border border-blue-400/10 rounded-lg group-hover:border-blue-400/20 transition-colors duration-300"
+                          >
+                            <p className="text-sm theme-text-muted group-hover:text-blue-300 transition-colors duration-300">{competition}</p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </motion.div>
+             
+                           {/* Physics Track */}
+              <motion.div
+                initial={{ opacity: 0, y: 60, scale: 0.8 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.8, delay: 0.1, type: "spring", stiffness: 100 }}
+                className="group"
+              >
+                <div className="relative h-full">
+                  <div className="absolute -inset-0.5 bg-gradient-to-br from-purple-400/50 via-purple-500/30 to-purple-600/50 rounded-2xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  
+                  <Card className="relative h-full flex flex-col bg-gradient-to-br from-[#1a0f29] via-[#1a2236] to-[#1a0f29] border border-purple-400/20 rounded-2xl overflow-hidden transform-gpu transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-2xl group-hover:shadow-purple-500/10 group-hover:border-purple-400/40">
+                    {/* Header with Image */}
+                    <div className="relative h-32 bg-gradient-to-br from-purple-400/20 to-purple-600/20 flex items-center justify-center overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-400/10 to-purple-600/10"></div>
+                      <div className="relative z-10 w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/20 group-hover:scale-110 transition-transform duration-300">
+                        <Atom className="w-10 h-10 text-white" />
+                      </div>
+                    </div>
+                    
+                    <div className="p-6 pb-4">
+                      <h3 className="text-xl font-bold theme-text-light mb-4 text-center">Physics</h3>
+                      
+                      {/* Competitions List */}
+                      <div className="space-y-3">
+                        {[
+                          "F = ma",
+                          "USAPhO",
+                          "Physics Bowl"
+                        ].map((competition, i) => (
+                          <motion.div
+                            key={i}
+                            initial={{ opacity: 0, x: -20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.3 + i * 0.1, duration: 0.5 }}
+                            className="px-3 py-2 bg-purple-400/5 border border-purple-400/10 rounded-lg group-hover:border-purple-400/20 transition-colors duration-300"
+                          >
+                            <p className="text-sm theme-text-muted group-hover:text-purple-300 transition-colors duration-300">{competition}</p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </motion.div>
+             
+                           {/* Chemistry Track */}
+              <motion.div
+                initial={{ opacity: 0, y: 60, scale: 0.8 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.8, delay: 0.2, type: "spring", stiffness: 100 }}
+                className="group"
+              >
+                <div className="relative h-full">
+                  <div className="absolute -inset-0.5 bg-gradient-to-br from-green-400/50 via-green-500/30 to-green-600/50 rounded-2xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  
+                  <Card className="relative h-full flex flex-col bg-gradient-to-br from-[#0f1920] via-[#1a2236] to-[#0f1920] border border-green-400/20 rounded-2xl overflow-hidden transform-gpu transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-2xl group-hover:shadow-green-500/10 group-hover:border-green-400/40">
+                    {/* Header with Image */}
+                    <div className="relative h-32 bg-gradient-to-br from-green-400/20 to-green-600/20 flex items-center justify-center overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-green-400/10 to-green-600/10"></div>
+                      <div className="relative z-10 w-20 h-20 rounded-2xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg shadow-green-500/20 group-hover:scale-110 transition-transform duration-300">
+                        <FlaskConical className="w-10 h-10 text-white" />
+                      </div>
+                    </div>
+                    
+                    <div className="p-6 pb-4">
+                      <h3 className="text-xl font-bold theme-text-light mb-4 text-center">Chemistry</h3>
+                      
+                      {/* Competitions List */}
+                      <div className="space-y-3">
+                        {[
+                          "USNCO",
+                          "National Science Bowl"
+                        ].map((competition, i) => (
+                          <motion.div
+                            key={i}
+                            initial={{ opacity: 0, x: -20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.4 + i * 0.1, duration: 0.5 }}
+                            className="px-3 py-2 bg-green-400/5 border border-green-400/10 rounded-lg group-hover:border-green-400/20 transition-colors duration-300"
+                          >
+                            <p className="text-sm theme-text-muted group-hover:text-green-300 transition-colors duration-300">{competition}</p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </motion.div>
+             
+                           {/* Biology Track */}
+              <motion.div
+                initial={{ opacity: 0, y: 60, scale: 0.8 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.8, delay: 0.3, type: "spring", stiffness: 100 }}
+                className="group"
+              >
+                <div className="relative h-full">
+                  <div className="absolute -inset-0.5 bg-gradient-to-br from-emerald-400/50 via-emerald-500/30 to-emerald-600/50 rounded-2xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  
+                  <Card className="relative h-full flex flex-col bg-gradient-to-br from-[#0f1a0f] via-[#1a2236] to-[#0f1a0f] border border-emerald-400/20 rounded-2xl overflow-hidden transform-gpu transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-2xl group-hover:shadow-emerald-500/10 group-hover:border-emerald-400/40">
+                    {/* Header with Image */}
+                    <div className="relative h-32 bg-gradient-to-br from-emerald-400/20 to-emerald-600/20 flex items-center justify-center overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/10 to-emerald-600/10"></div>
+                      <div className="relative z-10 w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform duration-300">
+                        <Heart className="w-10 h-10 text-white" />
+                      </div>
+                    </div>
+                    
+                    <div className="p-6 pb-4">
+                      <h3 className="text-xl font-bold theme-text-light mb-4 text-center">Biology</h3>
+                      
+                      {/* Competitions List */}
+                      <div className="space-y-3">
+                        {[
+                          "USABO Open / Semifinal and National",
+                          "National Science Bowl"
+                        ].map((competition, i) => (
+                          <motion.div
+                            key={i}
+                            initial={{ opacity: 0, x: -20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.5 + i * 0.1, duration: 0.5 }}
+                            className="px-3 py-2 bg-emerald-400/5 border border-emerald-400/10 rounded-lg group-hover:border-emerald-400/20 transition-colors duration-300"
+                          >
+                            <p className="text-sm theme-text-muted group-hover:text-emerald-300 transition-colors duration-300">{competition}</p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </motion.div>
+             
+                           {/* Computing Track */}
+              <motion.div
+                initial={{ opacity: 0, y: 60, scale: 0.8 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.8, delay: 0.4, type: "spring", stiffness: 100 }}
+                className="group"
+              >
+                <div className="relative h-full">
+                  <div className="absolute -inset-0.5 bg-gradient-to-br from-orange-400/50 via-orange-500/30 to-orange-600/50 rounded-2xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  
+                  <Card className="relative h-full flex flex-col bg-gradient-to-br from-[#1a0f0f] via-[#1a2236] to-[#1a0f0f] border border-orange-400/20 rounded-2xl overflow-hidden transform-gpu transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-2xl group-hover:shadow-orange-500/10 group-hover:border-orange-400/40">
+                    {/* Header with Image */}
+                    <div className="relative h-32 bg-gradient-to-br from-orange-400/20 to-orange-600/20 flex items-center justify-center overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-orange-400/10 to-orange-600/10"></div>
+                      <div className="relative z-10 w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:scale-110 transition-transform duration-300">
+                        <Code className="w-10 h-10 text-white" />
+                      </div>
+                    </div>
+                    
+                    <div className="p-6 pb-4">
+                      <h3 className="text-xl font-bold theme-text-light mb-4 text-center">Computing</h3>
+                      
+                      {/* Competitions List */}
+                      <div className="space-y-3">
+                        {[
+                          "USACO"
+                        ].map((competition, i) => (
+                          <motion.div
+                            key={i}
+                            initial={{ opacity: 0, x: -20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.6 + i * 0.1, duration: 0.5 }}
+                            className="px-3 py-2 bg-orange-400/5 border border-orange-400/10 rounded-lg group-hover:border-orange-400/20 transition-colors duration-300"
+                          >
+                            <p className="text-sm theme-text-muted group-hover:text-orange-300 transition-colors duration-300">{competition}</p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </motion.div>
+           </div>
+           
+           
+         </div>
+       </section>
+
+       
 
       {/* AES Champions Program Levels Section */}
       <section className="py-24 theme-bg-dark relative overflow-hidden">
@@ -308,9 +512,7 @@ export default function AESChampionsPage() {
             </div>
             
             <h2 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black theme-text-light mb-8 leading-tight">
-              <span className="bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 bg-clip-text text-transparent">Math & Physics</span>
-              <br />
-              <span className="text-white">Pathways to Excellence</span>
+              Pathways to Excellence
             </h2>
             
             <div className="max-w-4xl mx-auto">
@@ -318,7 +520,7 @@ export default function AESChampionsPage() {
                 Students are admitted to various levels based on their performance in our 
                 <span className="text-yellow-400 font-bold mx-2 relative">
                   customized assessment test
-                  <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-yellow-400/0 via-yellow-400 to-yellow-400/0"></div>
+                  <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-yellow-400/0 via-yellow-400 to-yellow-400/0"></span>
                 </span>
                 ensuring a tailored and effective learning journey.
               </p>
@@ -903,7 +1105,7 @@ export default function AESChampionsPage() {
             transition={{ delay: 0.6, duration: 0.8 }}
             className="text-center mt-20 mx-auto max-w-4xl"
           >
-            <div className="max-w-3xl mx-auto">
+            {/* <div className="max-w-3xl mx-auto">
               <h3 className="text-2xl lg:text-3xl font-bold theme-text-light mb-6">
                 Ready to Begin Your Journey?
               </h3>
@@ -918,7 +1120,7 @@ export default function AESChampionsPage() {
                   Schedule Consultation
                 </Button>
               </div>
-            </div>
+            </div> */}
           </motion.div>
         </div>
       </section>
@@ -1108,108 +1310,145 @@ export default function AESChampionsPage() {
             </p>
           </motion.div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 max-w-7xl mx-auto items-start">
-            {competitionPrograms.map((program, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.2, duration: 0.6 }}
-                className="relative group h-full"
-              >
-                {/* Background glow effect */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${program.color} rounded-3xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity duration-500`}></div>
-                
-                <Card className="relative h-full flex flex-col bg-[#1a2236]/90 backdrop-blur-sm border border-yellow-400/20 shadow-2xl hover:shadow-3xl transition-all duration-500 group-hover:scale-105 rounded-3xl overflow-hidden">
-                  {/* Header with gradient background */}
-                  <div className="relative bg-gradient-to-br from-[#1a2236] to-[#2a3246] p-8 theme-text-light">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-400/10 rounded-full -translate-y-12 translate-x-12"></div>
-                    <div className="absolute bottom-0 left-0 w-16 h-16 bg-yellow-400/10 rounded-full translate-y-8 -translate-x-8"></div>
-                    
-                    <div className="relative z-10 text-center">
-                      <div className="inline-flex items-center justify-center w-16 h-16 bg-yellow-400/20 rounded-xl mb-4 backdrop-blur-sm">
-                        <h3 className="text-xl font-black text-yellow-400 px-2">{program.name}</h3>
+                     <div className="grid md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-8 max-w-7xl mx-auto items-start">
+             {competitionPrograms.map((program, i) => (
+               <motion.div
+                 key={i}
+                 initial={{ opacity: 0, y: 50 }}
+                 whileInView={{ opacity: 1, y: 0 }}
+                 transition={{ delay: i * 0.2, duration: 0.6 }}
+                 className="relative group h-full"
+               >
+                 <Card
+                   className={`relative overflow-hidden transition-all duration-500 hover:scale-[1.02] group flex flex-col h-full ${
+                     i === 1
+                       ? "ring-2 ring-blue-400/50 shadow-2xl scale-[1.02] bg-slate-800/90 backdrop-blur-sm border border-blue-400/20"
+                       : "shadow-lg hover:shadow-2xl bg-slate-800/80 backdrop-blur-sm border border-slate-600/30 hover:border-slate-500/50"
+                   }`}
+                 >
+                                       {i === 1 && (
+                      <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-20">
+                        <Badge className="bg-yellow-400 text-[#1a2236] text-xs font-semibold px-2 py-1 shadow-md">
+                          Popular
+                        </Badge>
                       </div>
-                      <h3 className="text-2xl font-bold mb-3 theme-text-light">{program.name}</h3>
-                      <div className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-400/20 rounded-full text-sm font-semibold backdrop-blur-sm text-yellow-400">
-                        <Users className="w-4 h-4 flex-shrink-0" />
-                        <span>{program.grades}</span>
+                    )}
+
+                   <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-slate-700/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                                       <CardHeader className="text-center pb-6 pt-6 relative z-10">
+                      <div className="w-full h-48 mx-auto mb-6 rounded-2xl overflow-hidden shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105 ring-1 ring-slate-600/20">
+                        <img 
+                          src={i === 0 ? "/learning-journey-cartoon.png" : 
+                               i === 1 ? "/progress-mountain-climb.png" : 
+                               i === 2 ? "/successful-celebration.png" : 
+                               "/learning-journey-cartoon.png"} 
+                          alt={`${program.name} program`}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/60 to-slate-800/60"></div>
                       </div>
-                    </div>
-                  </div>                                     <CardContent className="flex-1 flex flex-col p-8">
-                     {/* Timeline Details */}
-                     <div className="space-y-4 mb-8">
-                       <h4 className="text-base font-bold theme-text-light mb-4 flex items-center gap-2">
-                         <Clock className="w-5 h-5 text-yellow-400" />
-                         Timeline
-                       </h4>
-                       <div className="space-y-3">
-                         <div className="flex justify-between items-center p-4 bg-yellow-400/10 rounded-xl border border-yellow-400/20">
-                           <span className="text-sm font-semibold theme-text-light flex-1">Long Term:</span>
-                           <Badge className="bg-yellow-400 text-[#1a2236] font-bold px-3 py-1.5 rounded-full text-sm flex-shrink-0 ml-3">{program.timeline.lt}</Badge>
-                         </div>
-                         <div className="flex justify-between items-center p-4 bg-yellow-400/10 rounded-xl border border-yellow-400/20">
-                           <span className="text-sm font-semibold theme-text-light flex-1">Fast Track:</span>
-                           <Badge className="bg-yellow-400 text-[#1a2236] font-bold px-3 py-1.5 rounded-full text-sm flex-shrink-0 ml-3">{program.timeline.ft}</Badge>
-                         </div>
-                       </div>
-                     </div>
-                     
-                     {/* Program Details */}
-                     <div className="space-y-4 mb-8">
-                       <h4 className="text-base font-bold theme-text-light mb-4 flex items-center gap-2">
-                         <Target className="w-5 h-5 text-yellow-400" />
-                         Program Details
-                       </h4>
-                       <div className="space-y-3">
-                         <div className="flex justify-between items-center p-4 bg-yellow-400/10 rounded-xl border border-yellow-400/20">
-                           <span className="text-sm font-semibold theme-text-light flex-1">Sessions:</span>
-                           <Badge className="bg-yellow-400 text-[#1a2236] font-bold px-3 py-1.5 rounded-full text-sm flex-shrink-0 ml-3">{program.sessions}</Badge>
-                         </div>
-                         <div className="flex flex-col p-4 bg-yellow-400/10 rounded-xl border border-yellow-400/20">
-                           <span className="text-sm font-semibold theme-text-light mb-2">Assessments:</span>
-                           <Badge className="bg-yellow-400 text-[#1a2236] font-bold px-3 py-1.5 rounded-full text-sm w-fit">{program.assessments}</Badge>
-                         </div>
-                       </div>
-                     </div>
-                     
-                     {/* Fees */}
-                     <div className="space-y-4 mb-8">
-                       <h4 className="text-base font-bold theme-text-light mb-4 flex items-center gap-2">
-                         <Briefcase className="w-5 h-5 text-yellow-400" />
-                         Investment
-                       </h4>
-                       <div className="space-y-3">
-                         <div className="flex justify-between items-center p-4 bg-yellow-400/10 rounded-xl border border-yellow-400/20">
-                           <div className="flex flex-col flex-1 min-w-0 gap-1 items-start">
-                             <span className="text-sm font-semibold theme-text-light">Long Term</span>
-                             <span className="text-xs theme-text-muted">Extended preparation</span>
+                      
+                      {/* Program Info Below Image */}
+                      <div className="text-center mt-4">
+                        <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center shadow-lg">
+                          <Calculator className="w-10 h-10 text-white" />
+                        </div>
+                        <h3 className="text-3xl font-bold text-cyan-300 mb-2">{program.name}</h3>
+                        <p className="text-lg text-cyan-200 font-medium">({program.grades})</p>
+                      </div>
+                    </CardHeader>
+
+                   <CardContent className="flex-1 flex flex-col relative z-10">
+                     <div className="flex-1 space-y-8">
+                       {/* Timeline Details */}
+                       <div className="space-y-4">
+                         <h4 className="font-bold text-cyan-300 text-lg border-b border-slate-600/50 pb-2">
+                           Timeline:
+                         </h4>
+                         <div className="space-y-3">
+                           <div className="relative p-4 bg-slate-700/50 rounded-xl border border-slate-600/30 backdrop-blur-sm">
+                             <div className="flex justify-between items-center">
+                               <span className="text-sm font-semibold text-cyan-200">Long Term</span>
+                               <div className="text-right">
+                                 <span className="text-xl font-bold text-cyan-300">{program.timeline.lt}</span>
+                               </div>
+                             </div>
                            </div>
-                           <span className="font-bold text-xl text-yellow-400 ml-3 whitespace-nowrap">{program.fees.lt}</span>
-                         </div>
-                         <div className="flex justify-between items-center p-4 bg-yellow-400/10 rounded-xl border border-yellow-400/20">
-                           <div className="flex flex-col flex-1 min-w-0 gap-1 items-start">
-                             <span className="text-sm font-semibold theme-text-light">Fast Track</span>
-                             <span className="text-xs theme-text-muted">Intensive preparation</span>
+                           <div className="relative p-4 bg-slate-700/50 rounded-xl border border-slate-600/30 backdrop-blur-sm">
+                             <div className="flex justify-between items-center">
+                               <span className="text-sm font-semibold text-cyan-200">Fast Track</span>
+                               <div className="text-right">
+                                 <span className="text-xl font-bold text-cyan-300">{program.timeline.ft}</span>
+                               </div>
+                             </div>
                            </div>
-                           <span className="font-bold text-xl text-yellow-400 ml-3 whitespace-nowrap">{program.fees.ft}</span>
+                         </div>
+                       </div>
+
+                       {/* Program Details */}
+                       <div className="space-y-4">
+                         <h4 className="font-bold text-cyan-300 text-lg border-b border-slate-600/50 pb-2">
+                           Program Details:
+                         </h4>
+                         <div className="space-y-3">
+                           <div className="relative p-4 bg-slate-700/50 rounded-xl border border-slate-600/30 backdrop-blur-sm">
+                             <div className="flex justify-between items-center">
+                               <span className="text-sm font-semibold text-cyan-200">Sessions</span>
+                               <div className="text-right">
+                                 <span className="text-xl font-bold text-cyan-300">{program.sessions}</span>
+                               </div>
+                             </div>
+                           </div>
+                           <div className="relative p-4 bg-slate-700/50 rounded-xl border border-slate-600/30 backdrop-blur-sm">
+                             <div className="flex justify-between items-center">
+                               <span className="text-sm font-semibold text-cyan-200">Assessments</span>
+                               <div className="text-right">
+                                 <span className="text-xl font-bold text-cyan-300">{program.assessments}</span>
+                               </div>
+                             </div>
+                           </div>
+                         </div>
+                       </div>
+
+                       {/* Fees */}
+                       <div className="space-y-4">
+                         <h4 className="font-bold text-cyan-300 text-lg border-b border-slate-600/50 pb-2">
+                           Pricing:
+                         </h4>
+                         <div className="space-y-3">
+                           <div className="relative p-4 bg-slate-700/50 rounded-xl border border-slate-600/30 backdrop-blur-sm">
+                             <div className="flex justify-between items-center">
+                               <span className="text-sm font-semibold text-cyan-200">Long Term</span>
+                               <div className="text-right">
+                                 <span className="text-xl font-bold text-cyan-300">{program.fees.lt}</span>
+                               </div>
+                             </div>
+                           </div>
+                           <div className="relative p-4 bg-slate-700/50 rounded-xl border border-slate-600/30 backdrop-blur-sm">
+                             <div className="flex justify-between items-center">
+                               <span className="text-sm font-semibold text-cyan-200">Fast Track</span>
+                               <div className="text-right">
+                                 <span className="text-xl font-bold text-cyan-300">{program.fees.ft}</span>
+                               </div>
+                             </div>
+                           </div>
                          </div>
                        </div>
                      </div>
-                    
-                    {/* Spacer to push button to bottom */}
-                    <div className="flex-1"></div>
-                    
-                    {/* CTA Button */}
-                    <Button className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:scale-105 transition-all duration-300 text-[#1a2236] font-bold py-3 rounded-xl shadow-lg hover:shadow-xl mt-auto">
-                      <Zap className="w-4 h-4 mr-2" />
-                      Enroll Now
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+
+                     {/* CTA Button */}
+                     <div className="pt-6">
+                       <Button className="w-full bg-gradient-to-r from-cyan-400 to-cyan-600 hover:from-cyan-300 hover:to-cyan-500 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                         <Zap className="w-4 h-4 mr-2" />
+                         Enroll Now
+                       </Button>
+                     </div>
+                   </CardContent>
+                 </Card>
+               </motion.div>
+             ))}
+           </div>
         </div>
       </section>
 
@@ -1242,10 +1481,6 @@ export default function AESChampionsPage() {
                   </CardHeader>
                   <CardContent className="flex-1 flex flex-col">
                     <p className="text-sm theme-text-muted text-center mb-4 font-medium">{deliverable.description}</p>
-                    <div className="flex-1" />
-                    <Button variant="outline" className="w-full border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-[#1a2236] transition-colors mt-2">
-                      Learn More
-                    </Button>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -1323,14 +1558,11 @@ export default function AESChampionsPage() {
               Join AES CHAMPIONS and master the skills needed to excel in national-level Olympiad competitions.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center pt-4">
-              <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg font-bold">
-                Start Your Journey
-              </Button>
-              <Button variant="outline" className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-[#1a2236] px-6 font-bold">
-                Schedule Assessment
-              </Button>
-            </div>
+                         <div className="flex justify-center pt-4">
+               <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg font-bold">
+                 Book Free Session
+               </Button>
+             </div>
           </motion.div>
         </div>
       </section>

@@ -39,16 +39,6 @@ const focusSkills = [
 
 const programFeatures = [
   {
-    icon: Target,
-    title: "Personalized Profile Mapping",
-    description: "Customize a social profile map that aligns with your innate talents and future career interests.",
-  },
-  {
-    icon: Lightbulb,
-    title: "Step-by-Step Coaching",
-    description: "From defining an idea to boosting audience and empowering you to establish and thrive as a self-branded identity.",
-  },
-  {
     icon: Star,
     title: "Expert Guidance",
     description: "Taught by SMEs, digital media enthusiasts and social skills experts.",
@@ -193,7 +183,10 @@ export default function AESCreatorversePage() {
     <main className="min-h-screen theme-bg-dark flex flex-col">
       <Header />
       {/* Hero Section */}
-      <section className="py-16 lg:py-24 theme-bg-dark relative overflow-hidden">
+      <section
+        id="home"
+        className="py-16 lg:py-24 theme-bg-dark relative overflow-hidden"
+      >
         {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-20 left-10 w-20 h-20 bg-yellow-400 rounded-full opacity-10 animate-float"></div>
@@ -203,55 +196,75 @@ export default function AESCreatorversePage() {
         </div>
         
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              className="space-y-8"
-            >
-              <div className="space-y-4">
-                <Badge className="bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-                  ✨ AES CREATORVERSE
-                </Badge>
-                <h1 className="text-5xl lg:text-6xl font-bold theme-text-light leading-tight">
-                  Creative Profile Building Program
-                </h1>
-                <blockquote className="text-xl theme-text-light italic border-l-4 border-yellow-400 pl-4">
-                  &quot;Where ACHARYA leads, creativity flows beyond horizons&quot;
-                  <span className="block text-sm theme-text-muted mt-2">- AES Motto</span>
-                </blockquote>
-                <p className="text-xl theme-text-muted leading-relaxed">
-                  A creative and interactive program to build your social and community profile by helping you drive campaigns, raise your voice through digital media, and host shows of your interest.
-                </p>
-              </div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative"
-            >
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-amber-400/20 rounded-3xl transform rotate-6"></div>
-                <div className="relative bg-[#1a2236]/90 backdrop-blur-sm p-8 rounded-3xl shadow-2xl border border-yellow-400/20">
-                  <div className="space-y-6">
-                    <h3 className="text-xl font-semibold text-yellow-400">Focus Skills</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      {focusSkills.map((skill, i) => (
-                        <Card key={i} className="flex flex-col items-center p-4 bg-gradient-to-br from-[#1a2236] to-[#2a3246] border-yellow-400/20 hover:scale-105 hover:shadow-xl transition-all duration-300">
-                          <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${skill.color} flex items-center justify-center mb-3`}>
-                            <skill.icon className="h-6 w-6 text-white" />
-                          </div>
-                          <CardTitle className="text-lg text-center mb-1 theme-text-light">{skill.title}</CardTitle>
-                          <CardDescription className="text-xs text-center theme-text-muted">{skill.description}</CardDescription>
-                        </Card>
-                      ))}
+          <div className="text-center mb-12 animate-slide-in-bottom">
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
+              ✨ AES CREATORVERSE
+            </Badge>
+            <h1 className="text-6xl lg:text-7xl font-black bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent mb-4 animate-slide-in-bottom">
+              AES CREATORVERSE
+            </h1>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">
+              Creative Profile Building Program
+            </h2>
+            <p className="text-lg theme-text-muted max-w-4xl mx-auto animate-slide-in-bottom" style={{ animationDelay: '0.2s' }}>
+              A creative and interactive program to build your social and community profile by helping you drive campaigns, raise your voice through digital media, and host shows of your interest.
+            </p>
+            <blockquote className="text-xl text-yellow-400 italic border-l-4 border-yellow-400 pl-4 mt-6 max-w-3xl mx-auto animate-slide-in-bottom" style={{ animationDelay: '0.4s' }}>
+              &quot;Where ACHARYA leads, creativity flows beyond horizons&quot;
+              <span className="block text-sm text-yellow-400 mt-2">- AES Motto</span>
+            </blockquote>
+          </div>
+          
+          {/* Action Buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="max-w-4xl mx-auto text-center"
+          >
+            <div className="flex justify-center">
+                             <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg">
+                 Book Free Session
+               </Button>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Focus Skills Section */}
+      <section className="py-20 theme-bg-dark">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="text-center mb-16"
+          >
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Focus Skills</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Our Focus Skills</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">
+              Develop essential skills in four key areas that will help you build your digital presence and community impact.
+            </p>
+          </motion.div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {focusSkills.map((skill, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Card className="h-full flex flex-col bg-[#1a2236]/90 backdrop-blur-sm border border-yellow-400/20 hover:shadow-xl hover:border-yellow-400/40 transition-all duration-300 group relative">
+                  <CardHeader className="pb-2">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center mb-4 mx-auto">
+                      <skill.icon className="h-7 w-7 text-[#1a2236]" />
                     </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+                    <CardTitle className="text-lg font-semibold text-center mb-2 theme-text-light">{skill.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex-1 flex flex-col">
+                    <p className="text-base theme-text-muted text-center leading-relaxed">{skill.description}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
@@ -270,7 +283,7 @@ export default function AESCreatorversePage() {
               Our structured approach helps you build a compelling social profile and establish your unique voice in the digital world.
             </p>
           </motion.div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {programFeatures.map((feature, index) => (
               <motion.div
                 key={index}
@@ -352,53 +365,7 @@ export default function AESCreatorversePage() {
         </div>
       </section>
 
-      {/* Success Examples Section */}
-      <section className="py-20 theme-bg-dark">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="text-center mb-16"
-          >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Success Examples</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">What Our Students Achieve</h2>
-            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Real examples of how students have built their profiles and made an impact.</p>
-          </motion.div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {successExamples.map((category, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <Card className="h-full flex flex-col bg-[#1a2236]/90 backdrop-blur-sm border border-yellow-400/20 hover:shadow-xl hover:border-yellow-400/40 transition-all duration-300 group relative">
-                  <CardHeader className="pb-2">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center mb-4 mx-auto">
-                      <category.icon className="h-7 w-7 text-[#1a2236]" />
-                    </div>
-                    <CardTitle className="text-lg font-semibold text-center mb-2 theme-text-light">{category.category}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-1 flex flex-col">
-                    <ul className="space-y-2 mb-4">
-                      {category.examples.map((example, index) => (
-                        <li key={index} className="flex items-start gap-2 text-sm theme-text-muted">
-                          <div className="w-2 h-2 rounded-full bg-yellow-400 mt-2 flex-shrink-0"></div>
-                          <span>{example}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="flex-1" />
-                    <Button variant="outline" className="w-full border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-[#1a2236] transition-colors mt-2">
-                      Learn More
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+
 
       {/* FAQ Section */}
       <section className="py-20 theme-bg-dark">
@@ -469,11 +436,8 @@ export default function AESCreatorversePage() {
               Join AES CREATORVERSE and build a compelling social profile that showcases your creativity and leadership.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center pt-4">
+            <div className="flex justify-center pt-4">
               <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg font-bold">
-                Start Creating
-              </Button>
-              <Button variant="outline" className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-[#1a2236] px-6 font-bold">
                 Schedule Consultation
               </Button>
             </div>

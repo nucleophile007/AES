@@ -1,13 +1,11 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import Header from "@/components/home/Header";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+
 import Footer from "@/components/home/Footer";
 import Chatbot from "@/components/home/Chatbot";
-import { BookOpen, User, Search } from "lucide-react";
+import { BookOpen, User } from "lucide-react";
 import Image from "next/image";
 
 // Dummy hero categories with improved pastel gradients and icons
@@ -50,7 +48,7 @@ const heroCategories = [
     id: "conduct-research",
     title: "How to Conduct and Showcase Research",
     gradient: "from-yellow-200 via-orange-200 to-rose-100",
-    icon: (props: React.SVGProps<SVGSVGElement>) => <Search className="h-6 w-6 text-orange-700 group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300" {...props} />, 
+    icon: (props: React.SVGProps<SVGSVGElement>) => <BookOpen className="h-6 w-6 text-orange-700 group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300" {...props} />, 
   },
   {
     id: "about-aes",
@@ -72,91 +70,9 @@ const heroCategories = [
   },
 ];
 
-const categories = [
-  "All",
-  "Student Spotlights",
-  "Education & College Admissions",
-  "Research Opportunities",
-  "Mentors",
-  "STEM",
-  "Extracurriculars",
-];
 
-const blogs = [
-  {
-    title: "Cervical Cancer Research Student Story: Mukudzei's Journey from Zimbabwe to Bowdoin",
-    date: "Jul 23, 2025",
-    category: "Student Spotlights",
-    excerpt: "Mukudzei's inspiring journey from Zimbabwe to Bowdoin through cervical cancer research.",
-    author: "Mukudzei M.",
-    readTime: "7 min read",
-    image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    title: "From Student Film Project to Award-Winning Film",
-    date: "Jun 30, 2025",
-    category: "Student Spotlights",
-    excerpt: "How a high school film project became an award-winning production.",
-    author: "Alex R.",
-    readTime: "4 min read",
-    image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    title: "How to Get Leadership Positions in High School",
-    date: "Jun 22, 2025",
-    category: "Education & College Admissions",
-    excerpt: "Tips and strategies for high school students to secure leadership roles.",
-    author: "Priya S.",
-    readTime: "10 min read",
-    image: "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    title: "12 Fall Internships for High School Students",
-    date: "Jun 20, 2025",
-    category: "Education & College Admissions",
-    excerpt: "A curated list of fall internships for ambitious high schoolers.",
-    author: "Team Acharya",
-    readTime: "9 min read",
-    image: "https://images.unsplash.com/photo-1503676382389-4809596d5290?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    title: "Time Management Skills for High School Students",
-    date: "Jun 18, 2025",
-    category: "Education & College Admissions",
-    excerpt: "Master time management with these actionable tips for students.",
-    author: "Riya G.",
-    readTime: "7 min read",
-    image: "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=800&q=80",
-  },
-  // Add more blog entries as needed
-];
 
 export default function AESBlogPage() {
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [searchQuery, setSearchQuery] = useState("");
-
-  // Map category keys to display names
-  const categoryKeyToName: { [key: string]: string } = {
-    "research-opportunities": "Research Opportunities and Ideas",
-    "student-spotlights": "Student Spotlights",
-    "education-admissions": "Education and College Admissions",
-    "meet-mentors": "Meet our Mentors",
-    "conduct-research": "How to Conduct and Showcase Research",
-    "about-aes": "About Acharya",
-  };
-  const allCategoryKeys = Object.keys(categoryKeyToName);
-
-  // Filter blogs by category and search
-  const filteredBlogs = blogs.filter((blog) => {
-    const matchesCategory =
-      selectedCategory === "All" ||
-      blog.category === categoryKeyToName[selectedCategory] ||
-      blog.category === selectedCategory;
-    const matchesSearch =
-      blog.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      blog.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
 
   return (
     <main className="min-h-screen theme-bg-dark flex flex-col">
@@ -187,7 +103,7 @@ export default function AESBlogPage() {
               <div
                 key={index}
                 className={`bg-gradient-to-br ${gradient} rounded-3xl p-6 sm:p-8 cursor-pointer shadow-xl hover:shadow-2xl hover:scale-[1.04] hover:-rotate-1 transition-all duration-300 group relative overflow-hidden animate-float`}
-                onClick={() => setSelectedCategory(id)}
+
                 style={{ willChange: 'transform' }}
               >
                 {/* Shimmer */}
@@ -213,112 +129,7 @@ export default function AESBlogPage() {
         </div>
       </section>
 
-      {/* Enhanced Filter Tabs Section - Matching Testimonials Style */}
-      <section className="py-12 theme-bg-dark relative overflow-hidden">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          {/* Search Bar */}
-          <div className="mb-8 flex justify-center">
-            <div className="relative w-full max-w-md">
-              <input
-                type="text"
-                placeholder="Search blog posts..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-4 pr-10 py-3 rounded-full theme-bg-dark border border-yellow-400/40 focus:border-yellow-400 focus:ring-yellow-400 theme-text-light text-sm transition-all duration-300 hover:shadow-lg hover:shadow-yellow-500/20 outline-none"
-              />
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-yellow-400" />
-            </div>
-          </div>
-          
-          {/* Filter Tabs - Matching Testimonials Style */}
-          <div className="flex flex-wrap justify-center gap-3 md:gap-5 relative z-10">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`rounded-full px-5 py-3 text-sm font-medium transition-all duration-200 md:px-7 md:py-4 md:text-base transform hover:scale-105 ${
-                  selectedCategory === cat || categoryKeyToName[selectedCategory] === cat
-                    ? "bg-yellow-400 text-slate-900 shadow-lg font-semibold hover:bg-yellow-300 hover:shadow-xl"
-                    : "bg-slate-700 text-sky-300 hover:bg-slate-600 hover:text-white hover:border-sky-300/60 hover:shadow-md border border-sky-300/40"
-                }`}
-                aria-label={`Filter by ${cat}`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* Blog Grid */}
-      <section className="py-12 theme-bg-dark">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Section Header */}
-          <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold theme-text-light mb-4">
-              Latest Blog Posts
-            </h2>
-            <p className="text-lg theme-text-muted max-w-2xl mx-auto">
-              Discover insights, stories, and guidance from our community
-            </p>
-          </div>
-          
-          {/* Blog Cards Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10 animate-fadeInUp">
-          {filteredBlogs.map((blog, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.08, duration: 0.5, type: "spring" }}
-            >
-                <Card className="h-full flex flex-col bg-[#1a2236]/80 glass-effect shadow-xl hover:shadow-2xl border border-yellow-400/40 hover:border-yellow-400 transition-all duration-300 rounded-2xl overflow-hidden group relative">
-                <div className="relative h-56 w-full overflow-hidden">
-                  <Image
-                    src={blog.image}
-                    alt={blog.title}
-                    layout="fill"
-                    objectFit="cover"
-                    className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105 group-hover:brightness-105"
-                  />
-                  <div className="absolute top-4 left-4">
-                      <Badge className="bg-yellow-400 text-[#1a2236] text-xs px-3 py-1 rounded-full shadow font-bold animate-pulse-glow border-0">
-                        {blog.category}
-                      </Badge>
-                  </div>
-                    {/* Floating orb */}
-                    <div className="absolute bottom-2 right-2 w-3 h-3 bg-yellow-400 rounded-full opacity-0 group-hover:opacity-60 group-hover:animate-bounce transition-all duration-500" style={{ animationDelay: '0.2s' }}></div>
-                </div>
-                <CardHeader className="pb-2 pt-4 px-5">
-                    <CardTitle className="text-lg font-bold text-white line-clamp-2 mb-1 group-hover:text-yellow-400 transition-colors duration-300 animate-typewriter">
-                      {blog.title}
-                    </CardTitle>
-                    <CardDescription className="text-xs text-yellow-200/80 mb-1 flex items-center gap-2">
-                      <span>{blog.date}</span> <span>•</span> <span>{blog.readTime}</span>
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="flex-1 flex flex-col px-5 pb-5">
-                    <p className="text-sm text-blue-100/90 mb-4 line-clamp-3 animate-fadeInUp">
-                      {blog.excerpt}
-                    </p>
-                  <div className="mt-auto flex items-center justify-between">
-                      <span className="text-xs text-yellow-400 font-semibold animate-fadeInDown">
-                        {blog.author}
-                      </span>
-                      <Button variant="link" className="text-yellow-300 px-0 font-semibold hover:text-yellow-400 hover:underline animate-slide-in-right transition-colors duration-200">
-                        Read More
-                      </Button>
-                  </div>
-                </CardContent>
-                  {/* Animated border bottom */}
-                  <div className="absolute bottom-0 left-0 w-0 h-1 bg-gradient-to-r from-yellow-400 to-yellow-300 group-hover:w-full transition-all duration-500 ease-out rounded-bl-2xl rounded-br-2xl"></div>
-              </Card>
-            </motion.div>
-          ))}
-          </div>
-        </div>
-      </section>
 
       {/* Dummy Content Section for Future Use */}
       <section className="container mx-auto mt-20 mb-10 animate-fadeIn theme-bg-dark">
