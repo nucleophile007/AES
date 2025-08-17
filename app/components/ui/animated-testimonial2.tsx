@@ -3,13 +3,13 @@
 import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useEffect, useState, useCallback } from "react"
-import Image from "next/image"
 
 type Testimonial = {
   quote: string
   name: string
   designation: string
-  src: string
+  src?: string  // Made optional
+  initials?: string  // Added initials field
   // New fields from the provided data
   achievement?: string
   improvement?: string
@@ -153,18 +153,11 @@ export const AnimatedTestimonials = ({
                   }}
                   className="absolute inset-0 origin-bottom"
                 >
-                  <Image
-                    src={testimonial.src || "/placeholder.svg?height=400&width=400"}
-                    alt={`${testimonial.name} - ${testimonial.designation}`}
-                    width={500}
-                    height={500}
-                    draggable={false}
-                    className="h-full w-full rounded-3xl object-cover object-center"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement
-                      target.src = "/placeholder.svg?height=400&width=400"
-                    }}
-                  />
+                  <div className="h-full w-full rounded-3xl bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center">
+                    <span className="text-6xl md:text-7xl font-bold text-[#1a2236] select-none">
+                      {testimonial.initials || testimonial.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    </span>
+                  </div>
                 </motion.div>
               ))}
             </AnimatePresence>
