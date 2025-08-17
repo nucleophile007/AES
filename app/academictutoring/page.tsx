@@ -551,7 +551,7 @@ export default function AcademicTutoringPage() {
                 className="relative group"
                 whileHover={{ scale: 1.05 }}
               >
-                                 <FlipCard height="h-80" className="group">
+                                 <FlipCard height="h-[40rem]" className="group">
                    <FlipCardFront>
                      <div className={`w-full h-full bg-gradient-to-br ${subject.color} rounded-3xl p-8 flex flex-col items-center justify-center text-white shadow-2xl border-2 border-white/20 overflow-hidden relative group-hover:shadow-3xl transition-all duration-500`}>
                        {/* Enhanced animated background pattern */}
@@ -605,44 +605,44 @@ export default function AcademicTutoringPage() {
                          <div className="absolute top-1/2 left-1/2 w-8 h-8 border border-yellow-400/15 rounded-full animate-float"></div>
                        </div>
                        
-                       {/* Enhanced glowing title */}
-                       <motion.h3 
-                         className="text-3xl font-bold text-yellow-400 text-center mb-8 relative drop-shadow-lg"
-                         animate={{ 
-                           textShadow: [
-                             "0 0 15px rgba(250, 204, 21, 0.6)",
-                             "0 0 25px rgba(250, 204, 21, 0.9)",
-                             "0 0 15px rgba(250, 204, 21, 0.6)"
-                           ]
-                         }}
-                         transition={{ duration: 2, repeat: Infinity }}
-                       >
-                         {subject.title}
-                       </motion.h3>
+                                               {/* Enhanced glowing title - positioned at consistent horizontal level */}
+                        <motion.h3 
+                          className="text-3xl font-bold text-yellow-400 text-center absolute top-8 left-1/2 transform -translate-x-1/2 drop-shadow-lg"
+                          animate={{ 
+                            textShadow: [
+                              "0 0 15px rgba(250, 204, 21, 0.6)",
+                              "0 0 25px rgba(250, 204, 21, 0.9)",
+                              "0 0 15px rgba(250, 204, 21, 0.6)"
+                            ]
+                          }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                        >
+                          {subject.title}
+                        </motion.h3>
                        
-                                               {/* Enhanced animated course list */}
-                        <div className="space-y-4 text-sm max-h-36 overflow-y-auto px-4 custom-scrollbar">
-                         {subject.courses.map((course, courseIndex) => (
-                           <motion.div 
-                             key={courseIndex} 
-                             className="theme-text-light text-center flex items-center justify-center gap-3 bg-yellow-400/10 backdrop-blur-sm px-4 py-2 rounded-full border border-yellow-400/20"
-                             initial={{ opacity: 0, x: -20 }}
-                             animate={{ opacity: 1, x: 0 }}
-                             transition={{ delay: courseIndex * 0.1, duration: 0.5 }}
-                             whileHover={{ 
-                               scale: 1.05,
-                               backgroundColor: "rgba(250, 204, 21, 0.15)"
-                             }}
-                           >
-                             <motion.div 
-                               className="w-2 h-2 bg-yellow-400 rounded-full"
-                               animate={{ scale: [1, 1.5, 1] }}
-                               transition={{ duration: 1, repeat: Infinity, delay: courseIndex * 0.2 }}
-                             />
-                             <span className="font-medium">{course}</span>
-                           </motion.div>
-                         ))}
-                       </div>
+                                                                       {/* Enhanced animated course list - positioned below fixed title */}
+                         <div className="space-y-4 text-sm px-4 mt-24">
+                          {subject.courses.map((course, courseIndex) => (
+                            <motion.div 
+                              key={courseIndex} 
+                              className="theme-text-light text-center flex items-center justify-center gap-3 bg-yellow-400/10 backdrop-blur-sm px-4 py-2 rounded-full border border-yellow-400/20"
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: courseIndex * 0.1, duration: 0.5 }}
+                              whileHover={{ 
+                                scale: 1.05,
+                                backgroundColor: "rgba(250, 204, 21, 0.15)"
+                              }}
+                            >
+                              <motion.div 
+                                className="w-2 h-2 bg-yellow-400 rounded-full"
+                                animate={{ scale: [1, 1.5, 1] }}
+                                transition={{ duration: 1, repeat: Infinity, delay: courseIndex * 0.2 }}
+                              />
+                              <span className="font-medium">{course}</span>
+                            </motion.div>
+                          ))}
+                        </div>
                        
                                                {/* Enhanced click indicator */}
                         <motion.div 
