@@ -9,13 +9,16 @@
     "lint": "next lint",
     "test": "vitest --run",
     "format.fix": "prettier --write .",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "tunnel": "ngrok http 3000 --subdomain aes-booking",
+    "dev:tunnel": "concurrently \"npm run dev\" \"sleep 5 && npm run tunnel\""
   },
   "dependencies": {
     "@prisma/client": "^6.12.0",
     "@react-three/drei": "^9.88.0",
     "@react-three/fiber": "^8.15.0",
     "@tabler/icons-react": "^3.34.1",
+    "@upstash/qstash": "^2.8.2",
     "chart.js": "^4.5.0",
     "chartjs-plugin-datalabels": "^2.2.0",
     "embla-carousel-autoplay": "^8.6.0",
@@ -69,6 +72,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
+    "concurrently": "^9.2.0",
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.3.0",
     "eslint": "^8.57.1",
@@ -78,6 +82,7 @@
     "input-otp": "^1.2.4",
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",
+    "ngrok": "^5.0.0-beta.2",
     "postcss": "^8.5.6",
     "prettier": "^3.5.3",
     "react-day-picker": "^8.10.1",
