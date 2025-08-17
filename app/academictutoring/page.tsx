@@ -14,7 +14,7 @@ import FlipCard, { FlipCardFront, FlipCardBack } from "@/components/ui/flip-card
 import { CardStack } from "@/components/ui/card-stack";
 import { Highlight } from "@/components/ui/highlight";
 import { useState, useEffect, useCallback, useRef } from "react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -118,12 +118,22 @@ const learningFeatures = [
   }
 ];
 
+// Helper function to generate initials from name
+const getInitials = (name: string) => {
+  return name
+    .split(' ')
+    .map(word => word[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2); // Take max 2 initials
+}
+
 const testimonialCards = [
   {
     id: 0,
     name: "Pragna",
     designation: "Physics: 95% | Math: B's to A's",
-    avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=120&h=120&fit=crop&crop=face",
+    initials: getInitials("Pragna"),
     rating: 5,
     content: (
       <p>
@@ -135,7 +145,7 @@ const testimonialCards = [
     id: 1,
     name: "Adwitha",
     designation: "Math Grade: D to A",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop&crop=face",
+    initials: getInitials("Adwitha"),
     rating: 5,
     content: (
       <p>
@@ -147,7 +157,7 @@ const testimonialCards = [
     id: 2,
     name: "Lalit Pinisetti",
     designation: "Personalized Learning Success",
-    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&h=120&fit=crop&crop=face",
+    initials: getInitials("Lalit Pinisetti"),
     rating: 5,
     content: (
       <p>
@@ -159,7 +169,7 @@ const testimonialCards = [
     id: 3,
     name: "Ruhee",
     designation: "AP Calculus Confidence",
-    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&h=120&fit=crop&crop=face",
+    initials: getInitials("Ruhee"),
     rating: 5,
     content: (
       <p>
@@ -171,7 +181,7 @@ const testimonialCards = [
     id: 4,
     name: "Rishitha",
     designation: "Tailored Learning Method",
-    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&h=120&fit=crop&crop=face",
+    initials: getInitials("Rishitha"),
     rating: 5,
     content: (
       <p>
@@ -183,7 +193,7 @@ const testimonialCards = [
     id: 5,
     name: "Sloane Stenson",
     designation: "Online Learning Success",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&h=120&fit=crop&crop=face",
+    initials: getInitials("Sloane Stenson"),
     rating: 5,
     content: (
       <p>
@@ -195,7 +205,7 @@ const testimonialCards = [
     id: 6,
     name: "Geetika",
     designation: "Pre-Calculus Mastery",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&h=120&fit=crop&crop=face",
+    initials: getInitials("Geetika"),
     rating: 5,
     content: (
       <p>
@@ -207,7 +217,7 @@ const testimonialCards = [
     id: 7,
     name: "IM1 Tutoring: Sutter Middle School",
     designation: "Patient Teaching Approach",
-    avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=120&h=120&fit=crop&crop=face",
+    initials: getInitials("IM1 Tutoring: Sutter Middle School"),
     rating: 5,
     content: (
       <p>
@@ -219,7 +229,7 @@ const testimonialCards = [
     id: 8,
     name: "Pre-Calc Tutoring: Folsom High School",
     designation: "Interactive Learning",
-    avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=120&h=120&fit=crop&crop=face",
+    initials: getInitials("Pre-Calc Tutoring: Folsom High School"),
     rating: 5,
     content: (
       <p>
@@ -231,7 +241,7 @@ const testimonialCards = [
     id: 9,
     name: "IM3 Tutoring: Folsom High School",
     designation: "Flexible Scheduling",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop&crop=face",
+    initials: getInitials("IM3 Tutoring: Folsom High School"),
     rating: 5,
     content: (
       <p>
@@ -243,7 +253,7 @@ const testimonialCards = [
     id: 10,
     name: "IM2 Tutoring: Folsom High School",
     designation: "Professional Methodology",
-    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&h=120&fit=crop&crop=face",
+    initials: getInitials("IM2 Tutoring: Folsom High School"),
     rating: 5,
     content: (
       <p>
@@ -255,7 +265,7 @@ const testimonialCards = [
     id: 11,
     name: "IM1 Tutoring: Folsom High School",
     designation: "Concept Breakdown",
-    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&h=120&fit=crop&crop=face",
+    initials: getInitials("IM1 Tutoring: Folsom High School"),
     rating: 5,
     content: (
       <p>
@@ -399,9 +409,8 @@ function TestimonialsSection() {
                       isActive ? "ring-yellow-400 ring-4 scale-110" : "ring-white hover:ring-yellow-300"
                     } ${isAnimating ? "animate-pulse" : ""}`}
                   >
-                    <AvatarImage src={testimonial.avatar || "/placeholder.svg"} alt={testimonial.name} />
                     <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-[#1a2236] font-semibold">
-                      {testimonial.name
+                      {testimonial.initials || testimonial.name
                         .split(" ")
                         .map((n) => n[0])
                         .join("")}
@@ -433,9 +442,8 @@ function TestimonialsSection() {
 
               <div className="flex items-center gap-4">
                 <Avatar className="w-12 h-12 ring-2 ring-yellow-100">
-                  <AvatarImage src={selectedTestimonial.avatar || "/placeholder.svg"} alt={selectedTestimonial.name} />
                   <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-[#1a2236] font-semibold">
-                    {selectedTestimonial.name
+                    {selectedTestimonial.initials || selectedTestimonial.name
                       .split(" ")
                       .map((n) => n[0])
                       .join("")}
