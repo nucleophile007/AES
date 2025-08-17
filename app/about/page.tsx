@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Users, BookOpen, Target, Trophy, Linkedin, Globe, Mail, GraduationCap, Star, Calculator, Atom } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -12,64 +13,34 @@ import Chatbot from "@/components/home/Chatbot";
 
 const faculty = [
   {
-    name: "Dr. Rajesh Acharya",
-    role: "Founder & Lead Mathematics Educator",
-    education: "Ph.D. in Applied Mathematics",
-    institution: "IIT Delhi Alumni",
-    experience: "15+ years",
-    specialties: ["Advanced Calculus", "Linear Algebra", "Competition Math", "AP Mathematics"],
-    achievements: ["500+ students mentored", "98% improvement rate", "Research publications"],
-    image: "/placeholder.svg",
+    name: "Dr. Thejus R. Kartha",
+    role: "Asst. Professor",
+    education: "Ph.D in Computational Chemistry",
+    institution: "Vijaybhoomi University, India",
+    experience: "Research & Teaching",
+    specialties: ["Data Science", "AI/ML", "Infrared Signal Processing", "Computational Chemistry"],
+    achievements: ["Data-driven solutions expert", "AI/ML lecturer", "Science education advocate", "Arts enthusiast"],
+    image: "/thejus-r-kartha.png",
   },
   {
-    name: "Dr. Priya Sharma",
-    role: "Head of Sciences Department",
-    education: "Ph.D. in Biochemistry",
-    institution: "University Faculty",
-    experience: "12+ years",
-    specialties: ["AP Chemistry", "Organic Chemistry", "Biology", "Pre-Med Prep"],
-    achievements: ["Medical school guidance", "Research mentor", "Lab experience"],
-    image: "/placeholder.svg",
+    name: "Dr. Rakesh Lingam",
+    role: "Asst. Professor",
+    education: "Ph.D in Mechanical and Aerospace Engineering",
+    institution: "IIT Dharwad, India",
+    experience: "Research & Mentoring",
+    specialties: ["Mechanical Engineering", "Aerospace Engineering", "Innovation Mentoring", "Youth Development"],
+    achievements: ["Top engineering faculty", "Innovation advocate", "Youth mentor", "Future-ready education"],
+    image: "/rakesh-lingam.png",
   },
   {
-    name: "Prof. Ankit Gupta",
-    role: "Physics & Engineering Specialist",
-    education: "M.Tech in Engineering Physics",
-    institution: "IIT Bombay Alumni",
-    experience: "10+ years",
-    specialties: ["AP Physics C", "Mechanics", "Electromagnetism", "Engineering Prep"],
-    achievements: ["Industry experience", "Patent holder", "Competition coach"],
-    image: "/placeholder.svg",
-  },
-  {
-    name: "Dr. Meera Patel",
-    role: "SAT & Test Prep Expert",
-    education: "Ph.D. in Education",
-    institution: "Stanford University",
-    experience: "8+ years",
-    specialties: ["SAT Math", "SAT Reading", "Test Strategies", "College Prep"],
-    achievements: ["1500+ average score improvement", "College counselor", "Admissions expert"],
-    image: "/placeholder.svg",
-  },
-  {
-    name: "Prof. Vikram Singh",
-    role: "Research Programs Director",
-    education: "Ph.D. in Computer Science",
-    institution: "IIT Kanpur Alumni",
-    experience: "14+ years",
-    specialties: ["Research Methodology", "Data Analysis", "Programming", "Project Mentoring"],
-    achievements: ["Published researcher", "Startup founder", "Innovation mentor"],
-    image: "/placeholder.svg",
-  },
-  {
-    name: "Dr. Kavita Reddy",
-    role: "Humanities & Law Coordinator",
-    education: "Ph.D. in English Literature",
-    institution: "University Faculty",
-    experience: "11+ years",
-    specialties: ["Academic Writing", "Critical Analysis", "Law Prep", "Liberal Arts"],
-    achievements: ["Writing coach", "Publication editor", "Legal education expert"],
-    image: "/placeholder.svg",
+    name: "Bhavya Kandala",
+    role: "Associate Attorney",
+    education: "Master of Laws (LLM) in Tech, Innovation and Entrepreneurship Law",
+    institution: "BSK Legal, India",
+    experience: "Legal Practice",
+    specialties: ["Family Law", "Criminal Defense", "Intellectual Property", "Entrepreneurship Law"],
+    achievements: ["Litigation expert", "Legal intern mentor", "Communication skills trainer", "Strategic planning advisor"],
+    image: "/bhavya-kandala.png",
   },
 ];
 
@@ -379,7 +350,253 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* Words from Our Founder Section */}
+      <section className="py-24 theme-bg-dark relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-10 left-20 w-32 h-32 bg-gradient-to-br from-yellow-400/20 to-amber-500/20 rounded-full blur-3xl animate-float"></div>
+          <div className="absolute top-40 right-32 w-24 h-24 bg-gradient-to-br from-blue-400/15 to-purple-500/15 rounded-full blur-2xl animate-float-reverse"></div>
+          <div className="absolute bottom-20 left-1/3 w-20 h-20 bg-gradient-to-br from-green-400/10 to-emerald-500/10 rounded-full blur-xl animate-float"></div>
+          <div className="absolute top-1/2 right-1/4 w-16 h-16 bg-gradient-to-br from-pink-400/15 to-rose-500/15 rounded-full blur-lg animate-float-reverse"></div>
+          
+          {/* Floating Geometric Shapes */}
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="absolute top-1/4 left-1/4 w-8 h-8 border-2 border-yellow-400/30 rounded-full"
+          />
+          <motion.div
+            animate={{ rotate: -360 }}
+            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+            className="absolute bottom-1/4 right-1/4 w-6 h-6 border-2 border-blue-400/30 transform rotate-45"
+          />
+        </div>
 
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Enhanced Header with Animated Elements */}
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className="text-center mb-20"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="inline-block mb-6"
+            >
+              <Badge className="bg-gradient-to-r from-yellow-400/20 to-amber-500/20 text-yellow-400 border-yellow-400/40 px-6 py-3 text-lg font-semibold shadow-lg backdrop-blur-sm">
+                ✨ Founder&apos;s Words ✨
+              </Badge>
+            </motion.div>
+            
+            <motion.h2
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.4 }}
+              className="text-5xl lg:text-6xl font-black bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent mb-8"
+            >
+              Words from Our Founder
+            </motion.h2>
+            
+            {/* Animated Underline */}
+            <motion.div
+              initial={{ width: 0 }}
+              whileInView={{ width: "200px" }}
+              transition={{ duration: 1.2, delay: 0.6 }}
+              className="h-1 bg-gradient-to-r from-yellow-400 to-amber-500 mx-auto rounded-full shadow-lg"
+            />
+          </motion.div>
+          
+          <div className="max-w-7xl mx-auto">
+            <div className="grid lg:grid-cols-2 gap-16 items-center">
+              {/* Enhanced Founder's Message */}
+              <motion.div
+                initial={{ opacity: 0, x: -50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                className="space-y-8 relative"
+              >
+                {/* Glowing Background for Message */}
+                <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/5 to-amber-500/5 rounded-3xl blur-3xl"></div>
+                
+                                                  <motion.div
+                   initial={{ opacity: 0, y: 20 }}
+                   whileInView={{ opacity: 1, y: 0 }}
+                   transition={{ duration: 0.8, delay: 0.8 }}
+                   className="relative z-10"
+                 >
+                   <motion.div
+                     initial={{ opacity: 0, scale: 0.9 }}
+                     whileInView={{ opacity: 1, scale: 1 }}
+                     transition={{ duration: 0.6, delay: 1 }}
+                     className="text-center mb-8"
+                   >
+                     <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                       <span className="text-3xl">✨</span>
+                     </div>
+                     <h3 className="text-3xl lg:text-4xl font-bold theme-text-light mb-2 bg-gradient-to-r from-yellow-400 to-amber-500 bg-clip-text text-transparent">
+                       WELCOME TO ACHARYA
+                     </h3>
+                     <p className="text-lg theme-text-muted">A Message from Our Founder</p>
+                   </motion.div>
+                   
+                   <div className="space-y-6">
+                     <motion.div
+                       initial={{ opacity: 0, x: -20 }}
+                       whileInView={{ opacity: 1, x: 0 }}
+                       transition={{ duration: 0.8, delay: 1.2 }}
+                       className="relative"
+                     >
+                       <div className="flex items-start space-x-4">
+                         <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-yellow-400/20 to-amber-500/20 rounded-full flex items-center justify-center text-2xl">
+                           ✨
+                         </div>
+                         <div className="flex-1">
+                           <blockquote className="relative">
+                             <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-yellow-400 to-amber-500 rounded-full"></div>
+                             <p className="pl-6 text-lg theme-text-muted leading-relaxed italic font-medium">
+                               &quot;Being passionate about teaching and mentoring students, we, at ACHARYA, would be thrilled to help young minds unlock their full potential and to prepare them for lifelong success. Instant connection with students as my natural ability, I encourage mentors to strive to create a nurturing and motivating environment for your children to feel empowered and grow. Through personalized teaching strategies, we aim to inspire confidence, foster critical thinking and cultivate a love for learning. We believe that every student has the potential to excel and with little guidance and encouragement they are bound to achieve their dreams.&quot;
+                             </p>
+                           </blockquote>
+                         </div>
+                       </div>
+                     </motion.div>
+                   </div>
+                   
+                   <motion.div
+                     initial={{ opacity: 0, y: 20 }}
+                     whileInView={{ opacity: 1, y: 0 }}
+                     transition={{ duration: 0.8, delay: 2.2 }}
+                     className="mt-8 pt-6 border-t border-yellow-400/20"
+                   >
+                     <div className="text-center">
+                       <p className="text-sm theme-text-muted mb-2">With dedication and passion,</p>
+                       <p className="text-lg font-semibold theme-text-light">Dr. Shanti Swaroop Kandala</p>
+                     </div>
+                   </motion.div>
+                 </motion.div>
+                
+                                 
+              </motion.div>
+
+                             {/* Enhanced Founder's Image */}
+               <motion.div
+                 initial={{ opacity: 0, x: 50 }}
+                 whileInView={{ opacity: 1, x: 0 }}
+                 transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
+                 className="flex flex-col items-center relative"
+               >
+                 {/* Reduced Background Glow Effects */}
+                 <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/20 to-amber-500/20 rounded-full blur-2xl"></div>
+                 <div className="absolute inset-8 bg-gradient-to-br from-blue-400/15 to-purple-500/15 rounded-full blur-xl"></div>
+                 
+                                   {/* Enhanced Founder's Image Container */}
+                  <motion.div
+                    whileHover={{ scale: 1.05, rotateY: 5 }}
+                    transition={{ duration: 0.3 }}
+                    className="relative"
+                  >
+                                         <div className="relative w-80 h-80 rounded-full overflow-hidden">
+                      <motion.div
+                        whileHover={{ scale: 1.1 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <Image
+                          src="/founder-image.png"
+                          alt="Dr. Shanti Swaroop Kandala - Founder of ACHARYA"
+                          width={320}
+                          height={320}
+                          className="w-full h-full object-cover"
+                        />
+                      </motion.div>
+                      
+                      {/* Overlay with Gradient */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#1a2236]/60 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
+                    </div>
+                    
+                    {/* Achievement Badges Removed */}
+                    
+                    {/* Static Decorative Elements */}
+                    <div className="absolute top-1/2 -right-8 w-6 h-6 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full shadow-lg"></div>
+                    
+                    <div className="absolute bottom-1/2 -left-8 w-4 h-4 bg-gradient-to-br from-pink-400 to-rose-500 rounded-full shadow-lg"></div>
+                  </motion.div>
+                 
+                                   {/* Founder's Signature Below Image - Now properly positioned */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 1.5 }}
+                    className="mt-8 text-center"
+                  >
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      transition={{ duration: 0.6, delay: 1.7 }}
+                      className="text-2xl font-bold theme-text-light mb-2"
+                    >
+                      Dr. Shanti Swaroop Kandala
+                    </motion.p>
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      transition={{ duration: 0.6, delay: 1.9 }}
+                      className="text-lg text-yellow-400 font-semibold mb-4"
+                    >
+                      Founder/CEO/Research Program Director
+                    </motion.p>
+                    <div className="space-y-2">
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        transition={{ duration: 0.6, delay: 2.1 }}
+                        className="text-sm theme-text-muted font-medium"
+                      >
+                        Ph.D. in Mechanical and Aerospace Engineering, IITH, India
+                      </motion.p>
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        transition={{ duration: 0.6, delay: 2.3 }}
+                        className="text-sm theme-text-muted font-medium"
+                      >
+                        M.S in Aerospace Engg., KAIST, South Korea
+                      </motion.p>
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        transition={{ duration: 0.6, delay: 2.5 }}
+                        className="text-sm theme-text-muted font-medium"
+                      >
+                        Master in Liberal Arts, Ashoka (UPenn), India
+                      </motion.p>
+                    </div>
+                  </motion.div>
+               </motion.div>
+             </div>
+           </div>
+         </div>
+        
+        {/* Additional CSS Animations */}
+        <style jsx>{`
+          @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+          }
+          @keyframes float-reverse {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(20px) rotate(-180deg); }
+          }
+          .animate-float {
+            animation: float 6s ease-in-out infinite;
+          }
+          .animate-float-reverse {
+            animation: float-reverse 8s ease-in-out infinite;
+          }
+        `}</style>
+      </section>
 
       {/* Elite Educators Section */}
       <section className="py-20 theme-bg-dark">
@@ -395,53 +612,52 @@ export default function AboutPage() {
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">
               Elite Educators & Industry Professionals
             </h2>
-            <p className="text-xl theme-text-muted max-w-4xl mx-auto">
-              Our team comprises IIT alumni, university faculty, and industry
-              professionals with Ph.D. degrees, fostering subject mastery and
-              research-driven thinking to guide students toward academic
-              excellence.
-            </p>
+            
           </motion.div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-            {[
-              {
-                icon: Users,
-                title: "University Faculty",
-                description: "Active professors and researchers from top universities bringing cutting-edge knowledge",
-              },
-              {
-                icon: GraduationCap,
-                title: "IIT Alumni", 
-                description: "Graduates from India's premier engineering institutes with exceptional academic excellence",
-              },
-              {
-                icon: BookOpen,
-                title: "Ph.D. Professionals",
-                description: "Industry experts with doctoral degrees combining academic rigor with practical experience",
-              },
-              {
-                icon: Star,
-                title: "US Graduates",
-                description: "Alumni from prestigious US universities including Ivy League and top-tier institutions",
-              },
-            ].map((credential, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="text-center p-6 bg-gradient-to-br from-yellow-400/10 to-amber-500/10 rounded-2xl border border-yellow-400/10"
-              >
-                <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <credential.icon className="h-8 w-8 text-[#1a2236]" />
+                     
+
+                       {/* Kavya S Rentachintala - Director of Operations & Marketing Strategy */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              className="max-w-6xl mx-auto mb-16"
+            >
+              <div className="grid lg:grid-cols-2 gap-12 items-center">
+                {/* Left Side - Image */}
+                <div className="flex justify-center">
+                  <div className="relative w-80 h-80 rounded-full overflow-hidden">
+                    <Image
+                      src="/kavya.png"
+                      alt="Kavya S Rentachintala - Director of Operations & Marketing Strategy"
+                      width={320}
+                      height={320}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                 </div>
-                <h3 className="text-xl font-semibold mb-2 theme-text-light">
-                  {credential.title}
-                </h3>
-                <p className="theme-text-muted">{credential.description}</p>
-              </motion.div>
-            ))}
-          </div>
+                
+                {/* Right Side - Details */}
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="text-3xl lg:text-4xl font-bold theme-text-light mb-3">
+                      Kavya S Rentachintala
+                    </h4>
+                    <p className="text-xl text-yellow-400 font-semibold mb-6">
+                      Director of Operations & Marketing Strategy
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <p className="text-lg theme-text-muted leading-relaxed">
+                      As a Silicon Engineer in a day and a super mom for two ambitious kids in the evening, Kavya is driving the Marketing and Operations activities including the day-to-day operations.
+                    </p>
+                    <p className="text-lg theme-text-muted leading-relaxed">
+                      Leveraging her creativity, acumen and AI skills, she rose to be the prime contact for scheduling our events, webinars and yearly seminars with local organizations. She also handles &quot;on-the-board&quot; intitation meetings with potential parents/students to customize services based on student&apos;s profiles. As bearing the marketing hat, she creates lively flyers, digital content, drive ads and social campaigns for ACHARYA.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           {/* <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
@@ -542,14 +758,14 @@ export default function AboutPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-12"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
+            {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
               Our Team
-            </Badge>
+            </Badge> */}
             <h3 className="text-3xl font-bold theme-text-light mb-4">
-              Meet Our Distinguished Faculty
+              Meet Our Distinguished Mentors
             </h3>
             <p className="text-lg theme-text-muted max-w-3xl mx-auto">
-              Our team combines academic excellence from top institutions with practical teaching experience
+              Our mentors bring diverse expertise from top institutions, combining academic excellence with real-world experience
             </p>
           </motion.div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -562,7 +778,7 @@ export default function AboutPage() {
               >
                 <Card className="h-full hover:shadow-xl transition-all duration-300 group border-2 hover:border-yellow-400/20 bg-gradient-to-br from-[#1a2236]/90 to-[#1a2236]/80 backdrop-blur-xl border-yellow-400/10">
                   <CardHeader className="text-center pb-4">
-                    <Avatar className="w-20 h-20 mx-auto mb-4 border-4 border-yellow-400/20">
+                    <Avatar className="w-32 h-32 mx-auto mb-4 border-4 border-yellow-400/20">
                       <AvatarImage src={member.image} />
                       <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-amber-500 text-[#1a2236] text-lg font-bold">
                         {member.name
@@ -591,16 +807,11 @@ export default function AboutPage() {
                       <div>
                         <p className="text-sm font-semibold theme-text-light mb-2">Specialties</p>
                         <div className="flex flex-wrap gap-1">
-                          {member.specialties.slice(0, 3).map((specialty, i) => (
+                          {member.specialties.map((specialty, i) => (
                             <Badge key={i} variant="secondary" className="text-xs bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
                               {specialty}
                             </Badge>
                           ))}
-                          {member.specialties.length > 3 && (
-                            <Badge variant="outline" className="text-xs border-yellow-400/20 text-yellow-400">
-                              +{member.specialties.length - 3} more
-                            </Badge>
-                          )}
                         </div>
                       </div>
                       <div>
@@ -628,6 +839,64 @@ export default function AboutPage() {
                     </div>
                   </CardContent>
                 </Card>
+              </motion.div>
+            ))}
+                     </div>
+           
+           {/* Spacing after mentor cards */}
+           <div className="mb-20"></div>
+           
+           {/* Team Description */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="text-center mb-16"
+          >
+            <p className="text-xl theme-text-muted max-w-4xl mx-auto">
+              Our mentors comprise distinguished academics, researchers, and legal professionals
+              from top institutions, bringing diverse expertise to guide students toward
+              academic excellence and real-world success.
+            </p>
+          </motion.div>
+          
+          {/* Credential Cards */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+            {[
+              {
+                icon: Users,
+                title: "University Faculty",
+                description: "Active professors and researchers from top universities bringing cutting-edge knowledge",
+              },
+              {
+                icon: GraduationCap,
+                title: "IIT Alumni", 
+                description: "Graduates from India's premier engineering institutes with exceptional academic excellence",
+              },
+              {
+                icon: BookOpen,
+                title: "Legal Professionals",
+                description: "Experienced attorneys and legal experts providing practical insights and mentorship",
+              },
+              {
+                icon: Star,
+                title: "Research Experts",
+                description: "Ph.D. researchers and computational scientists advancing knowledge in their fields",
+              },
+            ].map((credential, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="text-center p-6 bg-gradient-to-br from-yellow-400/10 to-amber-500/10 rounded-2xl border border-yellow-400/10"
+              >
+                <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <credential.icon className="h-8 w-8 text-[#1a2236]" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2 theme-text-light">
+                  {credential.title}
+                </h3>
+                <p className="theme-text-muted">{credential.description}</p>
               </motion.div>
             ))}
           </div>
