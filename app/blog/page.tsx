@@ -213,108 +213,110 @@ export default function AESBlogPage() {
         </div>
       </section>
 
-      {/* Category Navigation */}
-      <nav className="container mx-auto flex flex-wrap gap-3 justify-center py-8">
-        {categories.map((cat) => (
-          <Button
-            key={cat}
-            variant="ghost"
-            className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors duration-200 shadow-sm
-              ${selectedCategory === cat || categoryKeyToName[selectedCategory] === cat
-                ? 'bg-yellow-400 text-[#1a2236] font-bold shadow-md border border-yellow-400'
-                : 'bg-transparent glass-effect text-yellow-200 border border-yellow-400/30 hover:border-yellow-400 hover:text-yellow-400'}
-            `}
-            onClick={() => setSelectedCategory(cat)}
-          >
-            {cat}
-          </Button>
-        ))}
-      </nav>
-
-      {/* Search and Filter Bar */}
-      <section className="py-8 theme-bg-dark theme-border border-b relative overflow-hidden">
+      {/* Enhanced Filter Tabs Section - Matching Testimonials Style */}
+      <section className="py-12 theme-bg-dark relative overflow-hidden">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="flex flex-col lg:flex-row items-center lg:items-stretch justify-between gap-6 animate-slide-in-left w-full">
-            <h2 className="text-lg font-semibold theme-text-yellow mb-2 lg:mb-0 lg:mr-8 flex-shrink-0 flex items-center min-w-[220px]">
-              Looking for something specific?
-            </h2>
-            <div className="flex flex-col sm:flex-row flex-1 gap-4 w-full">
+          {/* Search Bar */}
+          <div className="mb-8 flex justify-center">
+            <div className="relative w-full max-w-md">
               <input
                 type="text"
                 placeholder="Search blog posts..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="flex-1 w-full pl-4 pr-10 py-3 rounded-full theme-bg-dark border border-yellow-400/40 focus:border-yellow-400 focus:ring-yellow-400 theme-text-light text-sm transition-all duration-300 group-hover:scale-105 hover:shadow-lg hover:shadow-yellow-500/20 outline-none"
+                className="w-full pl-4 pr-10 py-3 rounded-full theme-bg-dark border border-yellow-400/40 focus:border-yellow-400 focus:ring-yellow-400 theme-text-light text-sm transition-all duration-300 hover:shadow-lg hover:shadow-yellow-500/20 outline-none"
               />
-              <select
-                value={selectedCategory}
-                onChange={e => setSelectedCategory(e.target.value)}
-                className="flex-1 w-full rounded-full px-4 py-3 theme-bg-dark border border-yellow-400/40 focus:border-yellow-400 focus:ring-yellow-400 theme-text-light text-sm transition-all duration-300 outline-none min-w-[180px]"
-              >
-                <option value="All">All Categories</option>
-                {allCategoryKeys.map(key => (
-                  <option key={key} value={key}>{categoryKeyToName[key]}</option>
-                ))}
-              </select>
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-yellow-400" />
             </div>
+          </div>
+          
+          {/* Filter Tabs - Matching Testimonials Style */}
+          <div className="flex flex-wrap justify-center gap-3 md:gap-5 relative z-10">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`rounded-full px-5 py-3 text-sm font-medium transition-all duration-200 md:px-7 md:py-4 md:text-base transform hover:scale-105 ${
+                  selectedCategory === cat || categoryKeyToName[selectedCategory] === cat
+                    ? "bg-yellow-400 text-slate-900 shadow-lg font-semibold hover:bg-yellow-300 hover:shadow-xl"
+                    : "bg-slate-700 text-sky-300 hover:bg-slate-600 hover:text-white hover:border-sky-300/60 hover:shadow-md border border-sky-300/40"
+                }`}
+                aria-label={`Filter by ${cat}`}
+              >
+                {cat}
+              </button>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Blog Grid */}
       <section className="py-12 theme-bg-dark">
-        <div className="container mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-10 px-2 animate-fadeInUp">
-        {filteredBlogs.map((blog, idx) => (
-          <motion.div
-            key={idx}
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: idx * 0.08, duration: 0.5, type: "spring" }}
-          >
-              <Card className="h-full flex flex-col bg-[#1a2236]/80 glass-effect shadow-xl hover:shadow-2xl border border-yellow-400/40 hover:border-yellow-400 transition-all duration-300 rounded-2xl overflow-hidden group relative">
-              <div className="relative h-56 w-full overflow-hidden">
-                <Image
-                  src={blog.image}
-                  alt={blog.title}
-                  layout="fill"
-                  objectFit="cover"
-                  className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105 group-hover:brightness-105"
-                />
-                <div className="absolute top-4 left-4">
-                    <Badge className="bg-yellow-400 text-[#1a2236] text-xs px-3 py-1 rounded-full shadow font-bold animate-pulse-glow border-0">
-                      {blog.category}
-                    </Badge>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section Header */}
+          <div className="text-center mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold theme-text-light mb-4">
+              Latest Blog Posts
+            </h2>
+            <p className="text-lg theme-text-muted max-w-2xl mx-auto">
+              Discover insights, stories, and guidance from our community
+            </p>
+          </div>
+          
+          {/* Blog Cards Grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10 animate-fadeInUp">
+          {filteredBlogs.map((blog, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: idx * 0.08, duration: 0.5, type: "spring" }}
+            >
+                <Card className="h-full flex flex-col bg-[#1a2236]/80 glass-effect shadow-xl hover:shadow-2xl border border-yellow-400/40 hover:border-yellow-400 transition-all duration-300 rounded-2xl overflow-hidden group relative">
+                <div className="relative h-56 w-full overflow-hidden">
+                  <Image
+                    src={blog.image}
+                    alt={blog.title}
+                    layout="fill"
+                    objectFit="cover"
+                    className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105 group-hover:brightness-105"
+                  />
+                  <div className="absolute top-4 left-4">
+                      <Badge className="bg-yellow-400 text-[#1a2236] text-xs px-3 py-1 rounded-full shadow font-bold animate-pulse-glow border-0">
+                        {blog.category}
+                      </Badge>
+                  </div>
+                    {/* Floating orb */}
+                    <div className="absolute bottom-2 right-2 w-3 h-3 bg-yellow-400 rounded-full opacity-0 group-hover:opacity-60 group-hover:animate-bounce transition-all duration-500" style={{ animationDelay: '0.2s' }}></div>
                 </div>
-                  {/* Floating orb */}
-                  <div className="absolute bottom-2 right-2 w-3 h-3 bg-yellow-400 rounded-full opacity-0 group-hover:opacity-60 group-hover:animate-bounce transition-all duration-500" style={{ animationDelay: '0.2s' }}></div>
-              </div>
-              <CardHeader className="pb-2 pt-4 px-5">
-                  <CardTitle className="text-lg font-bold text-white line-clamp-2 mb-1 group-hover:text-yellow-400 transition-colors duration-300 animate-typewriter">
-                    {blog.title}
-                  </CardTitle>
-                  <CardDescription className="text-xs text-yellow-200/80 mb-1 flex items-center gap-2">
-                    <span>{blog.date}</span> <span>•</span> <span>{blog.readTime}</span>
-                  </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col px-5 pb-5">
-                  <p className="text-sm text-blue-100/90 mb-4 line-clamp-3 animate-fadeInUp">
-                    {blog.excerpt}
-                  </p>
-                <div className="mt-auto flex items-center justify-between">
-                    <span className="text-xs text-yellow-400 font-semibold animate-fadeInDown">
-                      {blog.author}
-                    </span>
-                    <Button variant="link" className="text-yellow-300 px-0 font-semibold hover:text-yellow-400 hover:underline animate-slide-in-right transition-colors duration-200">
-                      Read More
-                    </Button>
-                </div>
-              </CardContent>
-                {/* Animated border bottom */}
-                <div className="absolute bottom-0 left-0 w-0 h-1 bg-gradient-to-r from-yellow-400 to-yellow-300 group-hover:w-full transition-all duration-500 ease-out rounded-bl-2xl rounded-br-2xl"></div>
-            </Card>
-          </motion.div>
-        ))}
+                <CardHeader className="pb-2 pt-4 px-5">
+                    <CardTitle className="text-lg font-bold text-white line-clamp-2 mb-1 group-hover:text-yellow-400 transition-colors duration-300 animate-typewriter">
+                      {blog.title}
+                    </CardTitle>
+                    <CardDescription className="text-xs text-yellow-200/80 mb-1 flex items-center gap-2">
+                      <span>{blog.date}</span> <span>•</span> <span>{blog.readTime}</span>
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="flex-1 flex flex-col px-5 pb-5">
+                    <p className="text-sm text-blue-100/90 mb-4 line-clamp-3 animate-fadeInUp">
+                      {blog.excerpt}
+                    </p>
+                  <div className="mt-auto flex items-center justify-between">
+                      <span className="text-xs text-yellow-400 font-semibold animate-fadeInDown">
+                        {blog.author}
+                      </span>
+                      <Button variant="link" className="text-yellow-300 px-0 font-semibold hover:text-yellow-400 hover:underline animate-slide-in-right transition-colors duration-200">
+                        Read More
+                      </Button>
+                  </div>
+                </CardContent>
+                  {/* Animated border bottom */}
+                  <div className="absolute bottom-0 left-0 w-0 h-1 bg-gradient-to-r from-yellow-400 to-yellow-300 group-hover:w-full transition-all duration-500 ease-out rounded-bl-2xl rounded-br-2xl"></div>
+              </Card>
+            </motion.div>
+          ))}
+          </div>
         </div>
       </section>
 

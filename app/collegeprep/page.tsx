@@ -17,10 +17,11 @@ import { Highlight } from "@/components/ui/highlight";
 import ImageVideoCard from "@/components/ui/image-video-card";
 import StepCard from "@/components/ui/step-card";
 import { DraggableCardBody, DraggableCardContainer } from "@/components/ui/draggable-card";
+import EffortLevelInfographic from "@/components/home/effort-level-infographic"
 
 // StrengthBasedDiscoveryInfographic Component
 const StrengthBasedDiscoveryInfographic = () => {
-  const [hoveredPillar, setHoveredPillar] = React.useState<number | null>(null)
+  const [cardsVisible, setCardsVisible] = React.useState(false)
 
   const createPillar = (centerX: number, pillarIndex: number) => {
     const getGradientIds = (index: number) => {
@@ -60,9 +61,8 @@ const StrengthBasedDiscoveryInfographic = () => {
 
     return (
       <g
-        className="cursor-pointer transition-all duration-300 hover:brightness-110"
-        onMouseEnter={() => setHoveredPillar(pillarIndex)}
-        onMouseLeave={() => setHoveredPillar(null)}
+                 className="transition-all duration-300"
+        
       >
         <circle
           cx={centerX}
@@ -219,14 +219,14 @@ const StrengthBasedDiscoveryInfographic = () => {
   }
 
   const createCards = (centerX: number, pillarIndex: number) => {
-    const isHovered = hoveredPillar === pillarIndex
+    const isVisible = cardsVisible
 
     const getCardContent = (cardIndex: number) => {
       if (pillarIndex === 1) {
         // Pillar 2 content
         switch (cardIndex) {
           case 0:
-            return "We handpick high-impact competitions and research opportunities that match the student's strengths and aspirations"
+            return "We handpick high-impact competitions and research opportunities matching the student's strengths"
           case 1:
             return "Support for national and international Olympiads, science fairs, hackathons, business case competitions, social impact initiatives, and more"
           case 2:
@@ -265,62 +265,101 @@ const StrengthBasedDiscoveryInfographic = () => {
     if (pillarIndex === 1 || pillarIndex === 0 || pillarIndex === 2) {
       return (
         <>
-          {/* 12 o'clock Card (Top) */}
-          <div
-            className={`absolute w-48 transition-all duration-500 ${
-              isHovered ? "opacity-100 scale-110 shadow-2xl z-10" : "opacity-0 scale-0"
-            }`}
-            style={{
-              top: pillarIndex === 2 ? "-4%" : pillarIndex === 1 ? "-11%" : "-1%",
-              left: pillarIndex === 2 ? `${(centerX - 132) / 16}%` : pillarIndex === 1 ? `${(centerX - 106) / 16}%` : `${(centerX - 96) / 16}%`,
-              transform: isHovered ? "translate(0px, -20px)" : `translate(0px, 60px)`,
-            }}
-          >
-            <div className="bg-gradient-to-br from-cyan-50 to-blue-100 border-2 border-cyan-200 rounded-2xl p-4 shadow-xl backdrop-blur-sm relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-12 h-12 bg-gradient-to-br from-cyan-200 to-blue-300 rounded-full -translate-y-6 translate-x-6 opacity-30"></div>
-              <p className="text-xs text-slate-800 text-center leading-relaxed font-semibold relative z-10">
-                {getCardContent(0)}
-              </p>
-            </div>
-          </div>
+                     {/* 12 o'clock Card (Top) */}
+           <div
+             className={`absolute w-48 transition-all duration-700 ease-out ${
+               isVisible ? "opacity-100 scale-100 shadow-2xl z-10" : "opacity-0 scale-95"
+             }`}
+             style={{
+               top: pillarIndex === 2 ? "-4%" : pillarIndex === 1 ? "-8%" : "-1%",
+               left: pillarIndex === 2 ? `${(centerX - 142) / 16}%` : pillarIndex === 1 ? `${(centerX - 116) / 16}%` : `${(centerX - 92) / 16}%`,
+               transform: isVisible ? "translate(0px, -20px)" : `translate(0px, 60px)`,
+               transitionDelay: isVisible ? `${pillarIndex * 0.1}s` : "0s",
+             }}
+           >
+                           <div className={`rounded-2xl p-4 shadow-xl backdrop-blur-sm relative overflow-hidden ${
+                pillarIndex === 0 
+                  ? "bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-200" 
+                  : pillarIndex === 1 
+                  ? "bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200"
+                  : "bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200"
+              }`}>
+                <div className={`absolute top-0 right-0 w-12 h-12 rounded-full -translate-y-6 translate-x-6 opacity-30 ${
+                  pillarIndex === 0 
+                    ? "bg-gradient-to-br from-orange-200 to-orange-300" 
+                    : pillarIndex === 1 
+                    ? "bg-gradient-to-br from-blue-200 to-blue-300"
+                    : "bg-gradient-to-br from-green-200 to-green-300"
+                }`}></div>
+               <p className="text-xs text-slate-800 text-center leading-relaxed font-semibold relative z-10">
+                 {getCardContent(0)}
+               </p>
+             </div>
+           </div>
 
-          {/* 3 o'clock Card (Right) */}
-          <div
-            className={`absolute w-48 transition-all duration-500 ${
-              isHovered ? "opacity-100 scale-110 shadow-2xl z-10" : "opacity-0 scale-0"
-            }`}
-            style={{
-              top: "22%",
-              left: pillarIndex === 1 ? `${(centerX + 50) / 16}%` : pillarIndex === 2 ? `${(centerX + 22) / 16}%` : `${(centerX + 80) / 16}%`,
-              transform: isHovered ? "translate(30px, 0px)" : `translate(-40px, 0px)`,
-            }}
-          >
-            <div className="bg-gradient-to-br from-emerald-50 to-green-100 border-2 border-emerald-200 rounded-2xl p-4 shadow-xl backdrop-blur-sm relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-10 h-10 bg-gradient-to-br from-emerald-200 to-green-300 rounded-full -translate-y-5 -translate-x-5 opacity-30"></div>
-              <p className="text-xs text-slate-800 text-center leading-relaxed font-semibold relative z-10">
-                {getCardContent(1)}
-              </p>
-            </div>
-          </div>
+                     {/* 3 o'clock Card (Right) */}
+           <div
+             className={`absolute w-48 transition-all duration-700 ease-out ${
+               isVisible ? "opacity-100 scale-100 shadow-2xl z-10" : "opacity-0 scale-95"
+             }`}
+             style={{
+               top: pillarIndex === 2 ? "55%" : pillarIndex === 0 ? "60%" : "22%",
+               left: pillarIndex === 1 ? `${(centerX + 50) / 16}%` : pillarIndex === 2 ? `${(centerX + 22) / 16}%` : `${(centerX - 350) / 16}%`,
+               transform: isVisible ? "translate(30px, 0px)" : `translate(-40px, 0px)`,
+               transitionDelay: isVisible ? `${pillarIndex * 0.1 + 0.05}s` : "0s",
+             }}
+           >
+                           <div className={`rounded-2xl p-4 shadow-xl backdrop-blur-sm relative overflow-hidden ${
+                pillarIndex === 0 
+                  ? "bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-300" 
+                  : pillarIndex === 1 
+                  ? "bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-blue-300"
+                  : "bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-300"
+              }`}>
+                <div className={`absolute top-0 left-0 w-10 h-10 rounded-full -translate-y-5 -translate-x-5 opacity-30 ${
+                  pillarIndex === 0 
+                    ? "bg-gradient-to-br from-orange-300 to-orange-400" 
+                    : pillarIndex === 1 
+                    ? "bg-gradient-to-br from-blue-300 to-blue-400"
+                    : "bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-300"
+                }`}></div>
+               <p className="text-xs text-slate-800 text-center leading-relaxed font-semibold relative z-10">
+                 {getCardContent(1)}
+               </p>
+             </div>
+           </div>
 
-          {/* 9 o'clock Card (Left) */}
-          <div
-            className={`absolute w-48 transition-all duration-500 ${
-              isHovered ? "opacity-100 scale-110 shadow-2xl z-10" : "opacity-0 scale-0"
-            }`}
-            style={{
-              top: "22%",
-              left: pillarIndex === 1 ? `${(centerX - 292) / 16}%` : pillarIndex === 2 ? `${(centerX - 304) / 16}%` : `${(centerX - 272) / 16}%`,
-              transform: isHovered ? "translate(-30px, 0px)" : `translate(40px, 0px)`,
-            }}
-          >
-            <div className="bg-gradient-to-br from-violet-50 to-purple-100 border-2 border-violet-200 rounded-2xl p-4 shadow-xl backdrop-blur-sm relative overflow-hidden">
-              <div className="absolute bottom-0 right-0 w-8 h-8 bg-gradient-to-tl from-purple-200 to-violet-300 rounded-full translate-y-4 translate-x-4 opacity-30"></div>
-              <p className="text-xs text-slate-800 text-center leading-relaxed font-semibold relative z-10">
-                {getCardContent(2)}
-              </p>
-            </div>
-          </div>
+                     {/* 9 o'clock Card (Left) */}
+           <div
+             className={`absolute w-48 transition-all duration-700 ease-out ${
+               isVisible ? "opacity-100 scale-100 shadow-2xl z-10" : "opacity-0 scale-95"
+             }`}
+             style={{
+               top: "22%",
+               left: pillarIndex === 1 ? `${(centerX - 292) / 16}%` : pillarIndex === 2 ? `${(centerX + 92) / 16}%` : `${(centerX - 272) / 16}%`,
+               transform: isVisible ? "translate(-30px, 0px)" : `translate(40px, 0px)`,
+               transitionDelay: isVisible ? `${pillarIndex * 0.1 + 0.1}s` : "0s",
+             }}
+           >
+                           <div className={`rounded-2xl p-4 shadow-xl backdrop-blur-sm relative overflow-hidden ${
+                pillarIndex === 0 
+                  ? "bg-gradient-to-br from-orange-200 to-orange-300 border-2 border-orange-400" 
+                  : pillarIndex === 1 
+                  ? "bg-gradient-to-br from-blue-200 to-blue-300 border-2 border-blue-400"
+                  : "bg-gradient-to-br from-green-200 to-green-300 border-2 border-green-400"
+              }`}>
+                <div className={`absolute bottom-0 right-0 w-8 h-8 rounded-full translate-y-4 translate-x-4 opacity-30 ${
+                  pillarIndex === 0 
+                    ? "bg-gradient-to-tl from-orange-400 to-orange-500" 
+                    : pillarIndex === 1 
+                    ? "bg-gradient-to-tl from-blue-400 to-blue-500"
+                    : "bg-gradient-to-tl from-green-400 to-green-500"
+                }`}></div>
+               <p className="text-xs text-slate-800 text-center leading-relaxed font-semibold relative z-10">
+                 {getCardContent(2)}
+               </p>
+             </div>
+           </div>
         </>
       )
     }
@@ -329,7 +368,21 @@ const StrengthBasedDiscoveryInfographic = () => {
   }
 
   return (
-    <div className="relative w-full max-w-7xl mx-auto theme-bg-dark rounded-2xl p-8">
+         <motion.div 
+       className="relative w-full max-w-7xl mx-auto theme-bg-dark rounded-2xl p-8"
+       initial={{ opacity: 0, y: 20 }}
+       whileInView={{ opacity: 1, y: 0 }}
+       onViewportEnter={() => {
+         // Show all cards together when scrolling into view
+         setCardsVisible(true);
+       }}
+       onViewportLeave={() => {
+         // Hide cards when scrolling away from view
+         setCardsVisible(false);
+       }}
+       transition={{ duration: 1.2, ease: "easeOut" }}
+       viewport={{ once: false, amount: 0.3 }}
+     >
       <svg viewBox="0 0 1600 700" className="w-full h-auto" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="columnGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -393,7 +446,7 @@ const StrengthBasedDiscoveryInfographic = () => {
       {createCards(250, 0)}
       {createCards(800, 1)}
       {createCards(1350, 2)}
-    </div>
+    </motion.div>
   )
 }
 
@@ -1597,7 +1650,42 @@ export default function CollegePrepPage() {
           </div>
         </div>
       </section>
+      {/* Infographics Dashboard Section */}
+      <section className="py-20 theme-bg-dark relative overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-20 left-10 w-32 h-32 bg-yellow-400 rounded-full opacity-5 animate-float"></div>
+          <div className="absolute bottom-20 right-20 w-24 h-24 bg-blue-400 rounded-full opacity-5 animate-float-reverse"></div>
+          <div className="absolute top-1/2 left-1/3 w-20 h-20 bg-purple-400 rounded-full opacity-5 animate-float"></div>
+        </div>
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="text-center mb-16"
+          >
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
+              📊 Data Insights
+            </Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">
+              College Prep Analytics Dashboard
+            </h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">
+              Visualize your college preparation journey with data-driven insights and competitive achievement tracking
+            </p>
+          </motion.div>
 
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="max-w-7xl mx-auto"
+          >
+            <EffortLevelInfographic />
+          </motion.div>
+        </div>
+      </section>
       {/* Workshops & Events Section */}
       <section className="py-20 theme-bg-dark">
         <div className="container mx-auto px-4">
