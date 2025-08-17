@@ -53,15 +53,17 @@ export default function CTASection() {
                 <Calendar className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </Link>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-gray-900 text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-4 border-2 transition-all duration-300 font-semibold"
-            >
-              <MessageCircle className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-              Chat with Expert
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            <Link href="/book-session">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-gray-900 text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-4 border-2 transition-all duration-300 font-semibold"
+              >
+                <MessageCircle className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                Get Started Today
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
           
           {/* Trust Indicators */}

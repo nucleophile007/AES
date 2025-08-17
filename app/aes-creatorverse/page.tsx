@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, BookOpen, Award, Star, Globe, Clock, Target, TrendingUp, Lightbulb, Briefcase, Heart, Zap, Mic, PenTool, Video, Megaphone } from "lucide-react";
+import Link from "next/link";
 import Footer from "@/components/home/Footer";
 import Chatbot from "@/components/home/Chatbot";
 import Header from "@/components/home/Header";
@@ -222,9 +223,11 @@ export default function AESCreatorversePage() {
             className="max-w-4xl mx-auto text-center"
           >
             <div className="flex justify-center">
-                             <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg">
-                 Book Free Session
-               </Button>
+              <Link href="/book-session">
+                <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg">
+                  Book Free Session
+                </Button>
+              </Link>
             </div>
           </motion.div>
         </div>
@@ -437,9 +440,11 @@ export default function AESCreatorversePage() {
             </p>
             
             <div className="flex justify-center pt-4">
-              <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg font-bold">
-                Schedule Consultation
-              </Button>
+              <Link href="/book-session">
+                <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg font-bold">
+                  Schedule Consultation
+                </Button>
+              </Link>
             </div>
           </motion.div>
         </div>
