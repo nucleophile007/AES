@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { BookOpen, Star, Target, Users, FileText, Trophy, Lightbulb, Globe, Calendar, ArrowRight, CheckIcon, ChevronDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
+import Link from "next/link";
 import { CardStack } from "@/components/ui/card-stack";
 import { Highlight } from "@/components/ui/highlight";
 import ImageVideoCard from "@/components/ui/image-video-card";
@@ -692,42 +693,6 @@ const highlights = [
   },
 ];
 
-const events = [
-  { 
-    title: "Essay Bootcamp", 
-    date: "July 15, 2024", 
-    description: "Intensive workshop to help you brainstorm, draft, and polish your college essays.", 
-    icon: FileText, 
-    badge: "Workshop", 
-    color: "from-blue-500 to-blue-600",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
-    video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    features: ["Essay Writing", "Brainstorming", "Editing Tips"]
-  },
-  { 
-    title: "College Application Webinar", 
-    date: "August 5, 2024", 
-    description: "Live Q&A and walkthrough of the Common App and UC application process.", 
-    icon: Globe, 
-    badge: "Webinar", 
-    color: "from-teal-500 to-teal-600",
-    image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
-    video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-    features: ["Common App", "UC Apps", "Live Q&A"]
-  },
-  { 
-    title: "Financial Aid Night", 
-    date: "September 10, 2024", 
-    description: "Learn about FAFSA, scholarships, and maximizing your aid package.", 
-    icon: BookOpen, 
-    badge: "Info Session", 
-    color: "from-orange-500 to-orange-600",
-    image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
-    video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-    features: ["FAFSA Guide", "Scholarships", "Aid Tips"]
-  },
-];
-
 const colleges = [
   { name: "UWash Seattle", logo: "/college-logos/uwash.png" },
   { name: "UC Davis", logo: "/college-logos/ucdavis.png" },
@@ -866,12 +831,11 @@ export default function CollegePrepPage() {
             className="max-w-4xl mx-auto text-center"
           >
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg">
-                <ArrowRight className="mr-2 h-5 w-5" /> Download College Prep Flyer
-              </Button>
-              <Button variant="outline" className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-[#1a2236] px-6">
-                <Calendar className="mr-2 h-5 w-5" /> Book a Free 60-min Discovery Session
-              </Button>
+              <Link href="/book-session">
+                <Button variant="outline" className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-[#1a2236] px-6 w-full sm:w-auto">
+                  <Calendar className="mr-2 h-5 w-5" /> Book a Free 60-min Discovery Session
+                </Button>
+              </Link>
             </div>
           </motion.div>
         </div>
@@ -1352,7 +1316,7 @@ export default function CollegePrepPage() {
                 fontWeight="bold"
                 fontFamily="Arial, sans-serif"
               >
-                COLLAGE
+                COLLEGE
               </text>
               <text
                 x="0.5"
@@ -1363,7 +1327,7 @@ export default function CollegePrepPage() {
                 fontWeight="bold"
                 fontFamily="Arial, sans-serif"
               >
-                COLLAGE
+                COLLEGE
               </text>
             </g>
 
@@ -1686,40 +1650,6 @@ export default function CollegePrepPage() {
           </motion.div>
         </div>
       </section>
-      {/* Workshops & Events Section */}
-      <section className="py-20 theme-bg-dark">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="text-center mb-16"
-          >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Workshops & Events</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Upcoming College Prep Events</h2>
-            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Join our expert-led workshops and webinars to boost your college application success.</p>
-          </motion.div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
-            {events.map((event, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ delay: i * 0.2, duration: 0.6, type: "spring", stiffness: 100 }}
-              >
-                <ImageVideoCard
-                  title={event.title}
-                  description={event.description}
-                  imageUrl={event.image}
-                  videoUrl={event.video}
-                  badge={event.badge}
-                  className="w-full max-w-sm"
-                />
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* College Acceptances Section */}
       <section className="py-20 theme-bg-dark">
@@ -1855,20 +1785,14 @@ export default function CollegePrepPage() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center pt-4">
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 hover:from-yellow-300 hover:to-yellow-400 text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-4 shadow-xl hover:shadow-2xl transition-all duration-300 font-semibold"
-              >
-                <Calendar className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Book a Free Consultation
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-gray-900 text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-4 border-2 transition-all duration-300 font-semibold"
-              >
-                <ArrowRight className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                Learn More
-              </Button>
+              <Link href="/book-session">
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 hover:from-yellow-300 hover:to-yellow-400 text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-4 shadow-xl hover:shadow-2xl transition-all duration-300 font-semibold w-full sm:w-auto"
+                >
+                  <Calendar className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Book a Free Consultation
+                </Button>
+              </Link>
             </div>
             
             {/* Trust Indicators */}

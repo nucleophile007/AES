@@ -16,6 +16,7 @@ import { Highlight } from "@/components/ui/highlight";
 import { useState, useEffect, useCallback, useRef } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Image from "next/image"
+import Link from "next/link"
 
 const subjects = [
   {
@@ -505,9 +506,11 @@ export default function AcademicTutoringPage() {
             className="max-w-4xl mx-auto text-center"
           >
              <div className="flex justify-center">
-              <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg">
-                <ArrowRight className="mr-2 h-5 w-5" /> Book Free Consultation
-              </Button>
+              <Link href="/book-session">
+                <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg">
+                  <ArrowRight className="mr-2 h-5 w-5" /> Book Free Consultation
+                </Button>
+              </Link>
             </div>
           </motion.div>
         </div>
@@ -1063,20 +1066,14 @@ export default function AcademicTutoringPage() {
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center pt-4">
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 hover:from-yellow-300 hover:to-yellow-400 text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-4 shadow-xl hover:shadow-2xl transition-all duration-300 font-semibold"
-              >
-                <ArrowRight className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Get Started Today
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-gray-900 text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-4 border-2 transition-all duration-300 font-semibold"
-              >
-                <BookOpen className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                Learn More
-              </Button>
+              <Link href="/book-session">
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 hover:from-yellow-300 hover:to-yellow-400 text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-4 shadow-xl hover:shadow-2xl transition-all duration-300 font-semibold w-full sm:w-auto"
+                >
+                  <ArrowRight className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Get Started Today
+                </Button>
+              </Link>
             </div>
             
             {/* Trust Indicators */}
