@@ -333,7 +333,7 @@ export default function BookSessionPage() {
             </div>
             <h1 className="text-2xl font-bold text-gray-800 mb-4">Session Booked Successfully!</h1>
             <p className="text-gray-600 mb-6">
-              Thank you for booking with AES. We'll review your request and contact you within 24 hours.
+              Thank you for booking with AES. We&apos;ll review your request and contact you within 24 hours.
             </p>
             <div className="space-y-2 text-left bg-blue-50 p-4 rounded-lg mb-6">
               <p className="text-blue-800 flex items-center gap-2">
@@ -438,7 +438,7 @@ export default function BookSessionPage() {
                         onChange={handleInputChange}
                         required
                         className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg theme-text-light placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
-                        placeholder="Student's full name"
+                        placeholder="Student&apos;s full name"
                       />
                     </div>
                     <div>
@@ -500,7 +500,7 @@ export default function BookSessionPage() {
                           onChange={handleInputChange}
                           required
                           className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg theme-text-light placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
-                          placeholder="Parent's full name"
+                          placeholder="Parent&apos;s full name"
                         />
                       </div>
                       <div>
@@ -583,7 +583,7 @@ export default function BookSessionPage() {
 
                   <div className="bg-yellow-400/10 p-4 rounded-lg border border-yellow-400/20">
                     <p className="theme-text-light text-sm">
-                      📋 This session is completely FREE with no commitment required. We'll confirm your booking within 24 hours.
+                      📋 This session is completely FREE with no commitment required. We&apos;ll confirm your booking within 24 hours.
                     </p>
                   </div>
 
