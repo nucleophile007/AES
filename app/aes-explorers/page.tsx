@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { Users, BookOpen, Award, Star, Globe, Clock, Target, TrendingUp, Lightbulb, Briefcase, Heart, Zap, GraduationCap, Microscope, Rocket, Brain, Check, ArrowRight } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import Footer from "@/components/home/Footer";
 import Chatbot from "@/components/home/Chatbot";
 import Header from "@/components/home/Header";
@@ -206,9 +207,11 @@ export default function AESExplorersPage() {
               className="max-w-4xl mx-auto text-center"
             >
               <div className="flex justify-center">
-                <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg">
-                  <ArrowRight className="mr-2 h-5 w-5" /> Book Free Session
-                </Button>
+                <Link href="/book-session">
+                  <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg">
+                    <ArrowRight className="mr-2 h-5 w-5" /> Book Free Session
+                  </Button>
+                </Link>
               </div>
             </motion.div>
          </div>
@@ -583,9 +586,11 @@ export default function AESExplorersPage() {
             </p>
             
                          <div className="flex justify-center pt-4">
-               <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg font-bold">
-                 Book Free Consultation
-               </Button>
+               <Link href="/book-session">
+                 <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg font-bold">
+                   Book Free Consultation
+                 </Button>
+               </Link>
              </div>
           </motion.div>
         </div>
