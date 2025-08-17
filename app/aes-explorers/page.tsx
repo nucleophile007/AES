@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, BookOpen, Award, Star, Globe, Clock, Target, TrendingUp, Lightbulb, Briefcase, Heart, Zap, GraduationCap, Microscope, Rocket, Brain, Check } from "lucide-react";
+import { Users, BookOpen, Award, Star, Globe, Clock, Target, TrendingUp, Lightbulb, Briefcase, Heart, Zap, GraduationCap, Microscope, Rocket, Brain, Check, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Footer from "@/components/home/Footer";
 import Chatbot from "@/components/home/Chatbot";
@@ -170,72 +170,115 @@ export default function AESExplorersPage() {
   return (
     <main className="min-h-screen theme-bg-dark flex flex-col">
       <Header />
-      {/* Hero Section */}
-      <section
-        id="home"
-        className="py-16 lg:py-24 theme-bg-dark relative overflow-hidden"
-      >
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-20 left-10 w-20 h-20 bg-yellow-400 rounded-full opacity-10 animate-float"></div>
-          <div className="absolute top-40 right-20 w-16 h-16 bg-blue-400 rounded-full opacity-10 animate-float-reverse"></div>
-          <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-purple-400 rounded-full opacity-10 animate-float"></div>
-          <div className="absolute top-1/3 right-1/3 w-8 h-8 bg-green-400 rounded-full opacity-10 animate-float-reverse"></div>
-        </div>
-        
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+             {/* Hero Section */}
+       <section
+         id="home"
+         className="py-16 lg:py-24 theme-bg-dark relative overflow-hidden"
+       >
+         {/* Animated Background Elements */}
+         <div className="absolute inset-0 overflow-hidden">
+           <div className="absolute top-20 left-10 w-20 h-20 bg-yellow-400 rounded-full opacity-10 animate-float"></div>
+           <div className="absolute top-40 right-20 w-16 h-16 bg-blue-400 rounded-full opacity-10 animate-float-reverse"></div>
+           <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-purple-400 rounded-full opacity-10 animate-float"></div>
+           <div className="absolute top-1/3 right-1/3 w-8 h-8 bg-green-400 rounded-full opacity-10 animate-float-reverse"></div>
+         </div>
+         
+         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+           <div className="text-center mb-12 animate-slide-in-bottom">
+             <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
+               🔬 AES EXPLORERS
+             </Badge>
+             <h1 className="text-6xl lg:text-7xl font-black bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent mb-4 animate-slide-in-bottom">
+               AES EXPLORERS
+             </h1>
+             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">
+               Research-Based Mentorship Program
+             </h2>
+             <p className="text-lg theme-text-muted max-w-4xl mx-auto animate-slide-in-bottom" style={{ animationDelay: '0.2s' }}>
+               Our flagship program introduces middle and high school students to graduate-level research methodology, critical thinking, and academic publishing. Work with Ph.D. mentors on personalized research problems that match your interests.
+             </p>
+           </div>
+           
+                       {/* Action Buttons */}
             <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              className="space-y-8"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              className="max-w-4xl mx-auto text-center"
             >
-              <div className="space-y-4">
-                <Badge className="bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-                  🔬 AES EXPLORERS
+              <div className="flex justify-center">
+                <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg">
+                  <ArrowRight className="mr-2 h-5 w-5" /> Book Free Session
+                </Button>
+              </div>
+            </motion.div>
+         </div>
+       </section>
+
+                                                               {/* Research Domains Section */}
+          <section className="py-24 theme-bg-dark relative">
+            {/* Subtle background pattern */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(120,119,198,0.1),transparent_50%),radial-gradient(circle_at_70%_80%,rgba(120,119,198,0.1),transparent_50%)]"></div>
+            
+            <div className="container mx-auto px-4 relative z-10">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                className="text-center mb-20"
+              >
+                <Badge className="mb-6 bg-gradient-to-r from-yellow-400/20 to-amber-500/20 text-yellow-300 border-yellow-400/30 px-6 py-2 text-lg">
+                  🔬 Research Domains
                 </Badge>
-                                 <h1 className="text-4xl lg:text-5xl font-bold theme-text-light leading-tight">
-                   Research-Based Mentorship Program
-                 </h1>
-                <blockquote className="text-xl theme-text-light italic border-l-4 border-yellow-400 pl-4">
-                  &quot;The best way to predict the future is to invent it.&quot;
-                  <span className="block text-sm theme-text-muted mt-2">- Alan Kay</span>
-                </blockquote>
-                <p className="text-lg theme-text-muted leading-relaxed">
-                  Our flagship program introduces middle and high school students to graduate-level research methodology, critical thinking, and academic publishing. Work with Ph.D. mentors on personalized research problems that match your interests.
+                <h2 className="text-5xl lg:text-6xl font-black theme-text-light mb-8 leading-tight">
+                  Choose Your
+                  <span className="block bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent">
+                    Research Path
+                  </span>
+                </h2>
+                <p className="text-xl lg:text-2xl theme-text-muted max-w-4xl mx-auto leading-relaxed">
+                  Explore our comprehensive research domains and find your perfect match with expert mentors
                 </p>
-              </div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative"
-            >
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-amber-400/20 rounded-3xl transform rotate-6"></div>
-                <div className="relative bg-[#1a2236]/90 backdrop-blur-sm p-8 rounded-3xl shadow-2xl border border-yellow-400/20">
-                  <div className="space-y-6">
-                    <h3 className="text-xl font-semibold text-yellow-400">Research Domains</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {domains.map((domain, i) => (
-                        <Card key={i} className="flex flex-col items-center p-4 bg-gradient-to-br from-[#1a2236] to-[#2a3246] border-yellow-400/20 hover:scale-105 hover:shadow-xl transition-all duration-300">
-                          <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${domain.color} flex items-center justify-center mb-3`}>
-                            <domain.icon className="h-6 w-6 text-white" />
+              </motion.div>
+              
+              <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+                {domains.map((domain, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: i % 2 === 0 ? -50 : 50 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.2, duration: 0.8 }}
+                                         className="relative"
+                  >
+                                                              {/* Main card */}
+                     <div className="relative bg-gradient-to-br from-[#1a2236]/80 to-[#1a2236]/60 backdrop-blur-xl border border-yellow-400/20 rounded-3xl p-8 shadow-2xl overflow-hidden h-48">
+                        
+                        {/* Content */}
+                        <div className="relative z-10 h-full flex flex-col">
+                          <div className="flex items-start gap-6 flex-1">
+                            {/* Icon */}
+                            <div className={`flex-shrink-0 w-20 h-20 rounded-2xl bg-gradient-to-br ${domain.color} flex items-center justify-center shadow-2xl`}>
+                              <domain.icon className="h-10 w-10 text-white" />
+                            </div>
+                            
+                            {/* Text content */}
+                            <div className="flex-1 flex flex-col">
+                              <h3 className="text-3xl font-bold theme-text-light mb-4">
+                                {domain.title}
+                              </h3>
+                              <p className="text-lg theme-text-muted leading-relaxed flex-1">
+                                {domain.description}
+                              </p>
+                            </div>
                           </div>
-                          <CardTitle className="text-lg text-center mb-1 theme-text-light">{domain.title}</CardTitle>
-                          <CardDescription className="text-xs text-center theme-text-muted">{domain.description}</CardDescription>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                          
+                          {/* Bottom accent line */}
+                          <div className="mt-auto w-full h-1 bg-gradient-to-r from-transparent via-yellow-400/40 to-transparent"></div>
+                        </div>
+                      </div>
+                  </motion.div>
+                ))}
               </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
+            </div>
+          </section>
 
       {/* Program Info Section */}
       <section className="py-20 theme-bg-dark">
@@ -314,9 +357,7 @@ export default function AESExplorersPage() {
                       ))}
                     </ul>
                     <div className="flex-1" />
-                    <Button variant="outline" className="w-full border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-[#1a2236] transition-colors mt-2">
-                      Learn More
-                    </Button>
+                    
                   </CardContent>
                 </Card>
               </motion.div>
@@ -439,11 +480,11 @@ export default function AESExplorersPage() {
                          </ul>
                        </div>
 
-                       {/* Investment */}
-                       <div className="space-y-4">
-                         <h4 className="font-bold text-cyan-300 text-lg border-b border-slate-600/50 pb-2">
-                           Investment:
-                         </h4>
+                                               {/* Pricing */}
+                        <div className="space-y-4">
+                          <h4 className="font-bold text-cyan-300 text-lg border-b border-slate-600/50 pb-2">
+                            Pricing:
+                          </h4>
                          <div className="space-y-3">
                            <div className="relative p-4 bg-slate-700/50 rounded-xl border border-slate-600/30 backdrop-blur-sm">
                              <div className="flex justify-between items-center">
@@ -541,14 +582,11 @@ export default function AESExplorersPage() {
               Join AES EXPLORERS and work with leading researchers to publish your own academic work.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center pt-4">
-              <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg font-bold">
-                Apply Now
-              </Button>
-              <Button variant="outline" className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-[#1a2236] px-6 font-bold">
-                Schedule Consultation
-              </Button>
-            </div>
+                         <div className="flex justify-center pt-4">
+               <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg font-bold">
+                 Book Free Consultation
+               </Button>
+             </div>
           </motion.div>
         </div>
       </section>
