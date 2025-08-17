@@ -498,17 +498,18 @@ export default function AboutPage() {
                     transition={{ duration: 0.3 }}
                     className="relative"
                   >
-                                         <div className="relative w-80 h-80 rounded-full overflow-hidden">
+                                         <div className="relative w-80 h-80 rounded-full overflow-hidden border-4 border-gradient-to-r from-yellow-400/30 to-amber-500/30 shadow-2xl">
                       <motion.div
                         whileHover={{ scale: 1.1 }}
                         transition={{ duration: 0.3 }}
+                        className="w-full h-full"
                       >
                         <Image
                           src="/founder-image.png"
                           alt="Dr. Shanti Swaroop Kandala - Founder of ACHARYA"
                           width={320}
                           height={320}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover object-center"
                         />
                       </motion.div>
                       
