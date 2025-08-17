@@ -115,7 +115,7 @@ export default function AboutPage() {
               </Badge>
               <div>
                 <h1 className="text-4xl lg:text-5xl font-black bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent mb-4 animate-slide-in-bottom">
-                  About AcharyaES
+                  About Acharya
                 </h1>
                                  <h2 className="text-3xl lg:text-4xl font-bold theme-text-light mb-6">
                    Nurturing Students&apos; Intuitive Abilities

@@ -179,42 +179,9 @@ const timeline = [
   { step: "6", title: "Test Day Success", description: "Enter the SAT with confidence and a proven plan!", icon: Trophy },
 ];
 
-const events = [
-  { 
-    title: "SAT Bootcamp", 
-    date: "June 20, 2024", 
-    description: "Intensive 1-week SAT prep covering all sections with practice tests.", 
-    icon: Timer, 
-    badge: "Bootcamp",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
-    video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-  },
-  { 
-    title: "Practice Test Day", 
-    date: "July 10, 2024", 
-    description: "Simulated SAT test under real conditions with score analysis.", 
-    icon: ListChecks, 
-    badge: "Practice",
-    image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
-    video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
-  },
-  { 
-    title: "Strategy Webinar", 
-    date: "August 1, 2024", 
-    description: "Live online session on SAT strategies and Q&A with experts.", 
-    icon: Lightbulb, 
-    badge: "Webinar",
-    image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
-    video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
-  },
-];
 
-const resources = [
-  { name: "SAT Prep Flyer", link: "#", icon: FileText },
-  { name: "SAT Checklist", link: "#", icon: CheckIcon },
-  { name: "Practice Test Guide", link: "#", icon: ListChecks },
-  { name: "Time Management Tips", link: "#", icon: Timer },
-];
+
+
 
 const faqs = [
   { question: "How soon should I start prep?", answer: "Ideally 3–6 months before test day to allow for thorough practice and strategy refinement." },
@@ -877,91 +844,9 @@ export default function SATCoachingPage() {
          </div>
        </section>
 
-      {/* Workshops & Events Section */}
-      <section className="py-20 theme-bg-dark">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="text-center mb-16"
-          >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">Workshops & Events</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Upcoming SAT Events</h2>
-            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Join our expert-led SAT bootcamps, practice test days, and strategy webinars.</p>
-          </motion.div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {events.map((event, i) => (
-              <EventCard key={i} event={event} index={i} />
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* Downloadable Resources Section */}
-      <section className="py-20 theme-bg-dark">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="text-center mb-16"
-          >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">Downloadable Resources</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Helpful SAT Guides & Checklists</h2>
-            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Access our most popular SAT resources to support your prep journey.</p>
-          </motion.div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {resources.map((resource, i) => {
-              // Define unique color schemes for each card
-              const colorSchemes = [
-                "from-fuchsia-500 via-pink-500 to-rose-500", // Card 1: SAT Prep Flyer
-                "from-emerald-500 via-teal-500 to-cyan-500", // Card 2: SAT Checklist  
-                "from-violet-500 via-indigo-500 to-blue-500", // Card 3: Practice Test Guide
-                "from-amber-500 via-orange-500 to-red-500", // Card 4: Time Management Tips
-              ];
-              
-              const buttonColors = [
-                "from-fuchsia-400 to-pink-400", // Button 1
-                "from-emerald-400 to-teal-400", // Button 2
-                "from-violet-400 to-indigo-400", // Button 3
-                "from-amber-400 to-orange-400", // Button 4
-              ];
-              
-              const textColors = [
-                "text-fuchsia-100", // Text 1
-                "text-emerald-100", // Text 2
-                "text-violet-100", // Text 3
-                "text-amber-100", // Text 4
-              ];
-              
-              return (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: i * 0.1 }}
-                  className="group"
-                >
-                  <div className={`h-full flex flex-col items-center bg-gradient-to-br ${colorSchemes[i]} rounded-3xl shadow-2xl p-8 transition-all duration-500 hover:shadow-3xl hover:scale-105 hover:-translate-y-2 relative overflow-hidden min-h-[280px]`}>
-                    {/* Animated background elements */}
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
-                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/20 rounded-full group-hover:scale-125 transition-transform duration-700"></div>
-                    
-                    {/* Icon container with unique styling */}
-                    <div className="w-20 h-20 bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 border border-white/30 relative z-10">
-                      <resource.icon className="h-10 w-10 text-white drop-shadow-lg" />
-                    </div>
-                    
-                    {/* Title with better styling */}
-                    <div className="text-xl font-bold text-white text-center mb-4 drop-shadow-lg leading-tight">{resource.name}</div>
-                    
-                                         {/* Removed download button */}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+
+
 
       {/* Success Stories Section */}
       <section className="py-20 theme-bg-dark">
@@ -1112,20 +997,12 @@ export default function SATCoachingPage() {
               </div>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center pt-4">
+            <div className="flex justify-center pt-4">
               <Button
                 size="lg"
                 className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 hover:from-yellow-300 hover:to-yellow-400 text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-4 shadow-xl hover:shadow-2xl transition-all duration-300 font-semibold"
               >
                 <ArrowRight className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Get Started Today
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-gray-900 text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-4 border-2 transition-all duration-300 font-semibold"
-              >
-                <BookOpen className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                Learn More
               </Button>
             </div>
             

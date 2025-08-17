@@ -265,12 +265,12 @@ const StrengthBasedDiscoveryInfographic = () => {
     if (pillarIndex === 1 || pillarIndex === 0 || pillarIndex === 2) {
       return (
         <>
-                     {/* 12 o'clock Card (Top) */}
-           <div
+          {/* 12 o'clock Card (Top) */}
+          <div
              className={`absolute w-48 transition-all duration-700 ease-out ${
                isVisible ? "opacity-100 scale-100 shadow-2xl z-10" : "opacity-0 scale-95"
-             }`}
-             style={{
+            }`}
+            style={{
                top: pillarIndex === 2 ? "-4%" : pillarIndex === 1 ? "-8%" : "-1%",
                left: pillarIndex === 2 ? `${(centerX - 142) / 16}%` : pillarIndex === 1 ? `${(centerX - 116) / 16}%` : `${(centerX - 92) / 16}%`,
                transform: isVisible ? "translate(0px, -20px)" : `translate(0px, 60px)`,
@@ -291,18 +291,18 @@ const StrengthBasedDiscoveryInfographic = () => {
                     ? "bg-gradient-to-br from-blue-200 to-blue-300"
                     : "bg-gradient-to-br from-green-200 to-green-300"
                 }`}></div>
-               <p className="text-xs text-slate-800 text-center leading-relaxed font-semibold relative z-10">
-                 {getCardContent(0)}
-               </p>
-             </div>
-           </div>
+              <p className="text-xs text-slate-800 text-center leading-relaxed font-semibold relative z-10">
+                {getCardContent(0)}
+              </p>
+            </div>
+          </div>
 
-                     {/* 3 o'clock Card (Right) */}
-           <div
+          {/* 3 o'clock Card (Right) */}
+          <div
              className={`absolute w-48 transition-all duration-700 ease-out ${
                isVisible ? "opacity-100 scale-100 shadow-2xl z-10" : "opacity-0 scale-95"
-             }`}
-             style={{
+            }`}
+            style={{
                top: pillarIndex === 2 ? "55%" : pillarIndex === 0 ? "60%" : "22%",
                left: pillarIndex === 1 ? `${(centerX + 50) / 16}%` : pillarIndex === 2 ? `${(centerX + 22) / 16}%` : `${(centerX - 350) / 16}%`,
                transform: isVisible ? "translate(30px, 0px)" : `translate(-40px, 0px)`,
@@ -323,19 +323,19 @@ const StrengthBasedDiscoveryInfographic = () => {
                     ? "bg-gradient-to-br from-blue-300 to-blue-400"
                     : "bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-300"
                 }`}></div>
-               <p className="text-xs text-slate-800 text-center leading-relaxed font-semibold relative z-10">
-                 {getCardContent(1)}
-               </p>
-             </div>
-           </div>
+              <p className="text-xs text-slate-800 text-center leading-relaxed font-semibold relative z-10">
+                {getCardContent(1)}
+              </p>
+            </div>
+          </div>
 
-                     {/* 9 o'clock Card (Left) */}
-           <div
+          {/* 9 o'clock Card (Left) */}
+          <div
              className={`absolute w-48 transition-all duration-700 ease-out ${
                isVisible ? "opacity-100 scale-100 shadow-2xl z-10" : "opacity-0 scale-95"
-             }`}
-             style={{
-               top: "22%",
+            }`}
+            style={{
+              top: "22%",
                left: pillarIndex === 1 ? `${(centerX - 292) / 16}%` : pillarIndex === 2 ? `${(centerX + 92) / 16}%` : `${(centerX - 272) / 16}%`,
                transform: isVisible ? "translate(-30px, 0px)" : `translate(40px, 0px)`,
                transitionDelay: isVisible ? `${pillarIndex * 0.1 + 0.1}s` : "0s",
@@ -355,11 +355,11 @@ const StrengthBasedDiscoveryInfographic = () => {
                     ? "bg-gradient-to-tl from-blue-400 to-blue-500"
                     : "bg-gradient-to-tl from-green-400 to-green-500"
                 }`}></div>
-               <p className="text-xs text-slate-800 text-center leading-relaxed font-semibold relative z-10">
-                 {getCardContent(2)}
-               </p>
-             </div>
-           </div>
+              <p className="text-xs text-slate-800 text-center leading-relaxed font-semibold relative z-10">
+                {getCardContent(2)}
+              </p>
+            </div>
+          </div>
         </>
       )
     }
@@ -1742,12 +1742,12 @@ export default function CollegePrepPage() {
                 transition={{ delay: i * 0.05 }}
                 className="flex flex-col items-center"
               >
-                <div className="w-20 h-20 bg-white rounded-full shadow-lg flex items-center justify-center mb-3 border-2 border-yellow-400/20 hover:scale-110 hover:shadow-xl transition-transform duration-300 overflow-hidden">
+                                 <div className="w-32 h-32 bg-white rounded-full shadow-lg flex items-center justify-center mb-3 border-2 border-yellow-400/20 hover:scale-110 hover:shadow-xl transition-transform duration-300 overflow-hidden">
                   <Image
                     src={college.logo}
                     alt={college.name}
-                    width={60}
-                    height={60}
+                     width={110}
+                     height={110}
                     className="object-contain"
                   />
                 </div>

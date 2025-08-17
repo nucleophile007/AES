@@ -152,9 +152,9 @@ export default function Footer() {
             </h4>
             <div className="space-y-4">
               {[
-                { icon: Phone, text: "+1 (209) 920-7147" },
+                { icon: Phone, text: "(209) 920-7147" },
                 { icon: Mail, text: "acharya.folsom@gmail.com" },
-                { icon: MapPin, text: "123 Education Lane\nCalifornia, CA 90210" }
+                { icon: MapPin, text: "1401 21st Ste R\nSacramento, CA 95811" }
               ].map((contact, index) => (
                 <motion.div
                   key={index}

@@ -38,7 +38,7 @@ export default function CTASection() {
           </h2>
           
           <p className="text-base sm:text-lg lg:text-xl theme-text-muted px-4 leading-relaxed max-w-3xl mx-auto">
-            Join 500+ satisfied families who have seen remarkable improvements with
+            Join our community of satisfied families who have seen remarkable improvements with
             ACHARYA Educational Services. Book your free 60-minute assessment
             session today and discover your child&apos;s potential!
           </p>
@@ -70,10 +70,6 @@ export default function CTASection() {
             className="pt-8 border-t border-gray-700/30"
           >
             <div className="flex flex-wrap justify-center items-center gap-6 sm:gap-8 text-sm theme-text-muted">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span>500+ Happy Families</span>
-              </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
                 <span>Free 60-Min Assessment</span>
