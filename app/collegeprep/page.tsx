@@ -840,7 +840,7 @@ export default function CollegePrepPage() {
           >
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/book-session">
-                <Button variant="outline" className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-[#1a2236] px-6 w-full sm:w-auto">
+                <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg">
                   <Calendar className="mr-2 h-5 w-5" /> Book a Free 60-min Discovery Session
                 </Button>
               </Link>

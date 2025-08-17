@@ -1441,12 +1441,7 @@ export default function AESChampionsPage() {
                      </div>
 
                      {/* CTA Button */}
-                     <div className="pt-6">
-                       <Button className="w-full bg-gradient-to-r from-cyan-400 to-cyan-600 hover:from-cyan-300 hover:to-cyan-500 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-                         <Zap className="w-4 h-4 mr-2" />
-                         Enroll Now
-                       </Button>
-                     </div>
+                  
                    </CardContent>
                  </Card>
                </motion.div>
