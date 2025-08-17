@@ -1145,10 +1145,10 @@ export default function CollegePrepPage() {
           </defs>
 
           {/* Ground shadow */}
-          <ellipse cx="200" cy="350" rx="120" ry="20" fill="rgba(0,0,0,0.2)" />
+          <ellipse cx="280" cy="-15" rx="50" ry="20" fill="rgba(0,0,0,0.2)" />
 
           <g
-            transform="translate(270,-35) scale(0.4)"
+            transform="translate(280,-60) scale(0.4)"
             filter="url(#shadow)"
             style={{
               overflow: "visible", // Ensure group elements can extend beyond boundaries
