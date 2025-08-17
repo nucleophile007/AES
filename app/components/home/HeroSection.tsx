@@ -1,10 +1,10 @@
-"use client";
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play, X } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function HeroSection() {
   const [isVideoOpen, setIsVideoOpen] = useState(false);
@@ -55,11 +55,13 @@ export default function HeroSection() {
               className="max-w-2xl"
             >
               <div className="flex flex-col sm:flex-row gap-4 lg:gap-6">
-                <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 py-3 text-base lg:text-lg shadow-lg hover:shadow-xl transition-all duration-300">
-                  <ArrowRight className="h-5 w-5 lg:h-6 lg:w-6" /> Get Free 60-Min Session
-                </Button>
+                <Link href="/book-session">
+                  <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 py-3 text-base lg:text-lg shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto">
+                    <ArrowRight className="h-5 w-5 lg:h-6 lg:w-6" /> Get Free 60-Min Session
+                  </Button>
+                </Link>
 
-                                 <Button 
+                <Button 
                    variant="outline" 
                    className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-[#1a2236] px-6 py-3 text-base lg:text-lg border-2"
                    onClick={() => setIsVideoOpen(true)}

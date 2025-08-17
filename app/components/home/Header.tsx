@@ -66,12 +66,14 @@ export default function Header() {
           >
             Login
           </Button>
-          <Button 
-            className="bg-gradient-to-r from-yellow-400/90 via-amber-500/90 to-orange-500/90 hover:from-yellow-400 hover:via-amber-500 hover:to-orange-500 text-[#1a2236] font-bold shadow-lg hover:shadow-xl hover:shadow-yellow-400/20 transition-all duration-300 transform hover:scale-105 backdrop-blur-md"
-          >
-            <Sparkles className="mr-2 h-4 w-4" />
-            Book Free Session
-          </Button>
+          <Link href="/book-session">
+            <Button 
+              className="bg-gradient-to-r from-yellow-400/90 via-amber-500/90 to-orange-500/90 hover:from-yellow-400 hover:via-amber-500 hover:to-orange-500 text-[#1a2236] font-bold shadow-lg hover:shadow-xl hover:shadow-yellow-400/20 transition-all duration-300 transform hover:scale-105 backdrop-blur-md"
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              Book Free Session
+            </Button>
+          </Link>
         </div>
 
         {/* Mobile Menu Button */}
@@ -145,10 +147,12 @@ export default function Header() {
             </nav>
             <div className="pt-4 border-t border-yellow-400/10 space-y-3">
               <Button variant="outline" className="w-full border-yellow-400/20 text-yellow-400/90 hover:bg-white/10 hover:border-yellow-400/30 backdrop-blur-md bg-white/5">Login</Button>
-              <Button className="w-full bg-gradient-to-r from-yellow-400/90 via-amber-500/90 to-orange-500/90 hover:from-yellow-400 hover:via-amber-500 hover:to-orange-500 text-[#1a2236] font-bold shadow-lg backdrop-blur-md">
-                <Sparkles className="mr-2 h-4 w-4" />
-                Book Free Session
-              </Button>
+              <Link href="/book-session" className="block">
+                <Button className="w-full bg-gradient-to-r from-yellow-400/90 via-amber-500/90 to-orange-500/90 hover:from-yellow-400 hover:via-amber-500 hover:to-orange-500 text-[#1a2236] font-bold shadow-lg backdrop-blur-md">
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Book Free Session
+                </Button>
+              </Link>
             </div>
           </div>
         </motion.div>
