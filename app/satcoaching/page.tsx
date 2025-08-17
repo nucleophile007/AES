@@ -13,6 +13,7 @@ import { BookOpen, Star, Target, Users, FileText, Trophy, Lightbulb, Globe, Cale
 import ImageVideoCard from "@/components/ui/image-video-card";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
+import Link from "next/link";
 
 // EventCard Component to fix React Hooks rules
 const EventCard = ({ event, index }: { event: any; index: number }) => {
@@ -307,22 +308,12 @@ export default function SATCoachingPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="max-w-4xl mx-auto text-center"
           >
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg">
-                <ArrowRight className="mr-2 h-5 w-5" /> Book Free Consultation
-              </Button>
-              <Button 
-                variant="outline" 
-                className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-[#1a2236] px-6"
-                onClick={() => {
-                  document.getElementById('packages')?.scrollIntoView({ 
-                    behavior: 'smooth',
-                    block: 'start'
-                  });
-                }}
-              >
-                <BookOpen className="mr-2 h-5 w-5" /> Learn More About Our Programs
-              </Button>
+            <div className="flex justify-center">
+              <Link href="/book-session">
+                <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg">
+                  <ArrowRight className="mr-2 h-5 w-5" /> Book Free Consultation
+                </Button>
+              </Link>
             </div>
           </motion.div>
         </div>
@@ -998,12 +989,14 @@ export default function SATCoachingPage() {
             </div>
             
             <div className="flex justify-center pt-4">
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 hover:from-yellow-300 hover:to-yellow-400 text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-4 shadow-xl hover:shadow-2xl transition-all duration-300 font-semibold"
-              >
-                <ArrowRight className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Get Started Today
-              </Button>
+              <Link href="/book-session">
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 hover:from-yellow-300 hover:to-yellow-400 text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-4 shadow-xl hover:shadow-2xl transition-all duration-300 font-semibold"
+                >
+                  <ArrowRight className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Get Started Today
+                </Button>
+              </Link>
             </div>
             
             {/* Trust Indicators */}
