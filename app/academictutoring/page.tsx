@@ -380,7 +380,7 @@ function TestimonialsSection() {
 
         <div className="relative flex flex-col lg:flex-row items-center justify-center gap-16">
           <div className="relative w-[600px] h-[600px] lg:w-[700px] lg:h-[700px]">
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] lg:w-[500px] lg:h-[500px] border-2 border-dashed border-yellow-400/30 rounded-full" />
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] lg:w-[500px] lg:h-[500px] border-2 border-dashed border-cyan-400/40 rounded-full shadow-inner" />
             
             {/* Testimonials positioned around the circle */}
             {testimonialCards.map((testimonial, index) => {
@@ -405,11 +405,13 @@ function TestimonialsSection() {
                   onClick={() => handleAvatarClick(testimonial, index)}
                 >
                   <Avatar
-                    className={`w-20 h-20 lg:w-24 lg:h-24 ring-2 shadow-lg transition-all duration-500 ${
-                      isActive ? "ring-yellow-400 ring-4 scale-110" : "ring-white hover:ring-yellow-300"
+                    className={`w-20 h-20 lg:w-24 lg:h-24 ring-2 shadow-xl transition-all duration-500 ${
+                      isActive 
+                        ? "ring-cyan-400 ring-4 scale-110 shadow-cyan-400/50" 
+                        : "ring-slate-300/50 hover:ring-cyan-300 hover:shadow-cyan-300/30"
                     } ${isAnimating ? "animate-pulse" : ""}`}
                   >
-                    <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-[#1a2236] font-semibold">
+                    <AvatarFallback className="bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600 text-white font-semibold text-lg shadow-inner">
                       {testimonial.initials || testimonial.name
                         .split(" ")
                         .map((n) => n[0])
@@ -418,7 +420,7 @@ function TestimonialsSection() {
                   </Avatar>
 
                                       {isActive && (
-                      <div className="absolute inset-0 rounded-full border-2 border-yellow-400 animate-ping opacity-75" />
+                      <div className="absolute inset-0 rounded-full border-2 border-cyan-400 animate-ping opacity-75" />
                     )}
                 </div>
               )
@@ -428,32 +430,41 @@ function TestimonialsSection() {
           <div className="flex-1 max-w-lg">
             <div
               key={selectedTestimonial.id}
-              className="bg-[#1a2236]/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-yellow-400/20 animate-in fade-in-50 slide-in-from-right-5 duration-500"
+              className="relative bg-gradient-to-br from-slate-800/90 via-slate-900/80 to-indigo-900/60 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-cyan-400/30 animate-in fade-in-50 slide-in-from-right-5 duration-500 hover:border-cyan-400/50 transition-all"
             >
-              <div className="flex gap-1 mb-4">
-                {[...Array(selectedTestimonial.rating || 5)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                ))}
-              </div>
+              {/* Glassmorphism overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent rounded-3xl" />
+              
+              {/* Content */}
+              <div className="relative z-10">
+                <div className="flex gap-1 mb-4">
+                  {[...Array(selectedTestimonial.rating || 5)].map((_, i) => (
+                    <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400 drop-shadow-sm" />
+                  ))}
+                </div>
 
-              <blockquote className="theme-text-light text-lg leading-relaxed mb-6 font-medium">
-                {selectedTestimonial.content}
-              </blockquote>
+                <blockquote className="theme-text-light text-lg leading-relaxed mb-6 font-medium">
+                  {selectedTestimonial.content}
+                </blockquote>
 
-              <div className="flex items-center gap-4">
-                <Avatar className="w-12 h-12 ring-2 ring-yellow-100">
-                  <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-[#1a2236] font-semibold">
-                    {selectedTestimonial.initials || selectedTestimonial.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <div className="font-semibold theme-text-light">{selectedTestimonial.name}</div>
-                  <div className="text-yellow-400 text-sm font-medium">{selectedTestimonial.designation}</div>
+                <div className="flex items-center gap-4">
+                  <Avatar className="w-12 h-12 ring-2 ring-cyan-300/50 shadow-lg">
+                    <AvatarFallback className="bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600 text-white font-semibold shadow-inner">
+                      {selectedTestimonial.initials || selectedTestimonial.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="font-semibold theme-text-light">{selectedTestimonial.name}</div>
+                    <div className="text-cyan-400 text-sm font-medium">{selectedTestimonial.designation}</div>
+                  </div>
                 </div>
               </div>
+              
+              {/* Subtle background decoration */}
+              <div className="absolute top-4 right-4 w-20 h-20 bg-gradient-to-br from-cyan-400/10 to-blue-500/10 rounded-full blur-xl" />
             </div>
           </div>
         </div>
@@ -461,17 +472,17 @@ function TestimonialsSection() {
         <div className="flex justify-center gap-8 mt-16">
           <button
             onClick={goToPrevious}
-            className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg hover:bg-yellow-500 transition-all duration-200 hover:scale-110 active:scale-95"
+            className="w-14 h-14 bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-xl hover:shadow-cyan-400/50 transition-all duration-300 hover:scale-110 active:scale-95 border border-cyan-300/30"
             aria-label="Previous testimonial"
           >
-            <ChevronLeft className="w-6 h-6 text-[#1a2236]" />
+            <ChevronLeft className="w-6 h-6 text-white drop-shadow-sm" />
           </button>
           <button
             onClick={goToNext}
-            className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg hover:bg-yellow-500 transition-all duration-200 hover:scale-110 active:scale-95"
+            className="w-14 h-14 bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-xl hover:shadow-cyan-400/50 transition-all duration-300 hover:scale-110 active:scale-95 border border-cyan-300/30"
             aria-label="Next testimonial"
           >
-            <ChevronRight className="w-6 h-6 text-[#1a2236]" />
+            <ChevronRight className="w-6 h-6 text-white drop-shadow-sm" />
           </button>
         </div>
       </div>

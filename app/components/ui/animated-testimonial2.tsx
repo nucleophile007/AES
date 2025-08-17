@@ -153,7 +153,7 @@ export const AnimatedTestimonials = ({
                   }}
                   className="absolute inset-0 origin-bottom"
                 >
-                  <div className="h-full w-full rounded-3xl bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center">
+                  <div className="h-full w-full rounded-3xl bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600 flex items-center justify-center shadow-inner">
                     <span className="text-6xl md:text-7xl font-bold text-[#1a2236] select-none">
                       {testimonial.initials || testimonial.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                     </span>
