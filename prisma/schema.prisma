@@ -6,20 +6,41 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../generated/prisma"
 }
 
-   datasource db {
-     provider = "postgresql"
-     url      = env("DATABASE_URL")
-     directUrl = env("DIRECT_URL")
-   }
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
 
-model FreeSession {
-  id        String   @id @default(uuid())
-  name      String
-  email     String
-  phone     String
-  gradeLevel String
-  subjectOfInterest String
+model WebinarRegistration {
+  id           Int      @id @default(autoincrement())
+  email        String
+  parentName   String
+  parentEmail  String
+  parentPhone  String
+  studentName  String
+  grade        String
+  schoolName   String
+  program      String
+  preferredTime String
+  createdAt    DateTime @default(now())
+  approved     Boolean  @default(false)
+}
+
+model AvailabilityDay {
+  id        Int      @id @default(autoincrement())
+  // Store date as string in M/D/YYYY to match frontend calendar keys (e.g., "8/16/2025")
+  date      String
+  // Times are strings like "09:00 AM", "10:00 AM" (1-hour intervals)
+  times     Json
+  // Program this availability is for (e.g., "Mathematics Tutoring", "Science Tutoring")
+  program   String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Combination of date and program should be unique
+  @@unique([date, program])
 }
