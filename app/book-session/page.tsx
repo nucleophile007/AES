@@ -185,30 +185,45 @@ export default function BookSessionPage() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [availability, setAvailability] = useState<Record<string, string[]>>({})
+  const [isLoadingAvailability, setIsLoadingAvailability] = useState(false)
 
-  // Hardcoded availability for different programs
-  const programAvailability: Record<string, Record<string, string[]>> = {
-    "Academic Tutoring": {
-      "8/17/2025": ["10:00 AM","11:00 AM","12:00 PM", "1:00 PM"]
-    },
-    "SAT Coaching": {
-       "8/17/2025": ["10:00 AM","11:00 AM","12:00 PM", "1:00 PM"]
-    },
-    "College Prep": {
-      "8/17/2025": ["10:00 AM","11:00 AM","12:00 PM", "1:00 PM"]
-    },
-    "Olympiads": {
-      "8/17/2025": ["10:00 AM","11:00 AM","12:00 PM", "1:00 PM"]
-    },
-    "Research Program": {
-       "8/17/2025": ["10:00 AM","11:00 AM","12:00 PM", "1:00 PM"]
-    },
-    "AES Creatorverse": {
-     "8/17/2025": ["10:00 AM","11:00 AM","12:00 PM", "1:00 PM"]
+  // Fetch availability data from API
+  const fetchAvailability = async (program: string) => {
+    setIsLoadingAvailability(true)
+    try {
+      const response = await fetch(`/api/availability?program=${encodeURIComponent(program)}`)
+      const data = await response.json()
+      
+      if (data.success) {
+        // Transform API data into the format expected by the calendar
+        const availabilityMap: Record<string, string[]> = {}
+        
+        data.data.forEach((item: any) => {
+          if (item.program === program && item.date && Array.isArray(item.times)) {
+            availabilityMap[item.date] = item.times
+          }
+        })
+        
+        console.log(`✅ Loaded availability for ${program}:`, {
+          totalRows: data.totalRows,
+          aggregatedDates: data.aggregatedDates,
+          availableDates: Object.keys(availabilityMap).length,
+          availabilityMap
+        })
+        
+        setAvailability(availabilityMap)
+      } else {
+        console.error('Failed to fetch availability:', data.error)
+        setAvailability({})
+      }
+    } catch (error) {
+      console.error('Error fetching availability:', error)
+      setAvailability({})
+    } finally {
+      setIsLoadingAvailability(false)
     }
   }
-
-  const availability = programAvailability[formData.programInterested] || {}
 
   // Program options
   const programOptions = [
@@ -217,18 +232,21 @@ export default function BookSessionPage() {
     "College Prep",
     "Olympiads",
     "Research Program",
-    "AES Creatorverse"
+    "Profile Building"
   ]
 
   // Grade options
   const gradeOptions = [
-    '7th Grade', '8th Grade', '9th Grade', '10th Grade', '11th Grade', '12th Grade'
+    '3rd Grade','4th Grade','5th Grade','6th Grade','7th Grade', '8th Grade', '9th Grade', '10th Grade', '11th Grade', '12th Grade'
   ]
 
-  // Clear date/time when program changes
+  // Fetch availability when program changes
   useEffect(() => {
     if (formData.programInterested) {
+      // Clear previous date/time selection
       setFormData(prev => ({ ...prev, selectedDate: "", selectedTime: "" }))
+      // Fetch availability for the selected program
+      fetchAvailability(formData.programInterested)
     }
   }, [formData.programInterested])
 
@@ -242,7 +260,6 @@ export default function BookSessionPage() {
     setIsSubmitting(true)
 
     try {
-      // Send to QStash for Google Sheets integration
       const response = await fetch('/api/book-session', {
         method: 'POST',
         headers: {
@@ -262,7 +279,10 @@ export default function BookSessionPage() {
         }),
       })
 
-      if (response.ok) {
+      const result = await response.json()
+
+      if (response.ok && result.success) {
+        console.log('✅ Registration successful! Booking ID:', result.bookingId)
         setShowSuccessModal(true)
         setTimeout(() => {
           setShowSuccessModal(false)
@@ -281,10 +301,11 @@ export default function BookSessionPage() {
           })
         }, 8000)
       } else {
-        alert("Booking failed. Please try again.")
+        alert("Registration failed. Please try again.")
+        console.error('❌ Registration error:', result)
       }
     } catch (error) {
-      console.error("Submission error:", error)
+      console.error("❌ Submission error:", error)
       alert("Network error. Please check your connection and try again.")
     }
 
@@ -319,9 +340,9 @@ export default function BookSessionPage() {
             <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-4">Session Booked Successfully!</h1>
+            <h1 className="text-2xl font-bold text-gray-800 mb-4">Registration Successful!</h1>
             <p className="text-gray-600 mb-6">
-              Thank you for booking with AES. We&apos;ll review your request and contact you within 24 hours.
+              Thank you for registering with AES. Your booking has been saved and we&apos;ll contact you within 24 hours to confirm your session.
             </p>
             <div className="space-y-2 text-left bg-blue-50 p-4 rounded-lg mb-6">
               <p className="text-blue-800 flex items-center gap-2">
@@ -561,13 +582,20 @@ export default function BookSessionPage() {
                     <p className="theme-text-muted">Choose your preferred session schedule</p>
                   </div>
 
-                  <CalendarPicker
-                    selectedDate={formData.selectedDate}
-                    selectedTime={formData.selectedTime}
-                    onDateSelect={(date: string) => setFormData((prev) => ({ ...prev, selectedDate: date }))}
-                    onTimeSelect={(time: string) => setFormData((prev) => ({ ...prev, selectedTime: time }))}
-                    dateTimeMapping={availability}
-                  />
+                  {isLoadingAvailability ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400"></div>
+                      <p className="ml-4 theme-text-muted">Loading available times...</p>
+                    </div>
+                  ) : (
+                    <CalendarPicker
+                      selectedDate={formData.selectedDate}
+                      selectedTime={formData.selectedTime}
+                      onDateSelect={(date: string) => setFormData((prev) => ({ ...prev, selectedDate: date }))}
+                      onTimeSelect={(time: string) => setFormData((prev) => ({ ...prev, selectedTime: time }))}
+                      dateTimeMapping={availability}
+                    />
+                  )}
 
                   <div className="bg-yellow-400/10 p-4 rounded-lg border border-yellow-400/20">
                     <p className="theme-text-light text-sm">
@@ -588,7 +616,7 @@ export default function BookSessionPage() {
                       disabled={isSubmitting || !canSubmit}
                       className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isSubmitting ? "Booking..." : "Book Session"}
+                      {isSubmitting ? "Registering..." : "Register for Session"}
                     </Button>
                   </div>
                 </motion.div>

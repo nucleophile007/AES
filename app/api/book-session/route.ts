@@ -1,87 +1,77 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { Client } from '@upstash/qstash'
+import { PrismaClient } from '../../../generated/prisma';
+import { qstash } from '@/lib/qstash';
 
-const qstash = new Client({
-  token: process.env.QSTASH_TOKEN!,
-})
+const prisma = new PrismaClient();
 
-export async function POST(request: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json()
-    
-    // Validate required fields
-    const requiredFields = ['parentName', 'parentEmail', 'parentPhone', 'studentName', 'studentEmail', 'grade', 'schoolName', 'program', 'preferredDateTime']
-    
-    for (const field of requiredFields) {
-      if (!body[field]) {
-        return NextResponse.json({ error: `Missing required field: ${field}` }, { status: 400 })
-      }
-    }
+    const body = await req.json();
 
-    console.log("📊 Processing booking for:", body.studentName)
+    // 1. Save to database FIRST - this is the most important part
+    const registration = await prisma.webinarRegistration.create({
+      data: {
+        email: body.studentEmail,
+        parentName: body.parentName,
+        parentEmail: body.parentEmail,
+        parentPhone: body.parentPhone,
+        studentName: body.studentName,
+        grade: body.grade,
+        schoolName: body.schoolName || 'N/A',
+        program: body.program,
+        preferredTime: body.preferredDateTime,
+      },
+    });
 
-    // Prepare booking data with correct field names for Google Sheets
-    const bookingData = {
-      email: body.studentEmail || body.email,
-      parentName: body.parentName,
-      parentEmail: body.parentEmail,
-      parentContact: body.parentPhone,
-      studentName: body.studentName,
-      studentGrade: body.grade,
-      program: body.program,
-      preferredTime: body.preferredDateTime,
-      schoolName: body.schoolName,
-      submittedAt: body.submittedAt || new Date().toISOString(),
-      timestamp: new Date().toISOString(),
-    }
+    console.log("✅ Registration saved:", registration.id);
 
+    // 2. Publish Google Sheets job - independent, no retries to avoid duplicates
     try {
-      // Send to QStash for reliable processing
       await qstash.publishJSON({
         url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/jobs/update-sheet`,
-        body: bookingData,
-        retries: 3, // Retry up to 3 times for reliability
-      });
-      
-      console.log('✅ QStash job queued successfully')
-    } catch (qstashError) {
-      console.error("❌ QStash Error:", qstashError)
-      
-      // Fallback to direct Google Sheets submission
-      console.log("🔄 Attempting direct Google Sheets fallback...")
-      const directResponse = await fetch(process.env.GOOGLE_SCRIPT_URL!, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+        body: {
+          ...body,
+          bookingId: registration.id,
         },
-        body: JSON.stringify(bookingData)
-      })
-      
-      if (!directResponse.ok) {
-        const directErrorText = await directResponse.text()
-        console.error("❌ Direct Google Sheets Error:", directErrorText)
-        throw new Error(`Both QStash and direct submission failed. QStash: ${qstashError}, Direct: ${directErrorText}`)
-      }
-      
-      console.log('✅ Direct Google Sheets submission successful (fallback)')
+        retries: 0, // No retries for sheets to avoid duplicates
+      });
+      console.log("✅ Google Sheets job queued");
+    } catch (sheetError) {
+      console.error("❌ Failed to queue Google Sheets job:", sheetError);
+      // Don't fail the whole request - continue
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Booking request submitted successfully' 
-    }, { status: 200 })
+    // 3. Publish email job - independent, with retries
+    try {
+      await qstash.publishJSON({
+        url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/jobs/send-emails`,
+        body: {
+          ...body,
+          bookingId: registration.id,
+        },
+        retries: 3, // Allow retries for emails
+      });
+      console.log("✅ Email job queued");
+    } catch (emailError) {
+      console.error("❌ Failed to queue email job:", emailError);
+      // Don't fail the whole request - continue
+    }
+
+    return Response.json({ 
+      success: true,
+      message: 'Registration successful',
+      bookingId: registration.id 
+    }, { status: 200 });
 
   } catch (error) {
-    console.error('❌ Error submitting booking:', error)
-    return NextResponse.json({ 
-      error: 'Failed to submit booking request',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+    console.error("❌ API Error:", error);
+    return Response.json({ 
+      success: false, 
+      error: 'Failed to save registration' 
+    }, { status: 500 });
   }
 }
 
+// Only allow POST requests
 export async function GET() {
-  return NextResponse.json({ 
-    message: 'Booking API is active. Use POST to submit bookings.' 
-  }, { status: 200 })
+  return Response.json({ error: 'Method not allowed' }, { status: 405 });
 } 
