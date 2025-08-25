@@ -32,28 +32,28 @@ const StrengthBasedDiscoveryInfographic = () => {
             column: "columnGradient",
             capital: "capitalGradient",
             title: "titleGradient",
-            stroke: "#c2410c",
+            stroke: "#b45309", // Warm amber
           }
         case 1:
           return {
             column: "blueColumnGradient",
             capital: "blueCapitalGradient",
             title: "blueTitleGradient",
-            stroke: "#1e40af",
+            stroke: "#075985", // Deep ocean blue
           }
         case 2:
           return {
             column: "greenColumnGradient",
             capital: "greenCapitalGradient",
             title: "greenTitleGradient",
-            stroke: "#059669",
+            stroke: "#1e40af", // Theme blue
           }
         default:
           return {
             column: "columnGradient",
             capital: "capitalGradient",
             title: "titleGradient",
-            stroke: "#c2410c",
+            stroke: "#b45309", // Warm amber
           }
       }
     }
@@ -157,11 +157,11 @@ const StrengthBasedDiscoveryInfographic = () => {
         />
 
         <rect
-          x={centerX - 75}
+          x={centerX - 90}
           y="510"
-          width="150"
-          height="20"
-          rx="3"
+          width="180"
+          height="25"
+          rx="4"
           fill={`url(#${gradients.capital})`}
           stroke={gradients.stroke}
           strokeWidth="3"
@@ -169,19 +169,19 @@ const StrengthBasedDiscoveryInfographic = () => {
         />
 
         <rect
-          x={centerX - 100}
+          x={centerX - 120}
           y="550"
-          width="200"
-          height="70"
-          rx="20"
-          ry="20"
+          width="240"
+          height="80"
+          rx="25"
+          ry="25"
           fill={`url(#${gradients.title})`}
           filter="url(#shadow)"
         />
 
         <text
           x={centerX}
-          y="575"
+          y="580"
           textAnchor="middle"
           fill="white"
           fontSize="18"
@@ -192,7 +192,7 @@ const StrengthBasedDiscoveryInfographic = () => {
         </text>
         <text
           x={centerX}
-          y="600"
+          y="605"
           textAnchor="middle"
           fill="white"
           fontSize="18"
@@ -204,12 +204,12 @@ const StrengthBasedDiscoveryInfographic = () => {
 
         {/* Base foundation with more padding */}
         <rect
-          x={centerX - 120}
+          x={centerX - 140}
           y="640"
-          width="240"
-          height="40"
-          rx="20"
-          ry="20"
+          width="280"
+          height="50"
+          rx="25"
+          ry="25"
           fill={`url(#${gradients.capital})`}
           stroke={gradients.stroke}
           strokeWidth="2"
@@ -280,18 +280,18 @@ const StrengthBasedDiscoveryInfographic = () => {
            >
                            <div className={`rounded-2xl p-4 shadow-xl backdrop-blur-sm relative overflow-hidden ${
                 pillarIndex === 0 
-                  ? "bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-200" 
-                  : pillarIndex === 1 
-                  ? "bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200"
-                  : "bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200"
-              }`}>
-                <div className={`absolute top-0 right-0 w-12 h-12 rounded-full -translate-y-6 translate-x-6 opacity-30 ${
-                  pillarIndex === 0 
-                    ? "bg-gradient-to-br from-orange-200 to-orange-300" 
-                    : pillarIndex === 1 
-                    ? "bg-gradient-to-br from-blue-200 to-blue-300"
-                    : "bg-gradient-to-br from-green-200 to-green-300"
-                }`}></div>
+                  ? "bg-gradient-to-br from-amber-50 to-amber-100 border-2 border-amber-200" 
+                                     : pillarIndex === 1 
+                   ? "bg-gradient-to-br from-yellow-50 to-blue-100 border-2 border-yellow-200"
+                   : "bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200"
+               }`}>
+                 <div className={`absolute top-0 right-0 w-12 h-12 rounded-full -translate-y-6 translate-x-6 opacity-30 ${
+                   pillarIndex === 0 
+                     ? "bg-gradient-to-br from-amber-200 to-amber-300" 
+                     : pillarIndex === 1 
+                     ? "bg-gradient-to-br from-yellow-200 to-blue-300"
+                     : "bg-gradient-to-br from-blue-200 to-blue-300"
+                 }`}></div>
               <p className="text-xs text-slate-800 text-center leading-relaxed font-semibold relative z-10">
                 {getCardContent(0)}
               </p>
@@ -312,18 +312,18 @@ const StrengthBasedDiscoveryInfographic = () => {
            >
                            <div className={`rounded-2xl p-4 shadow-xl backdrop-blur-sm relative overflow-hidden ${
                 pillarIndex === 0 
-                  ? "bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-300" 
-                  : pillarIndex === 1 
-                  ? "bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-blue-300"
-                  : "bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-300"
-              }`}>
-                <div className={`absolute top-0 left-0 w-10 h-10 rounded-full -translate-y-5 -translate-x-5 opacity-30 ${
-                  pillarIndex === 0 
-                    ? "bg-gradient-to-br from-orange-300 to-orange-400" 
-                    : pillarIndex === 1 
-                    ? "bg-gradient-to-br from-blue-300 to-blue-400"
-                    : "bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-300"
-                }`}></div>
+                  ? "bg-gradient-to-br from-amber-100 to-amber-200 border-2 border-amber-300" 
+                                     : pillarIndex === 1 
+                   ? "bg-gradient-to-br from-yellow-100 to-blue-200 border-2 border-yellow-300"
+                   : "bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-blue-300"
+               }`}>
+                 <div className={`absolute top-0 left-0 w-10 h-10 rounded-full -translate-y-5 -translate-x-5 opacity-30 ${
+                   pillarIndex === 0 
+                     ? "bg-gradient-to-br from-amber-300 to-amber-400" 
+                     : pillarIndex === 1 
+                     ? "bg-gradient-to-br from-yellow-300 to-blue-400"
+                     : "bg-gradient-to-br from-blue-300 to-blue-400"
+                 }`}></div>
               <p className="text-xs text-slate-800 text-center leading-relaxed font-semibold relative z-10">
                 {getCardContent(1)}
               </p>
@@ -344,18 +344,18 @@ const StrengthBasedDiscoveryInfographic = () => {
            >
                            <div className={`rounded-2xl p-4 shadow-xl backdrop-blur-sm relative overflow-hidden ${
                 pillarIndex === 0 
-                  ? "bg-gradient-to-br from-orange-200 to-orange-300 border-2 border-orange-400" 
-                  : pillarIndex === 1 
-                  ? "bg-gradient-to-br from-blue-200 to-blue-300 border-2 border-blue-400"
-                  : "bg-gradient-to-br from-green-200 to-green-300 border-2 border-green-400"
-              }`}>
-                <div className={`absolute bottom-0 right-0 w-8 h-8 rounded-full translate-y-4 translate-x-4 opacity-30 ${
-                  pillarIndex === 0 
-                    ? "bg-gradient-to-tl from-orange-400 to-orange-500" 
-                    : pillarIndex === 1 
-                    ? "bg-gradient-to-tl from-blue-400 to-blue-500"
-                    : "bg-gradient-to-tl from-green-400 to-green-500"
-                }`}></div>
+                  ? "bg-gradient-to-br from-amber-200 to-amber-300 border-2 border-amber-400" 
+                                     : pillarIndex === 1 
+                   ? "bg-gradient-to-br from-yellow-200 to-blue-300 border-2 border-yellow-400"
+                   : "bg-gradient-to-br from-blue-200 to-blue-300 border-2 border-blue-400"
+               }`}>
+                 <div className={`absolute bottom-0 right-0 w-8 h-8 rounded-full translate-y-4 translate-x-4 opacity-30 ${
+                   pillarIndex === 0 
+                     ? "bg-gradient-to-tl from-amber-400 to-amber-500" 
+                     : pillarIndex === 1 
+                     ? "bg-gradient-to-tl from-yellow-400 to-blue-500"
+                     : "bg-gradient-to-tl from-blue-400 to-blue-500"
+                 }`}></div>
               <p className="text-xs text-slate-800 text-center leading-relaxed font-semibold relative z-10">
                 {getCardContent(2)}
               </p>
@@ -386,52 +386,55 @@ const StrengthBasedDiscoveryInfographic = () => {
      >
       <svg viewBox="0 0 1600 700" className="w-full h-auto" xmlns="http://www.w3.org/2000/svg">
         <defs>
+          {/* First Pillar - Warm Amber to Gold */}
           <linearGradient id="columnGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#fed7aa" />
-            <stop offset="50%" stopColor="#fb923c" />
-            <stop offset="100%" stopColor="#ea580c" />
+            <stop offset="0%" stopColor="#fef3c7" />
+            <stop offset="50%" stopColor="#f59e0b" />
+            <stop offset="100%" stopColor="#d97706" />
           </linearGradient>
 
           <linearGradient id="capitalGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#fdba74" />
-            <stop offset="100%" stopColor="#f97316" />
+            <stop offset="0%" stopColor="#fde68a" />
+            <stop offset="100%" stopColor="#f59e0b" />
           </linearGradient>
 
           <linearGradient id="titleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#f97316" />
-            <stop offset="100%" stopColor="#ea580c" />
+            <stop offset="0%" stopColor="#f59e0b" />
+            <stop offset="100%" stopColor="#b45309" />
           </linearGradient>
 
+          {/* Second Pillar - Gradient Color */}
           <linearGradient id="blueColumnGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#bfdbfe" />
-            <stop offset="50%" stopColor="#3b82f6" />
-            <stop offset="100%" stopColor="#1e40af" />
+            <stop offset="0%" stopColor="#fef3c7" />
+            <stop offset="50%" stopColor="#fbbf24" />
+            <stop offset="100%" stopColor="#3b82f6" />
           </linearGradient>
 
           <linearGradient id="blueCapitalGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#93c5fd" />
+            <stop offset="0%" stopColor="#fde68a" />
             <stop offset="100%" stopColor="#2563eb" />
           </linearGradient>
 
           <linearGradient id="blueTitleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#2563eb" />
+            <stop offset="0%" stopColor="#f59e0b" />
             <stop offset="100%" stopColor="#1e40af" />
           </linearGradient>
 
+          {/* Third Pillar - Blue */}
           <linearGradient id="greenColumnGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#a7f3d0" />
-            <stop offset="50%" stopColor="#10b981" />
-            <stop offset="100%" stopColor="#059669" />
+            <stop offset="0%" stopColor="#dbeafe" />
+            <stop offset="50%" stopColor="#3b82f6" />
+            <stop offset="100%" stopColor="#1d4ed8" />
           </linearGradient>
 
           <linearGradient id="greenCapitalGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#6ee7b7" />
-            <stop offset="100%" stopColor="#059669" />
+            <stop offset="0%" stopColor="#7dd3fc" />
+            <stop offset="100%" stopColor="#0284c7" />
           </linearGradient>
 
           <linearGradient id="greenTitleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#10b981" />
-            <stop offset="100%" stopColor="#059669" />
+            <stop offset="0%" stopColor="#0ea5e9" />
+            <stop offset="100%" stopColor="#075985" />
           </linearGradient>
 
           <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
