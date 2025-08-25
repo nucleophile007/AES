@@ -73,29 +73,15 @@ const ProgramsSection = memo(() => {
   return (
     <section 
       id="programs" 
-      className="py-16 sm:py-20 lg:py-32 relative overflow-hidden min-h-screen flex items-center"
-      style={{ backgroundColor: 'hsl(var(--v0-blue-dark))' }}
+      className="py-16 sm:py-20 lg:py-32 theme-bg-dark relative overflow-hidden min-h-screen flex items-center"
       aria-labelledby="programs-heading"
     >
       {/* Enhanced background elements for better visual depth */}
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom right, hsl(var(--v0-blue-medium)/50), hsl(var(--v0-blue-dark)/50))' }} />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-yellow-400/5 via-transparent to-transparent" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-sky-400/5 via-transparent to-transparent" />
-      
-      {/* Floating elements for enhanced visual interest */}
-      <div 
-        className="absolute top-20 left-10 w-32 h-32 bg-yellow-400/10 rounded-full blur-2xl animate-pulse"
-        aria-hidden="true"
-      />
-      <div 
-        className="absolute bottom-20 right-10 w-40 h-40 bg-sky-400/10 rounded-full blur-2xl animate-pulse"
-        style={{ animationDelay: '1s' }}
-        aria-hidden="true"
-      />
-      <div 
-        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-yellow-400/5 to-sky-400/5 rounded-full blur-3xl"
-        aria-hidden="true"
-      />
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-20 left-10 w-20 h-20 bg-yellow-400 rounded-full opacity-5 animate-float"></div>
+        <div className="absolute bottom-20 right-20 w-16 h-16 bg-blue-400 rounded-full opacity-5 animate-float-reverse"></div>
+        <div className="absolute top-1/2 left-1/4 w-12 h-12 bg-purple-400 rounded-full opacity-5 animate-float"></div>
+      </div>
       
       <div className="container mx-auto relative z-10 px-4 sm:px-6 lg:px-8 max-w-7xl">
         <motion.div
@@ -103,32 +89,37 @@ const ProgramsSection = memo(() => {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
-          className="text-center mb-12 sm:mb-16 lg:mb-20"
+          className="text-center mb-8 sm:mb-12 lg:mb-16"
         >
-          <motion.div variants={badgeVariants} className="mb-6">
-            <Badge 
-              className="px-6 py-3 border-0 text-sm sm:text-base shadow-2xl font-bold tracking-wide hover:scale-105 transition-transform duration-300"
-              style={{ backgroundColor: 'hsl(var(--v0-yellow))', color: 'hsl(var(--v0-blue-dark))' }}
+          <motion.div variants={badgeVariants} className="mb-3 sm:mb-4">
+            {/* <Badge 
+              className="bg-yellow-400/10 text-yellow-400 border-yellow-400/20 text-sm sm:text-base px-3 py-1.5 sm:px-4 sm:py-2"
               aria-label="Premium programs badge"
             >
               ✨ Our Premium Programs
-            </Badge>
+            </Badge> */}
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
+            Our Premium Programs
+          </Badge>
           </motion.div>
-          
-          <motion.h2
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold theme-text-light mb-4 sm:mb-6">
+            Unlock Your Child&apos;s Academic Edge
+          </h2>
+          <p className="text-lg theme-text-muted max-w-2xl mx-auto">
+            Our tailored programs and expert mentorship help your child achieve academic excellence.
+          </p>
+          {/* <motion.h2
             id="programs-heading"
             variants={itemVariants}
-            className="max-w-5xl mx-auto text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-center mb-6 sm:mb-8 leading-tight"
+            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-center mb-3 sm:mb-4 lg:mb-6 leading-tight px-2 theme-text-light"
           >
-            <span className="drop-shadow-lg block mb-2" style={{ color: 'hsl(var(--v0-blue-light))' }}>
-              ✨ Unlock Your Child&apos;s
-            </span>
-            <span className="drop-shadow-lg block" style={{ color: 'hsl(var(--v0-yellow))' }}>
+            Unlock Your Child&apos;s
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 block">
               Academic Edge
             </span>
-          </motion.h2>
+          </motion.h2> */}
           
-          <motion.p
+          {/* <motion.p
             variants={itemVariants}
             className="text-lg sm:text-xl lg:text-2xl max-w-4xl mx-auto px-6 py-6 backdrop-blur-md rounded-2xl shadow-2xl font-medium leading-relaxed"
             style={{ 
@@ -143,7 +134,7 @@ const ProgramsSection = memo(() => {
             <span className="font-bold" style={{ color: 'hsl(var(--v0-blue-light))' }}>Proven Results</span>
             {" "}•{" "}
             <span className="font-bold" style={{ color: 'hsl(var(--v0-yellow))' }}>Expert Guidance</span>
-          </motion.p>
+          </motion.p> */}
         </motion.div>
 
         {/* Enhanced carousel section with better visual hierarchy */}

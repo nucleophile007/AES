@@ -323,10 +323,10 @@ export default function SATCoachingPage() {
        <section className="py-20 theme-bg-dark">
          <div className="min-h-screen py-12 px-4 relative overflow-hidden" style={{ backgroundColor: "hsl(220, 45%, 20%)" }}>
            <div className="absolute inset-0 overflow-hidden">
-             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
-             <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 blur-3xl animate-pulse"></div>
+             <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 blur-3xl animate-pulse delay-1000"></div>
              <div
-               className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-purple-500/5 to-blue-500/5 rounded-full blur-3xl animate-spin"
+               className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-purple-500/5 to-blue-500/5 blur-3xl animate-spin"
                style={{ animationDuration: "20s" }}
              ></div>
            </div>
@@ -340,15 +340,15 @@ export default function SATCoachingPage() {
                </p>
              </div>
 
-             <div className="flex items-end justify-center gap-12 mb-16">
+             <div className="flex items-end justify-center gap-0 mb-16">
                {[
                  {
                    number: "1",
                    title: "Personalized SAT Plan",
                    points: ["Custom study schedule", "Current level assessment", "Target score planning", "Time optimization"],
-                   color: "bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600",
+                   color: "bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600",
                    height: "h-48",
-                   glowColor: "shadow-emerald-500/50",
+                   glowColor: "shadow-yellow-500/50",
                  },
                  {
                    number: "2",
@@ -359,31 +359,31 @@ export default function SATCoachingPage() {
                      "Question approach methods",
                      "Practice strategies",
                    ],
-                   color: "bg-gradient-to-br from-teal-400 via-teal-500 to-cyan-600",
+                   color: "bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700",
                    height: "h-56",
-                   glowColor: "shadow-teal-500/50",
+                   glowColor: "shadow-blue-500/50",
                  },
                  {
                    number: "3",
                    title: "Data-Driven Feedback",
                    points: ["Performance analytics", "Strength identification", "Weakness targeting", "Progress tracking"],
-                   color: "bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-600",
+                   color: "bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-500",
                    height: "h-64",
-                   glowColor: "shadow-purple-500/50",
+                   glowColor: "shadow-yellow-500/50",
                  },
                  {
                    number: "4",
                    title: "Targeted Score Improvement",
                    points: ["High-impact focus areas", "Personalized practice", "Score maximization", "Final preparation"],
-                   color: "bg-gradient-to-br from-orange-400 via-orange-500 to-red-500",
+                   color: "bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800",
                    height: "h-72",
-                   glowColor: "shadow-orange-500/50",
+                   glowColor: "shadow-blue-500/50",
                  },
                  {
                    number: "5",
                    title: "Success",
                    points: ["Target score achieved"],
-                   color: "bg-gradient-to-br from-yellow-300 via-yellow-400 to-amber-500",
+                   color: "bg-gradient-to-br from-yellow-500 via-yellow-600 to-amber-600",
                    height: "h-80",
                    glowColor: "shadow-yellow-500/60",
                    isSuccess: true,
@@ -404,82 +404,82 @@ export default function SATCoachingPage() {
                      </div>
                    )}
 
-                                       <div className="absolute bottom-full mb-6 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none z-20 transform group-hover:scale-105">
-                      <div className="relative w-80">
-                        {/* Arrow pointing down */}
-                        <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-cyan-400"></div>
-                        
-                        {/* Main card */}
-                        <div className="bg-gradient-to-br from-cyan-900/95 via-slate-800/90 to-purple-900/95 backdrop-blur-xl border border-cyan-400/30 p-6 shadow-2xl rounded-2xl relative overflow-hidden">
-                          {/* Animated background pattern */}
-                          <div className="absolute inset-0 opacity-20">
-                            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-cyan-400/20 via-transparent to-purple-400/20"></div>
-                            <div className="absolute top-4 right-4 w-20 h-20 border border-cyan-400/30 rounded-full animate-spin" style={{ animationDuration: '8s' }}></div>
-                            <div className="absolute bottom-4 left-4 w-16 h-16 border border-purple-400/30 rounded-full animate-spin" style={{ animationDuration: '12s', animationDirection: 'reverse' }}></div>
-                          </div>
-                          
-                          {/* Glow effect */}
-                          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-transparent to-purple-500/10 rounded-2xl blur-xl"></div>
-                          
-                          <div className="relative z-10">
-                            {/* Header with icon and title */}
-                            <div className="flex items-center gap-4 mb-4">
-                              <div className={`w-12 h-12 ${step.color} rounded-xl flex items-center justify-center text-white font-black text-lg flex-shrink-0 shadow-lg ring-2 ring-white/20 relative overflow-hidden`}>
-                                {/* Inner glow */}
-                                <div className="absolute inset-0 bg-white/20 rounded-xl"></div>
-                                {step.isSuccess ? <Trophy className="w-6 h-6 relative z-10" /> : <span className="relative z-10">{step.number}</span>}
-                              </div>
-                              <div className="flex-1">
-                                <h3 className="text-lg font-bold text-cyan-100 mb-1 leading-tight">{step.title}</h3>
-                                <div className="w-16 h-0.5 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full"></div>
-                              </div>
-                            </div>
-                            
-                            {/* Points list */}
-                            <div className="space-y-3">
-                              {step.points.map((point, pointIndex) => (
-                                <div key={pointIndex} className="flex items-center gap-3 group/item">
-                                  {/* Animated bullet point */}
-                                  <div className="relative">
-                                    <div className="w-2.5 h-2.5 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full animate-pulse"></div>
-                                    <div className="absolute inset-0 w-2.5 h-2.5 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full animate-ping opacity-75"></div>
-                                  </div>
-                                  
-                                  {/* Point text with hover effect */}
-                                  <span className="text-sm text-slate-300 group-hover/item:text-cyan-200 transition-colors duration-200 font-medium leading-relaxed">
-                                    {point}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                            
-                            {/* Bottom accent */}
-                            <div className="mt-4 pt-3 border-t border-cyan-400/20">
-                              <div className="flex items-center justify-between text-xs text-cyan-400/70">
-                                <span>Step {step.number}</span>
-                                <span className="flex items-center gap-1">
-                                  <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse"></div>
-                                  {/* <span>Hover for details</span> */}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                   <div className="absolute bottom-full mb-6 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none z-20 transform group-hover:scale-105">
+                     <div className="relative w-80">
+                       {/* Arrow pointing down */}
+                       <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-cyan-400"></div>
+                       
+                       {/* Main card */}
+                       <div className="bg-gradient-to-br from-cyan-900/95 via-slate-800/90 to-purple-900/95 backdrop-blur-xl border border-cyan-400/30 p-6 shadow-2xl rounded-2xl relative overflow-hidden">
+                         {/* Animated background pattern */}
+                         <div className="absolute inset-0 opacity-20">
+                           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-cyan-400/20 via-transparent to-purple-400/20"></div>
+                           <div className="absolute top-4 right-4 w-20 h-20 border border-cyan-400/30 rounded-full animate-spin" style={{ animationDuration: '8s' }}></div>
+                           <div className="absolute bottom-4 left-4 w-16 h-16 border border-purple-400/30 rounded-full animate-spin" style={{ animationDuration: '12s', animationDirection: 'reverse' }}></div>
+                         </div>
+                         
+                         {/* Glow effect */}
+                         <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-transparent to-purple-500/10 rounded-2xl blur-xl"></div>
+                         
+                         <div className="relative z-10">
+                           {/* Header with icon and title */}
+                           <div className="flex items-center gap-4 mb-4">
+                             <div className={`w-12 h-12 ${step.color} rounded-xl flex items-center justify-center text-white font-black text-lg flex-shrink-0 shadow-lg ring-2 ring-white/20 relative overflow-hidden`}>
+                               {/* Inner glow */}
+                               <div className="absolute inset-0 bg-white/20 rounded-xl"></div>
+                               {step.isSuccess ? <Trophy className="w-6 h-6 relative z-10" /> : <span className="relative z-10">{step.number}</span>}
+                             </div>
+                             <div className="flex-1">
+                               <h3 className="text-lg font-bold text-cyan-100 mb-1 leading-tight">{step.title}</h3>
+                               <div className="w-16 h-0.5 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full"></div>
+                             </div>
+                           </div>
+                           
+                           {/* Points list */}
+                           <div className="space-y-3">
+                             {step.points.map((point, pointIndex) => (
+                               <div key={pointIndex} className="flex items-center gap-3 group/item">
+                                 {/* Animated bullet point */}
+                                 <div className="relative">
+                                   <div className="w-2.5 h-2.5 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full animate-pulse"></div>
+                                   <div className="absolute inset-0 w-2.5 h-2.5 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full animate-ping opacity-75"></div>
+                                 </div>
+                                 
+                                 {/* Point text with hover effect */}
+                                 <span className="text-sm text-slate-300 group-hover/item:text-cyan-200 transition-colors duration-200 font-medium leading-relaxed">
+                                   {point}
+                                 </span>
+                               </div>
+                             ))}
+                           </div>
+                           
+                           {/* Bottom accent */}
+                           <div className="mt-4 pt-3 border-t border-cyan-400/20">
+                             <div className="flex items-center justify-between text-xs text-cyan-400/70">
+                               <span>Step {step.number}</span>
+                               <span className="flex items-center gap-1">
+                                 <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse"></div>
+                                 {/* <span>Hover for details</span> */}
+                               </span>
+                             </div>
+                           </div>
+                         </div>
+                       </div>
+                     </div>
+                   </div>
 
                    <div className="relative">
                      {/* Glow effect background */}
                      <div
-                       className={`absolute inset-0 ${step.color} ${step.height} w-36 rounded-3xl blur-xl opacity-60 ${step.glowColor} shadow-2xl animate-pulse`}
+                       className={`absolute inset-0 ${step.color} ${step.height} w-48 blur-xl opacity-60 ${step.glowColor} shadow-2xl animate-pulse`}
                      ></div>
 
                      {/* Main bar */}
                      <Card
-                       className={`${step.color} ${step.height} w-36 relative flex flex-col justify-center items-center p-6 text-white shadow-2xl hover:shadow-3xl transition-all duration-500 cursor-pointer hover:scale-110 hover:-translate-y-2 rounded-3xl border border-white/20 backdrop-blur-sm group-hover:animate-pulse`}
+                       className={`${step.color} ${step.height} w-48 relative flex flex-col justify-center items-center p-6 text-white shadow-2xl hover:shadow-3xl transition-all duration-500 cursor-pointer hover:scale-110 hover:-translate-y-2 border-0`}
                      >
                        {/* Inner glow */}
-                       <div className="absolute inset-2 bg-white/10 rounded-2xl"></div>
+                       <div className="absolute inset-2 bg-white/10"></div>
 
                        {/* Number with enhanced styling */}
                        <span className="text-7xl font-black relative z-10 drop-shadow-2xl transform transition-transform duration-300 group-hover:scale-110">
@@ -487,7 +487,7 @@ export default function SATCoachingPage() {
                        </span>
 
                        {/* Floating particles effect */}
-                       <div className="absolute inset-0 overflow-hidden rounded-3xl">
+                       <div className="absolute inset-0 overflow-hidden">
                          {[...Array(6)].map((_, i) => (
                            <div
                              key={i}
@@ -503,7 +503,7 @@ export default function SATCoachingPage() {
                        </div>
 
                        {/* Shimmer effect */}
-                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-shimmer rounded-3xl"></div>
+                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-shimmer"></div>
                      </Card>
                    </div>
                  </div>
@@ -900,39 +900,7 @@ export default function SATCoachingPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-20 theme-bg-dark">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="text-center mb-16"
-          >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">FAQ</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Frequently Asked Questions</h2>
-            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Find answers to common questions about our SAT/PSAT coaching, practice tests, and more.</p>
-          </motion.div>
-          <div className="max-w-3xl mx-auto space-y-8">
-            {faqs.map((faq, i) => (
-              <Accordion type="single" collapsible key={i}>
-                <AccordionItem value={`faq-${i}`} className="border-none">
-                  <div>
-                    <AccordionTrigger className="flex items-center gap-4 px-6 py-4 bg-yellow-400/10 rounded-full font-bold text-lg text-yellow-400 hover:bg-yellow-400/20 hover:no-underline transition-all">
-                      <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-[#1a2236] font-bold">Q</div>
-                      <span className="text-left">{faq.question}</span>
-                    </AccordionTrigger>
-                    <AccordionContent className="relative px-0 pb-4 pt-0">
-                      <div className="relative bg-gradient-to-br from-[#1a2236]/90 to-[#1a2236]/80 backdrop-blur-xl rounded-2xl shadow-lg p-6 text-base font-medium theme-text-light mt-2 ml-10 border border-yellow-400/20">
-                        <div className="absolute -left-4 top-6 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-[#1a2236]"></div>
-                        {faq.answer}
-                      </div>
-                    </AccordionContent>
-                  </div>
-                </AccordionItem>
-              </Accordion>
-            ))}
-          </div>
-        </div>
-      </section>
+      
 
       {/* Call to Action Section */}
       <section className="py-12 sm:py-16 lg:py-20 theme-bg-dark relative overflow-hidden">
@@ -1022,6 +990,39 @@ export default function SATCoachingPage() {
               </div>
             </motion.div>
           </motion.div>
+        </div>
+      </section>
+      <section className="py-20 theme-bg-dark">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="text-center mb-16"
+          >
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">FAQ</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Frequently Asked Questions</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Find answers to common questions about our SAT/PSAT coaching, practice tests, and more.</p>
+          </motion.div>
+          <div className="max-w-3xl mx-auto space-y-8">
+            {faqs.map((faq, i) => (
+              <Accordion type="single" collapsible key={i}>
+                <AccordionItem value={`faq-${i}`} className="border-none">
+                  <div>
+                    <AccordionTrigger className="flex items-center gap-4 px-6 py-4 bg-yellow-400/10 rounded-full font-bold text-lg text-yellow-400 hover:bg-yellow-400/20 hover:no-underline transition-all">
+                      <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-[#1a2236] font-bold">Q</div>
+                      <span className="text-left">{faq.question}</span>
+                    </AccordionTrigger>
+                    <AccordionContent className="relative px-0 pb-4 pt-0">
+                      <div className="relative bg-gradient-to-br from-[#1a2236]/90 to-[#1a2236]/80 backdrop-blur-xl rounded-2xl shadow-lg p-6 text-base font-medium theme-text-light mt-2 ml-10 border border-yellow-400/20">
+                        <div className="absolute -left-4 top-6 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-[#1a2236]"></div>
+                        {faq.answer}
+                      </div>
+                    </AccordionContent>
+                  </div>
+                </AccordionItem>
+              </Accordion>
+            ))}
+          </div>
         </div>
       </section>
       

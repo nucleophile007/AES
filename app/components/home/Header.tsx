@@ -29,29 +29,31 @@ export default function Header() {
 
       <div className="container mx-auto py-4 px-4 flex items-center justify-between relative z-10">
         {/* Logo and Brand */}
-        <motion.div 
-          className="flex items-center space-x-3 group cursor-pointer"
-          whileHover={{ scale: 1.05 }}
-          transition={{ type: "spring", stiffness: 400 }}
-        >
-          <div className="relative">
-            <Image
-              src="https://cdn.builder.io/api/v1/image/assets%2F5ed38136cd50447f928d11cc8bb6d314%2Ff894b9769d704ee88e744e40bde62d12?format=webp&width=800"
-              alt="ACHARYA Educational Services Logo"
-              className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl object-cover ring-2 ring-yellow-400/20 group-hover:ring-yellow-400/40 transition-all duration-300 shadow-lg group-hover:shadow-yellow-400/20 backdrop-blur-sm"
-              width={56}
-              height={56}
-              priority
-            />
-            <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400/15 to-orange-400/15 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          </div>
-          <div className="hidden sm:block">
-            <h1 className="text-xl sm:text-2xl font-black bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent drop-shadow-sm">
-              ACHARYA
-            </h1>
-            <p className="text-xs text-yellow-400/70 font-medium">Educational Services</p>
-          </div>
-        </motion.div>
+        <Link href="/">
+          <motion.div 
+            className="flex items-center space-x-3 group cursor-pointer"
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 400 }}
+          >
+            <div className="relative">
+              <Image
+                src="https://cdn.builder.io/api/v1/image/assets%2F5ed38136cd50447f928d11cc8bb6d314%2Ff894b9769d704ee88e744e40bde62d12?format=webp&width=800"
+                alt="ACHARYA Educational Services Logo"
+                className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl object-cover ring-2 ring-yellow-400/20 group-hover:ring-yellow-400/40 transition-all duration-300 shadow-lg group-hover:shadow-yellow-400/20 backdrop-blur-sm"
+                width={56}
+                height={56}
+                priority
+              />
+              <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400/15 to-orange-400/15 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </div>
+            <div className="hidden sm:block">
+              <h1 className="text-xl sm:text-2xl font-black bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent drop-shadow-sm">
+                ACHARYA
+              </h1>
+              <p className="text-xs text-yellow-400/70 font-medium">Educational Services</p>
+            </div>
+          </motion.div>
+        </Link>
         
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center space-x-8">
