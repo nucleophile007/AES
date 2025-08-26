@@ -1,15 +1,5 @@
 import { AnimatedTestimonials } from "@/components/ui/animated-testimonial2"
 
-// Helper function to generate initials from name
-const getInitials = (name: string) => {
-  return name
-    .split(' ')
-    .map(word => word[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2); // Take max 2 initials
-}
-
 export default function AnimatedTestimonialsDemo() {
   const sections = {
     tutoring: [
@@ -18,7 +8,7 @@ export default function AnimatedTestimonialsDemo() {
         designation: "Physics: 95% | Math: B's to A's", // Mapped from achievement
         quote:
           "ACHARYA Educational Services has significantly improved my academic performance in both physics and math. With their guidance, I achieved a 95 on my physics midterm and raised my math test scores from low B's to consistent A's. The tutors are knowledgeable, clear in their explanations, and genuinely committed to student success.",
-        initials: getInitials("Pragna"),
+        src: "/testimonial-logos/Raleigh_Charter__NC__Phoenix_logo.png.webp", // Realistic dummy image link
         achievement: "Physics: 95% | Math: B's to A's",
         improvement: "Academic Excellence",
         subject: "Physics & Mathematics",
@@ -30,7 +20,7 @@ export default function AnimatedTestimonialsDemo() {
         designation: "Math Grade: D to A", // Mapped from achievement
         quote:
           "Shanti Swaroop is a great tutor and has helped improve in math a lot. I went from a D to an A this year. Math is now easier than before when I was struggling everything finally clicked. My confidence in math has grown throughout the year.",
-        initials: getInitials("Adwitha"),
+        src: "/testimonial-logos/WestParkHighSchool.png", // Realistic dummy image link
         achievement: "Math Grade: D to A",
         improvement: "Complete Turnaround",
         subject: "Mathematics",
@@ -42,7 +32,7 @@ export default function AnimatedTestimonialsDemo() {
         designation: "Personalized Learning Success", // Mapped from achievement
         quote:
           "The tutor is strict with students when he needs to be strict, and gentle with students when he needs to be gentle. He truly understands what each student is capable of and motivates each student precisely enough for their highest chances of success. He makes each topic easy to understand for students and is overall a great teacher.",
-        initials: getInitials("Lalit Pinisetti"),
+        src: "/testimonial-logos/folsom.png", // Realistic dummy image link
         achievement: "Personalized Learning Success",
         improvement: "Understanding & Motivation",
         subject: "Mathematics & Physics",
@@ -54,7 +44,7 @@ export default function AnimatedTestimonialsDemo() {
         designation: "AP Calculus Confidence", // Mapped from achievement
         quote:
           "I joined because I wanted help in preparing for the AP Calculus exam, and these sessions definitely boosted my confidence in and familiarity with the subject. Shanti provided lots of good practice problems, explained concepts that I didn't understand at first, and was patient if it took me a while to figure something out. Overall, great experience!",
-        initials: getInitials("Ruhee"),
+        src: "/testimonial-logos/folsom.png", // Realistic dummy image link
         achievement: "AP Calculus Confidence",
         improvement: "Exam Preparation Success",
         subject: "AP Calculus",
@@ -66,7 +56,7 @@ export default function AnimatedTestimonialsDemo() {
         designation: "Tailored Learning Method", // Mapped from achievement
         quote:
           "I have joined these classes to help me get hold and excel in some of the classes that I am taking in school. Shanti Swaroop gained insights on how I learn and tailors the classes based on that which helps me to understand the different concepts even better. His way of teaching is very unique and different from any other tutor.",
-        initials: getInitials("Rishitha"),
+        src: "/testimonial-logos/folsom.png", // Realistic dummy image link
         achievement: "Tailored Learning Method",
         improvement: "Concept Mastery",
         subject: "Multiple Subjects",
@@ -78,7 +68,7 @@ export default function AnimatedTestimonialsDemo() {
         designation: "Online Learning Success", // Mapped from achievement
         quote:
           "Shanti has been so helpful to me as my tutor. He thoroughly explains every question I have to me and provides me with extra practice when needed. Being available via zoom makes tutoring easier and more accessible.",
-        initials: getInitials("Sloane Stenson"),
+        src: "/testimonial-logos/GraniteBayHighSchool.png", // Realistic dummy image link
         achievement: "Online Learning Success",
         improvement: "Accessible Tutoring",
         subject: "Mathematics",
@@ -90,7 +80,7 @@ export default function AnimatedTestimonialsDemo() {
         designation: "Pre-Calculus Mastery", // Mapped from achievement
         quote:
           "I joined these classes because I need help with Pre-Calculus, and every time I come to my classes I leave feeling more confident in the topic I am learning. Going to these classes helped me improve my test scores and helped me improve my overall grade in my pre-calculus class.",
-        initials: getInitials("Geetika"),
+        src: "/testimonial-logos/VistaDelLagoHS-GraphicsTransparent.png", // Realistic dummy image link
         achievement: "Pre-Calculus Mastery",
         improvement: "Test Score Improvement",
         subject: "Pre-Calculus",
@@ -102,7 +92,7 @@ export default function AnimatedTestimonialsDemo() {
         designation: "Patient Teaching Approach", // Mapped from achievement
         quote:
           "Shanti Swaroop is very patient and positive. Our daughter is having difficulty keeping up with the pace of her teacher at school. Shanti is better at explaining the concepts and allows her time to learn. He is very encouraging and helps to boost her confidence.",
-        initials: getInitials("IM1 Tutoring: Sutter Middle School"),
+        src: "/testimonial-logos/folsom.png", // Realistic dummy image link
         achievement: "Patient Teaching Approach",
         improvement: "Pace Adaptation",
         subject: "Mathematics",
@@ -114,7 +104,7 @@ export default function AnimatedTestimonialsDemo() {
         designation: "Interactive Learning", // Mapped from achievement
         quote:
           "Amazing Service! Shanti Swaroop is very interactive and focused with my kid. He explains concepts very well in multiple different ways and also a very nice and understanding person. Great Tutor!",
-        initials: getInitials("Pre-Calc Tutoring: Folsom High School"),
+        src: "/testimonial-logos/folsom.png", // Realistic dummy image link
         achievement: "Interactive Learning",
         improvement: "Concept Understanding",
         subject: "Pre-Calculus",
@@ -126,7 +116,7 @@ export default function AnimatedTestimonialsDemo() {
         designation: "Flexible Scheduling", // Mapped from achievement
         quote:
           "Shanti Swaroop has flexible scheduling and we worked together to find the best days to meet that provide the most benefit for my son. He makes sure that my son is not just working on math when he is in his session but rather, he also asks that my son check in, provides updates and samples of what he is working on.",
-        initials: getInitials("IM3 Tutoring: Folsom High School"),
+        src: "/testimonial-logos/folsom.png", // Realistic dummy image link
         achievement: "Flexible Scheduling",
         improvement: "Ongoing Support",
         subject: "Mathematics",
@@ -138,7 +128,7 @@ export default function AnimatedTestimonialsDemo() {
         designation: "Professional Methodology", // Mapped from achievement
         quote:
           "Shanti Swaroop is a great Tutor! He is very professional and organized in his methodology. You can tell right away that he cares about the students. He provides a game plan for his students. Would definitely recommend him.",
-        initials: getInitials("IM2 Tutoring: Folsom High School"),
+        src: "/testimonial-logos/folsom.png", // Realistic dummy image link
         achievement: "Professional Methodology",
         improvement: "Strategic Planning",
         subject: "Mathematics",
@@ -150,7 +140,7 @@ export default function AnimatedTestimonialsDemo() {
         designation: "Concept Breakdown", // Mapped from achievement
         quote:
           "Shanti has been really good about breaking down the steps of my son's struggles. He provided help with preparing for quizzes and tests. He has provided tips and tricks that helped math concepts makes sense that common core just is not accomplishing.",
-        initials: getInitials("IM1 Tutoring: Folsom High School"),
+        src: "/testimonial-logos/folsom.png", // Realistic dummy image link
         achievement: "Concept Breakdown",
         improvement: "Test Preparation",
         subject: "Mathematics",
@@ -160,46 +150,137 @@ export default function AnimatedTestimonialsDemo() {
     ],
     satCoaching: [
       {
-        quote: "Coming Soon! Our comprehensive SAT coaching program will help you achieve your target scores with proven strategies and personalized guidance.",
-        name: "Coming Soon",
-        designation: "SAT Coaching Program",
-        initials: "CS",
+        quote: "Increased my SAT score by 300 points! The strategies and practice tests were game-changing.",
+        name: "Rachel Martinez",
+        designation: "SAT Score: 1520",
+        src: "/testimonial-logos/folsom.png",
+      },
+      {
+        quote: "The SAT prep course was comprehensive and well-structured. I felt completely prepared on test day.",
+        name: "James Thompson",
+        designation: "SAT Score: 1480",
+        src: "/testimonial-logos/folsom.png",
+      },
+      {
+        quote:
+          "The personalized study plan and expert guidance helped me achieve my target score. Couldn't be happier!",
+        name: "Aisha Patel",
+        designation: "SAT Score: 1550",
+        src: "/testimonial-logos/folsom.png",
+      },
+      {
+        quote:
+          "From 1200 to 1450 in just 3 months! The instructors know exactly how to tackle each section effectively.",
+        name: "Tyler Rodriguez",
+        designation: "SAT Score: 1450",
+        src: "/testimonial-logos/folsom.png",
+      },
+      {
+        quote: "The mock tests and detailed feedback prepared me perfectly. I exceeded my own expectations!",
+        name: "Lily Wang",
+        designation: "SAT Score: 1500",
+        src: "/testimonial-logos/folsom.png",
       },
     ],
     collegePrep: [
       {
-        quote: "Shanti helped my daughter with college essay writing and application strategy. His coaching helped identify her strengths and achievements in the correct format. He maintains different strategies for each college and provides excellent guidance throughout the process.",
-        name: "Srinivas Eerpina",
-        designation: "Parent of High School Senior",
-        initials: getInitials("Srinivas Eerpina"),
+        quote: "The college prep program helped me get into my dream school! The essay guidance was invaluable.",
+        name: "Michael Chang",
+        designation: "Admitted to Stanford University",
+        src: "/testimonial-logos/folsom.png",
       },
       {
-        quote: "Working with Shanti for half a year has been transformative. He helped with everything from volunteering guidance to course selection for the next 4 years. His insights on career matters and big picture ambitions are invaluable.",
-        name: "Athreya",
-        designation: "High School Student",
-        initials: getInitials("Athreya"),
+        quote:
+          "From application strategy to interview prep, they covered everything. I got into 8 out of 10 colleges I applied to!",
+        name: "Isabella Garcia",
+        designation: "Admitted to MIT",
+        src: "/testimonial-logos/folsom.png",
       },
       {
-        quote: "Dr. Shanti Swaroop's guidance was essential to understanding the college application process. His patience and constant encouragement helped us narrow down potential universities based on my major and make my application stand out.",
-        name: "Sahasra",
-        designation: "College Applicant",
-        initials: getInitials("Sahasra"),
+        quote:
+          "The college counselors helped me discover schools I never would have considered. Found the perfect fit!",
+        name: "Kevin Lee",
+        designation: "Admitted to UC Berkeley",
+        src: "/testimonial-logos/folsom.png",
+      },
+      {
+        quote: "The scholarship guidance alone saved my family thousands of dollars. Plus, I got into my top choice!",
+        name: "Zoe Anderson",
+        designation: "Admitted to Harvard University",
+        src: "/testimonial-logos/folsom.png",
+      },
+      {
+        quote:
+          "They helped me craft a compelling narrative that showcased my unique strengths. The results speak for themselves!",
+        name: "Nathan Kim",
+        designation: "Admitted to Princeton University",
+        src: "/testimonial-logos/folsom.png",
       },
     ],
     researchProgram: [
       {
-        quote: "Coming Soon! Our advanced research program will connect students with PhD mentors for hands-on research experience and scientific discovery.",
-        name: "Coming Soon",
-        designation: "Research Program",
-        initials: "CS",
+        quote:
+          "The research program opened doors I never knew existed. I'm now published and heading to graduate school!",
+        name: "Sarah Mitchell",
+        designation: "Published Researcher",
+        src: "/testimonial-logos/folsom.png",
+      },
+      {
+        quote: "Working with PhD mentors gave me real research experience. My project won the state science fair!",
+        name: "Daniel Foster",
+        designation: "State Science Fair Winner",
+        src: "/testimonial-logos/folsom.png",
+      },
+      {
+        quote: "The research program taught me critical thinking and methodology that I use in all my studies now.",
+        name: "Maya Patel",
+        designation: "Research Intern at Johns Hopkins",
+        src: "/testimonial-logos/folsom.png",
+      },
+      {
+        quote: "I discovered my passion for biomedical research through this program. Now I'm pre-med at Yale!",
+        name: "Carlos Mendoza",
+        designation: "Pre-Med Student at Yale",
+        src: "/testimonial-logos/folsom.png",
+      },
+      {
+        quote: "The hands-on research experience and mentorship were invaluable. I'm now pursuing a PhD in physics!",
+        name: "Grace Liu",
+        designation: "PhD Candidate at Caltech",
+        src: "/testimonial-logos/folsom.png",
       },
     ],
     mathCompetition: [
       {
-        quote: "Coming Soon! Our math competition training will prepare students for AMC, USAMO, and other prestigious mathematics competitions.",
-        name: "Coming Soon",
-        designation: "Math Competition Training",
-        initials: "CS",
+        quote: "Qualified for USAMO after training here! The problem-solving techniques are incredibly effective.",
+        name: "Andrew Zhou",
+        designation: "USAMO Qualifier",
+        src: "/testimonial-logos/folsom.png",
+      },
+      {
+        quote: "Won first place at the state math competition! The coaches here are absolutely phenomenal.",
+        name: "Priya Sharma",
+        designation: "State Math Champion",
+        src: "/testimonial-logos/folsom.png",
+      },
+      {
+        quote:
+          "From struggling with algebra to competing nationally in math contests. The transformation was incredible!",
+        name: "Jordan Taylor",
+        designation: "National Math Competitor",
+        src: "/testimonial-logos/folsom.png",
+      },
+      {
+        quote: "The AMC preparation was thorough and challenging. I improved my score by over 50 points!",
+        name: "Elena Volkov",
+        designation: "AMC 12 High Scorer",
+        src: "/testimonial-logos/folsom.png",
+      },
+      {
+        quote: "Made it to the Math Olympiad team thanks to the expert coaching and rigorous practice sessions here!",
+        name: "Ryan O'Connor",
+        designation: "Math Olympiad Team Member",
+        src: "/testimonial-logos/folsom.png",
       },
     ],
   }

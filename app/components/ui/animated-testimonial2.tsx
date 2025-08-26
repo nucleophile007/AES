@@ -3,13 +3,13 @@
 import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useEffect, useState, useCallback } from "react"
+import Image from "next/image"
 
 type Testimonial = {
   quote: string
   name: string
   designation: string
-  src?: string  // Made optional
-  initials?: string  // Added initials field
+  src: string
   // New fields from the provided data
   achievement?: string
   improvement?: string
@@ -153,10 +153,25 @@ export const AnimatedTestimonials = ({
                   }}
                   className="absolute inset-0 origin-bottom"
                 >
-                  <div className="h-full w-full rounded-3xl bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600 flex items-center justify-center shadow-inner">
-                    <span className="text-6xl md:text-7xl font-bold text-[#1a2236] select-none">
-                      {testimonial.initials || testimonial.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                    </span>
+                  {/* Background gradient */}
+                  <div className="h-full w-full rounded-3xl bg-gradient-to-br from-cyan-100 via-blue-50 to-indigo-100 shadow-lg">
+                    {/* Logo container - centered and properly sized */}
+                    <div className="h-full w-full flex items-center justify-center p-8">
+                      <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl max-w-[70%] max-h-[70%] flex items-center justify-center">
+                        <Image
+                          src={testimonial.src || "/placeholder.svg?height=400&width=400"}
+                          alt={`${testimonial.name} - ${testimonial.designation}`}
+                          width={200}
+                          height={120}
+                          draggable={false}
+                          className="max-w-full max-h-full object-contain"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.src = "/placeholder.svg?height=400&width=400"
+                          }}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
               ))}
