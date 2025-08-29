@@ -1137,244 +1137,421 @@ export default function CollegePrepPage() {
                   fill="none"
                   opacity="0.3"
                 />
-
-                {/* University Building SVG Icon at the end of the road - TOP LAYER */}
-                          <defs>
-            {/* 3D Gradients for depth */}
-            <linearGradient id="buildingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#6366f1" />
-              <stop offset="50%" stopColor="#4f46e5" />
-              <stop offset="100%" stopColor="#3730a3" />
-            </linearGradient>
-
-            <linearGradient id="roofGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#ef4444" />
-              <stop offset="50%" stopColor="#dc2626" />
-              <stop offset="100%" stopColor="#b91c1c" />
-            </linearGradient>
-
-            <linearGradient id="sideGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#312e81" />
-              <stop offset="100%" stopColor="#1e1b4b" />
-            </linearGradient>
-
-            <linearGradient id="windowGlow" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#fbbf24" />
-              <stop offset="100%" stopColor="#f59e0b" />
-            </linearGradient>
-
-            {/* Shadow filter */}
-            <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-              <feDropShadow dx="3" dy="6" stdDeviation="4" floodColor="rgba(0,0,0,0.3)" />
-            </filter>
-          </defs>
-
-          {/* Ground shadow */}
-          <ellipse cx="280" cy="-15" rx="50" ry="20" fill="rgba(0,0,0,0.2)" />
+      
 
           <g
-            transform="translate(280,-60) scale(0.4)"
-            filter="url(#shadow)"
+            transform="translate(220,-110) scale(0.3)"
+            className="flex justify-center"
             style={{
               overflow: "visible", // Ensure group elements can extend beyond boundaries
             }}
           >
-            {/* Foundation - 3D base with enhanced depth */}
-            <g>
-              <rect x="-80" y="80" width="160" height="15" fill="#8b5cf6" rx="3" />
-              <polygon points="-80,80 -60,60 100,60 80,80" fill="#a855f7" />
-              <polygon points="80,80 100,60 100,75 80,95" fill="#7c3aed" />
-            </g>
+            
+          <svg viewBox="0 0 1000 500" className="w-full max-w-5xl h-auto">
+            <defs>
+              <linearGradient id="groundGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#334155" />
+                <stop offset="100%" stopColor="#1e293b" />
+              </linearGradient>
+              <linearGradient id="mainBuilding" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#1e3a8a" />
+                <stop offset="100%" stopColor="#1e40af" />
+              </linearGradient>
+              <linearGradient id="buildingSide" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#1e40af" />
+                <stop offset="100%" stopColor="#1d4ed8" />
+              </linearGradient>
+              <linearGradient id="buildingTop" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#2563eb" />
+                <stop offset="100%" stopColor="#1e40af" />
+              </linearGradient>
+              <linearGradient id="roofGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#475569" />
+                <stop offset="100%" stopColor="#334155" />
+              </linearGradient>
+              <linearGradient id="roofSide" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#334155" />
+                <stop offset="100%" stopColor="#1e293b" />
+              </linearGradient>
+              <linearGradient id="yellowAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#fbbf24" />
+                <stop offset="100%" stopColor="#f59e0b" />
+              </linearGradient>
+              <linearGradient id="goldAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#fcd34d" />
+                <stop offset="100%" stopColor="#f59e0b" />
+              </linearGradient>
+              <radialGradient id="fountain" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#60a5fa" />
+                <stop offset="100%" stopColor="#3b82f6" />
+              </radialGradient>
 
-            {/* Left Wing - Enhanced 3D depth */}
-            <g>
-              {/* Front face */}
-              <rect x="-75" y="30" width="35" height="50" fill="url(#buildingGradient)" rx="2" />
-              <polygon points="-40,30 -20,10 -20,60 -40,80" fill="url(#sideGradient)" />
-              {/* Top face with more depth */}
-              <polygon points="-75,30 -55,10 -20,10 -40,30" fill="#818cf8" />
+              <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                <feDropShadow dx="2" dy="4" stdDeviation="3" floodColor="#000000" floodOpacity="0.4" />
+              </filter>
+              <filter id="deepShadow" x="-50%" y="-50%" width="200%" height="200%">
+                <feDropShadow dx="3" dy="6" stdDeviation="4" floodColor="#000000" floodOpacity="0.5" />
+              </filter>
+              <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+                <feMerge>
+                  <feMergeNode in="coloredBlur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
 
-              {/* Roof with enhanced 3D */}
-              <polygon points="-75,30 -55,5 -20,10 -40,30" fill="url(#roofGradient)" />
-              <polygon points="-55,5 -35,-10 -10,0 -20,10" fill="#f87171" />
-            </g>
+            <polygon points="50,600 900,600 950,550 100,550" fill="url(#groundGradient)" filter="url(#deepShadow)" />
+            <polygon points="900,600 950,550 950,570 900,620" fill="#1e293b" />
+            <polygon points="50,600 900,600 900,620 50,620" fill="url(#groundGradient)" />
 
-            {/* Right Wing - Enhanced 3D depth */}
-            <g>
-              {/* Front face */}
-              <rect x="40" y="30" width="35" height="50" fill="url(#buildingGradient)" rx="2" />
-              <polygon points="75,30 95,10 95,60 75,80" fill="url(#sideGradient)" />
-              {/* Top face with enhanced depth */}
-              <polygon points="40,30 60,10 95,10 75,30" fill="#818cf8" />
+            {/* Decorative pathway with enhanced 3D depth */}
+            <polygon points="200,600 800,600 830,570 230,570" fill="#64748b" />
+            <polygon points="800,600 830,570 830,590 800,620" fill="#475569" />
+            <polygon points="200,600 800,600 800,620 200,620" fill="#64748b" />
 
-              {/* Roof with enhanced 3D */}
-              <polygon points="40,30 60,5 95,10 75,30" fill="url(#roofGradient)" />
-              <polygon points="60,5 80,-10 105,0 95,10" fill="#f87171" />
-            </g>
+            {/* Garden beds with 3D perspective */}
+            <ellipse cx="150" cy="580" rx="40" ry="15" fill="#166534" />
+            <ellipse cx="850" cy="580" rx="40" ry="15" fill="#166534" />
 
-            {/* Main Central Building - Enhanced 3D */}
-            <g>
-              {/* Front face */}
-              <rect x="-40" y="0" width="80" height="80" fill="url(#buildingGradient)" rx="3" />
-              <polygon points="40,0 70,-30 70,50 40,80" fill="url(#sideGradient)" />
-              {/* Top face with enhanced perspective */}
-              <polygon points="-40,0 -10,-30 70,-30 40,0" fill="#818cf8" />
-            </g>
+            {/* Left wing main structure */}
+            <polygon points="80,200 320,200 320,480 80,480" fill="url(#mainBuilding)" />
+            <polygon points="320,200 370,150 370,430 320,480" fill="url(#buildingSide)" />
+            <polygon points="80,200 320,200 370,150 130,150" fill="url(#buildingTop)" />
 
-            {/* Clock Tower - Enhanced 3D */}
-            <g>
-              {/* Front face */}
-              <rect x="-8" y="-40" width="16" height="50" fill="#4338ca" rx="2" />
-              <polygon points="8,-40 16,-48 16,2 8,10" fill="#312e81" />
-              {/* Top face with depth */}
-              <polygon points="-8,-40 0,-48 16,-48 8,-40" fill="#6366f1" />
+            {/* Left wing spire with enhanced 3D */}
+            <polygon points="80,180 120,180 120,160 80,160" fill="url(#mainBuilding)" />
+            <polygon points="120,180 140,160 140,140 120,160" fill="url(#buildingSide)" />
+            <polygon points="80,160 120,160 140,140 100,140" fill="url(#buildingTop)" />
 
-              {/* Clock face - 3D with depth */}
-              <circle cx="0" cy="-15" r="8" fill="url(#windowGlow)" />
-              <circle cx="4" cy="-19" r="8" fill="#fbbf24" opacity="0.8" />
+            {/* Left wing roof with proper depth */}
+            <polygon points="70,200 330,200 380,150 120,150" fill="url(#roofGradient)" />
+            <polygon points="330,200 380,150 380,170 330,220" fill="url(#roofSide)" />
 
-              {/* Clock hands */}
-              <line x1="0" y1="-15" x2="0" y2="-20" stroke="#374151" strokeWidth="1.5" />
-              <line x1="0" y1="-15" x2="4" y2="-15" stroke="#374151" strokeWidth="1" />
+            {/* Left wing spire crown */}
+            <polygon points="75,160 125,160 145,140 95,140" fill="url(#goldAccent)" />
+            <polygon points="125,160 145,140 145,160 125,180" fill="#f59e0b" />
+            <polygon points="95,140 105,140 100,120" fill="url(#goldAccent)" />
+            <circle cx="100" cy="125" r="3" fill="#fbbf24" filter="url(#glow)" />
 
-              {/* Spire - Enhanced 3D */}
-              <polygon points="-8,-40 0,-60 8,-40" fill="#7c3aed" />
-              <polygon points="0,-60 8,-68 16,-48 8,-40" fill="#6b46c1" />
-            </g>
+            {/* Left wing windows with side faces */}
+            <rect x="100" y="220" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="120,220 125,215 125,245 120,250" fill="#f59e0b" />
+            <rect x="130" y="220" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="150,220 155,215 155,245 150,250" fill="#f59e0b" />
+            <rect x="160" y="220" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="180,220 185,215 185,245 180,250" fill="#f59e0b" />
+            <rect x="190" y="220" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="210,220 215,215 215,245 210,250" fill="#f59e0b" />
+            <rect x="220" y="220" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="240,220 245,215 245,245 240,250" fill="#f59e0b" />
+            <rect x="250" y="220" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="270,220 275,215 275,245 270,250" fill="#f59e0b" />
+            <rect x="280" y="220" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="300,220 305,215 305,245 300,250" fill="#f59e0b" />
 
-            {/* Main Building Roof - Enhanced 3D */}
-            <polygon points="-40,0 0,-30 40,0" fill="url(#roofGradient)" />
-            <polygon points="0,-30 30,-60 70,-30 40,0" fill="#f87171" />
-            <polygon points="0,-30 30,-60 20,-50 -10,-20" fill="#fca5a5" />
+            {/* Additional rows of left wing windows */}
+            <rect x="100" y="270" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="120,270 125,265 125,295 120,300" fill="#f59e0b" />
+            <rect x="130" y="270" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="150,270 155,265 155,295 150,300" fill="#f59e0b" />
+            <rect x="160" y="270" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="180,270 185,265 185,295 180,300" fill="#f59e0b" />
+            <rect x="190" y="270" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="210,270 215,265 215,295 210,300" fill="#f59e0b" />
+            <rect x="220" y="270" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="240,270 245,265 245,295 240,300" fill="#f59e0b" />
+            <rect x="250" y="270" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="270,270 275,265 275,295 270,300" fill="#f59e0b" />
+            <rect x="280" y="270" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="300,270 305,265 305,295 300,300" fill="#f59e0b" />
 
-            {/* Entrance Portico - Enhanced 3D */}
-            <g>
-              <rect x="-20" y="40" width="40" height="40" fill="#5b21b6" rx="2" />
-              <polygon points="20,40 35,25 35,65 20,80" fill="#4c1d95" />
-              <polygon points="-20,40 -5,25 35,25 20,40" fill="#7c3aed" />
-            </g>
+            <rect x="100" y="320" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="120,320 125,315 125,345 120,350" fill="#f59e0b" />
+            <rect x="130" y="320" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="150,320 155,315 155,345 150,350" fill="#f59e0b" />
+            <rect x="160" y="320" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="180,320 185,315 185,345 180,350" fill="#f59e0b" />
+            <rect x="190" y="320" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="210,320 215,315 215,345 210,350" fill="#f59e0b" />
+            <rect x="220" y="320" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="240,320 245,315 245,345 240,350" fill="#f59e0b" />
+            <rect x="250" y="320" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="270,320 275,315 275,345 270,350" fill="#f59e0b" />
+            <rect x="280" y="320" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="300,320 305,315 305,345 300,350" fill="#f59e0b" />
 
-            {/* Classical Columns - Enhanced 3D */}
-            <g>
-              {/* Column 1 with depth */}
-              <rect x="-15" y="40" width="6" height="35" fill="#e5e7eb" />
-              <polygon points="-9,40 -3,34 -3,69 -9,75" fill="#d1d5db" />
-              <rect x="-16" y="38" width="8" height="4" fill="#f3f4f6" />
+            <rect x="100" y="370" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="120,370 125,365 125,395 120,400" fill="#f59e0b" />
+            <rect x="130" y="370" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="150,370 155,365 155,395 150,400" fill="#f59e0b" />
+            <rect x="160" y="370" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="180,370 185,365 185,395 180,400" fill="#f59e0b" />
+            <rect x="190" y="370" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="210,370 215,365 215,395 210,400" fill="#f59e0b" />
+            <rect x="220" y="370" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="240,370 245,365 245,395 240,400" fill="#f59e0b" />
+            <rect x="250" y="370" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="270,370 275,365 275,395 270,400" fill="#f59e0b" />
+            <rect x="280" y="370" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="300,370 305,365 305,395 300,400" fill="#f59e0b" />
 
-              {/* Column 2 with depth */}
-              <rect x="-3" y="40" width="6" height="35" fill="#e5e7eb" />
-              <polygon points="3,40 9,34 9,69 3,75" fill="#d1d5db" />
-              <rect x="-4" y="38" width="8" height="4" fill="#f3f4f6" />
+            {/* Main central building */}
+            <polygon points="350,120 650,120 650,480 350,480" fill="url(#mainBuilding)" />
+            <polygon points="650,120 720,50 720,410 650,480" fill="url(#buildingSide)" />
+            <polygon points="350,120 650,120 720,50 420,50" fill="url(#buildingTop)" />
 
-              {/* Column 3 with depth */}
-              <rect x="9" y="40" width="6" height="35" fill="#e5e7eb" />
-              <polygon points="15,40 21,34 21,69 15,75" fill="#d1d5db" />
-              <rect x="8" y="38" width="8" height="4" fill="#f3f4f6" />
-            </g>
+            {/* Tower middle section */}
+            <polygon points="400,80 600,80 600,120 400,120" fill="url(#mainBuilding)" />
+            <polygon points="600,80 650,30 650,70 600,120" fill="url(#buildingSide)" />
+            <polygon points="400,80 600,80 650,30 450,30" fill="url(#buildingTop)" />
 
-            {/* Windows with 3D glow effect */}
-            <g>
-              {/* Main building windows */}
-              <rect x="-30" y="15" width="8" height="12" fill="url(#windowGlow)" rx="1" />
-              <rect x="-30" y="15" width="6" height="10" fill="#fbbf24" rx="1" transform="translate(1,1)" />
+            {/* Clock tower top */}
+            <polygon points="470,50 530,50 530,80 470,80" fill="url(#mainBuilding)" />
+            <polygon points="530,50 560,20 560,50 530,80" fill="url(#buildingSide)" />
+            <polygon points="470,50 530,50 560,20 500,20" fill="url(#buildingTop)" />
 
-              <rect x="-10" y="15" width="8" height="12" fill="url(#windowGlow)" rx="1" />
-              <rect x="-10" y="15" width="6" height="10" fill="#fbbf24" rx="1" transform="translate(1,1)" />
+            {/* Tower crown with 3D effect */}
+            <polygon points="460,50 540,50 570,20 490,20" fill="url(#goldAccent)" />
+            <polygon points="540,50 570,20 570,40 540,70" fill="#f59e0b" />
 
-              <rect x="10" y="15" width="8" height="12" fill="url(#windowGlow)" rx="1" />
-              <rect x="10" y="15" width="6" height="10" fill="#fbbf24" rx="1" transform="translate(1,1)" />
+            {/* Tower spire */}
+            <polygon points="495,20 505,20 500,0" fill="url(#goldAccent)" />
+            <circle cx="500" cy="5" r="4" fill="#fbbf24" filter="url(#glow)" />
 
-              <rect x="30" y="15" width="8" height="12" fill="url(#windowGlow)" rx="1" />
-              <rect x="30" y="15" width="6" height="10" fill="#fbbf24" rx="1" transform="translate(1,1)" />
-            </g>
+            {/* Main tower roof with enhanced depth */}
+            <polygon points="340,140 660,140 730,70 410,70" fill="url(#roofGradient)" />
+            <polygon points="660,140 730,70 730,90 660,160" fill="url(#roofSide)" />
 
-            {/* Left wing windows */}
-            <g>
-              <rect x="-65" y="40" width="6" height="8" fill="url(#windowGlow)" rx="1" />
-              <rect x="-55" y="40" width="6" height="8" fill="url(#windowGlow)" rx="1" />
-              <rect x="-65" y="55" width="6" height="8" fill="url(#windowGlow)" rx="1" />
-              <rect x="-55" y="55" width="6" height="8" fill="url(#windowGlow)" rx="1" />
-            </g>
+            <circle cx="500" cy="65" r="25" fill="#fbbf24" stroke="#f59e0b" strokeWidth="3" filter="url(#glow)" />
+            <circle cx="500" cy="65" r="20" fill="#1e3a8a" />
+            <line x1="500" y1="65" x2="500" y2="50" stroke="#fbbf24" strokeWidth="4" strokeLinecap="round" />
+            <line x1="500" y1="65" x2="512" y2="65" stroke="#fbbf24" strokeWidth="3" strokeLinecap="round" />
+            <circle cx="500" cy="65" r="3" fill="#fbbf24" />
+            <text x="500" y="50" textAnchor="middle" fontSize="8" fill="#fbbf24" fontWeight="bold">
+              XII
+            </text>
+            <text x="515" y="70" textAnchor="middle" fontSize="8" fill="#fbbf24" fontWeight="bold">
+              III
+            </text>
+            <text x="500" y="85" textAnchor="middle" fontSize="8" fill="#fbbf24" fontWeight="bold">
+              VI
+            </text>
+            <text x="485" y="70" textAnchor="middle" fontSize="8" fill="#fbbf24" fontWeight="bold">
+              IX
+            </text>
 
-            {/* Right wing windows */}
-            <g>
-              <rect x="50" y="40" width="6" height="8" fill="url(#windowGlow)" rx="1" />
-              <rect x="60" y="40" width="6" height="8" fill="url(#windowGlow)" rx="1" />
-              <rect x="50" y="55" width="6" height="8" fill="url(#windowGlow)" rx="1" />
-              <rect x="60" y="55" width="6" height="8" fill="url(#windowGlow)" rx="1" />
-            </g>
+            {/* Right wing main structure */}
+            <polygon points="680,200 920,200 920,480 680,480" fill="url(#mainBuilding)" />
+            <polygon points="920,200 970,150 970,430 920,480" fill="url(#buildingSide)" />
+            <polygon points="680,200 920,200 970,150 730,150" fill="url(#buildingTop)" />
 
-            {/* Grand Entrance Door - Enhanced 3D */}
-            <g>
-              <rect x="-6" y="60" width="12" height="20" fill="#374151" rx="6" />
-              <polygon points="6,60 10,56 10,76 6,80" fill="#1f2937" />
-              <circle cx="3" cy="70" r="1" fill="#fbbf24" />
-            </g>
+            {/* Right wing spire with enhanced 3D */}
+            <polygon points="880,180 920,180 920,160 880,160" fill="url(#mainBuilding)" />
+            <polygon points="920,180 940,160 940,140 920,160" fill="url(#buildingSide)" />
+            <polygon points="880,160 920,160 940,140 900,140" fill="url(#buildingTop)" />
 
-            {/* University Banner - Enhanced 3D */}
-            <g>
-              <rect x="-25" y="-5" width="50" height="8" fill="#7c3aed" rx="1" />
-              <polygon points="25,-5 35,-15 35,-7 25,3" fill="#6b46c1" />
-              <text
-                x="0"
-                y="1"
-                textAnchor="middle"
-                fill="white"
-                fontSize="6"
-                fontWeight="bold"
-                fontFamily="Arial, sans-serif"
-              >
-                COLLEGE
-              </text>
-              <text
-                x="0.5"
-                y="1.5"
-                textAnchor="middle"
-                fill="rgba(0,0,0,0.3)"
-                fontSize="6"
-                fontWeight="bold"
-                fontFamily="Arial, sans-serif"
-              >
-                COLLEGE
-              </text>
-            </g>
+            {/* Right wing roof with proper depth */}
+            <polygon points="670,200 930,200 980,150 720,150" fill="url(#roofGradient)" />
+            <polygon points="930,200 980,150 980,170 930,220" fill="url(#roofSide)" />
 
-            {/* Campus Flag - Enhanced 3D */}
-            <g>
-              <line x1="45" y1="-20" x2="45" y2="10" stroke="#6b7280" strokeWidth="2" />
-              <polygon points="45,-20 65,-18 65,-8 45,-10" fill="#dc2626" />
-              <polygon points="45,-15 65,-13 65,-11 45,-13" fill="#fbbf24" />
-              <polygon points="65,-18 70,-23 70,-13 65,-8" fill="#b91c1c" />
-            </g>
+            {/* Right wing spire crown */}
+            <polygon points="875,160 925,160 945,140 895,140" fill="url(#goldAccent)" />
+            <polygon points="925,160 945,140 945,160 925,180" fill="#f59e0b" />
+            <polygon points="895,140 905,140 900,120" fill="url(#goldAccent)" />
+            <circle cx="900" cy="125" r="3" fill="#fbbf24" filter="url(#glow)" />
 
-            {/* Ceremonial Steps - Enhanced 3D */}
-            <g>
-              <rect x="-35" y="78" width="70" height="4" fill="#9ca3af" />
-              <polygon points="35,78 50,63 50,67 35,82" fill="#6b7280" />
+            {/* Right wing windows with 3D depth */}
+            <rect x="700" y="220" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="720,220 725,215 725,245 720,250" fill="#f59e0b" />
+            <rect x="730" y="220" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="750,220 755,215 755,245 750,250" fill="#f59e0b" />
+            <rect x="760" y="220" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="780,220 785,215 785,245 780,250" fill="#f59e0b" />
+            <rect x="790" y="220" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="810,220 815,215 815,245 810,250" fill="#f59e0b" />
+            <rect x="820" y="220" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="840,220 845,215 845,245 840,250" fill="#f59e0b" />
+            <rect x="850" y="220" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="870,220 875,215 875,245 870,250" fill="#f59e0b" />
+            <rect x="880" y="220" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="900,220 905,215 905,245 900,250" fill="#f59e0b" />
 
-              <rect x="-40" y="82" width="80" height="4" fill="#9ca3af" />
-              <polygon points="40,82 55,67 55,71 40,86" fill="#6b7280" />
+            {/* Additional rows of right wing windows */}
+            <rect x="700" y="270" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="720,270 725,265 725,295 720,300" fill="#f59e0b" />
+            <rect x="730" y="270" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="750,270 755,265 755,295 750,300" fill="#f59e0b" />
+            <rect x="760" y="270" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="780,270 785,265 785,295 780,300" fill="#f59e0b" />
+            <rect x="790" y="270" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="810,270 815,265 815,295 810,300" fill="#f59e0b" />
+            <rect x="820" y="270" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="840,270 845,265 845,295 840,300" fill="#f59e0b" />
+            <rect x="850" y="270" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="870,270 875,265 875,295 870,300" fill="#f59e0b" />
+            <rect x="880" y="270" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="900,270 905,265 905,295 900,300" fill="#f59e0b" />
 
-              <rect x="-45" y="86" width="90" height="4" fill="#9ca3af" />
-              <polygon points="45,86 60,71 60,75 45,90" fill="#6b7280" />
-            </g>
+            <rect x="700" y="320" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="720,320 725,315 725,345 720,350" fill="#f59e0b" />
+            <rect x="730" y="320" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="750,320 755,315 755,345 750,350" fill="#f59e0b" />
+            <rect x="760" y="320" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="780,320 785,315 785,345 780,350" fill="#f59e0b" />
+            <rect x="790" y="320" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="810,320 815,315 815,345 810,350" fill="#f59e0b" />
+            <rect x="820" y="320" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="840,320 845,315 845,345 840,350" fill="#f59e0b" />
+            <rect x="850" y="320" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="870,320 875,315 875,345 870,350" fill="#f59e0b" />
+            <rect x="880" y="320" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="900,320 905,315 905,345 900,350" fill="#f59e0b" />
 
-            {/* Decorative Elements with glow */}
-            <circle cx="-20" cy="65" r="2" fill="#fbbf24" opacity="0.9">
-              <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite" />
-            </circle>
-            <circle cx="20" cy="65" r="2" fill="#fbbf24" opacity="0.9">
-              <animate attributeName="opacity" values="1;0.7;1" dur="2s" repeatCount="indefinite" />
-            </circle>
+            <rect x="700" y="370" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="720,370 725,365 725,395 720,400" fill="#f59e0b" />
+            <rect x="730" y="370" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="750,370 755,365 755,395 750,400" fill="#f59e0b" />
+            <rect x="760" y="370" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="780,370 785,365 785,395 780,400" fill="#f59e0b" />
+            <rect x="790" y="370" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="810,370 815,365 815,395 810,400" fill="#f59e0b" />
+            <rect x="820" y="370" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="840,370 845,365 845,395 840,400" fill="#f59e0b" />
+            <rect x="850" y="370" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="870,370 875,365 875,395 870,400" fill="#f59e0b" />
+            <rect x="880" y="370" width="20" height="30" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <polygon points="900,370 905,365 905,395 900,400" fill="#f59e0b" />
+
+            {/* Enhanced university banner with decorative frame */}
+            <rect x="410" y="135" width="180" height="40" fill="url(#goldAccent)" rx="6" filter="url(#shadow)" />
+            <rect x="415" y="140" width="170" height="30" fill="#1e3a8a" rx="4" />
+            <text x="500" y="160" textAnchor="middle" fontSize="20" fill="#fbbf24" fontWeight="bold" fontFamily="serif">
+              UNIVERSITY
+            </text>
+            {/* Decorative corners */}
+            <circle cx="420" cy="145" r="3" fill="#fbbf24" />
+            <circle cx="580" cy="145" r="3" fill="#fbbf24" />
+            <circle cx="420" cy="165" r="3" fill="#fbbf24" />
+            <circle cx="580" cy="165" r="3" fill="#fbbf24" />
+
+            {/* Enhanced entrance with grand archway and decorative elements */}
+            {/* Grand entrance columns with enhanced depth */}
+            <rect x="420" y="320" width="15" height="180" fill="url(#yellowAccent)" filter="url(#deepShadow)" />
+            <rect x="445" y="320" width="15" height="180" fill="url(#yellowAccent)" filter="url(#deepShadow)" />
+            <rect x="540" y="320" width="15" height="180" fill="url(#yellowAccent)" filter="url(#deepShadow)" />
+            <rect x="565" y="320" width="15" height="180" fill="url(#yellowAccent)" filter="url(#deepShadow)" />
+
+            {/* Enhanced column capitals with depth */}
+            <rect x="415" y="305" width="25" height="15" fill="#f59e0b" />
+            <rect x="440" y="305" width="25" height="15" fill="#f59e0b" />
+            <rect x="535" y="305" width="25" height="15" fill="#f59e0b" />
+            <rect x="560" y="305" width="25" height="15" fill="#f59e0b" />
+
+            {/* Enhanced column bases */}
+            <rect x="415" y="495" width="25" height="10" fill="#f59e0b" />
+            <rect x="440" y="495" width="25" height="10" fill="#f59e0b" />
+            <rect x="535" y="495" width="25" height="10" fill="#f59e0b" />
+            <rect x="560" y="495" width="25" height="10" fill="#f59e0b" />
+
+            {/* Grand entrance doors with panels */}
+            <rect x="470" y="420" width="28" height="60" fill="#1e3a8a" stroke="#fbbf24" strokeWidth="3" />
+            <rect x="502" y="420" width="28" height="60" fill="#1e3a8a" stroke="#fbbf24" strokeWidth="3" />
+
+            {/* Door panels */}
+            <rect x="475" y="430" width="18" height="20" fill="none" stroke="#fbbf24" strokeWidth="2" />
+            <rect x="475" y="455" width="18" height="20" fill="none" stroke="#fbbf24" strokeWidth="2" />
+            <rect x="507" y="430" width="18" height="20" fill="none" stroke="#fbbf24" strokeWidth="2" />
+            <rect x="507" y="455" width="18" height="20" fill="none" stroke="#fbbf24" strokeWidth="2" />
+
+            {/* Ornate door handles */}
+            <circle cx="488" cy="450" r="3" fill="#fbbf24" filter="url(#glow)" />
+            <circle cx="512" cy="450" r="3" fill="#fbbf24" filter="url(#glow)" />
+
+            {/* Grand archway */}
+            <path d="M 465 420 Q 500 385 535 420" fill="none" stroke="#fbbf24" strokeWidth="4" />
+
+            {/* Added decorative fountain in front */}
+            <ellipse cx="500" cy="520" rx="45" ry="25" fill="url(#fountain)" filter="url(#shadow)" />
+            <ellipse cx="500" cy="515" rx="35" ry="20" fill="#60a5fa" />
+            <ellipse cx="500" cy="510" rx="25" ry="15" fill="#93c5fd" />
+            {/* Fountain center */}
+            <circle cx="500" cy="505" r="8" fill="#fbbf24" />
+            <circle cx="500" cy="505" r="5" fill="#1e3a8a" />
+
+            {/* Enhanced landscaping with sophisticated trees */}
+            {/* Left side trees */}
+            <ellipse cx="120" cy="520" rx="35" ry="25" fill="#166534" />
+            <rect x="117" y="530" width="6" height="30" fill="#92400e" />
+            <ellipse cx="120" cy="510" rx="25" ry="18" fill="#22c55e" />
+
+            <ellipse cx="180" cy="540" rx="30" ry="22" fill="#166534" />
+            <rect x="177" y="548" width="6" height="25" fill="#92400e" />
+            <ellipse cx="180" cy="532" rx="20" ry="15" fill="#22c55e" />
+
+            {/* Right side trees */}
+            <ellipse cx="880" cy="520" rx="35" ry="25" fill="#166534" />
+            <rect x="877" y="530" width="6" height="30" fill="#92400e" />
+            <ellipse cx="880" cy="510" rx="25" ry="18" fill="#22c55e" />
+
+            <ellipse cx="820" cy="540" rx="30" ry="22" fill="#166534" />
+            <rect x="817" y="548" width="6" height="25" fill="#92400e" />
+            <ellipse cx="820" cy="532" rx="20" ry="15" fill="#22c55e" />
+
+            {/* Added decorative lamp posts */}
+            <rect x="350" y="500" width="4" height="40" fill="#64748b" />
+            <ellipse cx="352" cy="495" rx="8" ry="6" fill="#fbbf24" filter="url(#glow)" />
+
+            <rect x="646" y="500" width="4" height="40" fill="#64748b" />
+            <ellipse cx="648" cy="495" rx="8" ry="6" fill="#fbbf24" filter="url(#glow)" />
+
+            {/* Enhanced ceremonial steps with decorative elements */}
+            <polygon points="380,480 620,480 640,460 400,460" fill="#64748b" filter="url(#deepShadow)" />
+            <polygon points="620,480 640,460 640,470 620,490" fill="#475569" />
+
+            <polygon points="390,490 610,490 630,470 410,470" fill="#64748b" />
+            <polygon points="610,490 630,470 630,480 610,500" fill="#475569" />
+
+            <polygon points="400,500 600,500 620,480 420,480" fill="#64748b" />
+            <polygon points="600,500 620,480 620,490 600,510" fill="#475569" />
+
+            {/* Added decorative urns on steps */}
+            <ellipse cx="430" cy="485" rx="8" ry="6" fill="#fbbf24" />
+            <ellipse cx="570" cy="485" rx="8" ry="6" fill="#fbbf24" />
+
+            {/* Added university flags */}
+            <rect x="200" y="450" width="3" height="50" fill="#64748b" />
+            <polygon points="203,450 203,470 230,460" fill="#1e3a8a" />
+
+            <rect x="797" y="450" width="3" height="50" fill="#64748b" />
+            <polygon points="800,450 800,470 773,460" fill="#1e3a8a" />
+
+            {/* Ornate balconies on central tower */}
+            <rect x="480" y="180" width="40" height="8" fill="url(#goldAccent)" />
+            <rect x="475" y="188" width="50" height="4" fill="#f59e0b" />
+            {/* Balcony railings */}
+            <rect x="478" y="175" width="2" height="13" fill="#fbbf24" />
+            <rect x="485" y="175" width="2" height="13" fill="#fbbf24" />
+            <rect x="492" y="175" width="2" height="13" fill="#fbbf24" />
+            <rect x="499" y="175" width="2" height="13" fill="#fbbf24" />
+            <rect x="506" y="175" width="2" height="13" fill="#fbbf24" />
+            <rect x="513" y="175" width="2" height="13" fill="#fbbf24" />
+            <rect x="520" y="175" width="2" height="13" fill="#fbbf24" />
+
+            {/* Decorative cornices */}
+            <rect x="340" y="195" width="320" height="8" fill="url(#goldAccent)" />
+            <rect x="90" y="195" width="270" height="6" fill="url(#goldAccent)" />
+            <rect x="640" y="195" width="270" height="6" fill="url(#goldAccent)" />
+
+            {/* University crest above entrance */}
+            <circle cx="500" cy="250" r="25" fill="url(#goldAccent)" stroke="#f59e0b" strokeWidth="3" />
+            <circle cx="500" cy="250" r="20" fill="#1e3a8a" />
+            <polygon points="500,235 510,245 500,255 490,245" fill="#fbbf24" />
+            <text x="500" y="270" textAnchor="middle" fontSize="8" fill="#fbbf24" fontWeight="bold">
+              EST. 1875
+            </text>
+          </svg>
           </g>
-                
-                {/* <polygon
-                  points="90,20 94,22 90,24 92,22"
-                  fill="#fbbf24"
-                  opacity={roadProgress > 90 ? 1 : 0}
-                  className="transition-all duration-500"
-                  filter="url(#roadShadow)"
-                /> */}
               </svg>
 
               {[
