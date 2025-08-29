@@ -1161,10 +1161,10 @@ export default function CollegePrepPage() {
                 <stop offset="0%" stopColor="#1e40af" />
                 <stop offset="100%" stopColor="#1d4ed8" />
               </linearGradient>
-              <linearGradient id="buildingTop" x1="0%" y1="0%" x2="100%" y2="100%">
+              {/* <linearGradient id="buildingTop" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#2563eb" />
                 <stop offset="100%" stopColor="#1e40af" />
-              </linearGradient>
+              </linearGradient> */}
               <linearGradient id="roofGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#475569" />
                 <stop offset="100%" stopColor="#334155" />
