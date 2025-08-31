@@ -89,7 +89,7 @@ const ProgramGradeCoverage: React.FC = () => {
     scales: {
       x: {
         min: 4,
-        max: 13,
+        max: 12,
         title: {
           display: true,
           text: "Grade Level",
