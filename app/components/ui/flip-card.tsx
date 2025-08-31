@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
-import { motion } from "framer-motion";
+import React, { useState, useEffect } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 
 interface FlipCardProps {
   children: React.ReactNode;
   className?: string;
   height?: string;
+  delay?: number;
 }
 
 interface FlipCardContentProps {
@@ -17,23 +18,48 @@ interface FlipCardContentProps {
 export const FlipCard: React.FC<FlipCardProps> = ({ 
   children, 
   className = "", 
-  height = "h-72" 
+  height = "h-72",
+  delay = 0
 }) => {
+  const [hasAnimated, setHasAnimated] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+  
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"]
+  });
 
-  const handleFlip = () => {
-    setIsFlipped(!isFlipped);
-  };
+  // Transform scroll progress to rotation
+  const rotateY = useTransform(scrollYProgress, [0, 0.5, 1], [0, 180, 0]);
+
+  useEffect(() => {
+    const unsubscribe = rotateY.on("change", (latest) => {
+      setIsFlipped(latest > 90);
+    });
+    return unsubscribe;
+  }, [rotateY]);
 
   return (
-    <div 
-      className={`relative w-full ${height} cursor-pointer perspective-1000 ${className}`}
-      onClick={handleFlip}
+    <motion.div 
+      ref={ref}
+      className={`relative w-full ${height} perspective-1000 ${className}`}
+      initial={{ opacity: 0, scale: 0.9, y: 50 }}
+      whileInView={{ 
+        opacity: 1, 
+        scale: 1, 
+        y: 0
+      }}
+      transition={{ 
+        duration: 0.8,
+        delay: delay,
+        ease: [0.4, 0, 0.2, 1]
+      }}
+      whileHover={{ scale: 1.02 }}
     >
       <motion.div
-        className="relative w-full h-full transform-style-preserve-3d transition-all duration-700 ease-out"
-        animate={{ rotateY: isFlipped ? 180 : 0 }}
-        whileHover={{ scale: 1.02 }}
+        className="relative w-full h-full transform-style-preserve-3d"
+        style={{ rotateY }}
         transition={{ 
           duration: 0.7,
           ease: [0.4, 0, 0.2, 1]
@@ -49,7 +75,7 @@ export const FlipCard: React.FC<FlipCardProps> = ({
           })}
         </div>
 
-        {/* Back of card */}
+        {/* Back of card - Properly oriented */}
         <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180">
           {React.Children.map(children, (child) => {
             if (React.isValidElement(child) && child.type === FlipCardBack) {
@@ -59,7 +85,7 @@ export const FlipCard: React.FC<FlipCardProps> = ({
           })}
         </div>
       </motion.div>
-    </div>
+    </motion.div>
   );
 };
 

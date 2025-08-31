@@ -22,19 +22,9 @@ export default function MissionSection() {
             className="space-y-6 sm:space-y-8"
           >
             <div>
-              <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-                Our Mission
-              </Badge>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold theme-text-light mb-4 sm:mb-6">
-                Nurturing Students&apos; Intuitive Abilities
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-yellow-400 mb-6 sm:mb-8">
+                MISSION
               </h2>
-              <p className="text-base sm:text-lg theme-text-muted leading-relaxed">
-                ACHARYA Educational Services is a California-based
-                organization dedicated to guiding students toward academic
-                excellence and future success. We ignite a passion for core
-                concepts and emerging technologies, helping students build
-                lasting connections to the knowledge shaping our world today.
-              </p>
               <div className="space-y-3 sm:space-y-4 mt-4 sm:mt-6">
                 {[
                   "Personalized Learning: Each lesson tailored to individual needs and learning pace",

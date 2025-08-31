@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { Users, BookOpen, Award, Star, Globe, Clock, Target, TrendingUp, Lightbulb, Briefcase, Heart, Zap, Trophy, Brain, Calculator, Atom, Users2, Calendar, FileText, Crown, ArrowRight, FlaskConical, Code } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import Footer from "@/components/home/Footer";
 import Chatbot from "@/components/home/Chatbot";
 import Header from "@/components/home/Header";
@@ -1198,92 +1199,7 @@ export default function AESChampionsPage() {
             </motion.div>
           </div>
 
-          {/* Middle Section: Student Distribution + Target Contest Prestige */}
-          <div className="grid lg:grid-cols-2 gap-12 mb-16">
-            {/* Student Distribution */}
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-br from-[#1a2236] to-[#2a3246] rounded-3xl p-8 border border-yellow-400/20"
-            >
-              <h3 className="text-xl font-bold theme-text-light mb-6">Student Distribution Across Levels</h3>
-              <p className="text-sm theme-text-muted mb-8">
-                Our program structure allows for broad participation at foundational levels, with a focused, elite group reaching the top tiers.
-              </p>
-              
-              {/* Pie Chart Representation */}
-              <div className="relative w-48 h-48 mx-auto mb-6">
-                <svg viewBox="0 0 200 200" className="w-full h-full transform -rotate-90">
-                  {/* Level 1 - 40% */}
-                  <circle cx="100" cy="100" r="80" fill="none" stroke="#3B82F6" strokeWidth="30" strokeDasharray="201 503" strokeDashoffset="0" opacity="0.8" />
-                  {/* Level 2 - 25% */}
-                  <circle cx="100" cy="100" r="80" fill="none" stroke="#10B981" strokeWidth="30" strokeDasharray="126 503" strokeDashoffset="-201" opacity="0.8" />
-                  {/* Level 3 - 20% */}
-                  <circle cx="100" cy="100" r="80" fill="none" stroke="#F59E0B" strokeWidth="30" strokeDasharray="101 503" strokeDashoffset="-327" opacity="0.8" />
-                  {/* Level 4 - 10% */}
-                  <circle cx="100" cy="100" r="80" fill="none" stroke="#8B5CF6" strokeWidth="30" strokeDasharray="63 503" strokeDashoffset="-428" opacity="0.8" />
-                  {/* Level 5 - 5% */}
-                  <circle cx="100" cy="100" r="80" fill="none" stroke="#EF4444" strokeWidth="30" strokeDasharray="31 503" strokeDashoffset="-491" opacity="0.8" />
-                </svg>
-              </div>
 
-              {/* Legend */}
-              <div className="space-y-2 text-sm">
-                {[
-                  { color: "bg-blue-500", label: "Level 1", percent: "40%" },
-                  { color: "bg-green-500", label: "Level 2", percent: "25%" },
-                  { color: "bg-yellow-500", label: "Level 3", percent: "20%" },
-                  { color: "bg-purple-500", label: "Level 4", percent: "10%" },
-                  { color: "bg-red-500", label: "Level 5", percent: "5%" }
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-3 h-3 rounded-full ${item.color}`}></div>
-                      <span className="theme-text-muted">{item.label}</span>
-                    </div>
-                    <span className="theme-text-light font-semibold">{item.percent}</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Target Contest Prestige */}
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-gradient-to-br from-[#1a2236] to-[#2a3246] rounded-3xl p-8 border border-yellow-400/20"
-            >
-              <h3 className="text-xl font-bold theme-text-light mb-6">Target Contest Prestige</h3>
-              <p className="text-sm theme-text-muted mb-8">
-                As students advance through the levels, they are prepared for increasingly prestigious and challenging competitions.
-              </p>
-
-              {/* Bar Chart */}
-              <div className="space-y-4">
-                {[
-                  { label: "Local/School", width: "20%", color: "bg-gradient-to-r from-blue-400 to-blue-500" },
-                  { label: "Regional", width: "40%", color: "bg-gradient-to-r from-green-400 to-green-500" },
-                  { label: "National Qualifiers", width: "60%", color: "bg-gradient-to-r from-yellow-400 to-yellow-500" },
-                  { label: "National Finals", width: "80%", color: "bg-gradient-to-r from-orange-400 to-orange-500" },
-                  { label: "International Olympiads", width: "100%", color: "bg-gradient-to-r from-red-400 to-red-500" }
-                ].map((contest, i) => (
-                  <div key={i} className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm theme-text-light font-medium">{contest.label}</span>
-                      <span className="text-xs theme-text-muted">{contest.width}</span>
-                    </div>
-                    <div className="w-full bg-gray-700 rounded-full h-2">
-                      <div 
-                        className={`h-2 rounded-full ${contest.color} transition-all duration-1000 ease-out`} 
-                        style={{width: contest.width}}
-                      ></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </div>
 
           {/* Bottom Section: Program Grade Coverage (precise ticks & spacing) */}
           <div className="mt-8 max-w-5xl mx-auto">
@@ -1341,13 +1257,15 @@ export default function AESChampionsPage() {
 
                                        <CardHeader className="text-center pb-6 pt-6 relative z-10">
                       <div className="w-full h-48 mx-auto mb-6 rounded-2xl overflow-hidden shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105 ring-1 ring-slate-600/20">
-                        <img 
+                        <Image 
                           src={i === 0 ? "/learning-journey-cartoon.png" : 
                                i === 1 ? "/progress-mountain-climb.png" : 
                                i === 2 ? "/successful-celebration.png" : 
                                "/learning-journey-cartoon.png"} 
                           alt={`${program.name} program`}
                           className="w-full h-full object-cover"
+                          width={300}
+                          height={300}
                         />
                         <div className="absolute inset-0 bg-gradient-to-br from-slate-900/60 to-slate-800/60"></div>
                       </div>
@@ -1462,25 +1380,41 @@ export default function AESChampionsPage() {
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">What You&apos;ll Achieve</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">Comprehensive skill development for competitive excellence and beyond.</p>
           </motion.div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                     <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8">
             {deliverables.map((deliverable, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 transition={{ delay: i * 0.1 }}
+                className="group"
               >
-                <Card className="h-full flex flex-col bg-[#1a2236]/90 backdrop-blur-sm border border-yellow-400/20 hover:shadow-xl hover:border-yellow-400/40 transition-all duration-300 group relative">
-                  <CardHeader className="pb-2">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center mb-4 mx-auto">
-                      <deliverable.icon className="h-7 w-7 text-[#1a2236]" />
-                    </div>
-                    <CardTitle className="text-lg font-semibold text-center mb-2 theme-text-light">{deliverable.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-1 flex flex-col">
-                    <p className="text-sm theme-text-muted text-center mb-4 font-medium">{deliverable.description}</p>
-                  </CardContent>
-                </Card>
+                <div className="relative h-full">
+                  {/* Glow Effect */}
+                  <div className="absolute -inset-0.5 bg-gradient-to-br from-yellow-400/30 via-amber-400/20 to-yellow-400/30 rounded-3xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  
+                  <Card className="relative h-full flex flex-col bg-gradient-to-br from-[#1a2236]/95 via-[#2a3246]/90 to-[#1a2236]/95 backdrop-blur-xl border border-yellow-400/30 hover:border-yellow-400/60 transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-2xl group-hover:shadow-yellow-400/20 overflow-hidden">
+                    {/* Background Pattern */}
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(251,191,36,0.05),transparent_50%)]"></div>
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(245,158,11,0.03),transparent_50%)]"></div>
+                    
+                    <CardHeader className="pb-4 pt-6 relative z-10">
+                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center mb-4 mx-auto shadow-lg shadow-yellow-400/20 group-hover:scale-110 transition-transform duration-300">
+                        <deliverable.icon className="h-8 w-8 text-[#1a2236]" />
+                      </div>
+                      <CardTitle className="text-xl font-bold text-center mb-3 theme-text-light group-hover:text-yellow-400 transition-colors duration-300">{deliverable.title}</CardTitle>
+                    </CardHeader>
+                    
+                    <CardContent className="flex-1 flex flex-col relative z-10 px-6 pb-6">
+                      <p className="text-sm theme-text-muted text-center leading-relaxed font-medium group-hover:text-yellow-300/80 transition-colors duration-300">{deliverable.description}</p>
+                      
+                      {/* Bottom Accent */}
+                      <div className="mt-6 flex justify-center">
+                        <div className="w-12 h-1 bg-gradient-to-r from-yellow-400/0 via-yellow-400 to-yellow-400/0 rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </motion.div>
             ))}
           </div>
