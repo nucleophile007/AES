@@ -527,7 +527,7 @@ export default function AcademicTutoringPage() {
 
 
       {/* Subjects Section */}
-      <section className="py-20 theme-bg-dark">
+      <section id="subjects-section" className="py-20 theme-bg-dark scroll-mt-20">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -541,7 +541,7 @@ export default function AcademicTutoringPage() {
             </p>
           </motion.div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div id="subject-cards-section" className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {subjects.map((subject, index) => (
               <motion.div
                 key={index}
@@ -550,7 +550,13 @@ export default function AcademicTutoringPage() {
                 transition={{ delay: index * 0.15, duration: 0.6, type: "spring", stiffness: 100 }}
                 className="relative group"
               >
-                                                                  <FlipCard height="h-[40rem]" className="group" delay={index * 0.2}>
+                <FlipCard 
+                  height="h-[40rem]" 
+                  className="group" 
+                  delay={0.2}
+                  autoFlip={true}
+                  autoFlipDelay={1000 + (index * 1000)} // Sequential flipping with 1-second interval
+                >
                     <FlipCardFront>
                       <div className="w-full h-full bg-gradient-to-br from-[#1a2236] via-[#2a3246] to-[#1a2236] rounded-3xl p-8 flex flex-col items-center justify-center text-white shadow-2xl border-2 border-yellow-400/40 overflow-hidden relative group-hover:shadow-3xl transition-all duration-500">
                                                {/* Enhanced animated background pattern */}
