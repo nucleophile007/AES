@@ -217,6 +217,97 @@ export default function AESExplorersPage() {
          </div>
        </section>
 
+       {/* Why Research Section - Redesigned and Beautiful */}
+       <section className="py-16 theme-bg-dark relative overflow-hidden">
+         {/* Animated Background Elements */}
+         <div className="absolute inset-0 overflow-hidden">
+           <div className="absolute top-20 left-10 w-20 h-20 bg-yellow-400 rounded-full opacity-10 animate-float"></div>
+           <div className="absolute top-40 right-20 w-16 h-16 bg-blue-400 rounded-full opacity-10 animate-float-reverse"></div>
+           <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-purple-400 rounded-full opacity-10 animate-float"></div>
+           <div className="absolute top-1/3 right-1/3 w-8 h-8 bg-green-400 rounded-full opacity-10 animate-float-reverse"></div>
+         </div>
+         
+         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+           <motion.div
+             initial={{ opacity: 0, y: 30 }}
+             whileInView={{ opacity: 1, y: 0 }}
+             transition={{ duration: 0.8 }}
+             className="max-w-4xl mx-auto"
+           >
+             <div className="relative bg-gradient-to-br from-[#1a2236]/80 to-[#1a2236]/60 backdrop-blur-xl border border-yellow-400/30 rounded-3xl p-10 shadow-2xl overflow-hidden">
+               {/* Decorative elements */}
+               <div className="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br from-yellow-400/20 to-amber-500/10 rounded-full blur-2xl"></div>
+               <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-gradient-to-br from-yellow-400/10 to-amber-500/20 rounded-full blur-2xl"></div>
+               
+               {/* Top accent line */}
+               <div className="w-full h-1 bg-gradient-to-r from-yellow-400/20 via-yellow-400 to-yellow-400/20 rounded-full mb-8"></div>
+               
+               <div className="text-center mb-8">
+                 <Badge className="mb-6 bg-gradient-to-r from-yellow-400/20 to-amber-500/20 text-yellow-300 border-yellow-400/30 px-6 py-2 text-lg">
+                   Why Research?
+                 </Badge>
+                 <h2 className="text-5xl lg:text-6xl font-black bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent mb-8 leading-tight">
+                   Research Excellence
+                 </h2>
+               </div>
+               
+               <div className="space-y-6">
+                 <motion.div 
+                   initial={{ opacity: 0, y: 20 }}
+                   whileInView={{ opacity: 1, y: 0 }}
+                   transition={{ delay: 0.1 }}
+                   className="flex items-center gap-4"
+                 >
+                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center flex-shrink-0">
+                     <Star className="h-6 w-6 text-[#1a2236]" />
+                   </div>
+                   <p className="text-xl theme-text-light font-medium">Boost your academic profile and intellectual vitality ratings.</p>
+                 </motion.div>
+                 
+                 <motion.div 
+                   initial={{ opacity: 0, y: 20 }}
+                   whileInView={{ opacity: 1, y: 0 }}
+                   transition={{ delay: 0.2 }}
+                   className="flex items-center gap-4"
+                 >
+                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center flex-shrink-0">
+                     <Brain className="h-6 w-6 text-[#1a2236]" />
+                   </div>
+                   <p className="text-xl theme-text-light font-medium">Showcase initiative, critical thinking, and problem-solving skills.</p>
+                 </motion.div>
+                 
+                 <motion.div 
+                   initial={{ opacity: 0, y: 20 }}
+                   whileInView={{ opacity: 1, y: 0 }}
+                   transition={{ delay: 0.3 }}
+                   className="flex items-center gap-4"
+                 >
+                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center flex-shrink-0">
+                     <GraduationCap className="h-6 w-6 text-[#1a2236]" />
+                   </div>
+                   <p className="text-xl theme-text-light font-medium">Open doors to Ivy League and top university admissions.</p>
+                 </motion.div>
+                 
+                 <motion.div 
+                   initial={{ opacity: 0, y: 20 }}
+                   whileInView={{ opacity: 1, y: 0 }}
+                   transition={{ delay: 0.4 }}
+                   className="flex items-center gap-4"
+                 >
+                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center flex-shrink-0">
+                     <Award className="h-6 w-6 text-[#1a2236]" />
+                   </div>
+                   <p className="text-xl theme-text-light font-medium">Gain recognition through publication and competitions.</p>
+                 </motion.div>
+               </div>
+               
+               {/* Bottom accent line */}
+               <div className="w-full h-1 bg-gradient-to-r from-yellow-400/20 via-yellow-400 to-yellow-400/20 rounded-full mt-8"></div>
+             </div>
+           </motion.div>
+         </div>
+       </section>
+
                                                                {/* Research Domains Section */}
           <section className="py-24 theme-bg-dark relative">
             {/* Subtle background pattern */}
