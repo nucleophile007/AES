@@ -64,8 +64,8 @@ export async function POST(request: NextRequest) {
 
     // Convert file to buffer and save
     const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
+    const uint8Array = new Uint8Array(bytes);
+    await writeFile(filePath, uint8Array);
 
     // Return the public URL
     const fileUrl = `/uploads/submissions/${fileName}`;
