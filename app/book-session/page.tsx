@@ -11,15 +11,17 @@ import Footer from '@/components/home/Footer'
 import Link from 'next/link'
 
 // Calendar Picker Component
+
 interface CalendarPickerProps {
   selectedDate: string
   selectedTime: string
   onDateSelect: (date: string) => void
   onTimeSelect: (time: string) => void
   dateTimeMapping: Record<string, string[]>
+  intervalMinutes: number
 }
 
-function CalendarPicker({ selectedDate, selectedTime, onDateSelect, onTimeSelect, dateTimeMapping }: CalendarPickerProps) {
+function CalendarPicker({ selectedDate, selectedTime, onDateSelect, onTimeSelect, dateTimeMapping, intervalMinutes }: CalendarPickerProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
 
   const monthNames = [
@@ -88,10 +90,32 @@ function CalendarPicker({ selectedDate, selectedTime, onDateSelect, onTimeSelect
   }
 
   const days = getDaysInMonth(currentMonth)
+
+  // Filter times by interval
   const availableTimesForSelectedDate = getAvailableTimesForDate(selectedDate)
-  const sortedTimesForSelectedDate = [...availableTimesForSelectedDate].sort(
-    (a, b) => timeStringToMinutes(a) - timeStringToMinutes(b)
-  )
+
+  // Helper to format time in 12-hour format
+  const minutesToTimeString = (minutes: number) => {
+    let h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    const ampm = h >= 12 ? "PM" : "AM";
+    h = h % 12;
+    if (h === 0) h = 12;
+    return `${h}:${m.toString().padStart(2, "0")} ${ampm}`;
+  };
+
+  // Build slot ranges for display
+  const sortedTimesForSelectedDate = [...availableTimesForSelectedDate]
+    .sort((a, b) => timeStringToMinutes(a) - timeStringToMinutes(b))
+    .map((startTime) => {
+      const startMins = timeStringToMinutes(startTime);
+      const endMins = startMins + intervalMinutes;
+      const endTime = minutesToTimeString(endMins);
+      return {
+        start: startTime,
+        range: `${startTime} - ${endTime}`,
+      };
+    });
 
   return (
     <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
@@ -147,13 +171,13 @@ function CalendarPicker({ selectedDate, selectedTime, onDateSelect, onTimeSelect
           {selectedDate ? (
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {sortedTimesForSelectedDate.length > 0 ? (
-                sortedTimesForSelectedDate.map((time) => (
-                  <button key={time} type="button" onClick={() => onTimeSelect(time)} className={`w-full px-3 py-2 text-sm rounded-lg border transition-all duration-200 ${
-                      selectedTime === time
+                sortedTimesForSelectedDate.map(({ start, range }) => (
+                  <button key={start} type="button" onClick={() => onTimeSelect(start)} className={`w-full px-3 py-2 text-sm rounded-lg border transition-all duration-200 whitespace-nowrap ${
+                      selectedTime === start
                         ? "bg-gradient-to-r from-yellow-400 to-amber-500 text-gray-900 border-yellow-400"
                         : "bg-white/5 theme-text-light border-white/20 hover:border-yellow-400/50"
                     }`}>
-                    {time}
+                    {range}
                   </button>
                 ))
               ) : (
@@ -594,6 +618,11 @@ export default function BookSessionPage() {
                       onDateSelect={(date: string) => setFormData((prev) => ({ ...prev, selectedDate: date }))}
                       onTimeSelect={(time: string) => setFormData((prev) => ({ ...prev, selectedTime: time }))}
                       dateTimeMapping={availability}
+                      intervalMinutes={
+                        ["Academic Tutoring", "SAT Coaching"].includes(formData.programInterested)
+                          ? 30
+                          : 60
+                      }
                     />
                   )}
 

@@ -44,3 +44,70 @@ model AvailabilityDay {
   // Combination of date and program should be unique
   @@unique([date, program])
 }
+
+model Student {
+  id          Int      @id @default(autoincrement())
+  name        String
+  email       String   @unique
+  grade       String
+  schoolName  String
+  parentName  String
+  parentEmail String
+  parentPhone String
+  program     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  submissions Submission[]
+  enrollments Enrollment[]
+}
+
+model Assignment {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  program     String
+  subject     String
+  grade       String
+  dueDate     DateTime
+  totalPoints Int      @default(100)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  submissions Submission[]
+}
+
+model Submission {
+  id            Int      @id @default(autoincrement())
+  studentId     Int
+  assignmentId  Int
+  content       String?  // Text content
+  fileUrl       String?  // File upload URL
+  submittedAt   DateTime @default(now())
+  grade         Int?     // Points earned
+  feedback      String?  // Teacher feedback
+  status        String   @default("submitted") // submitted, graded, returned
+  
+  // Relations
+  student     Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  assignment  Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  
+  @@unique([studentId, assignmentId])
+}
+
+model Enrollment {
+  id        Int      @id @default(autoincrement())
+  studentId Int
+  program   String
+  subject   String
+  startDate DateTime @default(now())
+  isActive  Boolean  @default(true)
+  
+  // Relations
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  @@unique([studentId, program, subject])
+}
