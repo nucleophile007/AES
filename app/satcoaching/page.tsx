@@ -133,14 +133,14 @@ const goals = [
     title: "Comprehensive Test Strategies & Tactics",
     description: `We identify your weakest SAT sections and target them with focused practice and proven strategies. You'll receive custom assignments, drills, and timed mini-tests to build confidence and accuracy. We track your progress after every session and celebrate every improvement, no matter how small. Our approach is data-driven, so you'll always know exactly where you stand and what to work on next. Many students see 150-300+ point improvements after completing our program.`,
     color: "from-teal-500 to-teal-600",
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
+    image: "/hwa2.png",
   },
   {
     icon: ClipboardList,
     title: "Data-Driven Feedback",
     description: `Master the SAT with our expert strategies for time management, question analysis, and test-day confidence. We teach you how to approach every question type, eliminate wrong answers, and manage your pacing for each section. You'll practice with real SAT questions and full-length, timed exams to build stamina and reduce anxiety. Our coaches share insider tips and test-day routines to help you perform your best when it counts.`,
     color: "from-orange-500 to-orange-600",
-    image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
+    image: "/hwa3.png",
   },
 ];
 
