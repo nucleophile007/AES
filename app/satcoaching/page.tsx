@@ -126,7 +126,7 @@ const goals = [
     title: "Personalized SAT Plan",
     description: `Customized study plans based on a thorough diagnostic test and your unique strengths and weaknesses. We work with you to set realistic goals and milestones, then create a week-by-week roadmap for your SAT journey. Your plan adapts as you progress, ensuring you always focus on the areas that will yield the biggest score gains. Regular check-ins and adjustments keep you on track and motivated. You'll never feel lost or overwhelmed—your coach is with you every step of the way.`,
     color: "from-blue-500 to-blue-600",
-    image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
+    image: "/hwa1.png",
   },
   {
     icon: BarChart,
@@ -541,67 +541,82 @@ export default function SATCoachingPage() {
             {goals.map((goal, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
+                initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.1 }}
+                transition={{ delay: i * 0.15, duration: 0.8, type: "spring", stiffness: 100 }}
+                className="group cursor-pointer"
               >
-                                 <div className="relative bg-gradient-to-br from-blue-50/90 via-indigo-50/80 to-blue-100/70 rounded-3xl shadow-2xl transition-all duration-500 flex flex-col items-center min-h-[300px] group overflow-hidden border border-blue-200/30 hover:shadow-3xl hover:-translate-y-2 hover:min-h-[500px]">
-                   {/* Top Accent Bar */}
-                   <div className={`absolute top-0 left-0 right-0 h-2 ${
-                     i === 0 
-                       ? "bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-600" 
-                       : i === 1 
-                       ? "bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-600"
-                       : "bg-gradient-to-r from-violet-400 via-purple-500 to-pink-600"
-                   }`}></div>
-                   
-                   {/* Beautiful AI Generated Image */}
-                   <div className="w-full h-32 mb-4 overflow-hidden rounded-t-3xl">
-                     <Image 
-                       src={goal.image} 
-                       alt={goal.title}
-                       width={400}
-                       height={128}
-                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                     />
-                     <div className="absolute inset-0 bg-gradient-to-t from-blue-900/20 to-transparent"></div>
-                   </div>
-                   
-                   {/* Background Pattern */}
-                   <div className="absolute inset-0 opacity-10">
-                     <div className="absolute top-8 right-8 w-24 h-24 border-2 border-blue-300/50 rounded-full"></div>
-                     <div className="absolute bottom-8 left-8 w-16 h-16 border border-blue-200/50 rounded-full"></div>
-                     <div className="absolute top-1/2 left-1/4 w-8 h-8 bg-blue-300/50 rounded-full"></div>
-                   </div>
-                   
-                   {/* Icon */}
-                   <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-100/80 to-indigo-100/80 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 border border-blue-200/50">
-                     <goal.icon className={`h-8 w-8 ${
-                       i === 0 
-                         ? "text-cyan-600" 
-                         : i === 1 
-                         ? "text-emerald-600"
-                         : "text-violet-600"
-                     }`} />
-                   </div>
-                   
-                   {/* Title */}
-                   <div className="font-bold text-xl text-blue-900 text-center mb-3 px-4">{goal.title}</div>
-                   
-                   {/* Description - Hidden by default, shows on hover */}
-                   <div className="text-sm text-blue-800/80 text-center leading-relaxed mb-6 flex-1 px-4 opacity-0 group-hover:opacity-100 transition-all duration-500 max-h-0 group-hover:max-h-96 overflow-hidden">
-                     {goal.description}
-                   </div>
-                   
-                   {/* Bottom Accent */}
-                   <div className={`absolute bottom-0 left-0 right-0 h-1 ${
-                     i === 0 
-                       ? "bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-600" 
-                       : i === 1 
-                       ? "bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600"
-                       : "bg-gradient-to-r from-violet-400 via-purple-500 to-pink-600"
-                   }`}></div>
-                 </div>
+                <div className="relative bg-gradient-to-br from-white to-gray-50 rounded-3xl shadow-2xl overflow-hidden transition-all duration-700 hover:shadow-3xl hover:-translate-y-4 hover:rotate-1">
+                  {/* Massive Image Section */}
+                  <div className="relative h-96 overflow-hidden">
+                    <Image 
+                      src={goal.image} 
+                      alt={goal.title}
+                      width={700}
+                      height={384}
+                      className="w-full h-full object-cover group-hover:scale-125 transition-transform duration-1000 ease-out"
+                    />
+                    
+                    {/* Dynamic Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-transparent to-black/60 group-hover:from-black/20 group-hover:to-black/40 transition-all duration-700"></div>
+                    
+                    {/* Floating Badge */}
+                    <div className="absolute top-8 left-8">
+                      <div className={`px-4 py-2 rounded-full backdrop-blur-md ${
+                        i === 0 
+                          ? "bg-blue-500/90 text-white" 
+                          : i === 1 
+                          ? "bg-emerald-500/90 text-white"
+                          : "bg-purple-500/90 text-white"
+                      }`}>
+                        <span className="text-sm font-semibold">Step {i + 1}</span>
+                      </div>
+                    </div>
+                    
+                    {/* Icon in Corner */}
+                    <div className="absolute top-8 right-8 w-16 h-16 bg-white/20 backdrop-blur-lg rounded-2xl flex items-center justify-center group-hover:bg-white/30 transition-all duration-500">
+                      <goal.icon className={`h-8 w-8 ${
+                        i === 0 
+                          ? "text-blue-100" 
+                          : i === 1 
+                          ? "text-emerald-100"
+                          : "text-purple-100"
+                      } group-hover:text-white transition-colors duration-500`} />
+                    </div>
+                    
+                    {/* Title Overlay */}
+                    <div className="absolute bottom-8 left-8 right-8">
+                      <h3 className="text-3xl font-black text-white mb-3 drop-shadow-2xl group-hover:scale-105 transition-transform duration-500">
+                        {goal.title}
+                      </h3>
+                      <div className={`w-16 h-1 rounded-full ${
+                        i === 0 
+                          ? "bg-blue-400" 
+                          : i === 1 
+                          ? "bg-emerald-400"
+                          : "bg-purple-400"
+                      }`}></div>
+                    </div>
+                  </div>
+                  
+                  {/* Expandable Content Card */}
+                  <div className="bg-white/80 backdrop-blur-sm transition-all duration-700 ease-in-out overflow-hidden max-h-0 group-hover:max-h-96 opacity-0 group-hover:opacity-100">
+                    <div className="p-8">
+                      <p className="text-gray-700 leading-relaxed text-base">
+                        {goal.description}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Glow Effect */}
+                  <div className={`absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 ${
+                    i === 0 
+                      ? "shadow-[0_0_50px_rgba(59,130,246,0.3)]" 
+                      : i === 1 
+                      ? "shadow-[0_0_50px_rgba(16,185,129,0.3)]"
+                      : "shadow-[0_0_50px_rgba(147,51,234,0.3)]"
+                  }`}></div>
+                </div>
               </motion.div>
             ))}
           </div>
