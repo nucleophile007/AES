@@ -14,14 +14,24 @@ import { useScroll, useTransform } from "framer-motion";
 
 const faculty = [
   {
-    name: "Bhavya Kandala",
-    role: "Associate Attorney",
-    education: "Master of Laws (LLM) in Tech, Innovation and Entrepreneurship Law",
-    institution: "Seattle Washington, USA",
-    experience: "Legal Practice",
-    specialties: ["Family Law", "Criminal Defense", "Intellectual Property", "Entrepreneurship Law"],
-    achievements: ["Litigation expert", "Legal intern mentor", "Communication skills trainer", "Strategic planning advisor"],
+    name: "Bhavya Sree Kandala",
+    role: "Criminal Defense & Family Law Attorney",
+    education: "Master of Laws (LLM) from Seattle University School of Law",
+    institution: "Washington State, USA",
+    experience: "Criminal Defense & Family Law Practice",
+    specialties: ["Family Law", "Criminal Defense", "Divorce & Child Custody", "DUI & Traffic Defense"],
+    achievements: ["Licensed Washington State Attorney", "Comprehensive litigation expertise", "Client-centered legal advocacy", "Compassionate legal representation"],
     image: "/bhavya-kandala.png",
+  },
+  {
+    name: "Dr. Manasa Kandula",
+    role: "Assistant Professor",
+    education: "Ph.D. in Materials Science",
+    institution: "University of Massachusetts Amherst, USA",
+    experience: "Research & Teaching in Physics & Materials Science",
+    specialties: ["Soft Condensed Matter", "Advanced Microscopy", "Biological Materials", "Materials Science Engineering"],
+    achievements: ["Faculty Success Fellow 2024", "International research experience", "Undergraduate research mentor", "Interdisciplinary collaboration expert"],
+    image: "/mk.png",
   },
   {
     name: "Dr. Thejus R. Kartha",
@@ -35,7 +45,7 @@ const faculty = [
   },
   {
     name: "Dr. Rakesh Lingam",
-    role: "Asst. Professor",
+    role: "Assistant Professor",
     education: "Ph.D in Mechanical and Aerospace Engineering",
     institution: "Indian Institute of Technology Dharwad, India",
     experience: "Research & Mentoring",
@@ -43,6 +53,26 @@ const faculty = [
     achievements: ["Top engineering faculty", "Innovation advocate", "Youth mentor", "Future-ready education"],
     image: "/rakesh-lingam.png",
   },
+  {
+    name: "Aneesh Bhardwaj",
+    role: "Mathematics Tutor & Speech & Debate Coach",
+    education: "Computer Engineering (3rd year undergraduate)",
+    institution: "UC Davis, USA",
+    experience: "Mathematics Tutoring & Speech & Debate Coaching",
+    specialties: ["IM1-IM3 Mathematics", "Precalculus", "Speech & Debate", "Analytical Problem Solving"],
+    achievements: ["6 years speech & debate experience", "National tournament competitor", "Science fair presenter", "Community mentor"],
+    image: "/aneesh.png",
+  },
+  {
+    name: "Dr. Konjengbam Anand",
+    role: "Assistant Professor",
+    education: "Ph.D. in Computer Science & Engineering",
+    institution: "Indian Institute of Technology Dharwad, India",
+    experience: "Research & Teaching in AI/ML",
+    specialties: ["Natural Language Processing", "Sentiment Analysis", "Machine Translation", "Generative AI"],
+    achievements: ["Suzuki Foundation Research Grant recipient", "IIT Hyderabad Research Excellence Award", "Text-to-Speech synthesis expert", "International research collaboration"],
+    image: "/kjba.png",
+  }
 ];
 
 const pillars = [
@@ -440,9 +470,9 @@ export default function AboutPage() {
                      transition={{ duration: 0.6, delay: 1 }}
                      className="text-center mb-8"
                    >
-                     <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                     {/* <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                        <span className="text-3xl">✨</span>
-                     </div>
+                     </div> */}
                      <h3 className="text-3xl lg:text-4xl font-bold theme-text-light mb-2 bg-gradient-to-r from-yellow-400 to-amber-500 bg-clip-text text-transparent">
                        WELCOME TO ACHARYA
                      </h3>
