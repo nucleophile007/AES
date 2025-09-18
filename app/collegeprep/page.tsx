@@ -898,16 +898,12 @@ export default function CollegePrepPage() {
                 transition={{ delay: 0.1 }}
                 className="group"
               >
-                                 <div className="bg-gradient-to-br from-red-400 via-pink-400 to-rose-400 rounded-3xl p-8 shadow-2xl h-full flex flex-col items-center justify-center text-center hover:shadow-3xl transition-all duration-500 hover:-translate-y-2 relative overflow-hidden">
-                   {/* Animated background elements */}
-                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
-                   <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/20 rounded-full group-hover:scale-125 transition-transform duration-700"></div>
-                   
-                   <div className="w-20 h-20 bg-white/30 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                    <Users className="h-10 w-10 text-white" />
+                <div className="rounded-3xl p-8 h-full flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl theme-bg-medium border border-yellow-400/20">
+                  <div className="w-16 h-16 rounded-full theme-bg-dark/50 border border-yellow-400/30 flex items-center justify-center mb-5">
+                    <Users className="h-8 w-8 text-yellow-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-4 drop-shadow-lg">Profile Enrichment</h3>
-                  <p className="text-indigo-100 text-base leading-relaxed">
+                  <h3 className="text-2xl font-bold theme-text-light mb-3">Profile Enrichment</h3>
+                  <p className="text-base leading-relaxed theme-text-muted">
                     Comprehensive profile building through strategic activities and leadership development.
                   </p>
                 </div>
@@ -920,16 +916,12 @@ export default function CollegePrepPage() {
                 transition={{ delay: 0.2 }}
                 className="group"
               >
-                                 <div className="bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 rounded-3xl p-8 shadow-2xl h-full flex flex-col items-center justify-center text-center hover:shadow-3xl transition-all duration-500 hover:-translate-y-2 relative overflow-hidden">
-                   {/* Animated background elements */}
-                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
-                   <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/20 rounded-full group-hover:scale-125 transition-transform duration-700"></div>
-                   
-                   <div className="w-20 h-20 bg-white/30 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                    <FileText className="h-10 w-10 text-white" />
+                <div className="rounded-3xl p-8 h-full flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl theme-bg-medium border border-yellow-400/20">
+                  <div className="w-16 h-16 rounded-full theme-bg-dark/50 border border-yellow-400/30 flex items-center justify-center mb-5">
+                    <FileText className="h-8 w-8 text-yellow-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-4 drop-shadow-lg">Essay Guidance</h3>
-                  <p className="text-emerald-100 text-base leading-relaxed">
+                  <h3 className="text-2xl font-bold theme-text-light mb-3">Essay Guidance</h3>
+                  <p className="text-base leading-relaxed theme-text-muted">
                     Expert help in crafting authentic, compelling application essays.
                   </p>
                 </div>
@@ -942,16 +934,12 @@ export default function CollegePrepPage() {
                 transition={{ delay: 0.3 }}
                 className="group"
               >
-                                 <div className="bg-gradient-to-br from-rose-500 via-pink-500 to-purple-500 rounded-3xl p-8 shadow-2xl h-full flex flex-col items-center justify-center text-center hover:shadow-3xl transition-all duration-500 hover:-translate-y-2 relative overflow-hidden">
-                   {/* Animated background elements */}
-                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
-                   <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/20 rounded-full group-hover:scale-125 transition-transform duration-700"></div>
-                   
-                   <div className="w-20 h-20 bg-white/30 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                    <Globe className="h-10 w-10 text-white" />
+                <div className="rounded-3xl p-8 h-full flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl theme-bg-medium border border-yellow-400/20">
+                  <div className="w-16 h-16 rounded-full theme-bg-dark/50 border border-yellow-400/30 flex items-center justify-center mb-5">
+                    <Globe className="h-8 w-8 text-yellow-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-4 drop-shadow-lg">College List Curation</h3>
-                  <p className="text-rose-100 text-base leading-relaxed">
+                  <h3 className="text-2xl font-bold theme-text-light mb-3">College List Curation</h3>
+                  <p className="text-base leading-relaxed theme-text-muted">
                     Personalized guidance to select best-fit institutions that reflect both personality and potential.
                   </p>
                 </div>
@@ -964,16 +952,12 @@ export default function CollegePrepPage() {
                 transition={{ delay: 0.4 }}
                 className="group"
               >
-                                 <div className="bg-gradient-to-br from-violet-500 via-indigo-500 to-blue-500 rounded-3xl p-8 shadow-2xl h-full flex flex-col items-center justify-center text-center hover:shadow-3xl transition-all duration-500 hover:-translate-y-2 relative overflow-hidden">
-                   {/* Animated background elements */}
-                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
-                   <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/20 rounded-full group-hover:scale-125 transition-transform duration-700"></div>
-                   
-                   <div className="w-20 h-20 bg-white/30 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                    <BookOpen className="h-10 w-10 text-white" />
+                <div className="rounded-3xl p-8 h-full flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl theme-bg-medium border border-yellow-400/20">
+                  <div className="w-16 h-16 rounded-full theme-bg-dark/50 border border-yellow-400/30 flex items-center justify-center mb-5">
+                    <BookOpen className="h-8 w-8 text-yellow-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-4 drop-shadow-lg">Dedicated Counseling</h3>
-                  <p className="text-violet-100 text-base leading-relaxed">
+                  <h3 className="text-2xl font-bold theme-text-light mb-3">Dedicated Counseling</h3>
+                  <p className="text-base leading-relaxed theme-text-muted">
                     One-on-one personalized guidance throughout your college journey.
                   </p>
                 </div>
@@ -986,16 +970,12 @@ export default function CollegePrepPage() {
                 transition={{ delay: 0.5 }}
                 className="group"
               >
-                                 <div className="bg-gradient-to-br from-yellow-400 via-orange-400 to-red-400 rounded-3xl p-8 shadow-2xl h-full flex flex-col items-center justify-center text-center hover:shadow-3xl transition-all duration-500 hover:-translate-y-2 relative overflow-hidden">
-                   {/* Animated background elements */}
-                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
-                   <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/20 rounded-full group-hover:scale-125 transition-transform duration-700"></div>
-                   
-                   <div className="w-20 h-20 bg-white/30 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                    <Star className="h-10 w-10 text-white" />
+                <div className="rounded-3xl p-8 h-full flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl theme-bg-medium border border-yellow-400/20">
+                  <div className="w-16 h-16 rounded-full theme-bg-dark/50 border border-yellow-400/30 flex items-center justify-center mb-5">
+                    <Star className="h-8 w-8 text-yellow-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-4 drop-shadow-lg">Personalized Roadmap</h3>
-                  <p className="text-amber-100 text-base leading-relaxed">
+                  <h3 className="text-2xl font-bold theme-text-light mb-3">Personalized Roadmap</h3>
+                  <p className="text-base leading-relaxed theme-text-muted">
                     Custom strategic plan tailored to your unique strengths and goals.
                   </p>
                 </div>
@@ -1008,16 +988,12 @@ export default function CollegePrepPage() {
                 transition={{ delay: 0.6 }}
                 className="group"
               >
-                                 <div className="bg-gradient-to-br from-purple-400 via-violet-400 to-fuchsia-400 rounded-3xl p-8 shadow-2xl h-full flex flex-col items-center justify-center text-center hover:shadow-3xl transition-all duration-500 hover:-translate-y-2 relative overflow-hidden">
-                   {/* Animated background elements */}
-                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
-                   <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/20 rounded-full group-hover:scale-125 transition-transform duration-700"></div>
-                   
-                   <div className="w-20 h-20 bg-white/30 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                    <Trophy className="h-10 w-10 text-white" />
+                <div className="rounded-3xl p-8 h-full flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl theme-bg-medium border border-yellow-400/20">
+                  <div className="w-16 h-16 rounded-full theme-bg-dark/50 border border-yellow-400/30 flex items-center justify-center mb-5">
+                    <Trophy className="h-8 w-8 text-yellow-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-4 drop-shadow-lg">Research Excellence</h3>
-                  <p className="text-sky-100 text-base leading-relaxed">
+                  <h3 className="text-2xl font-bold theme-text-light mb-3">Research Excellence</h3>
+                  <p className="text-base leading-relaxed theme-text-muted">
                     High-impact research opportunities and competition support for standout profiles.
                   </p>
                 </div>
