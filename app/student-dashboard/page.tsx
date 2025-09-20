@@ -61,118 +61,84 @@ import {
 import { cn } from "@/lib/utils";
 
 // Mock data - replace with actual API calls
-const mockStudent = {
-  id: 1,
-  name: "Alex Johnson",
-  email: "alex.johnson@email.com",
-  grade: "10th Grade",
-  school: "Granite Bay High School",
-  program: "Academic Tutoring",
-  profileImage: null,
-  gpa: 3.8,
-  overallGrade: "A-",
-};
-
-const mockAssignments = [
-  {
-    id: 1,
-    title: "Algebra II Problem Set #12",
-    subject: "Mathematics",
-    description: "Complete problems 1-25 from Chapter 8, focusing on quadratic equations and factoring.",
-    dueDate: "2025-09-15",
-    totalPoints: 100,
-    status: "pending",
-    program: "Academic Tutoring",
-  },
-  {
-    id: 2,
-    title: "Essay: Impact of Climate Change",
-    subject: "Science",
-    description: "Write a 3-page essay discussing the effects of climate change on marine ecosystems.",
-    dueDate: "2025-09-18",
-    totalPoints: 150,
-    status: "submitted",
-    program: "Academic Tutoring",
-  },
-  {
-    id: 3,
-    title: "SAT Practice Test #3",
-    subject: "SAT Prep",
-    description: "Complete the full-length practice test and submit your answers for review.",
-    dueDate: "2025-09-12",
-    totalPoints: 200,
-    status: "overdue",
-    program: "SAT Coaching",
-  },
-];
-
-const mockSubmissions = [
-  {
-    id: 1,
-    assignmentId: 2,
-    assignmentTitle: "Essay: Impact of Climate Change",
-    submittedAt: "2025-09-08",
-    grade: 142,
-    totalPoints: 150,
-    feedback: "Excellent work! Your analysis of marine ecosystem impacts was thorough and well-researched. Consider adding more specific examples in future essays.",
-    status: "graded",
-    teacherName: "Dr. Sarah Wilson",
-  },
-  {
-    id: 2,
-    assignmentId: 5,
-    assignmentTitle: "Geometry Proofs Worksheet",
-    submittedAt: "2025-09-05",
-    grade: 88,
-    totalPoints: 100,
-    feedback: "Good understanding of geometric principles. Work on clarity in your proof explanations.",
-    status: "graded",
-    teacherName: "Mr. John Davis",
-  },
-];
-
 const mockUpcomingEvents = [
   { id: 1, title: "Math Tutoring Session", date: "2025-09-10", time: "3:00 PM", type: "tutoring" },
   { id: 2, title: "SAT Practice Test", date: "2025-09-12", time: "9:00 AM", type: "test" },
   { id: 3, title: "Science Fair Project Review", date: "2025-09-15", time: "2:00 PM", type: "review" },
 ];
 
+interface Student {
+  id: number;
+  name: string;
+  email: string;
+  grade: string;
+  schoolName: string;
+  parentName: string;
+  parentEmail: string;
+  parentPhone: string;
+  program: string;
+  enrollments: Array<{
+    program: string;
+    subject: string;
+    isActive: boolean;
+  }>;
+  teachers: Array<{
+    id: number;
+    name: string;
+    email: string;
+    program: string;
+  }>;
+  stats: {
+    totalSubmissions: number;
+    gradedSubmissions: number;
+    averageGrade: number;
+    pendingAssignments: number;
+  };
+}
+
 interface Assignment {
   id: number;
   title: string;
   subject: string;
   description: string;
+  program: string;
+  grade: string;
   dueDate: string;
   totalPoints: number;
   status: string;
-  program: string;
+  submissionId?: number | null;
 }
 
 interface Submission {
   id: number;
   assignmentId: number;
   assignmentTitle: string;
+  assignmentSubject: string;
+  content?: string;
+  fileUrl?: string;
   submittedAt: string;
   grade?: number;
   totalPoints: number;
   feedback?: string;
   status: string;
-  teacherName: string;
 }
 
 export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
+  const [student, setStudent] = useState<Student | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [submissionText, setSubmissionText] = useState("");
   const [submissionFile, setSubmissionFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResubmitting, setIsResubmitting] = useState(false);
+  const [resubmissionId, setResubmissionId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   
-  // Mock student ID - in real app, get from authentication
-  const studentId = 1;
+  // For demo purposes, using a student email. In real app, this would come from authentication
+  const studentEmail = "alex.thompson@student.com"; // You can change this to test different students
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -195,23 +161,19 @@ export default function StudentDashboard() {
       try {
         setLoading(true);
         
-        // Fetch assignments
-        const assignmentsResponse = await fetch(`/api/assignments?studentId=${studentId}`);
-        const assignmentsData = await assignmentsResponse.json();
+        // Fetch student dashboard data
+        const response = await fetch(`/api/student/dashboard?studentEmail=${encodeURIComponent(studentEmail)}`);
+        const data = await response.json();
         
-        if (assignmentsData.success) {
-          setAssignments(assignmentsData.assignments);
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to fetch student data');
         }
-
-        // Fetch submissions
-        const submissionsResponse = await fetch(`/api/submissions?studentId=${studentId}`);
-        const submissionsData = await submissionsResponse.json();
         
-        if (submissionsData.success) {
-          setSubmissions(submissionsData.submissions);
-        }
+        setStudent(data.student);
+        setAssignments(data.assignments);
+        setSubmissions(data.submissions);
       } catch (err) {
-        setError("Failed to load dashboard data");
+        setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
         console.error("Error fetching data:", err);
       } finally {
         setLoading(false);
@@ -219,10 +181,10 @@ export default function StudentDashboard() {
     };
 
     fetchData();
-  }, [studentId]);
+  }, [studentEmail]);
 
   const handleSubmission = async () => {
-    if (!selectedAssignment) return;
+    if (!selectedAssignment || !student) return;
     
     setIsSubmitting(true);
     
@@ -233,7 +195,7 @@ export default function StudentDashboard() {
       if (submissionFile) {
         const formData = new FormData();
         formData.append('file', submissionFile);
-        formData.append('studentId', studentId.toString());
+        formData.append('studentId', student.id.toString());
         formData.append('assignmentId', selectedAssignment.id.toString());
         
         const uploadResponse = await fetch('/api/upload', {
@@ -251,38 +213,59 @@ export default function StudentDashboard() {
       }
       
       // Submit assignment
-      const submissionResponse = await fetch('/api/submissions', {
-        method: 'POST',
+      const endpoint = isResubmitting && resubmissionId 
+        ? '/api/student/submissions' 
+        : '/api/student/submissions';
+      
+      const requestBody = isResubmitting && resubmissionId
+        ? {
+            submissionId: resubmissionId,
+            content: submissionText,
+            fileUrl,
+          }
+        : {
+            studentId: student.id,
+            assignmentId: selectedAssignment.id,
+            content: submissionText,
+            fileUrl,
+          };
+
+      const submissionResponse = await fetch(endpoint, {
+        method: isResubmitting ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          studentId,
-          assignmentId: selectedAssignment.id,
-          assignmentTitle: selectedAssignment.title,
-          content: submissionText,
-          fileUrl,
-        }),
+        body: JSON.stringify(requestBody),
       });
       
       const submissionData = await submissionResponse.json();
       
       if (submissionData.success) {
-        // Update assignments list
-        const updatedAssignments = assignments.map(assignment =>
-          assignment.id === selectedAssignment.id
-            ? { ...assignment, status: "submitted" }
-            : assignment
-        );
-        setAssignments(updatedAssignments);
-        
-        // Add to submissions list
-        setSubmissions([...submissions, submissionData.submission]);
+        if (isResubmitting) {
+          // Update submissions list for resubmission
+          const updatedSubmissions = submissions.map(sub =>
+            sub.id === resubmissionId ? submissionData.submission : sub
+          );
+          setSubmissions(updatedSubmissions);
+        } else {
+          // Update assignments list for new submission
+          const updatedAssignments = assignments.map(assignment =>
+            assignment.id === selectedAssignment.id
+              ? { ...assignment, status: "submitted" }
+              : assignment
+          );
+          setAssignments(updatedAssignments);
+          
+          // Add to submissions list
+          setSubmissions([submissionData.submission, ...submissions]);
+        }
         
         // Reset form
         setSelectedAssignment(null);
         setSubmissionText("");
         setSubmissionFile(null);
+        setIsResubmitting(false);
+        setResubmissionId(null);
       } else {
         throw new Error(submissionData.error || 'Submission failed');
       }
@@ -292,6 +275,21 @@ export default function StudentDashboard() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleResubmission = async (submission: Submission) => {
+    if (!student) return;
+    
+    // Find the corresponding assignment
+    const assignment = assignments.find(a => a.id === submission.assignmentId);
+    if (!assignment) return;
+    
+    // Set up for resubmission
+    setSelectedAssignment(assignment);
+    setSubmissionText(submission.content || "");
+    setSubmissionFile(null); // Reset file, user will need to reupload
+    setIsResubmitting(true);
+    setResubmissionId(submission.id);
   };
 
   const sidebarItems = [
@@ -308,7 +306,7 @@ export default function StudentDashboard() {
       icon: FileText,
       isActive: activeTab === "assignments",
       onClick: () => setActiveTab("assignments"),
-      badge: assignments.filter(a => a.status === "pending").length,
+      badge: student ? student.stats.pendingAssignments : 0,
     },
     {
       title: "Submissions",
@@ -359,12 +357,75 @@ export default function StudentDashboard() {
     return Math.round((grade / total) * 100);
   };
 
+  // Check if assignment deadline has passed
+  const isDeadlinePassed = (dueDate: string): boolean => {
+    const deadline = new Date(dueDate);
+    const now = new Date();
+    return now > deadline;
+  };
+
+  // Check if submission can be resubmitted
+  const canResubmit = (submission: Submission): boolean => {
+    // Find the corresponding assignment
+    const assignment = assignments.find(a => a.id === submission.assignmentId);
+    if (!assignment) return false;
+    
+    // Can resubmit if deadline hasn't passed and submission is completed (but not graded yet)
+    return !isDeadlinePassed(assignment.dueDate) && 
+           submission.status === 'completed' && 
+           submission.grade === undefined;
+  };
+
   const getGradeColor = (percentage: number) => {
     if (percentage >= 90) return "text-green-600";
     if (percentage >= 80) return "text-blue-600";
     if (percentage >= 70) return "text-yellow-600";
     return "text-red-600";
   };
+
+  if (loading) {
+    return (
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full bg-gray-50">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading student dashboard...</p>
+            </div>
+          </div>
+        </div>
+      </SidebarProvider>
+    );
+  }
+
+  if (error) {
+    return (
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full bg-gray-50">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-red-600 text-xl mb-4">Error: {error}</div>
+              <Button onClick={() => window.location.reload()}>Try Again</Button>
+            </div>
+          </div>
+        </div>
+      </SidebarProvider>
+    );
+  }
+
+  if (!student) {
+    return (
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full bg-gray-50">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-gray-600 text-xl">Student not found</div>
+            </div>
+          </div>
+        </div>
+      </SidebarProvider>
+    );
+  }
 
   return (
     <SidebarProvider>
@@ -374,15 +435,15 @@ export default function StudentDashboard() {
             <div className="flex items-center gap-3">
               <Avatar className="h-10 w-10">
                 <AvatarFallback className="bg-blue-100 text-blue-600">
-                  {mockStudent.name.split(' ').map(n => n[0]).join('')}
+                  {student.name.split(' ').map(n => n[0]).join('')}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-sidebar-foreground truncate">
-                  {mockStudent.name}
+                  {student.name}
                 </p>
                 <p className="text-xs text-sidebar-foreground/70 truncate">
-                  {mockStudent.grade} • {mockStudent.school}
+                  {student.grade} • {student.schoolName}
                 </p>
               </div>
             </div>
@@ -523,8 +584,8 @@ export default function StudentDashboard() {
                             <FileText className="h-5 w-5 text-blue-600" />
                           </div>
                           <div>
-                            <p className="text-sm text-gray-600">Pending Assignments</p>
-                            <p className="text-2xl font-bold">{assignments.filter(a => a.status === "pending").length}</p>
+                            <p className="text-sm text-gray-600">Active Assignments</p>
+                            <p className="text-2xl font-bold">{assignments.filter(a => a.status === "active").length}</p>
                           </div>
                         </div>
                       </CardContent>
@@ -537,8 +598,8 @@ export default function StudentDashboard() {
                             <Trophy className="h-5 w-5 text-green-600" />
                           </div>
                           <div>
-                            <p className="text-sm text-gray-600">Overall Grade</p>
-                            <p className="text-2xl font-bold">{mockStudent.overallGrade}</p>
+                            <p className="text-sm text-gray-600">Completed</p>
+                            <p className="text-2xl font-bold">{submissions.filter(s => s.status === "completed").length}</p>
                           </div>
                         </div>
                       </CardContent>
@@ -551,8 +612,14 @@ export default function StudentDashboard() {
                             <GraduationCap className="h-5 w-5 text-purple-600" />
                           </div>
                           <div>
-                            <p className="text-sm text-gray-600">Current GPA</p>
-                            <p className="text-2xl font-bold">{mockStudent.gpa}</p>
+                            <p className="text-sm text-gray-600">Average Grade</p>
+                            <p className="text-2xl font-bold">
+                              {submissions.filter(s => s.status === 'completed' && s.grade).length > 0 
+                                ? Math.round(submissions.filter(s => s.status === 'completed' && s.grade)
+                                    .reduce((acc, s) => acc + (s.grade || 0), 0) / 
+                                    submissions.filter(s => s.status === 'completed' && s.grade).length) + '%'
+                                : 'N/A'}
+                            </p>
                           </div>
                         </div>
                       </CardContent>
@@ -607,14 +674,14 @@ export default function StudentDashboard() {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-3">
-                          {mockUpcomingEvents.map((event) => (
-                            <div key={event.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                          {assignments.slice(0, 3).map((assignment) => (
+                            <div key={assignment.id} className="flex items-center gap-3 p-3 border rounded-lg">
                               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                                 <Calendar className="h-5 w-5 text-blue-600" />
                               </div>
                               <div className="flex-1">
-                                <p className="font-medium text-sm">{event.title}</p>
-                                <p className="text-xs text-gray-600">{event.date} at {event.time}</p>
+                                <p className="font-medium text-sm">{assignment.title}</p>
+                                <p className="text-xs text-gray-600">Due {assignment.dueDate}</p>
                               </div>
                             </div>
                           ))}
@@ -638,17 +705,25 @@ export default function StudentDashboard() {
                   </div>
 
                   <div className="grid gap-4">
-                    {assignments.map((assignment) => (
+                    {assignments.map((assignment) => {
+                      // Find if there's a submission for this assignment
+                      const existingSubmission = submissions.find(s => s.assignmentId === assignment.id);
+                      const deadlinePassed = isDeadlinePassed(assignment.dueDate);
+                      const canResubmitAssignment = existingSubmission && 
+                                                   !deadlinePassed && 
+                                                   existingSubmission.grade === undefined;
+                      
+                      return (
                       <Card key={assignment.id} className="hover:shadow-md transition-shadow">
                         <CardContent className="p-6">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
                                 <h3 className="text-lg font-semibold">{assignment.title}</h3>
-                                {getStatusBadge(assignment.status)}
+                                {existingSubmission ? getStatusBadge(existingSubmission.status) : getStatusBadge("pending")}
                               </div>
                               <p className="text-gray-600 mb-3">{assignment.description}</p>
-                              <div className="flex items-center gap-4 text-sm text-gray-500">
+                              <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
                                 <span className="flex items-center gap-1">
                                   <BookOpen className="h-4 w-4" />
                                   {assignment.subject}
@@ -662,67 +737,185 @@ export default function StudentDashboard() {
                                   {assignment.totalPoints} points
                                 </span>
                               </div>
+                              
+                              {/* Deadline status indicator */}
+                              <div className="flex items-center gap-2 text-sm">
+                                {deadlinePassed ? (
+                                  <span className="flex items-center gap-1 text-red-600">
+                                    <AlertCircle className="h-4 w-4" />
+                                    Deadline passed
+                                  </span>
+                                ) : (
+                                  <span className="flex items-center gap-1 text-green-600">
+                                    <CheckCircle className="h-4 w-4" />
+                                    Still accepting submissions
+                                  </span>
+                                )}
+                                
+                                {existingSubmission && (
+                                  <span className="text-gray-500">
+                                    • Submitted on {existingSubmission.submittedAt}
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                            {assignment.status === "pending" && (
-                              <Dialog>
-                                <DialogTrigger asChild>
-                                  <Button onClick={() => setSelectedAssignment(assignment)}>
-                                    Submit Assignment
-                                  </Button>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-2xl">
-                                  <DialogHeader>
-                                    <DialogTitle>Submit Assignment: {selectedAssignment?.title}</DialogTitle>
-                                  </DialogHeader>
-                                  <div className="space-y-4">
-                                    <div className="space-y-2">
-                                      <Label htmlFor="submission">Written Response</Label>
-                                      <Textarea
-                                        id="submission"
-                                        placeholder="Enter your assignment response here..."
-                                        value={submissionText}
-                                        onChange={(e) => setSubmissionText(e.target.value)}
-                                        rows={6}
-                                      />
-                                    </div>
-                                    <div className="space-y-2">
-                                      <Label htmlFor="file">File Upload (Optional)</Label>
-                                      <Input
-                                        id="file"
-                                        type="file"
-                                        accept=".pdf,.doc,.docx,.txt,.jpg,.png"
-                                        onChange={(e) => setSubmissionFile(e.target.files?.[0] || null)}
-                                      />
-                                      <p className="text-xs text-gray-500">
-                                        Accepted formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB)
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <DialogFooter>
-                                    <Button
-                                      onClick={handleSubmission}
-                                      disabled={isSubmitting || (!submissionText.trim() && !submissionFile)}
-                                    >
-                                      {isSubmitting ? (
-                                        <>
-                                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                          Submitting...
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Send className="h-4 w-4 mr-2" />
-                                          Submit Assignment
-                                        </>
-                                      )}
+                            
+                            <div className="flex flex-col gap-2">
+                              {/* Submit button for new assignments */}
+                              {!existingSubmission && !deadlinePassed && (
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button onClick={() => {
+                                      setSelectedAssignment(assignment);
+                                      setIsResubmitting(false);
+                                      setResubmissionId(null);
+                                    }}>
+                                      <Send className="h-4 w-4 mr-2" />
+                                      Submit Assignment
                                     </Button>
-                                  </DialogFooter>
-                                </DialogContent>
-                              </Dialog>
-                            )}
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-2xl">
+                                    <DialogHeader>
+                                      <DialogTitle>Submit Assignment: {selectedAssignment?.title}</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                      <div className="space-y-2">
+                                        <Label htmlFor="submission">Written Response</Label>
+                                        <Textarea
+                                          id="submission"
+                                          placeholder="Enter your assignment response here..."
+                                          value={submissionText}
+                                          onChange={(e) => setSubmissionText(e.target.value)}
+                                          rows={6}
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor="file">File Upload (Optional)</Label>
+                                        <Input
+                                          id="file"
+                                          type="file"
+                                          accept=".pdf,.doc,.docx,.txt,.jpg,.png"
+                                          onChange={(e) => setSubmissionFile(e.target.files?.[0] || null)}
+                                        />
+                                        <p className="text-xs text-gray-500">
+                                          Accepted formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB)
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <DialogFooter>
+                                      <Button
+                                        onClick={handleSubmission}
+                                        disabled={isSubmitting || (!submissionText.trim() && !submissionFile)}
+                                      >
+                                        {isSubmitting ? (
+                                          <>
+                                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                            Submitting...
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Send className="h-4 w-4 mr-2" />
+                                            Submit Assignment
+                                          </>
+                                        )}
+                                      </Button>
+                                    </DialogFooter>
+                                  </DialogContent>
+                                </Dialog>
+                              )}
+                              
+                              {/* Resubmit button for submitted assignments */}
+                              {canResubmitAssignment && (
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button variant="outline" onClick={() => {
+                                      setSelectedAssignment(assignment);
+                                      setSubmissionText(existingSubmission.content || "");
+                                      setSubmissionFile(null);
+                                      setIsResubmitting(true);
+                                      setResubmissionId(existingSubmission.id);
+                                    }}>
+                                      <RefreshCw className="h-4 w-4 mr-2" />
+                                      Resubmit
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-2xl">
+                                    <DialogHeader>
+                                      <DialogTitle>Resubmit Assignment: {selectedAssignment?.title}</DialogTitle>
+                                      <p className="text-sm text-orange-600 bg-orange-50 p-3 rounded-lg mt-2">
+                                        ⚠️ Your previous submission will be replaced with this new one.
+                                      </p>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                      <div className="space-y-2">
+                                        <Label htmlFor="resubmission">Updated Response</Label>
+                                        <Textarea
+                                          id="resubmission"
+                                          placeholder="Enter your updated assignment response here..."
+                                          value={submissionText}
+                                          onChange={(e) => setSubmissionText(e.target.value)}
+                                          rows={6}
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor="resubmit-file">File Upload (Optional)</Label>
+                                        <Input
+                                          id="resubmit-file"
+                                          type="file"
+                                          accept=".pdf,.doc,.docx,.txt,.jpg,.png"
+                                          onChange={(e) => setSubmissionFile(e.target.files?.[0] || null)}
+                                        />
+                                        <p className="text-xs text-gray-500">
+                                          Accepted formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB)
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <DialogFooter>
+                                      <Button
+                                        onClick={handleSubmission}
+                                        disabled={isSubmitting || (!submissionText.trim() && !submissionFile)}
+                                      >
+                                        {isSubmitting ? (
+                                          <>
+                                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                            Resubmitting...
+                                          </>
+                                        ) : (
+                                          <>
+                                            <RefreshCw className="h-4 w-4 mr-2" />
+                                            Resubmit Assignment
+                                          </>
+                                        )}
+                                      </Button>
+                                    </DialogFooter>
+                                  </DialogContent>
+                                </Dialog>
+                              )}
+                              
+                              {/* Status indicators for completed/graded submissions */}
+                              {existingSubmission && existingSubmission.grade !== undefined && (
+                                <div className="text-center">
+                                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                                    <Trophy className="h-3 w-3 mr-1" />
+                                    Graded: {existingSubmission.grade}/{assignment.totalPoints}
+                                  </Badge>
+                                </div>
+                              )}
+                              
+                              {deadlinePassed && existingSubmission && existingSubmission.grade === undefined && (
+                                <div className="text-center">
+                                  <Badge variant="secondary" className="bg-gray-100 text-gray-600">
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    Awaiting Grade
+                                  </Badge>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -734,17 +927,91 @@ export default function StudentDashboard() {
                   </div>
 
                   <div className="grid gap-4">
-                    {submissions.map((submission) => (
-                      <Card key={submission.id}>
+                    {submissions.map((submission) => {
+                      const assignment = assignments.find(a => a.id === submission.assignmentId);
+                      const deadlinePassed = assignment ? isDeadlinePassed(assignment.dueDate) : true;
+                      const canResubmitThis = canResubmit(submission);
+                      
+                      return (
+                        <Card key={submission.id}>
                         <CardContent className="p-6">
                           <div className="flex items-start justify-between mb-4">
-                            <div>
+                            <div className="flex-1">
                               <h3 className="text-lg font-semibold">{submission.assignmentTitle}</h3>
                               <p className="text-sm text-gray-600">
-                                Submitted on {submission.submittedAt} • Teacher: {submission.teacherName}
+                                Submitted on {submission.submittedAt}
                               </p>
+                              {assignment && (
+                                <p className="text-sm text-gray-500 mt-1">
+                                  Due: {assignment.dueDate} 
+                                  {deadlinePassed && <span className="text-red-500 ml-2">(Deadline passed)</span>}
+                                  {!deadlinePassed && <span className="text-green-500 ml-2">(Still accepting submissions)</span>}
+                                </p>
+                              )}
                             </div>
-                            {getStatusBadge(submission.status)}
+                            <div className="flex items-center gap-2">
+                              {getStatusBadge(submission.status)}
+                              {canResubmitThis && (
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button variant="outline" size="sm" onClick={() => handleResubmission(submission)}>
+                                      <RefreshCw className="h-4 w-4 mr-2" />
+                                      Resubmit
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-2xl">
+                                    <DialogHeader>
+                                      <DialogTitle>Resubmit Assignment: {selectedAssignment?.title}</DialogTitle>
+                                      <p className="text-sm text-gray-600">
+                                        You can resubmit this assignment until the deadline. Your previous submission will be replaced.
+                                      </p>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                      <div className="space-y-2">
+                                        <Label htmlFor="resubmission">Updated Response</Label>
+                                        <Textarea
+                                          id="resubmission"
+                                          placeholder="Enter your updated assignment response here..."
+                                          value={submissionText}
+                                          onChange={(e) => setSubmissionText(e.target.value)}
+                                          rows={6}
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor="resubmit-file">File Upload (Optional)</Label>
+                                        <Input
+                                          id="resubmit-file"
+                                          type="file"
+                                          accept=".pdf,.doc,.docx,.txt,.jpg,.png"
+                                          onChange={(e) => setSubmissionFile(e.target.files?.[0] || null)}
+                                        />
+                                        <p className="text-xs text-gray-500">
+                                          Accepted formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB)
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <DialogFooter>
+                                      <Button
+                                        onClick={handleSubmission}
+                                        disabled={isSubmitting || (!submissionText.trim() && !submissionFile)}
+                                      >
+                                        {isSubmitting ? (
+                                          <>
+                                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                            Resubmitting...
+                                          </>
+                                        ) : (
+                                          <>
+                                            <RefreshCw className="h-4 w-4 mr-2" />
+                                            Resubmit Assignment
+                                          </>
+                                        )}
+                                      </Button>
+                                    </DialogFooter>
+                                  </DialogContent>
+                                </Dialog>
+                              )}
+                            </div>
                           </div>
                           
                           {submission.grade !== undefined && (
@@ -770,7 +1037,8 @@ export default function StudentDashboard() {
                           )}
                         </CardContent>
                       </Card>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -878,20 +1146,25 @@ export default function StudentDashboard() {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-3">
-                          {mockUpcomingEvents.map((event) => (
-                            <div key={event.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                          {assignments.filter(a => a.status === 'active').slice(0, 3).map((assignment) => (
+                            <div key={assignment.id} className="flex items-center gap-3 p-3 border rounded-lg">
                               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                                 <Calendar className="h-5 w-5 text-blue-600" />
                               </div>
                               <div className="flex-1">
-                                <p className="font-medium">{event.title}</p>
-                                <p className="text-sm text-gray-600">{event.date} at {event.time}</p>
+                                <p className="font-medium">{assignment.title}</p>
+                                <p className="text-sm text-gray-600">Due {assignment.dueDate}</p>
                               </div>
                               <Button variant="outline" size="sm">
                                 <Eye className="h-4 w-4" />
                               </Button>
                             </div>
                           ))}
+                          {assignments.filter(a => a.status === 'active').length === 0 && (
+                            <div className="text-center text-gray-500 py-4">
+                              No upcoming sessions scheduled
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>

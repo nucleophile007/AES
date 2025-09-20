@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
 import { NavbarDemo } from "./navbar";
+import { LoginModal } from "@/components/ui/LoginModal";
 import { Menu, X, Sparkles, ChevronDown } from "lucide-react";
 
 export default function Header() {
@@ -62,12 +63,14 @@ export default function Header() {
         
         {/* Desktop Buttons */}
         <div className="hidden md:flex items-center space-x-4">
-          <Button 
-            variant="outline" 
-            className="hidden sm:inline-flex border-yellow-400/20 text-yellow-400/90 hover:bg-yellow-400/10 hover:border-yellow-400/30 backdrop-blur-md transition-all duration-300 bg-white/5"
-          >
-            Login
-          </Button>
+          <LoginModal>
+            <Button 
+              variant="outline" 
+              className="hidden sm:inline-flex border-yellow-400/20 text-yellow-400/90 hover:bg-yellow-400/10 hover:border-yellow-400/30 backdrop-blur-md transition-all duration-300 bg-white/5"
+            >
+              Login
+            </Button>
+          </LoginModal>
           <Link href="/book-session">
             <Button 
               className="bg-gradient-to-r from-yellow-400/90 via-amber-500/90 to-orange-500/90 hover:from-yellow-400 hover:via-amber-500 hover:to-orange-500 text-[#1a2236] font-bold shadow-lg hover:shadow-xl hover:shadow-yellow-400/20 transition-all duration-300 transform hover:scale-105 backdrop-blur-md"
@@ -148,7 +151,9 @@ export default function Header() {
               <Link href="/#cta" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Contact</Link>
             </nav>
             <div className="pt-4 border-t border-yellow-400/10 space-y-3">
-              <Button variant="outline" className="w-full border-yellow-400/20 text-yellow-400/90 hover:bg-white/10 hover:border-yellow-400/30 backdrop-blur-md bg-white/5">Login</Button>
+              <LoginModal>
+                <Button variant="outline" className="w-full border-yellow-400/20 text-yellow-400/90 hover:bg-white/10 hover:border-yellow-400/30 backdrop-blur-md bg-white/5">Login</Button>
+              </LoginModal>
               <Link href="/book-session" className="block">
                 <Button className="w-full bg-gradient-to-r from-yellow-400/90 via-amber-500/90 to-orange-500/90 hover:from-yellow-400 hover:via-amber-500 hover:to-orange-500 text-[#1a2236] font-bold shadow-lg backdrop-blur-md">
                   <Sparkles className="mr-2 h-4 w-4" />

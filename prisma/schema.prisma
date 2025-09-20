@@ -28,6 +28,8 @@ model WebinarRegistration {
   preferredTime String
   createdAt    DateTime @default(now())
   approved     Boolean  @default(false)
+  // Track which admin approved this registration (null until approved)
+  adminEmail   String?
 }
 
 model AvailabilityDay {
@@ -38,11 +40,25 @@ model AvailabilityDay {
   times     Json
   // Program this availability is for (e.g., "Mathematics Tutoring", "Science Tutoring")
   program   String
+  // Admin email who created this availability
+  adminEmail String @default("acharya.folsom@gmail.com")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Combination of date and program should be unique
-  @@unique([date, program])
+  // Combination of date, program, and admin email should be unique
+  @@unique([date, program, adminEmail])
+}
+
+model Teacher {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  programs  String[] // List of programs the teacher manages
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  students TeacherStudent[]
 }
 
 model Student {
@@ -61,6 +77,21 @@ model Student {
   // Relations
   submissions Submission[]
   enrollments Enrollment[]
+  teacherLinks TeacherStudent[]
+}
+
+model TeacherStudent {
+  id         Int      @id @default(autoincrement())
+  teacherId  Int
+  studentId  Int
+  program    String
+  assignedAt DateTime @default(now())
+
+  // Relations
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, studentId, program])
 }
 
 model Assignment {
