@@ -66,7 +66,6 @@ export async function GET(request: NextRequest) {
         description: assignment.description,
         subject: assignment.subject,
         program: assignment.program,
-        grade: assignment.grade,
         dueDate: assignment.dueDate.toISOString().split('T')[0],
         totalPoints: assignment.totalPoints,
         status: submission ? 

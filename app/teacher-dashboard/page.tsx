@@ -1,11 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRequireAuth } from "../../contexts/AuthContext";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import AssignmentManager from "@/components/teacher/AssignmentManager";
+import SubmissionReviewer from "@/components/teacher/SubmissionReviewer";
 import { 
   User, 
   BookOpen, 
@@ -20,7 +23,11 @@ import {
   Phone,
   School,
   Award,
-  Plus
+  Plus,
+  CheckCircle,
+  AlertCircle,
+  LogOut,
+  RefreshCw
 } from "lucide-react";
 
 interface Student {
@@ -70,23 +77,38 @@ interface Assignment {
   totalPoints: number;
   isActive: boolean;
   createdAt: string;
-  submissionStats: {
-    total: number;
-    graded: number;
-    pending: number;
-    submissions: Array<{
+  instructions: string;
+  allowLateSubmission: boolean;
+  submissions: Array<{
+    id: number;
+    studentName?: string;
+    studentEmail?: string;
+    submittedAt: string;
+    grade: number | null;
+    status: string;
+    feedback: string | null;
+    student?: {
       id: number;
-      studentName: string;
-      studentEmail: string;
-      submittedAt: string;
-      grade: number | null;
-      status: string;
-      feedback: string | null;
-    }>;
+      name: string;
+      email: string;
+    };
+  }>;
+  resources: Array<{
+    id: number;
+    name: string;
+    url: string;
+    resource?: any;
+  }>;
+  _count?: {
+    submissions: number;
   };
 }
 
 export default function TeacherDashboard() {
+  // Authentication - require teacher role
+  const { user: authUser, isLoading: authLoading } = useRequireAuth('teacher');
+
+  // All state hooks must be declared first
   const [teacher, setTeacher] = useState<Teacher | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -96,28 +118,33 @@ export default function TeacherDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // For demo purposes, using a teacher email. In real app, this would come from authentication
-  const teacherEmail = "sarah.johnson@acharya.edu"; // You can change this to test different teachers
+  // Get teacher email from authenticated user
+  const teacherEmail = authUser?.email || "";
 
+  // All useEffect hooks must be declared before any conditional returns
   useEffect(() => {
-    fetchTeacherData();
-    fetchAssignments();
-  }, []);
+    if (authUser && teacherEmail) {
+      fetchTeacherData();
+      fetchAssignments();
+    }
+  }, [authUser, teacherEmail]); // Remove function deps to avoid infinite loop
 
+  // Fetch functions
   const fetchTeacherData = async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/teacher/students?teacherEmail=${encodeURIComponent(teacherEmail)}`);
       const data = await response.json();
       
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch teacher data');
+      if (response.ok && data.teacher) {
+        setTeacher(data.teacher);
+        setStudents(data.students || []);
+      } else {
+        setError(data.error || 'Failed to fetch teacher data');
       }
-      
-      setTeacher(data.teacher);
-      setStudents(data.students);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch data');
+      setError('Failed to fetch teacher data');
+      console.error('Error fetching teacher data:', err);
     } finally {
       setLoading(false);
     }
@@ -128,15 +155,27 @@ export default function TeacherDashboard() {
       const response = await fetch(`/api/teacher/assignments?teacherEmail=${encodeURIComponent(teacherEmail)}`);
       const data = await response.json();
       
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch assignments');
+      if (data.success) {
+        setAssignments(data.assignments);
+      } else {
+        console.error('Failed to fetch assignments:', data.error);
       }
-      
-      setAssignments(data.assignments);
     } catch (err) {
       console.error('Error fetching assignments:', err);
     }
   };
+
+  // Early return for authentication loading (AFTER all hooks)
+  if (authLoading || !authUser) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="flex items-center gap-2">
+          <RefreshCw className="h-6 w-6 animate-spin" />
+          <span>Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   // Filter students by selected program and search
   const filteredStudents = students.filter(
@@ -210,60 +249,26 @@ export default function TeacherDashboard() {
               onChange={(e) => setSearch(e.target.value)}
               className="w-64"
             />
+            <Button
+              variant="outline"
+              onClick={async () => {
+                try {
+                  await fetch('/api/auth/logout', { 
+                    method: 'POST',
+                    credentials: 'include'
+                  });
+                  window.location.href = '/';
+                } catch (error) {
+                  console.error('Logout failed:', error);
+                  window.location.href = '/';
+                }
+              }}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
           </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Students</p>
-                  <p className="text-2xl font-bold text-blue-600">{students.length}</p>
-                </div>
-                <Users className="h-8 w-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Active Assignments</p>
-                  <p className="text-2xl font-bold text-green-600">{assignments.filter(a => a.isActive).length}</p>
-                </div>
-                <FileText className="h-8 w-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Programs</p>
-                  <p className="text-2xl font-bold text-purple-600">{teacher.programs.length}</p>
-                </div>
-                <BookOpen className="h-8 w-8 text-purple-500" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Pending Reviews</p>
-                  <p className="text-2xl font-bold text-orange-600">
-                    {assignments.reduce((sum, a) => sum + a.submissionStats.pending, 0)}
-                  </p>
-                </div>
-                <Clock className="h-8 w-8 text-orange-500" />
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Main Content Tabs */}
@@ -271,17 +276,84 @@ export default function TeacherDashboard() {
           <TabsList className="mb-6">
             <TabsTrigger value="students">Students</TabsTrigger>
             <TabsTrigger value="assignments">Assignments</TabsTrigger>
+            <TabsTrigger value="submissions">Submissions</TabsTrigger>
           </TabsList>
 
-          {/* Program Filter Tabs */}
-          <Tabs value={selectedProgram || "all"} onValueChange={v => setSelectedProgram(v === "all" ? null : v)} className="mb-6">
-            <TabsList className="flex flex-wrap gap-2">
-              <TabsTrigger value="all">All Programs</TabsTrigger>
-              {teacher.programs.map((program) => (
-                <TabsTrigger key={program} value={program}>{program}</TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+          {/* Overview Tab */}
+          <TabsContent value="overview">
+            <div className="space-y-6">
+              {/* Program Filter */}
+              <Tabs value={selectedProgram || "all"} onValueChange={v => setSelectedProgram(v === "all" ? null : v)}>
+                <TabsList className="flex flex-wrap gap-2">
+                  <TabsTrigger value="all">All Programs</TabsTrigger>
+                  {teacher?.programs.map((program) => (
+                    <TabsTrigger key={program} value={program}>{program}</TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+
+              {/* Recent Activity */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5" />
+                      Recent Student Activity
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {students.slice(0, 5).map((student) => (
+                        <div key={student.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
+                          <div className="flex items-center gap-3">
+                            <User className="h-4 w-4 text-gray-400" />
+                            <div>
+                              <p className="text-sm font-medium">{student.name}</p>
+                              <p className="text-xs text-gray-500">{student.program}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-gray-500">
+                              {student.recentSubmissions.length} submissions
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Assignment Status
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {assignments.slice(0, 5).map((assignment) => (
+                        <div key={assignment.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
+                          <div>
+                            <p className="text-sm font-medium">{assignment.title}</p>
+                            <p className="text-xs text-gray-500">{assignment.subject}</p>
+                          </div>
+                          <div className="text-right">
+                            <div className="flex items-center gap-2">
+                              <CheckCircle className="h-3 w-3 text-green-500" />
+                              <span className="text-xs">{assignment.submissions?.filter(s => s.grade !== null).length || 0}</span>
+                              <AlertCircle className="h-3 w-3 text-orange-500" />
+                              <span className="text-xs">{assignment.submissions?.filter(s => s.grade === null).length || 0}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
 
           {/* Students Tab */}
           <TabsContent value="students">
@@ -361,95 +433,17 @@ export default function TeacherDashboard() {
 
           {/* Assignments Tab */}
           <TabsContent value="assignments">
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Assignments</h2>
-                <Button className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Create Assignment
-                </Button>
-              </div>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {filteredAssignments.length === 0 && (
-                  <div className="col-span-full text-center text-gray-400 py-12">
-                    No assignments found.
-                  </div>
-                )}
-                {filteredAssignments.map((assignment) => (
-                  <Card key={assignment.id} className="hover:shadow-lg transition-shadow">
-                    <CardHeader>
-                      <CardTitle className="flex items-center justify-between">
-                        <span className="flex items-center gap-2">
-                          <FileText className="h-5 w-5 text-blue-500" />
-                          {assignment.title}
-                        </span>
-                        <Badge variant={assignment.isActive ? "default" : "secondary"}>
-                          {assignment.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                      </CardTitle>
-                      <div className="text-sm text-gray-600">{assignment.description}</div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {/* Assignment Info */}
-                        <div className="flex flex-wrap gap-2">
-                          <Badge variant="outline" className="bg-purple-50 text-purple-700">
-                            {assignment.program}
-                          </Badge>
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                            {assignment.subject}
-                          </Badge>
-                          <Badge variant="outline" className="bg-green-50 text-green-700">
-                            {assignment.grade}
-                          </Badge>
-                        </div>
-                        
-                        {/* Due Date and Points */}
-                        <div className="flex justify-between text-sm text-gray-600">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            Due: {new Date(assignment.dueDate).toLocaleDateString()}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Award className="h-4 w-4" />
-                            {assignment.totalPoints} pts
-                          </div>
-                        </div>
-                        
-                        {/* Submission Stats */}
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <div className="text-sm font-medium text-gray-700 mb-2">Submission Stats:</div>
-                          <div className="grid grid-cols-3 gap-4 text-xs">
-                            <div className="text-center">
-                              <div className="font-bold text-blue-600">{assignment.submissionStats.total}</div>
-                              <div className="text-gray-500">Total</div>
-                            </div>
-                            <div className="text-center">
-                              <div className="font-bold text-green-600">{assignment.submissionStats.graded}</div>
-                              <div className="text-gray-500">Graded</div>
-                            </div>
-                            <div className="text-center">
-                              <div className="font-bold text-orange-600">{assignment.submissionStats.pending}</div>
-                              <div className="text-gray-500">Pending</div>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" className="flex-1">
-                            View Submissions
-                          </Button>
-                          <Button size="sm" variant="outline" className="flex-1">
-                            Edit Assignment
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
+            <AssignmentManager 
+              teacherEmail={teacherEmail}
+              assignments={assignments}
+              onAssignmentCreated={fetchAssignments}
+              onAssignmentUpdated={fetchAssignments}
+            />
+          </TabsContent>
+
+          {/* Submissions Tab */}
+          <TabsContent value="submissions">
+            <SubmissionReviewer teacherEmail={teacherEmail} />
           </TabsContent>
         </Tabs>
       </div>

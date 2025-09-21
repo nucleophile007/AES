@@ -1,40 +1,158 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '../../../../generated/prisma/index.js';
+import { PrismaClient } from '../../../../generated/prisma';
+import { deleteR2File, extractFileKeyFromUrl } from '../../../../lib/r2';
 
 const prisma = new PrismaClient();
 
-export async function POST(request: NextRequest) {
+// GET: Fetch submissions for a student or specific submission
+export async function GET(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { studentId, assignmentId, content, fileUrl } = body;
+    const { searchParams } = new URL(request.url);
+    const studentEmail = searchParams.get('studentEmail');
+    const assignmentId = searchParams.get('assignmentId');
+    const submissionId = searchParams.get('submissionId');
 
-    if (!studentId || !assignmentId) {
+    if (!studentEmail) {
       return NextResponse.json(
-        { error: 'Student ID and Assignment ID are required' },
+        { success: false, error: 'Student email is required' },
         { status: 400 }
       );
     }
 
-    // Check if student exists
+    // Find student
     const student = await prisma.student.findUnique({
-      where: { id: parseInt(studentId) }
+      where: { email: studentEmail }
     });
 
     if (!student) {
       return NextResponse.json(
-        { error: 'Student not found' },
+        { success: false, error: 'Student not found' },
         { status: 404 }
       );
     }
 
-    // Check if assignment exists
+    // If requesting specific submission
+    if (submissionId) {
+      const submission = await prisma.submission.findFirst({
+        where: {
+          id: parseInt(submissionId),
+          studentId: student.id
+        },
+        include: {
+          assignment: {
+            include: {
+              resources: {
+                include: {
+                  resource: true
+                }
+              }
+            }
+          }
+        }
+      });
+
+      if (!submission) {
+        return NextResponse.json(
+          { success: false, error: 'Submission not found' },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        submission
+      });
+    }
+
+    // Build filters
+    const filters: any = {
+      studentId: student.id
+    };
+
+    if (assignmentId) {
+      filters.assignmentId = parseInt(assignmentId);
+    }
+
+    // Get submissions with assignment details
+    const submissions = await prisma.submission.findMany({
+      where: filters,
+      include: {
+        assignment: {
+          include: {
+            resources: {
+              include: {
+                resource: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        submittedAt: 'desc'
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      submissions
+    });
+
+  } catch (error) {
+    console.error('Error fetching submissions:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch submissions' },
+      { status: 500 }
+    );
+  }
+}
+
+// POST: Create new submission
+export async function POST(request: NextRequest) {
+  try {
+    const data = await request.json();
+    const {
+      studentEmail,
+      assignmentId,
+      content,
+      fileUrl,
+      fileName,
+      fileSize
+    } = data;
+
+    if (!studentEmail || !assignmentId) {
+      return NextResponse.json(
+        { success: false, error: 'Student email and assignment ID are required' },
+        { status: 400 }
+      );
+    }
+
+    if (!content && !fileUrl) {
+      return NextResponse.json(
+        { success: false, error: 'Either content or file submission is required' },
+        { status: 400 }
+      );
+    }
+
+    // Find student
+    const student = await prisma.student.findUnique({
+      where: { email: studentEmail }
+    });
+
+    if (!student) {
+      return NextResponse.json(
+        { success: false, error: 'Student not found' },
+        { status: 404 }
+      );
+    }
+
+    // Find assignment
     const assignment = await prisma.assignment.findUnique({
       where: { id: parseInt(assignmentId) }
     });
 
     if (!assignment) {
       return NextResponse.json(
-        { error: 'Assignment not found' },
+        { success: false, error: 'Assignment not found' },
         { status: 404 }
       );
     }
@@ -43,7 +161,7 @@ export async function POST(request: NextRequest) {
     const existingSubmission = await prisma.submission.findUnique({
       where: {
         studentId_assignmentId: {
-          studentId: parseInt(studentId),
+          studentId: student.id,
           assignmentId: parseInt(assignmentId)
         }
       }
@@ -51,192 +169,172 @@ export async function POST(request: NextRequest) {
 
     if (existingSubmission) {
       return NextResponse.json(
-        { error: 'Assignment already submitted' },
+        { success: false, error: 'Assignment already submitted. Use resubmit to update.' },
         { status: 400 }
       );
     }
 
-    // Create the submission
+    // Check deadline
+    const now = new Date();
+    const deadline = new Date(assignment.dueDate);
+    
+    if (now > deadline && !assignment.allowLateSubmission) {
+      return NextResponse.json(
+        { success: false, error: 'Assignment deadline has passed' },
+        { status: 400 }
+      );
+    }
+
+    // Create submission
     const submission = await prisma.submission.create({
       data: {
-        studentId: parseInt(studentId),
+        studentId: student.id,
         assignmentId: parseInt(assignmentId),
         content: content || null,
         fileUrl: fileUrl || null,
-        status: 'submitted'
+        fileName: fileName || null,
+        fileSize: fileSize ? parseInt(fileSize) : null,
+        status: now > deadline ? 'late' : 'submitted',
+        submissionNumber: 1
       },
       include: {
-        assignment: true,
-        student: true
+        assignment: {
+          select: { id: true, title: true, dueDate: true, totalPoints: true }
+        }
       }
     });
 
     return NextResponse.json({
       success: true,
-      submission: {
-        id: submission.id,
-        assignmentId: submission.assignmentId,
-        assignmentTitle: submission.assignment.title,
-        content: submission.content,
-        fileUrl: submission.fileUrl,
-        submittedAt: submission.submittedAt.toISOString(),
-        status: submission.status,
-        studentName: submission.student.name
-      }
+      submission,
+      message: 'Submission created successfully'
     });
 
   } catch (error) {
     console.error('Error creating submission:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: false, error: 'Failed to create submission' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
+// PUT: Update/resubmit submission
 export async function PUT(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { submissionId, content, fileUrl } = body;
+    const data = await request.json();
+    const {
+      studentEmail,
+      assignmentId,
+      content,
+      fileUrl,
+      fileName,
+      fileSize
+    } = data;
 
-    if (!submissionId) {
+    if (!studentEmail || !assignmentId) {
       return NextResponse.json(
-        { error: 'Submission ID is required' },
+        { success: false, error: 'Student email and assignment ID are required' },
         { status: 400 }
       );
     }
 
-    // Check if submission exists
+    // Find student
+    const student = await prisma.student.findUnique({
+      where: { email: studentEmail }
+    });
+
+    if (!student) {
+      return NextResponse.json(
+        { success: false, error: 'Student not found' },
+        { status: 404 }
+      );
+    }
+
+    // Find existing submission
     const existingSubmission = await prisma.submission.findUnique({
-      where: { id: parseInt(submissionId) },
+      where: {
+        studentId_assignmentId: {
+          studentId: student.id,
+          assignmentId: parseInt(assignmentId)
+        }
+      },
       include: {
-        assignment: true,
-        student: true
+        assignment: true
       }
     });
 
     if (!existingSubmission) {
       return NextResponse.json(
-        { error: 'Submission not found' },
+        { success: false, error: 'No existing submission found. Create a new submission first.' },
         { status: 404 }
       );
     }
 
-    // Check if assignment deadline has passed
-    const deadline = new Date(existingSubmission.assignment.dueDate);
+    // Check if resubmission is allowed
     const now = new Date();
+    const deadline = new Date(existingSubmission.assignment.dueDate);
     
-    if (now > deadline) {
+    if (now > deadline && !existingSubmission.assignment.allowLateSubmission) {
       return NextResponse.json(
-        { error: 'Cannot resubmit after deadline' },
+        { success: false, error: 'Cannot resubmit after deadline' },
         { status: 400 }
       );
     }
 
-    // Check if submission has already been graded
+    // Check if already graded
     if (existingSubmission.grade !== null) {
       return NextResponse.json(
-        { error: 'Cannot resubmit a graded assignment' },
+        { success: false, error: 'Cannot resubmit graded assignment' },
         { status: 400 }
       );
     }
 
-    // Update the submission
+    // If replacing file, delete old file from R2
+    if (fileUrl && existingSubmission.fileUrl && fileUrl !== existingSubmission.fileUrl) {
+      const oldFileKey = extractFileKeyFromUrl(existingSubmission.fileUrl);
+      if (oldFileKey) {
+        await deleteR2File(oldFileKey);
+      }
+    }
+
+    // Update submission
+    const updateData: any = {
+      submissionNumber: existingSubmission.submissionNumber + 1,
+      status: now > deadline ? 'late_resubmitted' : 'resubmitted'
+    };
+
+    if (content !== undefined) updateData.content = content;
+    if (fileUrl !== undefined) updateData.fileUrl = fileUrl;
+    if (fileName !== undefined) updateData.fileName = fileName;
+    if (fileSize !== undefined) updateData.fileSize = fileSize ? parseInt(fileSize) : null;
+
     const updatedSubmission = await prisma.submission.update({
-      where: { id: parseInt(submissionId) },
-      data: {
-        content: content || existingSubmission.content,
-        fileUrl: fileUrl || existingSubmission.fileUrl,
-        submittedAt: new Date(), // Update submission timestamp
-        status: 'submitted'
+      where: {
+        studentId_assignmentId: {
+          studentId: student.id,
+          assignmentId: parseInt(assignmentId)
+        }
       },
+      data: updateData,
       include: {
-        assignment: true,
-        student: true
+        assignment: {
+          select: { id: true, title: true, dueDate: true, totalPoints: true }
+        }
       }
     });
 
     return NextResponse.json({
       success: true,
-      submission: {
-        id: updatedSubmission.id,
-        assignmentId: updatedSubmission.assignmentId,
-        assignmentTitle: updatedSubmission.assignment.title,
-        content: updatedSubmission.content,
-        fileUrl: updatedSubmission.fileUrl,
-        submittedAt: updatedSubmission.submittedAt.toISOString(),
-        status: updatedSubmission.status,
-        studentName: updatedSubmission.student.name,
-        grade: updatedSubmission.grade,
-        totalPoints: updatedSubmission.assignment.totalPoints,
-        feedback: updatedSubmission.feedback
-      }
+      submission: updatedSubmission,
+      message: 'Submission updated successfully'
     });
 
   } catch (error) {
     console.error('Error updating submission:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: false, error: 'Failed to update submission' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
-  }
-}
-
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const studentId = searchParams.get('studentId');
-
-    if (!studentId) {
-      return NextResponse.json(
-        { error: 'Student ID is required' },
-        { status: 400 }
-      );
-    }
-
-    // Get all submissions for the student
-    const submissions = await prisma.submission.findMany({
-      where: {
-        studentId: parseInt(studentId)
-      },
-      include: {
-        assignment: true
-      },
-      orderBy: {
-        submittedAt: 'desc'
-      }
-    });
-
-    const submissionsWithDetails = submissions.map(submission => ({
-      id: submission.id,
-      assignmentId: submission.assignmentId,
-      assignmentTitle: submission.assignment.title,
-      assignmentSubject: submission.assignment.subject,
-      content: submission.content,
-      fileUrl: submission.fileUrl,
-      submittedAt: submission.submittedAt.toISOString().split('T')[0],
-      grade: submission.grade,
-      totalPoints: submission.assignment.totalPoints,
-      feedback: submission.feedback,
-      status: submission.status
-    }));
-
-    return NextResponse.json({
-      success: true,
-      submissions: submissionsWithDetails
-    });
-
-  } catch (error) {
-    console.error('Error fetching submissions:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  } finally {
-    await prisma.$disconnect();
   }
 }

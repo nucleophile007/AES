@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { QueryProvider } from "./providers/query-provider";
+import { AuthProvider } from "../contexts/AuthContext";
 
 export const metadata: Metadata = {
   title: "ACHARYA Educational Services",
@@ -25,11 +26,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-background font-sans antialiased">
-        <QueryProvider>
-          {children}
-          <Toaster />
-          <Sonner />
-        </QueryProvider>
+        <AuthProvider>
+          <QueryProvider>
+            {children}
+            <Toaster />
+            <Sonner />
+          </QueryProvider>
+        </AuthProvider>
       </body>
     </html>
   );

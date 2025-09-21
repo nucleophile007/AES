@@ -1,7 +1,9 @@
 "use client";
 
+"use client";
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useRequireAuth } from "../../contexts/AuthContext";
 import {
   SidebarProvider,
   Sidebar,
@@ -57,8 +59,10 @@ import {
   Award,
   Bookmark,
   RefreshCw,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ResourceLibrary from "@/components/student/ResourceLibrary";
 
 // Mock data - replace with actual API calls
 const mockUpcomingEvents = [
@@ -107,6 +111,7 @@ interface Assignment {
   totalPoints: number;
   status: string;
   submissionId?: number | null;
+  resources?: Array<any>; // Add this line to allow resources property
 }
 
 interface Submission {
@@ -116,14 +121,19 @@ interface Submission {
   assignmentSubject: string;
   content?: string;
   fileUrl?: string;
+  fileName?: string; // Added fileName property
+  fileSize?: number; // Optionally add fileSize if used elsewhere
   submittedAt: string;
-  grade?: number;
+  grade?: number | null;
   totalPoints: number;
   feedback?: string;
   status: string;
 }
 
 export default function StudentDashboard() {
+  // Authentication - require student role
+  const { user: authUser, isLoading: authLoading } = useRequireAuth('student');
+
   const [activeTab, setActiveTab] = useState("overview");
   const [student, setStudent] = useState<Student | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -137,8 +147,51 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   
-  // For demo purposes, using a student email. In real app, this would come from authentication
-  const studentEmail = "alex.thompson@student.com"; // You can change this to test different students
+  // Get student email from authenticated user
+  const studentEmail = authUser?.email || "";
+
+  // Fetch initial data - Move this hook before any conditional returns
+  useEffect(() => {
+    // Only fetch data if we have a student email and auth is complete
+    if (!authLoading && authUser && studentEmail) {
+      const fetchData = async () => {
+        try {
+          setLoading(true);
+          
+          // Fetch student dashboard data
+          const response = await fetch(`/api/student/dashboard?studentEmail=${encodeURIComponent(studentEmail)}`);
+          const data = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(data.error || 'Failed to fetch student data');
+          }
+          
+          setStudent(data.student);
+          setAssignments(data.assignments);
+          setSubmissions(data.submissions);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+          console.error("Error fetching data:", err);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchData();
+    }
+  }, [authLoading, authUser, studentEmail]);
+
+  // Early return for authentication loading
+  if (authLoading || !authUser) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="flex items-center gap-2">
+          <RefreshCw className="h-6 w-6 animate-spin" />
+          <span>Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -155,34 +208,6 @@ export default function StudentDashboard() {
     }
   };
 
-  // Fetch initial data
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        
-        // Fetch student dashboard data
-        const response = await fetch(`/api/student/dashboard?studentEmail=${encodeURIComponent(studentEmail)}`);
-        const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to fetch student data');
-        }
-        
-        setStudent(data.student);
-        setAssignments(data.assignments);
-        setSubmissions(data.submissions);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
-        console.error("Error fetching data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [studentEmail]);
-
   const handleSubmission = async () => {
     if (!selectedAssignment || !student) return;
     
@@ -191,24 +216,69 @@ export default function StudentDashboard() {
     try {
       let fileUrl = null;
       
-      // Upload file if provided
+      // Upload file to R2 if provided
       if (submissionFile) {
-        const formData = new FormData();
-        formData.append('file', submissionFile);
-        formData.append('studentId', student.id.toString());
-        formData.append('assignmentId', selectedAssignment.id.toString());
-        
-        const uploadResponse = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-        
-        const uploadData = await uploadResponse.json();
-        
-        if (uploadData.success) {
-          fileUrl = uploadData.fileUrl;
-        } else {
-          throw new Error(uploadData.error || 'File upload failed');
+        try {
+          // Method 1: Try direct upload with presigned URL
+          const presignedResponse = await fetch('/api/r2-upload', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              studentId: student.id,
+              assignmentId: selectedAssignment.id,
+              fileName: submissionFile.name,
+              fileType: submissionFile.type,
+              fileSize: submissionFile.size,
+            }),
+          });
+          
+          const presignedData = await presignedResponse.json();
+          
+          if (!presignedData.success) {
+            throw new Error(presignedData.error || 'Failed to get upload URL');
+          }
+          
+          // Try direct upload to R2
+          const uploadResponse = await fetch(presignedData.presignedUrl, {
+            method: 'PUT',
+            body: submissionFile,
+            headers: {
+              'Content-Type': submissionFile.type,
+            },
+          });
+          
+          if (!uploadResponse.ok) {
+            throw new Error('Direct upload failed, trying server upload...');
+          }
+          
+          fileUrl = presignedData.publicUrl;
+          
+        } catch (directUploadError) {
+          console.log('Direct upload failed, trying server-side upload:', directUploadError);
+          
+          // Method 2: Fallback to server-side upload
+          const formData = new FormData();
+          formData.append('file', submissionFile);
+          formData.append('studentId', student.id.toString());
+          formData.append('assignmentId', selectedAssignment.id.toString());
+          
+          const serverUploadResponse = await fetch('/api/upload-r2', {
+            method: 'POST',
+            body: formData,
+          });
+          
+          const serverUploadData = await serverUploadResponse.json();
+          
+          console.log('Server upload response:', serverUploadData);
+          
+          if (serverUploadData.success) {
+            fileUrl = serverUploadData.fileUrl;
+          } else {
+            console.error('Server upload failed:', serverUploadData);
+            throw new Error(`Server upload failed: ${serverUploadData.error || 'Unknown error'}`);
+          }
         }
       }
       
@@ -219,15 +289,20 @@ export default function StudentDashboard() {
       
       const requestBody = isResubmitting && resubmissionId
         ? {
-            submissionId: resubmissionId,
-            content: submissionText,
-            fileUrl,
-          }
-        : {
-            studentId: student.id,
+            studentEmail: student.email,
             assignmentId: selectedAssignment.id,
             content: submissionText,
             fileUrl,
+            fileName: submissionFile?.name,
+            fileSize: submissionFile?.size,
+          }
+        : {
+            studentEmail: student.email,
+            assignmentId: selectedAssignment.id,
+            content: submissionText,
+            fileUrl,
+            fileName: submissionFile?.name,
+            fileSize: submissionFile?.size,
           };
 
       const submissionResponse = await fetch(endpoint, {
@@ -370,10 +445,10 @@ export default function StudentDashboard() {
     const assignment = assignments.find(a => a.id === submission.assignmentId);
     if (!assignment) return false;
     
-    // Can resubmit if deadline hasn't passed and submission is completed (but not graded yet)
+    // Can resubmit if deadline hasn't passed and submission is submitted (but not graded yet)
     return !isDeadlinePassed(assignment.dueDate) && 
-           submission.status === 'completed' && 
-           submission.grade === undefined;
+           submission.status === 'submitted' && 
+           submission.grade === null;
   };
 
   const getGradeColor = (percentage: number) => {
@@ -532,6 +607,26 @@ export default function StudentDashboard() {
                   <span>Settings</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={async () => {
+                    try {
+                      await fetch('/api/auth/logout', { 
+                        method: 'POST',
+                        credentials: 'include'
+                      });
+                      window.location.href = '/';
+                    } catch (error) {
+                      console.error('Logout failed:', error);
+                      window.location.href = '/';
+                    }
+                  }}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarFooter>
         </Sidebar>
@@ -599,7 +694,7 @@ export default function StudentDashboard() {
                           </div>
                           <div>
                             <p className="text-sm text-gray-600">Completed</p>
-                            <p className="text-2xl font-bold">{submissions.filter(s => s.status === "completed").length}</p>
+                            <p className="text-2xl font-bold">{submissions.filter(s => s.grade !== null && s.grade !== undefined).length}</p>
                           </div>
                         </div>
                       </CardContent>
@@ -614,10 +709,10 @@ export default function StudentDashboard() {
                           <div>
                             <p className="text-sm text-gray-600">Average Grade</p>
                             <p className="text-2xl font-bold">
-                              {submissions.filter(s => s.status === 'completed' && s.grade).length > 0 
-                                ? Math.round(submissions.filter(s => s.status === 'completed' && s.grade)
+                              {submissions.filter(s => s.grade !== null && s.grade !== undefined).length > 0 
+                                ? Math.round(submissions.filter(s => s.grade !== null && s.grade !== undefined)
                                     .reduce((acc, s) => acc + (s.grade || 0), 0) / 
-                                    submissions.filter(s => s.status === 'completed' && s.grade).length) + '%'
+                                    submissions.filter(s => s.grade !== null && s.grade !== undefined).length) + '%'
                                 : 'N/A'}
                             </p>
                           </div>
@@ -711,7 +806,7 @@ export default function StudentDashboard() {
                       const deadlinePassed = isDeadlinePassed(assignment.dueDate);
                       const canResubmitAssignment = existingSubmission && 
                                                    !deadlinePassed && 
-                                                   existingSubmission.grade === undefined;
+                                                   existingSubmission.grade === null;
                       
                       return (
                       <Card key={assignment.id} className="hover:shadow-md transition-shadow">
@@ -723,6 +818,24 @@ export default function StudentDashboard() {
                                 {existingSubmission ? getStatusBadge(existingSubmission.status) : getStatusBadge("pending")}
                               </div>
                               <p className="text-gray-600 mb-3">{assignment.description}</p>
+                              
+                              {/* Resource indicator */}
+                              {assignment.resources && assignment.resources.length > 0 && (
+                                <div className="flex items-center gap-2 mb-3">
+                                  <BookOpen className="h-4 w-4 text-blue-500" />
+                                  <span className="text-sm text-blue-600">
+                                    {assignment.resources.length} resource{assignment.resources.length !== 1 ? 's' : ''} available
+                                  </span>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-6 px-2 text-xs"
+                                    onClick={() => setActiveTab("resources")}
+                                  >
+                                    View Resources
+                                  </Button>
+                                </div>
+                              )}
                               <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
                                 <span className="flex items-center gap-1">
                                   <BookOpen className="h-4 w-4" />
@@ -930,7 +1043,6 @@ export default function StudentDashboard() {
                     {submissions.map((submission) => {
                       const assignment = assignments.find(a => a.id === submission.assignmentId);
                       const deadlinePassed = assignment ? isDeadlinePassed(assignment.dueDate) : true;
-                      const canResubmitThis = canResubmit(submission);
                       
                       return (
                         <Card key={submission.id}>
@@ -939,106 +1051,162 @@ export default function StudentDashboard() {
                             <div className="flex-1">
                               <h3 className="text-lg font-semibold">{submission.assignmentTitle}</h3>
                               <p className="text-sm text-gray-600">
-                                Submitted on {submission.submittedAt}
+                                Submitted on {new Date(submission.submittedAt).toLocaleDateString('en-US', {
+                                  year: 'numeric',
+                                  month: 'long', 
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
                               </p>
                               {assignment && (
                                 <p className="text-sm text-gray-500 mt-1">
-                                  Due: {assignment.dueDate} 
-                                  {deadlinePassed && <span className="text-red-500 ml-2">(Deadline passed)</span>}
-                                  {!deadlinePassed && <span className="text-green-500 ml-2">(Still accepting submissions)</span>}
+                                  Due: {new Date(assignment.dueDate).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                  })}
+                                  {deadlinePassed && <span className="text-red-500 ml-2">(Submitted after deadline)</span>}
+                                  {!deadlinePassed && <span className="text-green-500 ml-2">(Submitted on time)</span>}
                                 </p>
+                              )}
+                              {assignment && (
+                                <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
+                                  <span className="flex items-center gap-1">
+                                    <BookOpen className="h-4 w-4" />
+                                    {assignment.subject}
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <Star className="h-4 w-4" />
+                                    {assignment.totalPoints} points
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <RefreshCw className="h-4 w-4" />
+                                    Submission #{submission.id}
+                                  </span>
+                                </div>
                               )}
                             </div>
                             <div className="flex items-center gap-2">
                               {getStatusBadge(submission.status)}
-                              {canResubmitThis && (
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <Button variant="outline" size="sm" onClick={() => handleResubmission(submission)}>
-                                      <RefreshCw className="h-4 w-4 mr-2" />
-                                      Resubmit
-                                    </Button>
-                                  </DialogTrigger>
-                                  <DialogContent className="max-w-2xl">
-                                    <DialogHeader>
-                                      <DialogTitle>Resubmit Assignment: {selectedAssignment?.title}</DialogTitle>
-                                      <p className="text-sm text-gray-600">
-                                        You can resubmit this assignment until the deadline. Your previous submission will be replaced.
-                                      </p>
-                                    </DialogHeader>
-                                    <div className="space-y-4">
-                                      <div className="space-y-2">
-                                        <Label htmlFor="resubmission">Updated Response</Label>
-                                        <Textarea
-                                          id="resubmission"
-                                          placeholder="Enter your updated assignment response here..."
-                                          value={submissionText}
-                                          onChange={(e) => setSubmissionText(e.target.value)}
-                                          rows={6}
-                                        />
-                                      </div>
-                                      <div className="space-y-2">
-                                        <Label htmlFor="resubmit-file">File Upload (Optional)</Label>
-                                        <Input
-                                          id="resubmit-file"
-                                          type="file"
-                                          accept=".pdf,.doc,.docx,.txt,.jpg,.png"
-                                          onChange={(e) => setSubmissionFile(e.target.files?.[0] || null)}
-                                        />
-                                        <p className="text-xs text-gray-500">
-                                          Accepted formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB)
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <DialogFooter>
-                                      <Button
-                                        onClick={handleSubmission}
-                                        disabled={isSubmitting || (!submissionText.trim() && !submissionFile)}
-                                      >
-                                        {isSubmitting ? (
-                                          <>
-                                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                            Resubmitting...
-                                          </>
-                                        ) : (
-                                          <>
-                                            <RefreshCw className="h-4 w-4 mr-2" />
-                                            Resubmit Assignment
-                                          </>
-                                        )}
-                                      </Button>
-                                    </DialogFooter>
-                                  </DialogContent>
-                                </Dialog>
-                              )}
                             </div>
                           </div>
                           
-                          {submission.grade !== undefined && (
+                          {/* Submission Content */}
+                          {submission.content && (
+                            <div className="mb-4">
+                              <h4 className="text-sm font-medium text-gray-700 mb-2">Written Response:</h4>
+                              <div className="bg-gray-50 p-4 rounded-lg">
+                                <p className="text-sm text-gray-800 whitespace-pre-wrap">{submission.content}</p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* File Attachment */}
+                          {submission.fileUrl && submission.fileName && (
+                            <div className="mb-4">
+                              <h4 className="text-sm font-medium text-gray-700 mb-2">File Attachment:</h4>
+                              <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-blue-100 rounded-lg">
+                                      <FileText className="h-5 w-5 text-blue-600" />
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-medium text-blue-900">{submission.fileName}</p>
+                                      {submission.fileSize && (
+                                        <p className="text-xs text-blue-700">
+                                          {(submission.fileSize / 1024 / 1024).toFixed(2)} MB
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => window.open(submission.fileUrl, '_blank')}
+                                    >
+                                      <Eye className="h-4 w-4 mr-2" />
+                                      View
+                                    </Button>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => {
+                                        const link = document.createElement('a');
+                                        if (submission.fileUrl) {
+                                          link.href = submission.fileUrl;
+                                          link.download = submission.fileName ?? "download";
+                                          link.click();
+                                        }
+                                      }}
+                                    >
+                                      <Download className="h-4 w-4 mr-2" />
+                                      Download
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Grade Display */}
+                          {submission.grade !== null && submission.grade !== undefined && assignment && (
                             <div className="mb-4">
                               <div className="flex items-center gap-2 mb-2">
                                 <span className="text-sm text-gray-600">Grade:</span>
-                                <span className={cn("text-lg font-bold", getGradeColor(calculateGradePercentage(submission.grade, submission.totalPoints)))}>
-                                  {submission.grade}/{submission.totalPoints} ({calculateGradePercentage(submission.grade, submission.totalPoints)}%)
+                                <span className={cn("text-lg font-bold", getGradeColor(calculateGradePercentage(submission.grade, assignment.totalPoints)))}>
+                                  {submission.grade}/{assignment.totalPoints} ({calculateGradePercentage(submission.grade, assignment.totalPoints)}%)
                                 </span>
                               </div>
                               <Progress 
-                                value={calculateGradePercentage(submission.grade, submission.totalPoints)} 
+                                value={calculateGradePercentage(submission.grade, assignment.totalPoints)} 
                                 className="h-2"
                               />
                             </div>
                           )}
-                          
+
+                          {/* Teacher Feedback */}
                           {submission.feedback && (
                             <div className="bg-blue-50 p-4 rounded-lg">
                               <p className="text-sm font-medium text-blue-900 mb-1">Teacher Feedback:</p>
-                              <p className="text-sm text-blue-800">{submission.feedback}</p>
+                              <p className="text-sm text-blue-800 whitespace-pre-wrap">{submission.feedback}</p>
                             </div>
                           )}
+
+                          {/* Submission Status Info */}
+                          <div className="mt-4 pt-4 border-t border-gray-200">
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <span>Submission ID: #{submission.id}</span>
+                              <span>
+                                {submission.grade !== null && submission.grade !== undefined ? 'Graded' : 'Awaiting Review'}
+                              </span>
+                            </div>
+                          </div>
                         </CardContent>
                       </Card>
                       );
                     })}
+
+                    {submissions.length === 0 && (
+                      <Card>
+                        <CardContent className="p-8 text-center">
+                          <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <h3 className="text-lg font-medium text-gray-900 mb-2">No Submissions Yet</h3>
+                          <p className="text-gray-600 mb-4">
+                            You haven&apos;t submitted any assignments yet. 
+                          </p>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setActiveTab("assignments")}
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            View Assignments
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    )}
                   </div>
                 </div>
               )}
@@ -1249,35 +1417,7 @@ export default function StudentDashboard() {
               )}
 
               {activeTab === "resources" && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold">Learning Resources</h2>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {[
-                      { title: "Math Formula Sheet", type: "PDF", size: "2.3 MB", subject: "Mathematics" },
-                      { title: "Science Lab Manual", type: "PDF", size: "5.1 MB", subject: "Science" },
-                      { title: "SAT Practice Questions", type: "PDF", size: "1.8 MB", subject: "SAT Prep" },
-                      { title: "Study Guide Templates", type: "DOCX", size: "0.9 MB", subject: "General" },
-                      { title: "Video Tutorials Playlist", type: "Link", size: "Online", subject: "All Subjects" },
-                      { title: "Previous Assignments", type: "Folder", size: "Multiple", subject: "All Subjects" },
-                    ].map((resource, index) => (
-                      <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer">
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-3">
-                            <div className="p-2 bg-blue-100 rounded-lg">
-                              <Download className="h-5 w-5 text-blue-600" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm truncate">{resource.title}</p>
-                              <p className="text-xs text-gray-600">{resource.subject}</p>
-                              <p className="text-xs text-gray-500">{resource.type} • {resource.size}</p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
+                <ResourceLibrary studentEmail={studentEmail} />
               )}
 
               {activeTab === "messages" && (

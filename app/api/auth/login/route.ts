@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '../../../../generated/prisma/index.js';
+import bcrypt from 'bcryptjs';
+import { generateToken, setAuthCookie, type AuthUser } from '../../../../lib/auth';
 
 const prisma = new PrismaClient();
 
@@ -28,16 +30,27 @@ export async function POST(request: NextRequest) {
     });
 
     if (student) {
-      // For demo purposes, we're using simple password checking
-      // In production, you should hash passwords and compare hashes
-      if (password === 'student123') {
-        const response = NextResponse.json({
+      // Verify password with bcrypt
+      const isValidPassword = await bcrypt.compare(password, student.password);
+      
+      if (isValidPassword) {
+        const authUser: AuthUser = {
+          id: student.id,
+          email: student.email,
+          name: student.name,
+          role: 'student'
+        };
+
+        const token = generateToken(authUser);
+        
+        const responseData = {
           success: true,
           user: {
             id: student.id,
             name: student.name,
             email: student.email,
             type: 'student',
+            role: 'student',
             grade: student.grade,
             schoolName: student.schoolName,
             program: student.program,
@@ -52,17 +65,12 @@ export async function POST(request: NextRequest) {
             })),
             enrollments: student.enrollments
           },
+          token,
           redirectTo: '/student-dashboard'
-        });
+        };
 
-        // Set a simple session cookie (in production, use proper JWT or session management)
-        response.cookies.set('auth-token', `student-${student.id}`, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          maxAge: 60 * 60 * 24 * 7 // 7 days
-        });
-
+        const response = NextResponse.json(responseData);
+        setAuthCookie(response, token);
         return response;
       }
     }
@@ -80,15 +88,27 @@ export async function POST(request: NextRequest) {
     });
 
     if (teacher) {
-      // For demo purposes, we're using simple password checking
-      if (password === 'teacher123') {
-        const response = NextResponse.json({
+      // Verify password with bcrypt
+      const isValidPassword = await bcrypt.compare(password, teacher.password);
+      
+      if (isValidPassword) {
+        const authUser: AuthUser = {
+          id: teacher.id,
+          email: teacher.email,
+          name: teacher.name,
+          role: 'teacher'
+        };
+
+        const token = generateToken(authUser);
+        
+        const responseData = {
           success: true,
           user: {
             id: teacher.id,
             name: teacher.name,
             email: teacher.email,
             type: 'teacher',
+            role: 'teacher',
             programs: teacher.programs,
             students: teacher.students.map((link: any) => ({
               id: link.student.id,
@@ -99,17 +119,12 @@ export async function POST(request: NextRequest) {
               program: link.program
             }))
           },
+          token,
           redirectTo: '/teacher-dashboard'
-        });
+        };
 
-        // Set a simple session cookie
-        response.cookies.set('auth-token', `teacher-${teacher.id}`, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          maxAge: 60 * 60 * 24 * 7 // 7 days
-        });
-
+        const response = NextResponse.json(responseData);
+        setAuthCookie(response, token);
         return response;
       }
     }

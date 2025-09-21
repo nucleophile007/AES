@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { useAuth } from "../../../contexts/AuthContext";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,7 @@ interface LoginModalProps {
 }
 
 export function LoginModal({ children }: LoginModalProps) {
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -29,27 +31,21 @@ export function LoginModal({ children }: LoginModalProps) {
     setIsLoading(true);
     
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const result = await login(email, password);
 
-      const data = await response.json();
-
-      if (data.success) {
+      if (result.success) {
         // Successfully logged in
         setOpen(false);
         setEmail("");
         setPassword("");
         
         // Redirect to the appropriate dashboard
-        window.location.href = data.redirectTo;
+        if (result.redirectTo) {
+          window.location.href = result.redirectTo;
+        }
       } else {
         // Show error message
-        alert(data.error || 'Login failed. Please check your credentials.');
+        alert(result.error || 'Login failed. Please check your credentials.');
       }
     } catch (error) {
       console.error("Login failed:", error);
@@ -152,14 +148,6 @@ export function LoginModal({ children }: LoginModalProps) {
           </Button>
         </form>
         
-        <div className="mt-6 text-center">
-          <p className="text-yellow-400/70 text-sm">
-            Don&apos;t have an account?{" "}
-            <button className="text-yellow-400 hover:text-yellow-300 font-medium transition-colors">
-              Sign up
-            </button>
-          </p>
-        </div>
       </DialogContent>
     </Dialog>
   );
