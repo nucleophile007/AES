@@ -307,7 +307,8 @@ async function main() {
 
   console.log('📚 Created student enrollments');
 
-  // Create sample assignments
+  // Create sample assignments (temporarily disabled due to schema changes)
+  /*
   const assignments = await Promise.all([
     prisma.assignment.create({
       data: {
@@ -354,8 +355,12 @@ async function main() {
       }
     })
   ]);
+  */
 
-  console.log('📝 Created assignments');
+  // Temporary: Create empty assignments array to avoid undefined error
+  const assignments: any[] = [];
+
+  console.log('📝 Created assignments (disabled)');
 
   console.log('✅ Database seeding completed successfully!');
   console.log('\n📊 Summary:');

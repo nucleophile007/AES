@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>R2 Upload Test</title>
+</head>
+<body>
+    <h1>Test R2 Integration</h1>
+    
+    <button onclick="testR2Connection()">Test R2 Connection</button>
+    <div id="result"></div>
+
+    <script>
+        async function testR2Connection() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                const response = await fetch('/api/r2-upload', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        fileName: 'test.pdf',
+                        fileType: 'application/pdf',
+                        fileSize: 1024,
+                        studentId: 1,
+                        assignmentId: 1
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <h3 style="color: green;">✅ R2 Integration Working!</h3>
+                        <p><strong>Presigned URL:</strong> ${data.presignedUrl.substring(0, 100)}...</p>
+                        <p><strong>Public URL:</strong> ${data.publicUrl}</p>
+                        <p><strong>File Key:</strong> ${data.fileKey}</p>
+                        <p><strong>Expires in:</strong> ${data.expiresIn} seconds</p>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <h3 style="color: red;">❌ Error</h3>
+                        <p>${data.error}</p>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h3 style="color: red;">❌ Connection Error</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,52 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '../../../../generated/prisma/index.js';
+import { PrismaClient } from '../../../../generated/prisma';
 
 const prisma = new PrismaClient();
 
+// GET: List all assignments for a teacher
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const teacherEmail = searchParams.get('teacherEmail');
     const program = searchParams.get('program');
-    
+    const grade = searchParams.get('grade');
+
     if (!teacherEmail) {
       return NextResponse.json(
-        { error: 'Teacher email is required' },
+        { success: false, error: 'Teacher email is required' },
         { status: 400 }
       );
     }
 
-    // First, find the teacher
+    // Find teacher
     const teacher = await prisma.teacher.findUnique({
       where: { email: teacherEmail }
     });
 
     if (!teacher) {
       return NextResponse.json(
-        { error: 'Teacher not found' },
+        { success: false, error: 'Teacher not found' },
         { status: 404 }
       );
     }
 
-    // Build where clause for assignments
-    let whereClause: any = {};
-    
-    if (program) {
-      whereClause.program = program;
-    } else {
-      // If no specific program, get assignments for all teacher's programs
-      whereClause.program = {
-        in: teacher.programs
-      };
-    }
+    // Build filters
+    const filters: any = {
+      teacherId: teacher.id,
+      isActive: true
+    };
 
-    // Get assignments with submission counts
+    if (program) filters.program = program;
+    if (grade) filters.grade = grade;
+
+    // Get assignments with related data
     const assignments = await prisma.assignment.findMany({
-      where: whereClause,
+      where: filters,
       include: {
+        targetStudent: { // Include assigned student info
+          select: { id: true, name: true, email: true }
+        },
         submissions: {
           include: {
-            student: true
+            student: {
+              select: { id: true, name: true, email: true }
+            }
+          }
+        },
+        resources: {
+          include: {
+            resource: true
+          }
+        },
+        _count: {
+          select: {
+            submissions: true
           }
         }
       },
@@ -55,45 +69,308 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Transform the data to include submission statistics
-    const assignmentsWithStats = assignments.map(assignment => ({
-      id: assignment.id,
-      title: assignment.title,
-      description: assignment.description,
-      program: assignment.program,
-      subject: assignment.subject,
-      grade: assignment.grade,
-      dueDate: assignment.dueDate,
-      totalPoints: assignment.totalPoints,
-      isActive: assignment.isActive,
-      createdAt: assignment.createdAt,
-      submissionStats: {
-        total: assignment.submissions.length,
-        graded: assignment.submissions.filter(s => s.grade !== null).length,
-        pending: assignment.submissions.filter(s => s.grade === null).length,
-        submissions: assignment.submissions.map(submission => ({
-          id: submission.id,
-          studentName: submission.student.name,
-          studentEmail: submission.student.email,
-          submittedAt: submission.submittedAt,
-          grade: submission.grade,
-          status: submission.status,
-          feedback: submission.feedback
-        }))
-      }
-    }));
-
     return NextResponse.json({
-      assignments: assignmentsWithStats
+      success: true,
+      assignments
     });
 
   } catch (error) {
     console.error('Error fetching assignments:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: false, error: 'Failed to fetch assignments' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
+  }
+}
+
+// POST: Create new assignment
+export async function POST(request: NextRequest) {
+  try {
+    const data = await request.json();
+    const {
+      title,
+      description,
+      instructions,
+      program,
+      subject,
+      dueDate,
+      totalPoints = 100,
+      allowLateSubmission = false,
+      teacherEmail,
+      studentId, // Add studentId parameter
+      resourceIds = []
+    } = data;
+
+    if (!title || !description || !program || !subject || !dueDate || !teacherEmail) {
+      return NextResponse.json(
+        { success: false, error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    // Validate studentId if provided
+    if (studentId) {
+      const student = await prisma.student.findUnique({
+        where: { id: parseInt(studentId) }
+      });
+
+      if (!student) {
+        return NextResponse.json(
+          { success: false, error: 'Student not found' },
+          { status: 404 }
+        );
+      }
+
+      // Verify student is in the selected program
+      if (student.program !== program) {
+        return NextResponse.json(
+          { success: false, error: 'Student is not enrolled in the selected program' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Find teacher
+    const teacher = await prisma.teacher.findUnique({
+      where: { email: teacherEmail }
+    });
+
+    if (!teacher) {
+      return NextResponse.json(
+        { success: false, error: 'Teacher not found' },
+        { status: 404 }
+      );
+    }
+
+    // Create assignment
+    const assignment = await prisma.assignment.create({
+      data: {
+        title,
+        description,
+        instructions,
+        program,
+        subject,
+        dueDate: new Date(dueDate),
+        totalPoints: parseInt(totalPoints),
+        allowLateSubmission,
+        teacherId: teacher.id,
+        targetStudentId: studentId ? parseInt(studentId) : null // Add student assignment
+      }
+    });
+
+    // Link resources if provided
+    if (resourceIds.length > 0) {
+      await prisma.assignmentResource.createMany({
+        data: resourceIds.map((resourceId: number) => ({
+          assignmentId: assignment.id,
+          resourceId,
+          isRequired: true
+        }))
+      });
+    }
+
+    // Get the created assignment with relations
+    const createdAssignment = await prisma.assignment.findUnique({
+      where: { id: assignment.id },
+      include: {
+        resources: {
+          include: {
+            resource: true
+          }
+        }
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      assignment: createdAssignment,
+      message: 'Assignment created successfully'
+    });
+
+  } catch (error) {
+    console.error('Error creating assignment:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to create assignment' },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT: Update assignment
+export async function PUT(request: NextRequest) {
+  try {
+    const data = await request.json();
+    const {
+      id,
+      title,
+      description,
+      instructions,
+      program,
+      subject,
+      grade,
+      dueDate,
+      totalPoints,
+      allowLateSubmission,
+      isActive,
+      teacherEmail,
+      resourceIds = []
+    } = data;
+
+    if (!id || !teacherEmail) {
+      return NextResponse.json(
+        { success: false, error: 'Assignment ID and teacher email are required' },
+        { status: 400 }
+      );
+    }
+
+    // Find teacher
+    const teacher = await prisma.teacher.findUnique({
+      where: { email: teacherEmail }
+    });
+
+    if (!teacher) {
+      return NextResponse.json(
+        { success: false, error: 'Teacher not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check if assignment belongs to teacher
+    const existingAssignment = await prisma.assignment.findFirst({
+      where: {
+        id: parseInt(id),
+        teacherId: teacher.id
+      }
+    });
+
+    if (!existingAssignment) {
+      return NextResponse.json(
+        { success: false, error: 'Assignment not found or access denied' },
+        { status: 404 }
+      );
+    }
+
+    // Update assignment
+    const updateData: any = {};
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (instructions !== undefined) updateData.instructions = instructions;
+    if (program !== undefined) updateData.program = program;
+    if (subject !== undefined) updateData.subject = subject;
+    if (grade !== undefined) updateData.grade = grade;
+    if (dueDate !== undefined) updateData.dueDate = new Date(dueDate);
+    if (totalPoints !== undefined) updateData.totalPoints = parseInt(totalPoints);
+    if (allowLateSubmission !== undefined) updateData.allowLateSubmission = allowLateSubmission;
+    if (isActive !== undefined) updateData.isActive = isActive;
+
+    const updatedAssignment = await prisma.assignment.update({
+      where: { id: parseInt(id) },
+      data: updateData
+    });
+
+    // Update resource links if provided
+    if (resourceIds.length >= 0) {
+      // Remove existing resource links
+      await prisma.assignmentResource.deleteMany({
+        where: { assignmentId: parseInt(id) }
+      });
+
+      // Add new resource links
+      if (resourceIds.length > 0) {
+        await prisma.assignmentResource.createMany({
+          data: resourceIds.map((resourceId: number) => ({
+            assignmentId: parseInt(id),
+            resourceId,
+            isRequired: true
+          }))
+        });
+      }
+    }
+
+    // Get updated assignment with relations
+    const finalAssignment = await prisma.assignment.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        resources: {
+          include: {
+            resource: true
+          }
+        }
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      assignment: finalAssignment,
+      message: 'Assignment updated successfully'
+    });
+
+  } catch (error) {
+    console.error('Error updating assignment:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to update assignment' },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE: Delete assignment
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    const teacherEmail = searchParams.get('teacherEmail');
+
+    if (!id || !teacherEmail) {
+      return NextResponse.json(
+        { success: false, error: 'Assignment ID and teacher email are required' },
+        { status: 400 }
+      );
+    }
+
+    // Find teacher
+    const teacher = await prisma.teacher.findUnique({
+      where: { email: teacherEmail }
+    });
+
+    if (!teacher) {
+      return NextResponse.json(
+        { success: false, error: 'Teacher not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check if assignment belongs to teacher
+    const assignment = await prisma.assignment.findFirst({
+      where: {
+        id: parseInt(id),
+        teacherId: teacher.id
+      }
+    });
+
+    if (!assignment) {
+      return NextResponse.json(
+        { success: false, error: 'Assignment not found or access denied' },
+        { status: 404 }
+      );
+    }
+
+    // Soft delete (mark as inactive) instead of hard delete to preserve submissions
+    await prisma.assignment.update({
+      where: { id: parseInt(id) },
+      data: { isActive: false }
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Assignment deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Error deleting assignment:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to delete assignment' },
+      { status: 500 }
+    );
   }
 }

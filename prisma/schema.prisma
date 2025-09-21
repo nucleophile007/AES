@@ -53,18 +53,22 @@ model Teacher {
   id        Int      @id @default(autoincrement())
   name      String
   email     String   @unique
+  password  String   @default("temp123") // Add password for login
   programs  String[] // List of programs the teacher manages
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  students TeacherStudent[]
+  students    TeacherStudent[]
+  assignments Assignment[]
+  resources   Resource[]
 }
 
 model Student {
   id          Int      @id @default(autoincrement())
   name        String
   email       String   @unique
+  password    String   @default("temp123") // Add password for login
   grade       String
   schoolName  String
   parentName  String
@@ -75,9 +79,11 @@ model Student {
   updatedAt   DateTime @updatedAt
   
   // Relations
-  submissions Submission[]
-  enrollments Enrollment[]
-  teacherLinks TeacherStudent[]
+  submissions   Submission[]
+  enrollments   Enrollment[]
+  teacherLinks  TeacherStudent[]
+  assignedResources StudentResource[]
+  assignedAssignments Assignment[] @relation("AssignedAssignments") // Assignments specifically assigned to this student
 }
 
 model TeacherStudent {
@@ -95,32 +101,42 @@ model TeacherStudent {
 }
 
 model Assignment {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String
-  program     String
-  subject     String
-  grade       String
-  dueDate     DateTime
-  totalPoints Int      @default(100)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  title        String
+  description  String
+  instructions String?  // Detailed instructions
+  program      String
+  subject      String
+  dueDate      DateTime
+  totalPoints  Int      @default(100)
+  isActive     Boolean  @default(true)
+  allowLateSubmission Boolean @default(false)
+  teacherId    Int      @default(1) // Teacher who created this assignment
+  targetStudentId Int?  // Optional: specific student this assignment is for
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
   
   // Relations
+  teacher     Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  targetStudent Student?   @relation("AssignedAssignments", fields: [targetStudentId], references: [id], onDelete: SetNull)
   submissions Submission[]
+  resources   AssignmentResource[]
 }
 
 model Submission {
-  id            Int      @id @default(autoincrement())
-  studentId     Int
-  assignmentId  Int
-  content       String?  // Text content
-  fileUrl       String?  // File upload URL
-  submittedAt   DateTime @default(now())
-  grade         Int?     // Points earned
-  feedback      String?  // Teacher feedback
-  status        String   @default("submitted") // submitted, graded, returned
+  id             Int      @id @default(autoincrement())
+  studentId      Int
+  assignmentId   Int
+  content        String?  // Text content
+  fileUrl        String?  // File upload URL
+  fileName       String?  // Original filename
+  fileSize       Int?     // File size in bytes
+  submittedAt    DateTime @default(now())
+  updatedAt      DateTime @updatedAt @default(now())
+  grade          Int?     // Points earned
+  feedback       String?  // Teacher feedback
+  status         String   @default("submitted") // submitted, graded, returned, resubmitted
+  submissionNumber Int    @default(1) // Track resubmissions
   
   // Relations
   student     Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
@@ -141,4 +157,57 @@ model Enrollment {
   student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
   
   @@unique([studentId, program, subject])
+}
+
+// Resources that teachers can create and assign to students
+model Resource {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  type        String   // "document", "video", "link", "image"
+  fileUrl     String?  // File URL for uploaded resources
+  linkUrl     String?  // External link URL
+  fileName    String?  // Original filename if uploaded
+  fileSize    Int?     // File size in bytes
+  program     String
+  subject     String
+  grade       String
+  teacherId   Int      // Teacher who created this resource
+  isPublic    Boolean  @default(false) // If true, visible to all students in program
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  teacher           Teacher           @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  assignmentLinks   AssignmentResource[]
+  studentAssignments StudentResource[]
+}
+
+// Link resources to specific assignments
+model AssignmentResource {
+  id           Int      @id @default(autoincrement())
+  assignmentId Int
+  resourceId   Int
+  isRequired   Boolean  @default(false)
+  
+  // Relations
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  resource   Resource   @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  
+  @@unique([assignmentId, resourceId])
+}
+
+// Assign resources directly to specific students
+model StudentResource {
+  id         Int      @id @default(autoincrement())
+  studentId  Int
+  resourceId Int
+  assignedAt DateTime @default(now())
+  viewedAt   DateTime?
+  
+  // Relations
+  student  Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  
+  @@unique([studentId, resourceId])
 }

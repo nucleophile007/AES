@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>R2 Upload Test</title>
+</head>
+<body>
+    <h1>R2 Upload Test</h1>
+    <button onclick="testUpload()">Test Upload</button>
+    <div id="result"></div>
+
+    <script>
+function testUpload() {
+    const resultDiv = document.getElementById('result');
+    resultDiv.innerHTML = 'Testing...';
+    
+    // Simple R2 test using fetch
+    const formData = new FormData();
+
+    // Create a simple text file blob
+    const testFile = new Blob(['This is a test file for R2 upload testing'], { type: 'text/plain' });
+    formData.append('file', testFile, 'test.txt');
+    formData.append('studentId', '1');
+    formData.append('assignmentId', '1');
+
+    console.log('Testing R2 upload endpoint with fetch...');
+
+    fetch('/api/upload-r2', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => {
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers));
+      return response.json();
+    })
+    .then(data => {
+      console.log('Response data:', data);
+      resultDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+    })
+    .catch(error => {
+      console.error('Fetch error:', error);
+      resultDiv.innerHTML = 'Error: ' + error.message;
+    });
+}
+    </script>
+</body>
+</html>
