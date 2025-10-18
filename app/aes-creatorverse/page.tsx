@@ -233,6 +233,45 @@ export default function AESCreatorversePage() {
         </div>
       </section>
 
+
+{/* Program Features Section */}
+<section className="py-20 theme-bg-dark">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="text-center mb-16"
+          >
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Program Features</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Comprehensive Creative Development</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">
+              Our structured approach helps you build a compelling social profile and establish your unique voice in the digital world.
+            </p>
+          </motion.div>
+                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {programFeatures.map((feature, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Card className="h-full flex flex-col justify-center bg-[#1a2236]/90 backdrop-blur-sm border border-yellow-400/20 shadow-md rounded-xl hover:shadow-xl hover:border-yellow-400/40 transition-all duration-300 group p-0">
+                  <div className="flex items-center gap-4 px-6 pt-8 pb-2">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <feature.icon className="h-6 w-6 text-[#1a2236]" />
+                    </div>
+                    <span className="text-lg font-bold theme-text-light">{feature.title}</span>
+                  </div>
+                  <div className="px-6 pb-8 pt-2 flex-1 flex flex-col justify-center">
+                    <p className="text-base theme-text-muted font-medium text-left">{feature.description}</p>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
       {/* Focus Skills Section */}
       <section className="py-20 theme-bg-dark">
         <div className="container mx-auto px-4">
@@ -272,44 +311,7 @@ export default function AESCreatorversePage() {
         </div>
       </section>
 
-      {/* Program Features Section */}
-      <section className="py-20 theme-bg-dark">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="text-center mb-16"
-          >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Program Features</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Comprehensive Creative Development</h2>
-            <p className="text-xl theme-text-muted max-w-3xl mx-auto">
-              Our structured approach helps you build a compelling social profile and establish your unique voice in the digital world.
-            </p>
-          </motion.div>
-                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {programFeatures.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card className="h-full flex flex-col justify-center bg-[#1a2236]/90 backdrop-blur-sm border border-yellow-400/20 shadow-md rounded-xl hover:shadow-xl hover:border-yellow-400/40 transition-all duration-300 group p-0">
-                  <div className="flex items-center gap-4 px-6 pt-8 pb-2">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center group-hover:scale-105 transition-transform">
-                      <feature.icon className="h-6 w-6 text-[#1a2236]" />
-                    </div>
-                    <span className="text-lg font-bold theme-text-light">{feature.title}</span>
-                  </div>
-                  <div className="px-6 pb-8 pt-2 flex-1 flex flex-col justify-center">
-                    <p className="text-base theme-text-muted font-medium text-left">{feature.description}</p>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      
 
       {/* Program Packages Section */}
       <section className="py-20 theme-bg-dark">
