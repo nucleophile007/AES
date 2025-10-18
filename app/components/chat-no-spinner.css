@@ -1,0 +1,6 @@
+/* Custom chat styles to hide spinners */
+.teacher-chat-no-spinner .animate-spin,
+.teacher-chat-no-spinner [class*="spinner"] {
+  display: none !important;
+  animation: none !important;
+}

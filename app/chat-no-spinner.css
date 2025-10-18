@@ -1,0 +1,29 @@
+/* This CSS removes all loading spinners for teacher-role users */
+
+/* Hide all spinner animations in teacher chat */
+.teacher-chat-no-spinner .animate-spin {
+  animation: none !important;
+}
+
+/* Hide circular spinner animations anywhere for teachers */
+body.teacher-role .animate-spin {
+  animation: none !important;
+}
+
+/* Hide specific loading indicators in teacher dashboard */
+body.teacher-role .loading-indicator {
+  display: none !important;
+}
+
+/* Make any progress indicators complete immediately for teachers */
+body.teacher-role .progress-indicator {
+  width: 100% !important;
+  transition: none !important;
+}
+
+/* Override any loading states in dialogs for teachers */
+body.teacher-role [role="dialog"] .animate-spin,
+body.teacher-role [role="dialog"] .spinner,
+body.teacher-role [role="dialog"] .loading {
+  display: none !important;
+}
