@@ -63,6 +63,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ResourceLibrary from "@/components/student/ResourceLibrary";
+import MentorMessages from "../../components/student/MentorMessages";
 
 // Mock data - replace with actual API calls
 const mockUpcomingEvents = [
@@ -1307,60 +1308,11 @@ export default function StudentDashboard() {
                     </Button>
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Upcoming Sessions</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3">
-                          {assignments.filter(a => a.status === 'active').slice(0, 3).map((assignment) => (
-                            <div key={assignment.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <Calendar className="h-5 w-5 text-blue-600" />
-                              </div>
-                              <div className="flex-1">
-                                <p className="font-medium">{assignment.title}</p>
-                                <p className="text-sm text-gray-600">Due {assignment.dueDate}</p>
-                              </div>
-                              <Button variant="outline" size="sm">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
-                          {assignments.filter(a => a.status === 'active').length === 0 && (
-                            <div className="text-center text-gray-500 py-4">
-                              No upcoming sessions scheduled
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Assignment Deadlines</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3">
-                          {assignments.filter(a => a.status === "pending").map((assignment) => (
-                            <div key={assignment.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                                <FileText className="h-5 w-5 text-orange-600" />
-                              </div>
-                              <div className="flex-1">
-                                <p className="font-medium">{assignment.title}</p>
-                                <p className="text-sm text-gray-600">Due: {assignment.dueDate}</p>
-                              </div>
-                              <Button variant="outline" size="sm">
-                                <ChevronRight className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
+                  {/* StudentScheduleView Component */}
+                  {studentEmail && (() => {
+                    const StudentScheduleView = require("../../components/student/StudentScheduleView").default;
+                    return <StudentScheduleView studentEmail={studentEmail} />;
+                  })()}
                 </div>
               )}
 
@@ -1371,44 +1323,109 @@ export default function StudentDashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Card>
                       <CardHeader>
-                        <CardTitle>Learning Goals</CardTitle>
+                        <CardTitle>Assignment Completion</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
-                          {[
-                            { goal: "Master Quadratic Equations", progress: 85, target: "End of Month" },
-                            { goal: "Improve SAT Math Score", progress: 60, target: "Test Date" },
-                            { goal: "Complete Research Project", progress: 40, target: "Next Week" },
-                          ].map((item, index) => (
-                            <div key={index} className="space-y-2">
-                              <div className="flex justify-between">
-                                <span className="text-sm font-medium">{item.goal}</span>
-                                <span className="text-sm text-gray-600">{item.progress}%</span>
+                          {/* Group assignments by subject */}
+                          {(() => {
+                            // Group assignments by subject
+                            const bySubject = assignments.reduce((acc, assignment) => {
+                              const subject = assignment.subject || "Other";
+                              if (!acc[subject]) {
+                                acc[subject] = { total: 0, completed: 0 };
+                              }
+                              acc[subject].total += 1;
+                              // Count completed assignments
+                              if (submissions.some(s => s.assignmentId === assignment.id && s.status === "graded")) {
+                                acc[subject].completed += 1;
+                              }
+                              return acc;
+                            }, {} as Record<string, {total: number, completed: number}>);
+                            
+                            // Convert to array for rendering
+                            return Object.entries(bySubject).map(([subject, counts]) => (
+                              <div key={subject} className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-sm font-medium">{subject}</span>
+                                  <span className="text-sm text-gray-600">
+                                    {counts.completed}/{counts.total} completed
+                                  </span>
+                                </div>
+                                <Progress 
+                                  value={counts.total > 0 ? (counts.completed / counts.total) * 100 : 0} 
+                                  className="h-2" 
+                                />
+                                <div className="text-xs text-gray-500">
+                                  {counts.total - counts.completed} remaining
+                                </div>
                               </div>
-                              <Progress value={item.progress} className="h-2" />
-                              <div className="text-xs text-gray-500">Target: {item.target}</div>
-                            </div>
-                          ))}
+                            ));
+                          })()}
                         </div>
                       </CardContent>
                     </Card>
 
                     <Card>
                       <CardHeader>
-                        <CardTitle>Study Streak</CardTitle>
+                        <CardTitle>Assignment Statistics</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-center space-y-4">
-                          <div className="text-4xl font-bold text-green-600">12</div>
-                          <div className="text-lg text-gray-600">Days in a row!</div>
-                          <div className="flex justify-center gap-1">
-                            {[...Array(7)].map((_, i) => (
-                              <div key={i} className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                <CheckCircle className="h-4 w-4 text-green-600" />
+                        <div className="space-y-6">
+                          {/* Assignment counts */}
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-blue-50 p-4 rounded-lg text-center">
+                              <div className="text-3xl font-bold text-blue-600">
+                                {submissions.length}
                               </div>
-                            ))}
+                              <div className="text-sm text-gray-600">
+                                Submissions
+                              </div>
+                            </div>
+                            <div className="bg-green-50 p-4 rounded-lg text-center">
+                              <div className="text-3xl font-bold text-green-600">
+                                {submissions.filter(s => s.status === "graded").length}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                Completed
+                              </div>
+                            </div>
+                            <div className="bg-yellow-50 p-4 rounded-lg text-center">
+                              <div className="text-3xl font-bold text-yellow-600">
+                                {assignments.filter(a => 
+                                  !submissions.some(s => s.assignmentId === a.id)
+                                ).length}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                Pending
+                              </div>
+                            </div>
+                            <div className="bg-purple-50 p-4 rounded-lg text-center">
+                              <div className="text-3xl font-bold text-purple-600">
+                                {assignments.length}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                Total Assignments
+                              </div>
+                            </div>
                           </div>
-                          <p className="text-sm text-gray-600">Keep up the great work!</p>
+                          
+                          {/* Activity summary */}
+                          <div className="text-center pt-2 border-t">
+                            <p className="text-sm font-medium text-gray-700 mb-1">
+                              Recent Activity
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {submissions.length > 0 
+                                ? `Last submission: ${new Date(
+                                    submissions.sort((a, b) => 
+                                      new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+                                    )[0]?.submittedAt
+                                  ).toLocaleDateString()}`
+                                : 'No submissions yet'
+                              }
+                            </p>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -1422,80 +1439,64 @@ export default function StudentDashboard() {
 
               {activeTab === "messages" && (
                 <div className="space-y-6">
-                  <h2 className="text-2xl font-bold">Messages</h2>
-                  
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <Card className="lg:col-span-1">
-                      <CardHeader>
-                        <CardTitle className="text-lg">Conversations</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          {[
-                            { name: "Dr. Sarah Wilson", subject: "Science", lastMessage: "Great work on your essay!", time: "2 hours ago", unread: true },
-                            { name: "Mr. John Davis", subject: "Mathematics", lastMessage: "Let's review the geometry proofs", time: "1 day ago", unread: false },
-                            { name: "Academic Support", subject: "General", lastMessage: "Study group this Friday", time: "2 days ago", unread: true },
-                          ].map((conversation, index) => (
-                            <div key={index} className={cn("p-3 rounded-lg cursor-pointer hover:bg-gray-50", conversation.unread && "bg-blue-50")}>
-                              <div className="flex items-start gap-3">
-                                <Avatar className="h-8 w-8">
-                                  <AvatarFallback className="text-xs">
-                                    {conversation.name.split(' ').map(n => n[0]).join('')}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <p className="text-sm font-medium truncate">{conversation.name}</p>
-                                    {conversation.unread && <div className="w-2 h-2 bg-blue-600 rounded-full"></div>}
-                                  </div>
-                                  <p className="text-xs text-gray-600">{conversation.subject}</p>
-                                  <p className="text-xs text-gray-500 truncate">{conversation.lastMessage}</p>
-                                  <p className="text-xs text-gray-400">{conversation.time}</p>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="lg:col-span-2">
-                      <CardHeader>
-                        <CardTitle className="text-lg">Chat with Dr. Sarah Wilson</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <ScrollArea className="h-96 w-full p-4 border rounded-lg">
-                          <div className="space-y-4">
-                            <div className="flex gap-3">
-                              <Avatar className="h-8 w-8">
-                                <AvatarFallback className="text-xs">SW</AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1">
-                                <div className="bg-gray-100 p-3 rounded-lg">
-                                  <p className="text-sm">Hi Alex! I&apos;ve reviewed your climate change essay. Excellent work on the research and analysis!</p>
-                                </div>
-                                <p className="text-xs text-gray-500 mt-1">Dr. Sarah Wilson • 2 hours ago</p>
-                              </div>
-                            </div>
-                            
-                            <div className="flex gap-3 justify-end">
-                              <div className="flex-1 flex justify-end">
-                                <div className="bg-blue-600 text-white p-3 rounded-lg max-w-xs">
-                                  <p className="text-sm">Thank you so much! I really enjoyed researching this topic. Do you have any suggestions for my next assignment?</p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </ScrollArea>
-                        <div className="flex gap-2 mt-4">
-                          <Input placeholder="Type your message..." className="flex-1" />
-                          <Button>
-                            <Send className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold">Messages</h2>
+                    
+                    {/* Add debug button visible only in development */}
+                    {process.env.NODE_ENV === 'development' && (
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={async () => {
+                            try {
+                              const response = await fetch('/api/debug/setup-chat', { method: 'POST' });
+                              const data = await response.json();
+                              if (data.success) {
+                                alert('Chat system setup successfully! Please refresh the page.');
+                              } else {
+                                alert(`Setup failed: ${data.error}`);
+                              }
+                            } catch (err) {
+                              alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                              console.error('Error setting up chat:', err);
+                            }
+                          }}
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Setup Chat System
+                        </Button>
+                        
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(`/api/debug/messages?studentId=${student.id}&teacherId=18&debug=true`);
+                              const data = await response.json();
+                              console.log('Debug data:', data);
+                              alert(`Debug info logged to console. Found ${data.filteredMessages?.length || 0} messages.`);
+                            } catch (err) {
+                              alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                              console.error('Error debugging messages:', err);
+                            }
+                          }}
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Debug Messages
+                        </Button>
+                      </div>
+                    )}
                   </div>
+                  
+                  {/* Import and use our MentorMessages component */}
+                  {student && (
+                    <MentorMessages 
+                      studentId={student.id}
+                      studentEmail={student.email}
+                      studentName={student.name}
+                    />
+                  )}
                 </div>
               )}
               </motion.div>

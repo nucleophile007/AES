@@ -6,6 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Download,
   ExternalLink,
@@ -18,7 +22,12 @@ import {
   Clock,
   CheckCircle,
   User,
-  Users
+  Users,
+  Send,
+  Upload,
+  MessageCircle,
+  Plus,
+  RefreshCw
 } from 'lucide-react';
 
 interface Resource {
@@ -43,6 +52,39 @@ interface Resource {
   createdAt: string;
 }
 
+interface Teacher {
+  id: number;
+  name: string;
+  email: string;
+  programs: string[];
+  program: string;
+  assignedAt: string;
+}
+
+interface StudentSubmission {
+  id: number;
+  title: string;
+  description?: string;
+  content?: string;
+  fileUrl?: string;
+  fileName?: string;
+  fileSize?: number;
+  submittedAt: string;
+  updatedAt: string;
+  teachers: Teacher[];
+  teacherRemarks: Array<{
+    id: number;
+    remark: string;
+    createdAt: string;
+    updatedAt: string;
+    teacher: {
+      id: number;
+      name: string;
+      email: string;
+    };
+  }>;
+}
+
 interface ResourceLibraryProps {
   studentEmail: string;
 }
@@ -53,6 +95,20 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
+
+  // Student submissions state
+  const [submissions, setSubmissions] = useState<StudentSubmission[]>([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
+  
+  // Submission form state
+  const [submissionTitle, setSubmissionTitle] = useState('');
+  const [submissionDescription, setSubmissionDescription] = useState('');
+  const [submissionContent, setSubmissionContent] = useState('');
+  const [submissionFile, setSubmissionFile] = useState<File | null>(null);
+  const [selectedTeachers, setSelectedTeachers] = useState<number[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSubmissionDialog, setShowSubmissionDialog] = useState(false);
 
   // Fetch resources
   useEffect(() => {
@@ -79,6 +135,39 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
     }
   }, [studentEmail]);
 
+  // Fetch teachers and submissions
+  useEffect(() => {
+    const fetchTeachersAndSubmissions = async () => {
+      if (!studentEmail) return;
+      
+      try {
+        setSubmissionsLoading(true);
+        
+        // Fetch teachers
+        const teachersResponse = await fetch(`/api/student/teachers?studentEmail=${encodeURIComponent(studentEmail)}`);
+        const teachersData = await teachersResponse.json();
+        
+        if (teachersData.success) {
+          setTeachers(teachersData.teachers);
+        }
+        
+        // Fetch submissions
+        const submissionsResponse = await fetch(`/api/student/submissions/resources?studentEmail=${encodeURIComponent(studentEmail)}`);
+        const submissionsData = await submissionsResponse.json();
+        
+        if (submissionsData.success) {
+          setSubmissions(submissionsData.submissions);
+        }
+      } catch (error) {
+        console.error('Error fetching teachers and submissions:', error);
+      } finally {
+        setSubmissionsLoading(false);
+      }
+    };
+
+    fetchTeachersAndSubmissions();
+  }, [studentEmail]);
+
   // Mark resource as viewed
   const markAsViewed = async (resourceId: number) => {
     if (resources.find(r => r.id === resourceId)?.viewedAt) return;
@@ -103,6 +192,128 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
       ));
     } catch (error) {
       console.error('Error marking resource as viewed:', error);
+    }
+  };
+
+  // Handle submission creation
+  const handleSubmission = async () => {
+    if (!submissionTitle.trim() || selectedTeachers.length === 0) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      let fileUrl = null;
+      
+      // Upload file if provided
+      if (submissionFile) {
+        try {
+          // Method 1: Try direct upload with presigned URL
+          const presignedResponse = await fetch('/api/r2-upload', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              studentId: 0, // Will be set by the API
+              assignmentId: 0, // Not needed for resource submissions
+              fileName: submissionFile.name,
+              fileType: submissionFile.type,
+              fileSize: submissionFile.size,
+            }),
+          });
+          
+          const presignedData = await presignedResponse.json();
+          
+          if (presignedData.success) {
+            // Try direct upload to R2
+            const uploadResponse = await fetch(presignedData.presignedUrl, {
+              method: 'PUT',
+              body: submissionFile,
+              headers: {
+                'Content-Type': submissionFile.type,
+              },
+            });
+            
+            if (uploadResponse.ok) {
+              fileUrl = presignedData.publicUrl;
+            }
+          }
+          
+          // Fallback to server-side upload
+          if (!fileUrl) {
+            const formData = new FormData();
+            formData.append('file', submissionFile);
+            formData.append('studentId', '0');
+            formData.append('type', 'student-submission');
+            
+            const serverUploadResponse = await fetch('/api/upload-r2', {
+              method: 'POST',
+              body: formData,
+            });
+            
+            const serverUploadData = await serverUploadResponse.json();
+            
+            if (serverUploadData.success) {
+              fileUrl = serverUploadData.fileUrl;
+            }
+          }
+        } catch (uploadError) {
+          console.error('File upload failed:', uploadError);
+        }
+      }
+      
+      // Create submission
+      const submissionResponse = await fetch('/api/student/submissions/resources', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          studentEmail,
+          title: submissionTitle,
+          description: submissionDescription,
+          content: submissionContent,
+          fileUrl,
+          fileName: submissionFile?.name,
+          fileSize: submissionFile?.size,
+          teacherIds: selectedTeachers,
+        }),
+      });
+      
+      const submissionData = await submissionResponse.json();
+      
+      if (submissionData.success) {
+        // Reset form
+        setSubmissionTitle('');
+        setSubmissionDescription('');
+        setSubmissionContent('');
+        setSubmissionFile(null);
+        setSelectedTeachers([]);
+        setShowSubmissionDialog(false);
+        
+        // Refresh submissions
+        const submissionsResponse = await fetch(`/api/student/submissions/resources?studentEmail=${encodeURIComponent(studentEmail)}`);
+        const refreshedData = await submissionsResponse.json();
+        if (refreshedData.success) {
+          setSubmissions(refreshedData.submissions);
+        }
+      } else {
+        console.error('Submission failed:', submissionData.error);
+      }
+    } catch (error) {
+      console.error('Error creating submission:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle teacher selection
+  const handleTeacherSelection = (teacherId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedTeachers(prev => [...prev, teacherId]);
+    } else {
+      setSelectedTeachers(prev => prev.filter(id => id !== teacherId));
     }
   };
 
@@ -211,6 +422,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
           <TabsTrigger value="assignment">Assignment Resources ({assignmentResources.length})</TabsTrigger>
           <TabsTrigger value="personal">Personal Resources ({studentSpecificResources.length})</TabsTrigger>
           <TabsTrigger value="general">General Resources ({generalResources.length})</TabsTrigger>
+          <TabsTrigger value="submissions">My Submissions ({submissions.length})</TabsTrigger>
         </TabsList>
 
         {/* Assignment Resources */}
@@ -498,6 +710,233 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                         </Button>
                       )}
                     </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Student Submissions */}
+        <TabsContent value="submissions" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">Submit to Teachers</h3>
+              <p className="text-sm text-gray-600">Share your work and get feedback from your teachers</p>
+            </div>
+            
+            <Dialog open={showSubmissionDialog} onOpenChange={setShowSubmissionDialog}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Submission
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Submit Work to Teachers</DialogTitle>
+                </DialogHeader>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Title *</Label>
+                    <Input
+                      id="title"
+                      placeholder="Enter submission title"
+                      value={submissionTitle}
+                      onChange={(e) => setSubmissionTitle(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Input
+                      id="description"
+                      placeholder="Brief description (optional)"
+                      value={submissionDescription}
+                      onChange={(e) => setSubmissionDescription(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="content">Content</Label>
+                    <Textarea
+                      id="content"
+                      placeholder="Write your content here..."
+                      value={submissionContent}
+                      onChange={(e) => setSubmissionContent(e.target.value)}
+                      rows={4}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="file">Attach File (Optional)</Label>
+                    <Input
+                      id="file"
+                      type="file"
+                      accept=".pdf,.doc,.docx,.txt,.jpg,.png,.ppt,.pptx,.xlsx"
+                      onChange={(e) => setSubmissionFile(e.target.files?.[0] || null)}
+                    />
+                    <p className="text-xs text-gray-500">
+                      Supported: PDF, DOC, DOCX, TXT, JPG, PNG, PPT, PPTX, XLSX (Max 10MB)
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Select Teachers * (At least one required)</Label>
+                    <div className="border rounded-lg p-3 space-y-2 max-h-40 overflow-y-auto">
+                      {teachers.map((teacher) => (
+                        <div key={teacher.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`teacher-${teacher.id}`}
+                            checked={selectedTeachers.includes(teacher.id)}
+                            onCheckedChange={(checked) => 
+                              handleTeacherSelection(teacher.id, checked as boolean)
+                            }
+                          />
+                          <Label 
+                            htmlFor={`teacher-${teacher.id}`}
+                            className="text-sm cursor-pointer flex-1"
+                          >
+                            {teacher.name}
+                            <span className="text-gray-500 ml-1">({teacher.program})</span>
+                          </Label>
+                        </div>
+                      ))}
+                      {teachers.length === 0 && (
+                        <p className="text-sm text-gray-500">No teachers found.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <DialogFooter>
+                  <Button
+                    onClick={handleSubmission}
+                    disabled={isSubmitting || !submissionTitle.trim() || selectedTeachers.length === 0}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-2" />
+                        Submit to Teachers
+                      </>
+                    )}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+          
+          {/* Submissions List */}
+          {submissionsLoading ? (
+            <div className="text-center py-8 text-gray-500">
+              Loading submissions...
+            </div>
+          ) : submissions.length === 0 ? (
+            <div className="text-center py-12">
+              <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Submissions Yet</h3>
+              <p className="text-gray-600 mb-4">
+                Start sharing your work with teachers to get feedback and guidance.
+              </p>
+              <Button onClick={() => setShowSubmissionDialog(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create First Submission
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {submissions.map((submission) => (
+                <Card key={submission.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-lg">{submission.title}</CardTitle>
+                        {submission.description && (
+                          <p className="text-sm text-gray-600 mt-1">{submission.description}</p>
+                        )}
+                        <div className="flex items-center gap-4 text-xs text-gray-500 mt-2">
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            Submitted {new Date(submission.submittedAt).toLocaleDateString()}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Users className="h-3 w-3" />
+                            {submission.teachers.length} teacher{submission.teachers.length !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                      </div>
+                      <Badge variant={submission.teacherRemarks.length > 0 ? 'default' : 'secondary'}>
+                        {submission.teacherRemarks.length > 0 ? 'Has Feedback' : 'Pending Review'}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent className="space-y-3">
+                    {/* Content Preview */}
+                    {submission.content && (
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <p className="text-sm text-gray-800 line-clamp-3">{submission.content}</p>
+                      </div>
+                    )}
+                    
+                    {/* File Attachment */}
+                    {submission.fileUrl && submission.fileName && (
+                      <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                        <FileText className="h-5 w-5 text-blue-600" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-blue-900">{submission.fileName}</p>
+                          {submission.fileSize && (
+                            <p className="text-xs text-blue-700">
+                              {(submission.fileSize / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                          )}
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => window.open(submission.fileUrl, '_blank')}
+                        >
+                          <ExternalLink className="h-4 w-4 mr-1" />
+                          Open
+                        </Button>
+                      </div>
+                    )}
+                    
+                    {/* Teachers */}
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 mb-2">Sent to:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {submission.teachers.map((teacher) => (
+                          <Badge key={teacher.id} variant="outline" className="text-xs">
+                            {teacher.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Teacher Remarks */}
+                    {submission.teacherRemarks.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-gray-700">Teacher Feedback:</p>
+                        {submission.teacherRemarks.map((remark) => (
+                          <div key={remark.id} className="bg-green-50 p-3 rounded-lg border-l-4 border-green-200">
+                            <div className="flex items-start justify-between mb-2">
+                              <p className="text-sm font-medium text-green-900">{remark.teacher.name}</p>
+                              <p className="text-xs text-green-600">
+                                {new Date(remark.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <p className="text-sm text-green-800">{remark.remark}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}
