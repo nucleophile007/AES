@@ -892,111 +892,123 @@ export default function CollegePrepPage() {
           >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {/* Profile Enrichment Card */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="group"
+                className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm p-6 rounded-2xl relative group hover:bg-gradient-to-br hover:from-gray-800/70 hover:to-gray-900/70 transition-all duration-300 border border-gray-700/20 hover:border-yellow-400/20"
               >
-                <div className="rounded-3xl p-8 h-full flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl theme-bg-medium border border-yellow-400/20">
-                  <div className="w-16 h-16 rounded-full theme-bg-dark/50 border border-yellow-400/30 flex items-center justify-center mb-5">
-                    <Users className="h-8 w-8 text-yellow-400" />
+                <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-amber-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+                <div className="relative z-10">
+                  <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-xl flex items-center justify-center text-gray-900 mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <Users className="h-6 w-6" />
                   </div>
-                  <h3 className="text-2xl font-bold theme-text-light mb-3">Profile Enrichment</h3>
-                  <p className="text-base leading-relaxed theme-text-muted">
-                    Comprehensive profile building through strategic activities and leadership development.
-                  </p>
+                  <h3 className="text-lg font-semibold theme-text-light mb-3 group-hover:text-yellow-400 transition-colors duration-300">
+                    Profile Enrichment
+                  </h3>
+                  <p className="theme-text-muted text-sm leading-relaxed">Comprehensive profile building through strategic activities and leadership development.</p>
                 </div>
+                <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 to-amber-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-b-2xl" />
               </motion.div>
 
               {/* Essay Guidance Card */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="group"
+                className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm p-6 rounded-2xl relative group hover:bg-gradient-to-br hover:from-gray-800/70 hover:to-gray-900/70 transition-all duration-300 border border-gray-700/20 hover:border-amber-500/20"
               >
-                <div className="rounded-3xl p-8 h-full flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl theme-bg-medium border border-yellow-400/20">
-                  <div className="w-16 h-16 rounded-full theme-bg-dark/50 border border-yellow-400/30 flex items-center justify-center mb-5">
-                    <FileText className="h-8 w-8 text-yellow-400" />
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+                <div className="relative z-10">
+                  <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center text-gray-900 mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <FileText className="h-6 w-6" />
                   </div>
-                  <h3 className="text-2xl font-bold theme-text-light mb-3">Essay Guidance</h3>
-                  <p className="text-base leading-relaxed theme-text-muted">
-                    Expert help in crafting authentic, compelling application essays.
-                  </p>
+                  <h3 className="text-lg font-semibold theme-text-light mb-3 group-hover:text-amber-400 transition-colors duration-300">
+                    Essay Guidance
+                  </h3>
+                  <p className="theme-text-muted text-sm leading-relaxed">Expert help in crafting authentic, compelling application essays.</p>
                 </div>
+                <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-b-2xl" />
               </motion.div>
 
               {/* College List Curation Card */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="group"
+                className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm p-6 rounded-2xl relative group hover:bg-gradient-to-br hover:from-gray-800/70 hover:to-gray-900/70 transition-all duration-300 border border-gray-700/20 hover:border-orange-500/20"
               >
-                <div className="rounded-3xl p-8 h-full flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl theme-bg-medium border border-yellow-400/20">
-                  <div className="w-16 h-16 rounded-full theme-bg-dark/50 border border-yellow-400/30 flex items-center justify-center mb-5">
-                    <Globe className="h-8 w-8 text-yellow-400" />
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-yellow-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+                <div className="relative z-10">
+                  <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-yellow-400 rounded-xl flex items-center justify-center text-gray-900 mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <Globe className="h-6 w-6" />
                   </div>
-                  <h3 className="text-2xl font-bold theme-text-light mb-3">College List Curation</h3>
-                  <p className="text-base leading-relaxed theme-text-muted">
-                    Personalized guidance to select best-fit institutions that reflect both personality and potential.
-                  </p>
+                  <h3 className="text-lg font-semibold theme-text-light mb-3 group-hover:text-orange-400 transition-colors duration-300">
+                    College List Curation
+                  </h3>
+                  <p className="theme-text-muted text-sm leading-relaxed">Personalized guidance to select best-fit institutions that reflect both personality and potential.</p>
                 </div>
+                <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-yellow-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-b-2xl" />
               </motion.div>
 
               {/* Dedicated Counseling Card */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="group"
+                className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm p-6 rounded-2xl relative group hover:bg-gradient-to-br hover:from-gray-800/70 hover:to-gray-900/70 transition-all duration-300 border border-gray-700/20 hover:border-yellow-400/20"
               >
-                <div className="rounded-3xl p-8 h-full flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl theme-bg-medium border border-yellow-400/20">
-                  <div className="w-16 h-16 rounded-full theme-bg-dark/50 border border-yellow-400/30 flex items-center justify-center mb-5">
-                    <BookOpen className="h-8 w-8 text-yellow-400" />
+                <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-amber-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+                <div className="relative z-10">
+                  <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-xl flex items-center justify-center text-gray-900 mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <BookOpen className="h-6 w-6" />
                   </div>
-                  <h3 className="text-2xl font-bold theme-text-light mb-3">Dedicated Counseling</h3>
-                  <p className="text-base leading-relaxed theme-text-muted">
-                    One-on-one personalized guidance throughout your college journey.
-                  </p>
+                  <h3 className="text-lg font-semibold theme-text-light mb-3 group-hover:text-yellow-400 transition-colors duration-300">
+                    Dedicated Counseling
+                  </h3>
+                  <p className="theme-text-muted text-sm leading-relaxed">One-on-one personalized guidance throughout your college journey.</p>
                 </div>
+                <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 to-amber-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-b-2xl" />
               </motion.div>
 
               {/* Personalized Roadmap Card */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="group"
+                className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm p-6 rounded-2xl relative group hover:bg-gradient-to-br hover:from-gray-800/70 hover:to-gray-900/70 transition-all duration-300 border border-gray-700/20 hover:border-amber-500/20"
               >
-                <div className="rounded-3xl p-8 h-full flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl theme-bg-medium border border-yellow-400/20">
-                  <div className="w-16 h-16 rounded-full theme-bg-dark/50 border border-yellow-400/30 flex items-center justify-center mb-5">
-                    <Star className="h-8 w-8 text-yellow-400" />
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+                <div className="relative z-10">
+                  <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center text-gray-900 mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <Star className="h-6 w-6" />
                   </div>
-                  <h3 className="text-2xl font-bold theme-text-light mb-3">Personalized Roadmap</h3>
-                  <p className="text-base leading-relaxed theme-text-muted">
-                    Custom strategic plan tailored to your unique strengths and goals.
-                  </p>
+                  <h3 className="text-lg font-semibold theme-text-light mb-3 group-hover:text-amber-400 transition-colors duration-300">
+                    Personalized Roadmap
+                  </h3>
+                  <p className="theme-text-muted text-sm leading-relaxed">Custom strategic plan tailored to your unique strengths and goals.</p>
                 </div>
+                <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-b-2xl" />
               </motion.div>
 
               {/* Research Excellence Card */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
-                className="group"
+                className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm p-6 rounded-2xl relative group hover:bg-gradient-to-br hover:from-gray-800/70 hover:to-gray-900/70 transition-all duration-300 border border-gray-700/20 hover:border-orange-500/20"
               >
-                <div className="rounded-3xl p-8 h-full flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl theme-bg-medium border border-yellow-400/20">
-                  <div className="w-16 h-16 rounded-full theme-bg-dark/50 border border-yellow-400/30 flex items-center justify-center mb-5">
-                    <Trophy className="h-8 w-8 text-yellow-400" />
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-yellow-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+                <div className="relative z-10">
+                  <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-yellow-400 rounded-xl flex items-center justify-center text-gray-900 mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <Trophy className="h-6 w-6" />
                   </div>
-                  <h3 className="text-2xl font-bold theme-text-light mb-3">Research Excellence</h3>
-                  <p className="text-base leading-relaxed theme-text-muted">
-                    High-impact research opportunities and competition support for standout profiles.
-                  </p>
+                  <h3 className="text-lg font-semibold theme-text-light mb-3 group-hover:text-orange-400 transition-colors duration-300">
+                    Research Excellence
+                  </h3>
+                  <p className="theme-text-muted text-sm leading-relaxed">High-impact research opportunities and competition support for standout profiles.</p>
                 </div>
+                <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-yellow-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-b-2xl" />
               </motion.div>
             </div>
           </motion.div>

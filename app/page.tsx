@@ -1,7 +1,7 @@
 "use client";
 
 import Header from "@/components/home/Header";
-import HeroSection from "@/components/home/HeroSection";
+import ProgramsHero from "@/components/home/ProgramsHero";
 import MissionSection from "@/components/home/MissionSection";
 import ProgramsSection from "@/components/home/ProgramSection1";
 import HowItWorksSection from "@/components/home/HowItWorksSection";
@@ -12,6 +12,7 @@ import SuccessStoriesSection from "@/components/home/SuccessStoriesSection";
 import AnimatedTestimonials from "@/components/home/AnimatedTestimonials";
 import FeaturesGridSection from "@/components/home/FeaturesGridSection";
 import CTASection from "@/components/home/CTASection";
+import SupportersCarousel from "@/components/home/SupportersCarousel";
 import Chatbot from "@/components/home/Chatbot";
 import Footer from "@/components/home/Footer";
 import AdminDashboard from "@/components/home/AdminDashboard";
@@ -25,13 +26,16 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background w-full overflow-x-hidden">
       <Header />
-      <HeroSection />
-      <ProgramsSection />
+      <ProgramsHero />
+      {/* <ProgramsSection /> */}
       <MissionSection />
       <HowItWorksSection />
-      <AnimatedTestimonials />
+      
       <FeaturesGridSection />
+      
       <CTASection />
+      <SupportersCarousel />
+      {/* <AnimatedTestimonials /> */}
       <Chatbot />
       <Footer />
     </div>
