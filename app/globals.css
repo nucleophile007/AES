@@ -418,8 +418,40 @@
   }
 }
 
+@keyframes scroll-reverse {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes scroll-bounce {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-25%);
+  }
+  50% {
+    transform: translateX(-50%);
+  }
+  75% {
+    transform: translateX(-25%);
+  }
+}
+
 .animate-scroll {
   animation: scroll 40s linear infinite;
+}
+
+.animate-scroll-reverse {
+  animation: scroll-reverse 45s linear infinite;
+}
+
+.animate-scroll-bounce {
+  animation: scroll-bounce 50s ease-in-out infinite;
 }
 
 .pause-animation {
