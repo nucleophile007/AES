@@ -13,6 +13,7 @@ import AnimatedTestimonials from "@/components/home/AnimatedTestimonials";
 import FeaturesGridSection from "@/components/home/FeaturesGridSection";
 import CTASection from "@/components/home/CTASection";
 import SupportersCarousel from "@/components/home/SupportersCarousel";
+import TestimonialCarousel from "@/components/home/TestimonialCarousel";
 import Chatbot from "@/components/home/Chatbot";
 import Footer from "@/components/home/Footer";
 import AdminDashboard from "@/components/home/AdminDashboard";
@@ -34,6 +35,7 @@ export default function HomePage() {
       <FeaturesGridSection />
       
       <CTASection />
+      <TestimonialCarousel />
       <SupportersCarousel />
       {/* <AnimatedTestimonials /> */}
       <Chatbot />
