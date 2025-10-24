@@ -79,7 +79,7 @@ export function SupportersCarousel() {
         </div>
 
         {/* Infinite Carousel */}
-        <div className="relative overflow-hidden group">
+        <div className="relative overflow-hidden group py-8">
           <div className="flex animate-scroll group-hover:pause-animation">
             {duplicatedSupporters.map((supporter, index) => (
               <div
@@ -90,8 +90,8 @@ export function SupportersCarousel() {
                   <Image
                     src={supporter.logo}
                     alt={supporter.alt}
-                    width={80}
-                    height={80}
+                    width={120}
+                    height={120}
                     className="object-contain transition-all duration-300"
                   />
                 </div>
