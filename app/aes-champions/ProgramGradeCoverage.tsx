@@ -11,7 +11,7 @@ import {
 import { Bar } from "react-chartjs-2"
 import ChartDataLabels from "chartjs-plugin-datalabels"
 
-// ✅ Register Chart.js components
+// ✅ Register Chart.js componentss
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ChartDataLabels)
 
 const ProgramGradeCoverage: React.FC = () => {

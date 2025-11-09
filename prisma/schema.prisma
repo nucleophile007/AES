@@ -1,113 +1,322 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
 model WebinarRegistration {
-  id           Int      @id @default(autoincrement())
-  email        String
-  parentName   String
-  parentEmail  String
-  parentPhone  String
-  studentName  String
-  grade        String
-  schoolName   String
-  program      String
+  id            Int      @id @default(autoincrement())
+  email         String
+  parentName    String
+  parentEmail   String
+  parentPhone   String
+  studentName   String
+  grade         String
+  schoolName    String
+  program       String
   preferredTime String
-  createdAt    DateTime @default(now())
-  approved     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  approved      Boolean  @default(false)
+  adminEmail    String?
 }
 
 model AvailabilityDay {
-  id        Int      @id @default(autoincrement())
-  // Store date as string in M/D/YYYY to match frontend calendar keys (e.g., "8/16/2025")
-  date      String
-  // Times are strings like "09:00 AM", "10:00 AM" (1-hour intervals)
-  times     Json
-  // Program this availability is for (e.g., "Mathematics Tutoring", "Science Tutoring")
-  program   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         Int      @id @default(autoincrement())
+  date       String
+  times      Json
+  program    String
+  adminEmail String   @default("acharya.folsom@gmail.com")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  // Combination of date and program should be unique
-  @@unique([date, program])
+  @@unique([date, program, adminEmail])
+}
+
+model Teacher {
+  id                Int                       @id @default(autoincrement())
+  name              String
+  email             String                    @unique
+  password          String?
+  programs          String[]
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  isActivated       Boolean                   @default(false)
+  assignments       Assignment[]
+  classSchedules    ClassSchedule[]
+  resources         Resource[]
+  submissionRemarks StudentSubmissionRemark[]
+  students          TeacherStudent[]
 }
 
 model Student {
-  id          Int      @id @default(autoincrement())
-  name        String
-  email       String   @unique
-  grade       String
-  schoolName  String
-  parentName  String
-  parentEmail String
-  parentPhone String
-  program     String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relations
-  submissions Submission[]
-  enrollments Enrollment[]
+  id                  Int                 @id @default(autoincrement())
+  name                String
+  email               String              @unique
+  password            String?
+  grade               String
+  schoolName          String
+  parentName          String
+  parentEmail         String
+  parentPhone         String
+  program             String
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  isActivated         Boolean             @default(false)
+  assignedAssignments Assignment[]        @relation("AssignedAssignments")
+  classSchedules      ClassSchedule[]
+  enrollments         Enrollment[]
+  Payment             Payment[]
+  assignedResources   StudentResource[]
+  studentSubmissions  StudentSubmission[]
+  submissions         Submission[]
+  teacherLinks        TeacherStudent[]
+  Testimonial         Testimonial[]
+}
+
+model TeacherStudent {
+  id         Int      @id @default(autoincrement())
+  teacherId  Int
+  studentId  Int
+  program    String
+  assignedAt DateTime @default(now())
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher    Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, studentId, program])
 }
 
 model Assignment {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String
-  program     String
-  subject     String
-  grade       String
-  dueDate     DateTime
-  totalPoints Int      @default(100)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relations
-  submissions Submission[]
+  id                  Int                  @id @default(autoincrement())
+  title               String
+  description         String
+  instructions        String?
+  program             String
+  subject             String
+  dueDate             DateTime
+  totalPoints         Int                  @default(100)
+  isActive            Boolean              @default(true)
+  allowLateSubmission Boolean              @default(false)
+  teacherId           Int                  @default(1)
+  targetStudentId     Int?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  targetStudent       Student?             @relation("AssignedAssignments", fields: [targetStudentId], references: [id])
+  teacher             Teacher              @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  resources           AssignmentResource[]
+  submissions         Submission[]
 }
 
 model Submission {
-  id            Int      @id @default(autoincrement())
-  studentId     Int
-  assignmentId  Int
-  content       String?  // Text content
-  fileUrl       String?  // File upload URL
-  submittedAt   DateTime @default(now())
-  grade         Int?     // Points earned
-  feedback      String?  // Teacher feedback
-  status        String   @default("submitted") // submitted, graded, returned
-  
-  // Relations
-  student     Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  assignment  Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  
+  id               Int        @id @default(autoincrement())
+  studentId        Int
+  assignmentId     Int
+  content          String?
+  fileUrl          String?
+  fileName         String?
+  fileSize         Int?
+  submittedAt      DateTime   @default(now())
+  updatedAt        DateTime   @default(now()) @updatedAt
+  grade            Int?
+  feedback         String?
+  status           String     @default("submitted")
+  submissionNumber Int        @default(1)
+  assignment       Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student          Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
   @@unique([studentId, assignmentId])
 }
 
 model Enrollment {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   studentId Int
   program   String
   subject   String
-  startDate DateTime @default(now())
-  isActive  Boolean  @default(true)
-  
-  // Relations
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  
+  startDate DateTime  @default(now())
+  isActive  Boolean   @default(true)
+  access    String    @default("unblocked")
+  student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  Payment   Payment[]
+
   @@unique([studentId, program, subject])
+}
+
+model Resource {
+  id                 Int                  @id @default(autoincrement())
+  title              String
+  description        String?
+  type               String
+  fileUrl            String?
+  linkUrl            String?
+  fileName           String?
+  fileSize           Int?
+  program            String
+  subject            String
+  grade              String
+  teacherId          Int
+  isPublic           Boolean              @default(false)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  assignmentLinks    AssignmentResource[]
+  teacher            Teacher              @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  studentAssignments StudentResource[]
+}
+
+model AssignmentResource {
+  id           Int        @id @default(autoincrement())
+  assignmentId Int
+  resourceId   Int
+  isRequired   Boolean    @default(false)
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  resource     Resource   @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, resourceId])
+}
+
+model StudentResource {
+  id         Int       @id @default(autoincrement())
+  studentId  Int
+  resourceId Int
+  assignedAt DateTime  @default(now())
+  viewedAt   DateTime?
+  resource   Resource  @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  student    Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, resourceId])
+}
+
+model StudentSubmission {
+  id             Int                       @id @default(autoincrement())
+  studentId      Int
+  title          String
+  description    String?
+  content        String?
+  fileUrl        String?
+  fileName       String?
+  fileSize       Int?
+  submittedAt    DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+  teacherIds     Int[]
+  student        Student                   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacherRemarks StudentSubmissionRemark[]
+}
+
+model StudentSubmissionRemark {
+  id                  Int               @id @default(autoincrement())
+  studentSubmissionId Int
+  teacherId           Int
+  remark              String
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  studentSubmission   StudentSubmission @relation(fields: [studentSubmissionId], references: [id], onDelete: Cascade)
+  teacher             Teacher           @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([studentSubmissionId, teacherId])
+}
+
+model Message {
+  id            String    @id @default(uuid())
+  senderId      Int
+  senderRole    String
+  recipientId   Int
+  recipientRole String
+  content       String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  isRead        Boolean   @default(false)
+  readAt        DateTime?
+
+  @@index([senderId, recipientId, createdAt])
+  @@index([recipientId, isRead])
+  @@index([createdAt(sort: Desc)])
+}
+
+model ClassSchedule {
+  id          Int      @id @default(autoincrement())
+  title       String
+  date        DateTime
+  startTime   String
+  endTime     String
+  subject     String
+  description String?
+  location    String?
+  meetingLink String?
+  status      String   @default("upcoming")
+  color       String?
+  studentId   Int
+  teacherId   Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher     Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId])
+  @@index([studentId])
+}
+
+model ActivationRequest {
+  id        Int      @id @default(autoincrement())
+  email     String
+  role      String
+  token     String   @unique
+  userId    Int
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+
+  @@unique([email, role])
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+}
+
+model Payment {
+  id           Int        @id @default(autoincrement())
+  enrollmentId Int
+  studentId    Int
+  studentEmail String
+  studentName  String
+  parentName   String
+  parentEmail  String
+  parentPhone  String
+  program      String
+  subject      String
+  paymentInfo  String
+  amount       String?
+  dueDate      String
+  fileUrl      String?
+  fileName     String?
+  fileSize     Int?
+  status       String     @default("pending")
+  sentAt       DateTime   @default(now())
+  paidAt       DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime
+  Enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  Student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model Testimonial {
+  id         Int      @id @default(autoincrement())
+  studentId  Int
+  content    String
+  authorType String
+  authorName String
+  isApproved Boolean  @default(false)
+  isVisible  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+  Student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
