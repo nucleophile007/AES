@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import bcrypt from "bcrypt";
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 import { 
   validatePasswordStrength, 
   isCommonPassword,
@@ -146,13 +146,16 @@ export async function POST(request: NextRequest) {
     if (!activationRequest) {
       // Log failed attempt for security monitoring
       try {
-        await prisma.$executeRaw`
-          INSERT INTO "FailedActivation" ("token", "ipAddress", "userAgent", "reason", "createdAt")
-          VALUES (${token}, ${clientIP}, ${userAgent}, 'TOKEN_NOT_FOUND', NOW())
-        `;
+        await prisma.failedActivation.create({
+          data: {
+            token,
+            ipAddress: clientIP,
+            userAgent,
+            reason: 'TOKEN_NOT_FOUND'
+          }
+        });
       } catch (e) {
-        // Ignore if table doesn't exist yet
-        console.log('Failed activation logging skipped (table may not exist)');
+        console.error('Failed to log activation attempt:', e);
       }
       
       await timingSafeDelay();
@@ -215,15 +218,20 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // 9. Log successful activation (optional - create table if you want this)
+    // 9. Log successful activation
     try {
-      await prisma.$executeRaw`
-        INSERT INTO "SecurityLog" ("event", "userId", "userRole", "success", "ipAddress", "userAgent", "createdAt")
-        VALUES ('ACCOUNT_ACTIVATED', ${activationRequest.userId}, ${activationRequest.role}, true, ${clientIP}, ${userAgent}, NOW())
-      `;
+      await prisma.securityLog.create({
+        data: {
+          event: 'ACCOUNT_ACTIVATED',
+          userId: activationRequest.userId,
+          userRole: activationRequest.role,
+          success: true,
+          ipAddress: clientIP,
+          userAgent
+        }
+      });
     } catch (e) {
-      // Ignore if table doesn't exist yet
-      console.log('Security logging skipped (table may not exist)');
+      console.error('Failed to log security event:', e);
     }
 
     return NextResponse.json({ 
