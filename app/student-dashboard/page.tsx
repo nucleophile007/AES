@@ -220,23 +220,6 @@ export default function StudentDashboard() {
       // Upload file to R2 if provided
       if (submissionFile) {
         try {
-          // Method 1: Try direct upload with presigned URL
-          const presignedResponse = await fetch('/api/r2-upload', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              studentId: student.id,
-              assignmentId: selectedAssignment.id,
-              fileName: submissionFile.name,
-              fileType: submissionFile.type,
-              fileSize: submissionFile.size,
-            }),
-          });
-          
-          const presignedData = await presignedResponse.json();
-          
           // Use server-side upload directly (presigned URLs have issues with R2)
           const formData = new FormData();
           formData.append('file', submissionFile);

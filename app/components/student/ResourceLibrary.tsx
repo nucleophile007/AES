@@ -208,23 +208,6 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
       // Upload file if provided
       if (submissionFile) {
         try {
-          // Method 1: Try direct upload with presigned URL
-          const presignedResponse = await fetch('/api/r2-upload', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              studentId: 0, // Will be set by the API
-              assignmentId: 0, // Not needed for resource submissions
-              fileName: submissionFile.name,
-              fileType: submissionFile.type,
-              fileSize: submissionFile.size,
-            }),
-          });
-          
-          const presignedData = await presignedResponse.json();
-          
           // Use server-side upload directly (presigned URLs have issues with R2)
           const formData = new FormData();
           formData.append('file', submissionFile);
