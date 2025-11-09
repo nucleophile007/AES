@@ -398,3 +398,62 @@
 .rotate-y-180 {
   transform: rotateY(180deg);
 }
+
+/* Hero Section Styles */
+.hero-badge {
+  @apply inline-block px-4 py-2 text-sm font-medium uppercase tracking-wider text-white/80 bg-white/10 backdrop-blur-sm rounded-full border border-white/20;
+}
+
+.text-outline {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* Infinite Scroll Animation */
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes scroll-reverse {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes scroll-bounce {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-25%);
+  }
+  50% {
+    transform: translateX(-50%);
+  }
+  75% {
+    transform: translateX(-25%);
+  }
+}
+
+.animate-scroll {
+  animation: scroll 40s linear infinite;
+}
+
+.animate-scroll-reverse {
+  animation: scroll-reverse 45s linear infinite;
+}
+
+.animate-scroll-bounce {
+  animation: scroll-bounce 50s ease-in-out infinite;
+}
+
+.pause-animation {
+  animation-play-state: paused;
+}

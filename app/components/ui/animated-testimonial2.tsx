@@ -10,6 +10,7 @@ type Testimonial = {
   name: string
   designation: string
   src: string
+  school?: string
   // New fields from the provided data
   achievement?: string
   improvement?: string
@@ -212,9 +213,17 @@ export const AnimatedTestimonials = ({
 
                 {/* Designation - ADAPTIVE SPACING */}
                 <div className={`flex items-start ${isShort ? "mb-10" : "mb-6"}`}>
-                  <p className="text-sm md:text-base text-yellow-400 font-medium">
-                    {currentTestimonials[active]?.designation}
-                  </p>
+                  <div className="space-y-1">
+                    {currentTestimonials[active]?.school && (
+                      <p className="text-lg md:text-2xl text-yellow-400 font-medium">
+                        {currentTestimonials[active]?.school}
+                      </p>
+                    )}
+                    <p className="text-sm md:text-base text-yellow-400 font-medium">
+                      {currentTestimonials[active]?.designation}
+                    </p>
+                    
+                  </div>
                 </div>
 
                 {/* Quote - ADAPTIVE SPACING AND CENTERING */}
