@@ -1,7 +1,9 @@
 "use client";
 
+"use client";
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useRequireAuth } from "../../contexts/AuthContext";
 import {
   SidebarProvider,
   Sidebar,
@@ -57,122 +59,140 @@ import {
   Award,
   Bookmark,
   RefreshCw,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ResourceLibrary from "@/components/student/ResourceLibrary";
+import MentorMessages from "../../components/student/MentorMessages";
 
 // Mock data - replace with actual API calls
-const mockStudent = {
-  id: 1,
-  name: "Alex Johnson",
-  email: "alex.johnson@email.com",
-  grade: "10th Grade",
-  school: "Granite Bay High School",
-  program: "Academic Tutoring",
-  profileImage: null,
-  gpa: 3.8,
-  overallGrade: "A-",
-};
-
-const mockAssignments = [
-  {
-    id: 1,
-    title: "Algebra II Problem Set #12",
-    subject: "Mathematics",
-    description: "Complete problems 1-25 from Chapter 8, focusing on quadratic equations and factoring.",
-    dueDate: "2025-09-15",
-    totalPoints: 100,
-    status: "pending",
-    program: "Academic Tutoring",
-  },
-  {
-    id: 2,
-    title: "Essay: Impact of Climate Change",
-    subject: "Science",
-    description: "Write a 3-page essay discussing the effects of climate change on marine ecosystems.",
-    dueDate: "2025-09-18",
-    totalPoints: 150,
-    status: "submitted",
-    program: "Academic Tutoring",
-  },
-  {
-    id: 3,
-    title: "SAT Practice Test #3",
-    subject: "SAT Prep",
-    description: "Complete the full-length practice test and submit your answers for review.",
-    dueDate: "2025-09-12",
-    totalPoints: 200,
-    status: "overdue",
-    program: "SAT Coaching",
-  },
-];
-
-const mockSubmissions = [
-  {
-    id: 1,
-    assignmentId: 2,
-    assignmentTitle: "Essay: Impact of Climate Change",
-    submittedAt: "2025-09-08",
-    grade: 142,
-    totalPoints: 150,
-    feedback: "Excellent work! Your analysis of marine ecosystem impacts was thorough and well-researched. Consider adding more specific examples in future essays.",
-    status: "graded",
-    teacherName: "Dr. Sarah Wilson",
-  },
-  {
-    id: 2,
-    assignmentId: 5,
-    assignmentTitle: "Geometry Proofs Worksheet",
-    submittedAt: "2025-09-05",
-    grade: 88,
-    totalPoints: 100,
-    feedback: "Good understanding of geometric principles. Work on clarity in your proof explanations.",
-    status: "graded",
-    teacherName: "Mr. John Davis",
-  },
-];
-
 const mockUpcomingEvents = [
   { id: 1, title: "Math Tutoring Session", date: "2025-09-10", time: "3:00 PM", type: "tutoring" },
   { id: 2, title: "SAT Practice Test", date: "2025-09-12", time: "9:00 AM", type: "test" },
   { id: 3, title: "Science Fair Project Review", date: "2025-09-15", time: "2:00 PM", type: "review" },
 ];
 
+interface Student {
+  id: number;
+  name: string;
+  email: string;
+  grade: string;
+  schoolName: string;
+  parentName: string;
+  parentEmail: string;
+  parentPhone: string;
+  program: string;
+  enrollments: Array<{
+    program: string;
+    subject: string;
+    isActive: boolean;
+  }>;
+  teachers: Array<{
+    id: number;
+    name: string;
+    email: string;
+    program: string;
+  }>;
+  stats: {
+    totalSubmissions: number;
+    gradedSubmissions: number;
+    averageGrade: number;
+    pendingAssignments: number;
+  };
+}
+
 interface Assignment {
   id: number;
   title: string;
   subject: string;
   description: string;
+  program: string;
+  grade: string;
   dueDate: string;
   totalPoints: number;
   status: string;
-  program: string;
+  submissionId?: number | null;
+  resources?: Array<any>; // Add this line to allow resources property
 }
 
 interface Submission {
   id: number;
   assignmentId: number;
   assignmentTitle: string;
+  assignmentSubject: string;
+  content?: string;
+  fileUrl?: string;
+  fileName?: string; // Added fileName property
+  fileSize?: number; // Optionally add fileSize if used elsewhere
   submittedAt: string;
-  grade?: number;
+  grade?: number | null;
   totalPoints: number;
   feedback?: string;
   status: string;
-  teacherName: string;
 }
 
 export default function StudentDashboard() {
+  // Authentication - require student role
+  const { user: authUser, isLoading: authLoading } = useRequireAuth('student');
+
   const [activeTab, setActiveTab] = useState("overview");
+  const [student, setStudent] = useState<Student | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [submissionText, setSubmissionText] = useState("");
   const [submissionFile, setSubmissionFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResubmitting, setIsResubmitting] = useState(false);
+  const [resubmissionId, setResubmissionId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   
-  // Mock student ID - in real app, get from authentication
-  const studentId = 1;
+  // Get student email from authenticated user
+  const studentEmail = authUser?.email || "";
+
+  // Fetch initial data - Move this hook before any conditional returns
+  useEffect(() => {
+    // Only fetch data if we have a student email and auth is complete
+    if (!authLoading && authUser && studentEmail) {
+      const fetchData = async () => {
+        try {
+          setLoading(true);
+          
+          // Fetch student dashboard data
+          const response = await fetch(`/api/student/dashboard?studentEmail=${encodeURIComponent(studentEmail)}`);
+          const data = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(data.error || 'Failed to fetch student data');
+          }
+          
+          setStudent(data.student);
+          setAssignments(data.assignments);
+          setSubmissions(data.submissions);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+          console.error("Error fetching data:", err);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchData();
+    }
+  }, [authLoading, authUser, studentEmail]);
+
+  // Early return for authentication loading
+  if (authLoading || !authUser) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="flex items-center gap-2">
+          <RefreshCw className="h-6 w-6 animate-spin" />
+          <span>Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -189,100 +209,139 @@ export default function StudentDashboard() {
     }
   };
 
-  // Fetch initial data
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        
-        // Fetch assignments
-        const assignmentsResponse = await fetch(`/api/assignments?studentId=${studentId}`);
-        const assignmentsData = await assignmentsResponse.json();
-        
-        if (assignmentsData.success) {
-          setAssignments(assignmentsData.assignments);
-        }
-
-        // Fetch submissions
-        const submissionsResponse = await fetch(`/api/submissions?studentId=${studentId}`);
-        const submissionsData = await submissionsResponse.json();
-        
-        if (submissionsData.success) {
-          setSubmissions(submissionsData.submissions);
-        }
-      } catch (err) {
-        setError("Failed to load dashboard data");
-        console.error("Error fetching data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [studentId]);
-
   const handleSubmission = async () => {
-    if (!selectedAssignment) return;
+    if (!selectedAssignment || !student) return;
     
     setIsSubmitting(true);
     
     try {
       let fileUrl = null;
       
-      // Upload file if provided
+      // Upload file to R2 if provided
       if (submissionFile) {
-        const formData = new FormData();
-        formData.append('file', submissionFile);
-        formData.append('studentId', studentId.toString());
-        formData.append('assignmentId', selectedAssignment.id.toString());
-        
-        const uploadResponse = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-        
-        const uploadData = await uploadResponse.json();
-        
-        if (uploadData.success) {
-          fileUrl = uploadData.fileUrl;
-        } else {
-          throw new Error(uploadData.error || 'File upload failed');
+        try {
+          // Method 1: Try direct upload with presigned URL
+          const presignedResponse = await fetch('/api/r2-upload', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              studentId: student.id,
+              assignmentId: selectedAssignment.id,
+              fileName: submissionFile.name,
+              fileType: submissionFile.type,
+              fileSize: submissionFile.size,
+            }),
+          });
+          
+          const presignedData = await presignedResponse.json();
+          
+          if (!presignedData.success) {
+            throw new Error(presignedData.error || 'Failed to get upload URL');
+          }
+          
+          // Try direct upload to R2
+          const uploadResponse = await fetch(presignedData.presignedUrl, {
+            method: 'PUT',
+            body: submissionFile,
+            headers: {
+              'Content-Type': submissionFile.type,
+            },
+          });
+          
+          if (!uploadResponse.ok) {
+            throw new Error('Direct upload failed, trying server upload...');
+          }
+          
+          fileUrl = presignedData.publicUrl;
+          
+        } catch (directUploadError) {
+          console.log('Direct upload failed, trying server-side upload:', directUploadError);
+          
+          // Method 2: Fallback to server-side upload
+          const formData = new FormData();
+          formData.append('file', submissionFile);
+          formData.append('studentId', student.id.toString());
+          formData.append('assignmentId', selectedAssignment.id.toString());
+          
+          const serverUploadResponse = await fetch('/api/upload-r2', {
+            method: 'POST',
+            body: formData,
+          });
+          
+          const serverUploadData = await serverUploadResponse.json();
+          
+          console.log('Server upload response:', serverUploadData);
+          
+          if (serverUploadData.success) {
+            fileUrl = serverUploadData.fileUrl;
+          } else {
+            console.error('Server upload failed:', serverUploadData);
+            throw new Error(`Server upload failed: ${serverUploadData.error || 'Unknown error'}`);
+          }
         }
       }
       
       // Submit assignment
-      const submissionResponse = await fetch('/api/submissions', {
-        method: 'POST',
+      const endpoint = isResubmitting && resubmissionId 
+        ? '/api/student/submissions' 
+        : '/api/student/submissions';
+      
+      const requestBody = isResubmitting && resubmissionId
+        ? {
+            studentEmail: student.email,
+            assignmentId: selectedAssignment.id,
+            content: submissionText,
+            fileUrl,
+            fileName: submissionFile?.name,
+            fileSize: submissionFile?.size,
+          }
+        : {
+            studentEmail: student.email,
+            assignmentId: selectedAssignment.id,
+            content: submissionText,
+            fileUrl,
+            fileName: submissionFile?.name,
+            fileSize: submissionFile?.size,
+          };
+
+      const submissionResponse = await fetch(endpoint, {
+        method: isResubmitting ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          studentId,
-          assignmentId: selectedAssignment.id,
-          assignmentTitle: selectedAssignment.title,
-          content: submissionText,
-          fileUrl,
-        }),
+        body: JSON.stringify(requestBody),
       });
       
       const submissionData = await submissionResponse.json();
       
       if (submissionData.success) {
-        // Update assignments list
-        const updatedAssignments = assignments.map(assignment =>
-          assignment.id === selectedAssignment.id
-            ? { ...assignment, status: "submitted" }
-            : assignment
-        );
-        setAssignments(updatedAssignments);
-        
-        // Add to submissions list
-        setSubmissions([...submissions, submissionData.submission]);
+        if (isResubmitting) {
+          // Update submissions list for resubmission
+          const updatedSubmissions = submissions.map(sub =>
+            sub.id === resubmissionId ? submissionData.submission : sub
+          );
+          setSubmissions(updatedSubmissions);
+        } else {
+          // Update assignments list for new submission
+          const updatedAssignments = assignments.map(assignment =>
+            assignment.id === selectedAssignment.id
+              ? { ...assignment, status: "submitted" }
+              : assignment
+          );
+          setAssignments(updatedAssignments);
+          
+          // Add to submissions list
+          setSubmissions([submissionData.submission, ...submissions]);
+        }
         
         // Reset form
         setSelectedAssignment(null);
         setSubmissionText("");
         setSubmissionFile(null);
+        setIsResubmitting(false);
+        setResubmissionId(null);
       } else {
         throw new Error(submissionData.error || 'Submission failed');
       }
@@ -292,6 +351,21 @@ export default function StudentDashboard() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleResubmission = async (submission: Submission) => {
+    if (!student) return;
+    
+    // Find the corresponding assignment
+    const assignment = assignments.find(a => a.id === submission.assignmentId);
+    if (!assignment) return;
+    
+    // Set up for resubmission
+    setSelectedAssignment(assignment);
+    setSubmissionText(submission.content || "");
+    setSubmissionFile(null); // Reset file, user will need to reupload
+    setIsResubmitting(true);
+    setResubmissionId(submission.id);
   };
 
   const sidebarItems = [
@@ -308,7 +382,7 @@ export default function StudentDashboard() {
       icon: FileText,
       isActive: activeTab === "assignments",
       onClick: () => setActiveTab("assignments"),
-      badge: assignments.filter(a => a.status === "pending").length,
+      badge: student ? student.stats.pendingAssignments : 0,
     },
     {
       title: "Submissions",
@@ -359,12 +433,75 @@ export default function StudentDashboard() {
     return Math.round((grade / total) * 100);
   };
 
+  // Check if assignment deadline has passed
+  const isDeadlinePassed = (dueDate: string): boolean => {
+    const deadline = new Date(dueDate);
+    const now = new Date();
+    return now > deadline;
+  };
+
+  // Check if submission can be resubmitted
+  const canResubmit = (submission: Submission): boolean => {
+    // Find the corresponding assignment
+    const assignment = assignments.find(a => a.id === submission.assignmentId);
+    if (!assignment) return false;
+    
+    // Can resubmit if deadline hasn't passed and submission is submitted (but not graded yet)
+    return !isDeadlinePassed(assignment.dueDate) && 
+           submission.status === 'submitted' && 
+           submission.grade === null;
+  };
+
   const getGradeColor = (percentage: number) => {
     if (percentage >= 90) return "text-green-600";
     if (percentage >= 80) return "text-blue-600";
     if (percentage >= 70) return "text-yellow-600";
     return "text-red-600";
   };
+
+  if (loading) {
+    return (
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full bg-gray-50">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading student dashboard...</p>
+            </div>
+          </div>
+        </div>
+      </SidebarProvider>
+    );
+  }
+
+  if (error) {
+    return (
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full bg-gray-50">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-red-600 text-xl mb-4">Error: {error}</div>
+              <Button onClick={() => window.location.reload()}>Try Again</Button>
+            </div>
+          </div>
+        </div>
+      </SidebarProvider>
+    );
+  }
+
+  if (!student) {
+    return (
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full bg-gray-50">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-gray-600 text-xl">Student not found</div>
+            </div>
+          </div>
+        </div>
+      </SidebarProvider>
+    );
+  }
 
   return (
     <SidebarProvider>
@@ -374,15 +511,15 @@ export default function StudentDashboard() {
             <div className="flex items-center gap-3">
               <Avatar className="h-10 w-10">
                 <AvatarFallback className="bg-blue-100 text-blue-600">
-                  {mockStudent.name.split(' ').map(n => n[0]).join('')}
+                  {student.name.split(' ').map(n => n[0]).join('')}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-sidebar-foreground truncate">
-                  {mockStudent.name}
+                  {student.name}
                 </p>
                 <p className="text-xs text-sidebar-foreground/70 truncate">
-                  {mockStudent.grade} • {mockStudent.school}
+                  {student.grade} • {student.schoolName}
                 </p>
               </div>
             </div>
@@ -471,6 +608,26 @@ export default function StudentDashboard() {
                   <span>Settings</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={async () => {
+                    try {
+                      await fetch('/api/auth/logout', { 
+                        method: 'POST',
+                        credentials: 'include'
+                      });
+                      window.location.href = '/';
+                    } catch (error) {
+                      console.error('Logout failed:', error);
+                      window.location.href = '/';
+                    }
+                  }}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarFooter>
         </Sidebar>
@@ -523,8 +680,8 @@ export default function StudentDashboard() {
                             <FileText className="h-5 w-5 text-blue-600" />
                           </div>
                           <div>
-                            <p className="text-sm text-gray-600">Pending Assignments</p>
-                            <p className="text-2xl font-bold">{assignments.filter(a => a.status === "pending").length}</p>
+                            <p className="text-sm text-gray-600">Active Assignments</p>
+                            <p className="text-2xl font-bold">{assignments.filter(a => a.status === "active").length}</p>
                           </div>
                         </div>
                       </CardContent>
@@ -537,8 +694,8 @@ export default function StudentDashboard() {
                             <Trophy className="h-5 w-5 text-green-600" />
                           </div>
                           <div>
-                            <p className="text-sm text-gray-600">Overall Grade</p>
-                            <p className="text-2xl font-bold">{mockStudent.overallGrade}</p>
+                            <p className="text-sm text-gray-600">Completed</p>
+                            <p className="text-2xl font-bold">{submissions.filter(s => s.grade !== null && s.grade !== undefined).length}</p>
                           </div>
                         </div>
                       </CardContent>
@@ -551,8 +708,14 @@ export default function StudentDashboard() {
                             <GraduationCap className="h-5 w-5 text-purple-600" />
                           </div>
                           <div>
-                            <p className="text-sm text-gray-600">Current GPA</p>
-                            <p className="text-2xl font-bold">{mockStudent.gpa}</p>
+                            <p className="text-sm text-gray-600">Average Grade</p>
+                            <p className="text-2xl font-bold">
+                              {submissions.filter(s => s.grade !== null && s.grade !== undefined).length > 0 
+                                ? Math.round(submissions.filter(s => s.grade !== null && s.grade !== undefined)
+                                    .reduce((acc, s) => acc + (s.grade || 0), 0) / 
+                                    submissions.filter(s => s.grade !== null && s.grade !== undefined).length) + '%'
+                                : 'N/A'}
+                            </p>
                           </div>
                         </div>
                       </CardContent>
@@ -607,14 +770,14 @@ export default function StudentDashboard() {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-3">
-                          {mockUpcomingEvents.map((event) => (
-                            <div key={event.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                          {assignments.slice(0, 3).map((assignment) => (
+                            <div key={assignment.id} className="flex items-center gap-3 p-3 border rounded-lg">
                               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                                 <Calendar className="h-5 w-5 text-blue-600" />
                               </div>
                               <div className="flex-1">
-                                <p className="font-medium text-sm">{event.title}</p>
-                                <p className="text-xs text-gray-600">{event.date} at {event.time}</p>
+                                <p className="font-medium text-sm">{assignment.title}</p>
+                                <p className="text-xs text-gray-600">Due {assignment.dueDate}</p>
                               </div>
                             </div>
                           ))}
@@ -638,17 +801,43 @@ export default function StudentDashboard() {
                   </div>
 
                   <div className="grid gap-4">
-                    {assignments.map((assignment) => (
+                    {assignments.map((assignment) => {
+                      // Find if there's a submission for this assignment
+                      const existingSubmission = submissions.find(s => s.assignmentId === assignment.id);
+                      const deadlinePassed = isDeadlinePassed(assignment.dueDate);
+                      const canResubmitAssignment = existingSubmission && 
+                                                   !deadlinePassed && 
+                                                   existingSubmission.grade === null;
+                      
+                      return (
                       <Card key={assignment.id} className="hover:shadow-md transition-shadow">
                         <CardContent className="p-6">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
                                 <h3 className="text-lg font-semibold">{assignment.title}</h3>
-                                {getStatusBadge(assignment.status)}
+                                {existingSubmission ? getStatusBadge(existingSubmission.status) : getStatusBadge("pending")}
                               </div>
                               <p className="text-gray-600 mb-3">{assignment.description}</p>
-                              <div className="flex items-center gap-4 text-sm text-gray-500">
+                              
+                              {/* Resource indicator */}
+                              {assignment.resources && assignment.resources.length > 0 && (
+                                <div className="flex items-center gap-2 mb-3">
+                                  <BookOpen className="h-4 w-4 text-blue-500" />
+                                  <span className="text-sm text-blue-600">
+                                    {assignment.resources.length} resource{assignment.resources.length !== 1 ? 's' : ''} available
+                                  </span>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-6 px-2 text-xs"
+                                    onClick={() => setActiveTab("resources")}
+                                  >
+                                    View Resources
+                                  </Button>
+                                </div>
+                              )}
+                              <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
                                 <span className="flex items-center gap-1">
                                   <BookOpen className="h-4 w-4" />
                                   {assignment.subject}
@@ -662,67 +851,185 @@ export default function StudentDashboard() {
                                   {assignment.totalPoints} points
                                 </span>
                               </div>
+                              
+                              {/* Deadline status indicator */}
+                              <div className="flex items-center gap-2 text-sm">
+                                {deadlinePassed ? (
+                                  <span className="flex items-center gap-1 text-red-600">
+                                    <AlertCircle className="h-4 w-4" />
+                                    Deadline passed
+                                  </span>
+                                ) : (
+                                  <span className="flex items-center gap-1 text-green-600">
+                                    <CheckCircle className="h-4 w-4" />
+                                    Still accepting submissions
+                                  </span>
+                                )}
+                                
+                                {existingSubmission && (
+                                  <span className="text-gray-500">
+                                    • Submitted on {existingSubmission.submittedAt}
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                            {assignment.status === "pending" && (
-                              <Dialog>
-                                <DialogTrigger asChild>
-                                  <Button onClick={() => setSelectedAssignment(assignment)}>
-                                    Submit Assignment
-                                  </Button>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-2xl">
-                                  <DialogHeader>
-                                    <DialogTitle>Submit Assignment: {selectedAssignment?.title}</DialogTitle>
-                                  </DialogHeader>
-                                  <div className="space-y-4">
-                                    <div className="space-y-2">
-                                      <Label htmlFor="submission">Written Response</Label>
-                                      <Textarea
-                                        id="submission"
-                                        placeholder="Enter your assignment response here..."
-                                        value={submissionText}
-                                        onChange={(e) => setSubmissionText(e.target.value)}
-                                        rows={6}
-                                      />
-                                    </div>
-                                    <div className="space-y-2">
-                                      <Label htmlFor="file">File Upload (Optional)</Label>
-                                      <Input
-                                        id="file"
-                                        type="file"
-                                        accept=".pdf,.doc,.docx,.txt,.jpg,.png"
-                                        onChange={(e) => setSubmissionFile(e.target.files?.[0] || null)}
-                                      />
-                                      <p className="text-xs text-gray-500">
-                                        Accepted formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB)
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <DialogFooter>
-                                    <Button
-                                      onClick={handleSubmission}
-                                      disabled={isSubmitting || (!submissionText.trim() && !submissionFile)}
-                                    >
-                                      {isSubmitting ? (
-                                        <>
-                                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                          Submitting...
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Send className="h-4 w-4 mr-2" />
-                                          Submit Assignment
-                                        </>
-                                      )}
+                            
+                            <div className="flex flex-col gap-2">
+                              {/* Submit button for new assignments */}
+                              {!existingSubmission && !deadlinePassed && (
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button onClick={() => {
+                                      setSelectedAssignment(assignment);
+                                      setIsResubmitting(false);
+                                      setResubmissionId(null);
+                                    }}>
+                                      <Send className="h-4 w-4 mr-2" />
+                                      Submit Assignment
                                     </Button>
-                                  </DialogFooter>
-                                </DialogContent>
-                              </Dialog>
-                            )}
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-2xl">
+                                    <DialogHeader>
+                                      <DialogTitle>Submit Assignment: {selectedAssignment?.title}</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                      <div className="space-y-2">
+                                        <Label htmlFor="submission">Written Response</Label>
+                                        <Textarea
+                                          id="submission"
+                                          placeholder="Enter your assignment response here..."
+                                          value={submissionText}
+                                          onChange={(e) => setSubmissionText(e.target.value)}
+                                          rows={6}
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor="file">File Upload (Optional)</Label>
+                                        <Input
+                                          id="file"
+                                          type="file"
+                                          accept=".pdf,.doc,.docx,.txt,.jpg,.png"
+                                          onChange={(e) => setSubmissionFile(e.target.files?.[0] || null)}
+                                        />
+                                        <p className="text-xs text-gray-500">
+                                          Accepted formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB)
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <DialogFooter>
+                                      <Button
+                                        onClick={handleSubmission}
+                                        disabled={isSubmitting || (!submissionText.trim() && !submissionFile)}
+                                      >
+                                        {isSubmitting ? (
+                                          <>
+                                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                            Submitting...
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Send className="h-4 w-4 mr-2" />
+                                            Submit Assignment
+                                          </>
+                                        )}
+                                      </Button>
+                                    </DialogFooter>
+                                  </DialogContent>
+                                </Dialog>
+                              )}
+                              
+                              {/* Resubmit button for submitted assignments */}
+                              {canResubmitAssignment && (
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button variant="outline" onClick={() => {
+                                      setSelectedAssignment(assignment);
+                                      setSubmissionText(existingSubmission.content || "");
+                                      setSubmissionFile(null);
+                                      setIsResubmitting(true);
+                                      setResubmissionId(existingSubmission.id);
+                                    }}>
+                                      <RefreshCw className="h-4 w-4 mr-2" />
+                                      Resubmit
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-2xl">
+                                    <DialogHeader>
+                                      <DialogTitle>Resubmit Assignment: {selectedAssignment?.title}</DialogTitle>
+                                      <p className="text-sm text-orange-600 bg-orange-50 p-3 rounded-lg mt-2">
+                                        ⚠️ Your previous submission will be replaced with this new one.
+                                      </p>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                      <div className="space-y-2">
+                                        <Label htmlFor="resubmission">Updated Response</Label>
+                                        <Textarea
+                                          id="resubmission"
+                                          placeholder="Enter your updated assignment response here..."
+                                          value={submissionText}
+                                          onChange={(e) => setSubmissionText(e.target.value)}
+                                          rows={6}
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor="resubmit-file">File Upload (Optional)</Label>
+                                        <Input
+                                          id="resubmit-file"
+                                          type="file"
+                                          accept=".pdf,.doc,.docx,.txt,.jpg,.png"
+                                          onChange={(e) => setSubmissionFile(e.target.files?.[0] || null)}
+                                        />
+                                        <p className="text-xs text-gray-500">
+                                          Accepted formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB)
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <DialogFooter>
+                                      <Button
+                                        onClick={handleSubmission}
+                                        disabled={isSubmitting || (!submissionText.trim() && !submissionFile)}
+                                      >
+                                        {isSubmitting ? (
+                                          <>
+                                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                            Resubmitting...
+                                          </>
+                                        ) : (
+                                          <>
+                                            <RefreshCw className="h-4 w-4 mr-2" />
+                                            Resubmit Assignment
+                                          </>
+                                        )}
+                                      </Button>
+                                    </DialogFooter>
+                                  </DialogContent>
+                                </Dialog>
+                              )}
+                              
+                              {/* Status indicators for completed/graded submissions */}
+                              {existingSubmission && existingSubmission.grade !== undefined && (
+                                <div className="text-center">
+                                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                                    <Trophy className="h-3 w-3 mr-1" />
+                                    Graded: {existingSubmission.grade}/{assignment.totalPoints}
+                                  </Badge>
+                                </div>
+                              )}
+                              
+                              {deadlinePassed && existingSubmission && existingSubmission.grade === undefined && (
+                                <div className="text-center">
+                                  <Badge variant="secondary" className="bg-gray-100 text-gray-600">
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    Awaiting Grade
+                                  </Badge>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -734,43 +1041,173 @@ export default function StudentDashboard() {
                   </div>
 
                   <div className="grid gap-4">
-                    {submissions.map((submission) => (
-                      <Card key={submission.id}>
+                    {submissions.map((submission) => {
+                      const assignment = assignments.find(a => a.id === submission.assignmentId);
+                      const deadlinePassed = assignment ? isDeadlinePassed(assignment.dueDate) : true;
+                      
+                      return (
+                        <Card key={submission.id}>
                         <CardContent className="p-6">
                           <div className="flex items-start justify-between mb-4">
-                            <div>
+                            <div className="flex-1">
                               <h3 className="text-lg font-semibold">{submission.assignmentTitle}</h3>
                               <p className="text-sm text-gray-600">
-                                Submitted on {submission.submittedAt} • Teacher: {submission.teacherName}
+                                Submitted on {new Date(submission.submittedAt).toLocaleDateString('en-US', {
+                                  year: 'numeric',
+                                  month: 'long', 
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
                               </p>
+                              {assignment && (
+                                <p className="text-sm text-gray-500 mt-1">
+                                  Due: {new Date(assignment.dueDate).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                  })}
+                                  {deadlinePassed && <span className="text-red-500 ml-2">(Submitted after deadline)</span>}
+                                  {!deadlinePassed && <span className="text-green-500 ml-2">(Submitted on time)</span>}
+                                </p>
+                              )}
+                              {assignment && (
+                                <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
+                                  <span className="flex items-center gap-1">
+                                    <BookOpen className="h-4 w-4" />
+                                    {assignment.subject}
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <Star className="h-4 w-4" />
+                                    {assignment.totalPoints} points
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <RefreshCw className="h-4 w-4" />
+                                    Submission #{submission.id}
+                                  </span>
+                                </div>
+                              )}
                             </div>
-                            {getStatusBadge(submission.status)}
+                            <div className="flex items-center gap-2">
+                              {getStatusBadge(submission.status)}
+                            </div>
                           </div>
                           
-                          {submission.grade !== undefined && (
+                          {/* Submission Content */}
+                          {submission.content && (
+                            <div className="mb-4">
+                              <h4 className="text-sm font-medium text-gray-700 mb-2">Written Response:</h4>
+                              <div className="bg-gray-50 p-4 rounded-lg">
+                                <p className="text-sm text-gray-800 whitespace-pre-wrap">{submission.content}</p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* File Attachment */}
+                          {submission.fileUrl && submission.fileName && (
+                            <div className="mb-4">
+                              <h4 className="text-sm font-medium text-gray-700 mb-2">File Attachment:</h4>
+                              <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-blue-100 rounded-lg">
+                                      <FileText className="h-5 w-5 text-blue-600" />
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-medium text-blue-900">{submission.fileName}</p>
+                                      {submission.fileSize && (
+                                        <p className="text-xs text-blue-700">
+                                          {(submission.fileSize / 1024 / 1024).toFixed(2)} MB
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => window.open(submission.fileUrl, '_blank')}
+                                    >
+                                      <Eye className="h-4 w-4 mr-2" />
+                                      View
+                                    </Button>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => {
+                                        const link = document.createElement('a');
+                                        if (submission.fileUrl) {
+                                          link.href = submission.fileUrl;
+                                          link.download = submission.fileName ?? "download";
+                                          link.click();
+                                        }
+                                      }}
+                                    >
+                                      <Download className="h-4 w-4 mr-2" />
+                                      Download
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Grade Display */}
+                          {submission.grade !== null && submission.grade !== undefined && assignment && (
                             <div className="mb-4">
                               <div className="flex items-center gap-2 mb-2">
                                 <span className="text-sm text-gray-600">Grade:</span>
-                                <span className={cn("text-lg font-bold", getGradeColor(calculateGradePercentage(submission.grade, submission.totalPoints)))}>
-                                  {submission.grade}/{submission.totalPoints} ({calculateGradePercentage(submission.grade, submission.totalPoints)}%)
+                                <span className={cn("text-lg font-bold", getGradeColor(calculateGradePercentage(submission.grade, assignment.totalPoints)))}>
+                                  {submission.grade}/{assignment.totalPoints} ({calculateGradePercentage(submission.grade, assignment.totalPoints)}%)
                                 </span>
                               </div>
                               <Progress 
-                                value={calculateGradePercentage(submission.grade, submission.totalPoints)} 
+                                value={calculateGradePercentage(submission.grade, assignment.totalPoints)} 
                                 className="h-2"
                               />
                             </div>
                           )}
-                          
+
+                          {/* Teacher Feedback */}
                           {submission.feedback && (
                             <div className="bg-blue-50 p-4 rounded-lg">
                               <p className="text-sm font-medium text-blue-900 mb-1">Teacher Feedback:</p>
-                              <p className="text-sm text-blue-800">{submission.feedback}</p>
+                              <p className="text-sm text-blue-800 whitespace-pre-wrap">{submission.feedback}</p>
                             </div>
                           )}
+
+                          {/* Submission Status Info */}
+                          <div className="mt-4 pt-4 border-t border-gray-200">
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <span>Submission ID: #{submission.id}</span>
+                              <span>
+                                {submission.grade !== null && submission.grade !== undefined ? 'Graded' : 'Awaiting Review'}
+                              </span>
+                            </div>
+                          </div>
                         </CardContent>
                       </Card>
-                    ))}
+                      );
+                    })}
+
+                    {submissions.length === 0 && (
+                      <Card>
+                        <CardContent className="p-8 text-center">
+                          <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <h3 className="text-lg font-medium text-gray-900 mb-2">No Submissions Yet</h3>
+                          <p className="text-gray-600 mb-4">
+                            You haven&apos;t submitted any assignments yet. 
+                          </p>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setActiveTab("assignments")}
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            View Assignments
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    )}
                   </div>
                 </div>
               )}
@@ -871,55 +1308,11 @@ export default function StudentDashboard() {
                     </Button>
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Upcoming Sessions</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3">
-                          {mockUpcomingEvents.map((event) => (
-                            <div key={event.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <Calendar className="h-5 w-5 text-blue-600" />
-                              </div>
-                              <div className="flex-1">
-                                <p className="font-medium">{event.title}</p>
-                                <p className="text-sm text-gray-600">{event.date} at {event.time}</p>
-                              </div>
-                              <Button variant="outline" size="sm">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Assignment Deadlines</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3">
-                          {assignments.filter(a => a.status === "pending").map((assignment) => (
-                            <div key={assignment.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                                <FileText className="h-5 w-5 text-orange-600" />
-                              </div>
-                              <div className="flex-1">
-                                <p className="font-medium">{assignment.title}</p>
-                                <p className="text-sm text-gray-600">Due: {assignment.dueDate}</p>
-                              </div>
-                              <Button variant="outline" size="sm">
-                                <ChevronRight className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
+                  {/* StudentScheduleView Component */}
+                  {studentEmail && (() => {
+                    const StudentScheduleView = require("../../components/student/StudentScheduleView").default;
+                    return <StudentScheduleView studentEmail={studentEmail} />;
+                  })()}
                 </div>
               )}
 
@@ -930,44 +1323,109 @@ export default function StudentDashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Card>
                       <CardHeader>
-                        <CardTitle>Learning Goals</CardTitle>
+                        <CardTitle>Assignment Completion</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
-                          {[
-                            { goal: "Master Quadratic Equations", progress: 85, target: "End of Month" },
-                            { goal: "Improve SAT Math Score", progress: 60, target: "Test Date" },
-                            { goal: "Complete Research Project", progress: 40, target: "Next Week" },
-                          ].map((item, index) => (
-                            <div key={index} className="space-y-2">
-                              <div className="flex justify-between">
-                                <span className="text-sm font-medium">{item.goal}</span>
-                                <span className="text-sm text-gray-600">{item.progress}%</span>
+                          {/* Group assignments by subject */}
+                          {(() => {
+                            // Group assignments by subject
+                            const bySubject = assignments.reduce((acc, assignment) => {
+                              const subject = assignment.subject || "Other";
+                              if (!acc[subject]) {
+                                acc[subject] = { total: 0, completed: 0 };
+                              }
+                              acc[subject].total += 1;
+                              // Count completed assignments
+                              if (submissions.some(s => s.assignmentId === assignment.id && s.status === "graded")) {
+                                acc[subject].completed += 1;
+                              }
+                              return acc;
+                            }, {} as Record<string, {total: number, completed: number}>);
+                            
+                            // Convert to array for rendering
+                            return Object.entries(bySubject).map(([subject, counts]) => (
+                              <div key={subject} className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-sm font-medium">{subject}</span>
+                                  <span className="text-sm text-gray-600">
+                                    {counts.completed}/{counts.total} completed
+                                  </span>
+                                </div>
+                                <Progress 
+                                  value={counts.total > 0 ? (counts.completed / counts.total) * 100 : 0} 
+                                  className="h-2" 
+                                />
+                                <div className="text-xs text-gray-500">
+                                  {counts.total - counts.completed} remaining
+                                </div>
                               </div>
-                              <Progress value={item.progress} className="h-2" />
-                              <div className="text-xs text-gray-500">Target: {item.target}</div>
-                            </div>
-                          ))}
+                            ));
+                          })()}
                         </div>
                       </CardContent>
                     </Card>
 
                     <Card>
                       <CardHeader>
-                        <CardTitle>Study Streak</CardTitle>
+                        <CardTitle>Assignment Statistics</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-center space-y-4">
-                          <div className="text-4xl font-bold text-green-600">12</div>
-                          <div className="text-lg text-gray-600">Days in a row!</div>
-                          <div className="flex justify-center gap-1">
-                            {[...Array(7)].map((_, i) => (
-                              <div key={i} className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                <CheckCircle className="h-4 w-4 text-green-600" />
+                        <div className="space-y-6">
+                          {/* Assignment counts */}
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-blue-50 p-4 rounded-lg text-center">
+                              <div className="text-3xl font-bold text-blue-600">
+                                {submissions.length}
                               </div>
-                            ))}
+                              <div className="text-sm text-gray-600">
+                                Submissions
+                              </div>
+                            </div>
+                            <div className="bg-green-50 p-4 rounded-lg text-center">
+                              <div className="text-3xl font-bold text-green-600">
+                                {submissions.filter(s => s.status === "graded").length}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                Completed
+                              </div>
+                            </div>
+                            <div className="bg-yellow-50 p-4 rounded-lg text-center">
+                              <div className="text-3xl font-bold text-yellow-600">
+                                {assignments.filter(a => 
+                                  !submissions.some(s => s.assignmentId === a.id)
+                                ).length}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                Pending
+                              </div>
+                            </div>
+                            <div className="bg-purple-50 p-4 rounded-lg text-center">
+                              <div className="text-3xl font-bold text-purple-600">
+                                {assignments.length}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                Total Assignments
+                              </div>
+                            </div>
                           </div>
-                          <p className="text-sm text-gray-600">Keep up the great work!</p>
+                          
+                          {/* Activity summary */}
+                          <div className="text-center pt-2 border-t">
+                            <p className="text-sm font-medium text-gray-700 mb-1">
+                              Recent Activity
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {submissions.length > 0 
+                                ? `Last submission: ${new Date(
+                                    submissions.sort((a, b) => 
+                                      new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+                                    )[0]?.submittedAt
+                                  ).toLocaleDateString()}`
+                                : 'No submissions yet'
+                              }
+                            </p>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -976,113 +1434,69 @@ export default function StudentDashboard() {
               )}
 
               {activeTab === "resources" && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold">Learning Resources</h2>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {[
-                      { title: "Math Formula Sheet", type: "PDF", size: "2.3 MB", subject: "Mathematics" },
-                      { title: "Science Lab Manual", type: "PDF", size: "5.1 MB", subject: "Science" },
-                      { title: "SAT Practice Questions", type: "PDF", size: "1.8 MB", subject: "SAT Prep" },
-                      { title: "Study Guide Templates", type: "DOCX", size: "0.9 MB", subject: "General" },
-                      { title: "Video Tutorials Playlist", type: "Link", size: "Online", subject: "All Subjects" },
-                      { title: "Previous Assignments", type: "Folder", size: "Multiple", subject: "All Subjects" },
-                    ].map((resource, index) => (
-                      <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer">
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-3">
-                            <div className="p-2 bg-blue-100 rounded-lg">
-                              <Download className="h-5 w-5 text-blue-600" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm truncate">{resource.title}</p>
-                              <p className="text-xs text-gray-600">{resource.subject}</p>
-                              <p className="text-xs text-gray-500">{resource.type} • {resource.size}</p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
+                <ResourceLibrary studentEmail={studentEmail} />
               )}
 
               {activeTab === "messages" && (
                 <div className="space-y-6">
-                  <h2 className="text-2xl font-bold">Messages</h2>
-                  
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <Card className="lg:col-span-1">
-                      <CardHeader>
-                        <CardTitle className="text-lg">Conversations</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          {[
-                            { name: "Dr. Sarah Wilson", subject: "Science", lastMessage: "Great work on your essay!", time: "2 hours ago", unread: true },
-                            { name: "Mr. John Davis", subject: "Mathematics", lastMessage: "Let's review the geometry proofs", time: "1 day ago", unread: false },
-                            { name: "Academic Support", subject: "General", lastMessage: "Study group this Friday", time: "2 days ago", unread: true },
-                          ].map((conversation, index) => (
-                            <div key={index} className={cn("p-3 rounded-lg cursor-pointer hover:bg-gray-50", conversation.unread && "bg-blue-50")}>
-                              <div className="flex items-start gap-3">
-                                <Avatar className="h-8 w-8">
-                                  <AvatarFallback className="text-xs">
-                                    {conversation.name.split(' ').map(n => n[0]).join('')}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <p className="text-sm font-medium truncate">{conversation.name}</p>
-                                    {conversation.unread && <div className="w-2 h-2 bg-blue-600 rounded-full"></div>}
-                                  </div>
-                                  <p className="text-xs text-gray-600">{conversation.subject}</p>
-                                  <p className="text-xs text-gray-500 truncate">{conversation.lastMessage}</p>
-                                  <p className="text-xs text-gray-400">{conversation.time}</p>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="lg:col-span-2">
-                      <CardHeader>
-                        <CardTitle className="text-lg">Chat with Dr. Sarah Wilson</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <ScrollArea className="h-96 w-full p-4 border rounded-lg">
-                          <div className="space-y-4">
-                            <div className="flex gap-3">
-                              <Avatar className="h-8 w-8">
-                                <AvatarFallback className="text-xs">SW</AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1">
-                                <div className="bg-gray-100 p-3 rounded-lg">
-                                  <p className="text-sm">Hi Alex! I&apos;ve reviewed your climate change essay. Excellent work on the research and analysis!</p>
-                                </div>
-                                <p className="text-xs text-gray-500 mt-1">Dr. Sarah Wilson • 2 hours ago</p>
-                              </div>
-                            </div>
-                            
-                            <div className="flex gap-3 justify-end">
-                              <div className="flex-1 flex justify-end">
-                                <div className="bg-blue-600 text-white p-3 rounded-lg max-w-xs">
-                                  <p className="text-sm">Thank you so much! I really enjoyed researching this topic. Do you have any suggestions for my next assignment?</p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </ScrollArea>
-                        <div className="flex gap-2 mt-4">
-                          <Input placeholder="Type your message..." className="flex-1" />
-                          <Button>
-                            <Send className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold">Messages</h2>
+                    
+                    {/* Add debug button visible only in development */}
+                    {process.env.NODE_ENV === 'development' && (
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={async () => {
+                            try {
+                              const response = await fetch('/api/debug/setup-chat', { method: 'POST' });
+                              const data = await response.json();
+                              if (data.success) {
+                                alert('Chat system setup successfully! Please refresh the page.');
+                              } else {
+                                alert(`Setup failed: ${data.error}`);
+                              }
+                            } catch (err) {
+                              alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                              console.error('Error setting up chat:', err);
+                            }
+                          }}
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Setup Chat System
+                        </Button>
+                        
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(`/api/debug/messages?studentId=${student.id}&teacherId=18&debug=true`);
+                              const data = await response.json();
+                              console.log('Debug data:', data);
+                              alert(`Debug info logged to console. Found ${data.filteredMessages?.length || 0} messages.`);
+                            } catch (err) {
+                              alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                              console.error('Error debugging messages:', err);
+                            }
+                          }}
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Debug Messages
+                        </Button>
+                      </div>
+                    )}
                   </div>
+                  
+                  {/* Import and use our MentorMessages component */}
+                  {student && (
+                    <MentorMessages 
+                      studentId={student.id}
+                      studentEmail={student.email}
+                      studentName={student.name}
+                    />
+                  )}
                 </div>
               )}
               </motion.div>
