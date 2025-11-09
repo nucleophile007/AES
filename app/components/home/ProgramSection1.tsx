@@ -2,16 +2,7 @@
 import React, { memo } from "react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-import dynamic from "next/dynamic";
-
-const AppleCardsCarouselDemo = dynamic(() => import("../ui/apple-cards-carousel-demo"), {
-  loading: () => (
-    <div className="flex items-center justify-center h-96">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400"></div>
-    </div>
-  ),
-  ssr: false,
-});
+import { ProgramCarousel } from "./ProgramCarousel";
 
 // Enhanced animation variants for better UX
 const containerVariants = {
@@ -151,7 +142,7 @@ const ProgramsSection = memo(() => {
             aria-hidden="true"
           />
           <div className="relative z-10">
-            <AppleCardsCarouselDemo />
+            <ProgramCarousel />
           </div>
         </motion.div>
 

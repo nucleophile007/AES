@@ -1,30 +1,101 @@
 "use client";
 import React, { useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, Send } from "lucide-react";
 
-function getBotResponse(message: string) {
-  const lowerMessage = message.toLowerCase();
-  if (lowerMessage.includes("program") || lowerMessage.includes("course")) {
-    return "We offer tutoring in Mathematics, Physics, Chemistry, Biology, SAT coaching, College Prep, and Research Programs. Which subject interests you most?";
-  } else if (lowerMessage.includes("price") || lowerMessage.includes("cost")) {
-    return "Our tutoring sessions have custom packages available. Would you like me to connect you with our admissions team for specific pricing?";
-  } else if (lowerMessage.includes("schedule") || lowerMessage.includes("time")) {
-    return "We offer flexible scheduling with both online and in-person options. What time zone are you in and what days work best for you?";
-  } else if (lowerMessage.includes("sat") || lowerMessage.includes("test")) {
-    return "Our SAT coaching program has helped students achieve an average score improvement of 280+ points. Would you like to know more about our test prep methodology?";
-  } else if (lowerMessage.includes("research")) {
-    return "Our Research Programs help students conduct real scientific research and have led to Intel Science Fair finals and published papers. Are you interested in a specific research area?";
-  } else {
-    return "Thank you for your question! For specific details, I'd recommend scheduling a consultation with our team. Would you like me to help you set up a free assessment call?";
+type ChatMessage = {
+  id: number;
+  text?: string;
+  sender: "bot" | "user";
+  time: string;
+  links?: { label: string; href: string }[];
+};
+
+const ROUTES = [
+  { label: "Home", href: "/", kw: ["home", "site", "main", "homepage"] },
+  { label: "SAT Coaching", href: "/satcoaching", kw: ["sat", "psat", "practice", "score", "test", "prep"] },
+  { label: "College Prep", href: "/collegeprep", kw: ["college", "admission", "essay", "essays", "application", "uachieve"] },
+  { label: "Academic Tutoring", href: "/academictutoring", kw: ["tutor", "tutoring", "math", "physics", "chem", "bio", "subject", "academic"] },
+  { label: "Research Programs", href: "/aes-explorers", kw: ["research", "paper", "publication", "mentor", "project"] },
+  { label: "Math Competitions", href: "/mathcompetition", kw: ["competition", "olympiad", "amc", "aime", "contest"] },
+  { label: "AES Explorers", href: "/aes-explorers", kw: ["explorer", "explorers"] },
+  { label: "Book a Session", href: "/book-session", kw: ["book", "consult", "session", "call", "meeting"] },
+];
+
+function scoreRoute(msg: string, route: (typeof ROUTES)[number]) {
+  const m = msg.toLowerCase();
+  let score = 0;
+  for (const k of route.kw) {
+    if (m.includes(k)) score += k.length >= 5 ? 2 : 1;
   }
+  if (m.includes(route.label.toLowerCase())) score += 2;
+  return score;
+}
+
+function matchRoutes(message: string) {
+  const scored = ROUTES
+    .map((r) => ({ ...r, score: scoreRoute(message, r) }))
+    .sort((a, b) => b.score - a.score);
+
+  const top = scored[0];
+  const next = scored[1];
+  const confident = !!top && top.score >= 3 && (top.score - (next?.score ?? 0) >= 2);
+  const candidates = scored.filter((r) => r.score > 0).slice(0, 3);
+  return { confident, top, candidates };
+}
+
+function getBotResponse(message: string): Pick<ChatMessage, "text" | "links"> {
+  const lower = message.toLowerCase().trim();
+
+  // 1) Small talk / greetings: no links, just conversational replies
+  const isGreeting = /^(hi|hello|hey|yo|hola|namaste|good\s*(morning|afternoon|evening))\b/.test(lower);
+  const isThanks = /(thank\s*you|thanks|thx|appreciate)/.test(lower);
+  const isHowAreYou = /(how\s*are\s*you|how's\s*it\s*going)/.test(lower);
+
+  if (isGreeting) {
+    return { text: "Hi! How can I help today? You can ask about SAT, College Prep, Tutoring, Research, or bookings." };
+  }
+  if (isHowAreYou) {
+    return { text: "I'm great and ready to help! What would you like to explore?" };
+  }
+  if (isThanks) {
+    return { text: "You're welcome! If you need anything else, just ask." };
+  }
+
+  // 2) Intent matching with confidence gating
+  const { confident, top, candidates } = matchRoutes(message);
+
+  // Only surface links when we are confident OR the user clearly asked for info/navigation
+  const askedForInfo = /(tell\s*me|more\s*info|details|learn\s*more|show\s*me|where|how\s*to|book|apply|enroll|join)/.test(lower);
+
+  if (confident && top) {
+    return {
+      text: askedForInfo
+        ? `Here you go: ${top.label}`
+        : `I think this matches what you asked: ${top.label}. Want to check it out?`,
+      links: [{ label: top.label, href: top.href }],
+    };
+  }
+
+  if (candidates.length && askedForInfo) {
+    return {
+      text: "Did you mean one of these?",
+      links: candidates.map((c) => ({ label: c.label, href: c.href })),
+    };
+  }
+
+  // 3) Default conversational reply without links
+  return {
+    text: "Got it. Could you share a bit more? For example: 'SAT practice', 'College essays', 'Book a session', or 'Research mentorship'.",
+  };
 }
 
 export default function Chatbot() {
   const [chatbotOpen, setChatbotOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState([
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       id: 1,
       text: "Hello! I'm AcharyaES Assistant. How can I help you today? I can answer questions about our programs, tutoring services, or help you get started.",
@@ -36,7 +107,7 @@ export default function Chatbot() {
 
   const handleSendMessage = () => {
     if (messageInput.trim() === "") return;
-    const newMessage = {
+    const newMessage: ChatMessage = {
       id: chatMessages.length + 1,
       text: messageInput,
       sender: "user",
@@ -45,14 +116,16 @@ export default function Chatbot() {
     setChatMessages([...chatMessages, newMessage]);
     setMessageInput("");
     setTimeout(() => {
-      const botResponse = {
-        id: chatMessages.length + 2,
-        text: getBotResponse(messageInput),
+      const resp = getBotResponse(messageInput);
+      const botResponse: ChatMessage = {
+        id: Date.now(),
+        text: resp.text,
+        links: resp.links,
         sender: "bot",
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
       setChatMessages((prev) => [...prev, botResponse]);
-    }, 1000);
+    }, 700);
   };
 
   return (
@@ -64,7 +137,7 @@ export default function Chatbot() {
       >
         <Button
           onClick={() => setChatbotOpen(!chatbotOpen)}
-          className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 hover:from-yellow-500 hover:via-amber-600 hover:to-orange-600 shadow-2xl border-2 border-yellow-300/30 relative overflow-hidden group"
+          className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 hover:from-yellow-500 hover:via-amber-600 hover:to-orange-600 shadow-2xl border-2 border-yellow-300/30 relative overflow-hidden group focus-visible:ring-0 focus-visible:outline-none"
         >
           {/* Animated Background Elements */}
           <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-amber-500/20 animate-pulse"></div>
@@ -86,7 +159,7 @@ export default function Chatbot() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.8, y: 20 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="absolute bottom-16 sm:bottom-20 right-0 w-72 sm:w-80 h-80 sm:h-96 bg-gradient-to-br from-[#1a2236]/95 to-[#1a2236]/90 backdrop-blur-xl rounded-xl sm:rounded-2xl shadow-2xl border border-yellow-400/20 overflow-hidden"
+          className="absolute bottom-16 sm:bottom-20 right-0 w-[19rem] sm:w-[22rem] lg:w-[24rem] h-[22rem] sm:h-[26rem] lg:h-[28rem] bg-gradient-to-br from-[#1a2236]/95 to-[#1a2236]/90 backdrop-blur-xl rounded-xl sm:rounded-2xl shadow-2xl border border-yellow-400/20 overflow-hidden"
         >
           {/* Header */}
           <div className="bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 p-3 sm:p-4 text-white relative overflow-hidden">
@@ -108,7 +181,7 @@ export default function Chatbot() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setChatbotOpen(false)}
-                className="text-white hover:bg-white/20 h-6 w-6 sm:h-8 sm:w-8 p-0 rounded-full transition-all duration-200"
+                className="text-white hover:bg-white/20 h-6 w-6 sm:h-8 sm:w-8 p-0 rounded-full transition-all duration-200 focus-visible:ring-0 focus-visible:outline-none"
               >
                 ×
               </Button>
@@ -116,7 +189,7 @@ export default function Chatbot() {
           </div>
 
           {/* Chat Messages */}
-          <div className="flex-1 p-3 sm:p-4 h-56 sm:h-64 overflow-y-auto space-y-3 sm:space-y-4 bg-gradient-to-b from-[#1a2236]/50 to-[#1a2236]/30">
+          <div className="flex-1 p-3 sm:p-4 h-[14rem] sm:h-[17rem] overflow-y-auto space-y-3 sm:space-y-4 bg-gradient-to-b from-[#1a2236]/50 to-[#1a2236]/30 scrollbar-hide">
             {chatMessages.map((message) => (
               <motion.div
                 key={message.id}
@@ -126,13 +199,22 @@ export default function Chatbot() {
                 className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[80%] rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2 ${
+                  className={`max-w-[80%] px-3 sm:px-4 py-2 ${
                     message.sender === "user"
-                      ? "bg-gradient-to-r from-yellow-400 to-amber-500 text-white shadow-lg"
-                      : "bg-gradient-to-r from-slate-700/80 to-slate-600/80 text-slate-100 border border-slate-600/50"
+                      ? "bg-gradient-to-r from-yellow-400 to-amber-500 text-white shadow-lg rounded-2xl rounded-br-sm"
+                      : "bg-gradient-to-r from-slate-700/80 to-slate-600/80 text-slate-100 border border-slate-600/50 rounded-2xl rounded-bl-sm"
                   }`}
                 >
-                  <p className="text-xs sm:text-sm">{message.text}</p>
+                  {message.text && <p className="text-xs sm:text-sm">{message.text}</p>}
+                  {message.sender === "bot" && message.links && message.links.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {message.links.map((l, i) => (
+                        <Link key={`${l.href}-${i}`} href={l.href} className="text-xs sm:text-sm px-2 py-1 rounded-md border border-yellow-400/40 text-yellow-300 hover:text-slate-900 hover:bg-yellow-400 transition-colors focus-visible:outline-none">
+                          {l.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                   <p
                     className={`text-xs mt-1 ${
                       message.sender === "user" ? "text-white/70" : "text-slate-400"
@@ -151,8 +233,8 @@ export default function Chatbot() {
               <Input
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
-                placeholder="Type your message..."
-                className="flex-1 text-xs sm:text-sm bg-slate-800/50 border-slate-600/50 text-slate-100 placeholder:text-slate-400 focus:border-yellow-400/50 focus:ring-yellow-400/20"
+                placeholder="Ask your doubts here..."
+                className="flex-1 text-xs sm:text-sm bg-slate-800/60 border-yellow-400 text-slate-100 placeholder:text-slate-400 rounded-lg outline-none"
                 onKeyPress={(e) => {
                   if (e.key === "Enter") {
                     handleSendMessage();
@@ -162,7 +244,7 @@ export default function Chatbot() {
               <Button
                 onClick={handleSendMessage}
                 size="sm"
-                className="bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-lg shadow-lg border border-yellow-300/30"
+                className="bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-lg shadow-lg border border-yellow-300/30 focus-visible:ring-0 focus-visible:outline-none"
               >
                 <Send className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
