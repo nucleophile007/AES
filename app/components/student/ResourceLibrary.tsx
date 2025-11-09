@@ -225,41 +225,28 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
           
           const presignedData = await presignedResponse.json();
           
-          if (presignedData.success) {
-            // Try direct upload to R2
-            const uploadResponse = await fetch(presignedData.presignedUrl, {
-              method: 'PUT',
-              body: submissionFile,
-              headers: {
-                'Content-Type': submissionFile.type,
-              },
-            });
-            
-            if (uploadResponse.ok) {
-              fileUrl = presignedData.publicUrl;
-            }
-          }
+          // Use server-side upload directly (presigned URLs have issues with R2)
+          const formData = new FormData();
+          formData.append('file', submissionFile);
+          formData.append('studentId', '0');
+          formData.append('assignmentId', '0'); // Resource library doesn't need assignment
           
-          // Fallback to server-side upload
-          if (!fileUrl) {
-            const formData = new FormData();
-            formData.append('file', submissionFile);
-            formData.append('studentId', '0');
-            formData.append('type', 'student-submission');
-            
-            const serverUploadResponse = await fetch('/api/upload-r2', {
-              method: 'POST',
-              body: formData,
-            });
-            
-            const serverUploadData = await serverUploadResponse.json();
-            
-            if (serverUploadData.success) {
-              fileUrl = serverUploadData.fileUrl;
-            }
+          const uploadResponse = await fetch('/api/upload-r2', {
+            method: 'POST',
+            body: formData,
+          });
+          
+          const uploadData = await uploadResponse.json();
+          
+          if (uploadData.success) {
+            fileUrl = uploadData.fileUrl;
+          } else {
+            console.error('Upload failed:', uploadData);
+            throw new Error(`Upload failed: ${uploadData.error || 'Unknown error'}`);
           }
         } catch (uploadError) {
           console.error('File upload failed:', uploadError);
+          throw uploadError;
         }
       }
       

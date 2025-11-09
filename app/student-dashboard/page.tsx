@@ -237,49 +237,30 @@ export default function StudentDashboard() {
           
           const presignedData = await presignedResponse.json();
           
-          if (!presignedData.success) {
-            throw new Error(presignedData.error || 'Failed to get upload URL');
-          }
-          
-          // Try direct upload to R2
-          const uploadResponse = await fetch(presignedData.presignedUrl, {
-            method: 'PUT',
-            body: submissionFile,
-            headers: {
-              'Content-Type': submissionFile.type,
-            },
-          });
-          
-          if (!uploadResponse.ok) {
-            throw new Error('Direct upload failed, trying server upload...');
-          }
-          
-          fileUrl = presignedData.publicUrl;
-          
-        } catch (directUploadError) {
-          console.log('Direct upload failed, trying server-side upload:', directUploadError);
-          
-          // Method 2: Fallback to server-side upload
+          // Use server-side upload directly (presigned URLs have issues with R2)
           const formData = new FormData();
           formData.append('file', submissionFile);
           formData.append('studentId', student.id.toString());
           formData.append('assignmentId', selectedAssignment.id.toString());
           
-          const serverUploadResponse = await fetch('/api/upload-r2', {
+          const uploadResponse = await fetch('/api/upload-r2', {
             method: 'POST',
             body: formData,
           });
           
-          const serverUploadData = await serverUploadResponse.json();
+          const uploadData = await uploadResponse.json();
           
-          console.log('Server upload response:', serverUploadData);
+          console.log('Upload response:', uploadData);
           
-          if (serverUploadData.success) {
-            fileUrl = serverUploadData.fileUrl;
+          if (uploadData.success) {
+            fileUrl = uploadData.fileUrl;
           } else {
-            console.error('Server upload failed:', serverUploadData);
-            throw new Error(`Server upload failed: ${serverUploadData.error || 'Unknown error'}`);
+            console.error('Upload failed:', uploadData);
+            throw new Error(`Upload failed: ${uploadData.error || 'Unknown error'}`);
           }
+        } catch (uploadError) {
+          console.error('File upload error:', uploadError);
+          throw uploadError;
         }
       }
       

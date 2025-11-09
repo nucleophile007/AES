@@ -1,8 +1,8 @@
-import { S3Client } from "@aws-sdk/client-s3";
+import { S3Client, S3ClientConfig } from "@aws-sdk/client-s3";
 
 // Cloudflare R2 configuration
 // R2 uses S3-compatible API, so we use the AWS SDK with R2 endpoints
-export const r2Client = new S3Client({
+const r2Config: S3ClientConfig = {
   region: "auto", // R2 uses "auto" as the region
   endpoint: process.env.R2_ENDPOINT, // Your R2 endpoint URL
   credentials: {
@@ -13,7 +13,9 @@ export const r2Client = new S3Client({
   // Path-style: https://endpoint.com/bucket/key
   // Virtual-hosted (won't work): https://bucket.endpoint.com/key
   forcePathStyle: true,
-});
+};
+
+export const r2Client = new S3Client(r2Config);
 
 // R2 bucket configuration
 export const R2_CONFIG = {
