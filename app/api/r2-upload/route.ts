@@ -58,9 +58,15 @@ export async function POST(request: NextRequest) {
     });
 
     // Generate presigned URL for upload (expires in 15 minutes)
+    // IMPORTANT: Must specify region and endpoint for R2
     const presignedUrl = await getSignedUrl(r2Client, putObjectCommand, {
       expiresIn: 15 * 60, // 15 minutes
+      // These are critical for R2 to work correctly
+      unhoistableHeaders: new Set(['x-amz-content-sha256']),
     });
+
+    console.log('Generated presigned URL:', presignedUrl);
+    console.log('Expected endpoint:', process.env.R2_ENDPOINT);
 
     // Generate the public URL that will be accessible after upload
     const publicUrl = getR2PublicUrl(fileKey);
