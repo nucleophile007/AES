@@ -320,3 +320,33 @@ model Testimonial {
   updatedAt  DateTime
   Student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
+
+// Security logging tables
+model SecurityLog {
+  id        Int      @id @default(autoincrement())
+  event     String   // e.g., 'ACCOUNT_ACTIVATED', 'LOGIN_ATTEMPT', 'PASSWORD_RESET'
+  userId    Int
+  userRole  String   // 'TEACHER', 'STUDENT', 'ADMIN'
+  success   Boolean
+  ipAddress String
+  userAgent String
+  metadata  Json?    // Additional context about the event
+  createdAt DateTime @default(now())
+
+  @@index([userId, event])
+  @@index([createdAt])
+}
+
+model FailedActivation {
+  id        Int      @id @default(autoincrement())
+  token     String
+  ipAddress String
+  userAgent String
+  reason    String   // 'TOKEN_NOT_FOUND', 'TOKEN_EXPIRED', 'WEAK_PASSWORD', etc.
+  metadata  Json?    // Additional context
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([ipAddress])
+  @@index([createdAt])
+}
