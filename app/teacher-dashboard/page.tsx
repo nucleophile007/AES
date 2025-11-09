@@ -147,21 +147,6 @@ export default function TeacherDashboard() {
   // Get teacher email from authenticated user
   const teacherEmail = authUser?.email || "";
 
-  // All useEffect hooks must be declared before any conditional returns
-  useEffect(() => {
-    if (authUser && teacherEmail) {
-      fetchTeacherData();
-      fetchAssignments();
-    }
-  }, [authUser, teacherEmail]); // Remove function deps to avoid infinite loop
-
-  // Fetch student submissions when resources tab is active
-  useEffect(() => {
-    if (activeTab === 'resources' && teacherEmail) {
-      fetchStudentSubmissions();
-    }
-  }, [activeTab, teacherEmail]);
-
   // Fetch functions
   const fetchTeacherData = async () => {
     try {
@@ -249,6 +234,20 @@ export default function TeacherDashboard() {
       setIsAddingRemark(false);
     }
   };
+
+  // useEffect hooks - must be after function declarations but before any conditional returns
+  useEffect(() => {
+    if (teacherEmail) {
+      fetchAssignments();
+      fetchTeacherData();
+    }
+  }, [teacherEmail]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (teacherEmail) {
+      fetchStudentSubmissions();
+    }
+  }, [teacherEmail]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Early return for authentication loading (AFTER all hooks)
   if (authLoading || !authUser) {
@@ -578,7 +577,7 @@ export default function TeacherDashboard() {
                   <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No Student Submissions</h3>
                   <p className="text-gray-600">
-                    Students haven't submitted any resources for review yet.
+                    Students haven&apos;t submitted any resources for review yet.
                   </p>
                 </div>
               ) : (
@@ -716,7 +715,7 @@ export default function TeacherDashboard() {
                             <DialogContent className="max-w-2xl">
                               <DialogHeader>
                                 <DialogTitle>
-                                  {submission.hasMyRemark ? 'Update' : 'Add'} Feedback for "{submission.title}"
+                                  {submission.hasMyRemark ? 'Update' : 'Add'} Feedback for &quot;{submission.title}&quot;
                                 </DialogTitle>
                               </DialogHeader>
                               

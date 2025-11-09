@@ -66,14 +66,6 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
     search: ''
   });
 
-  useEffect(() => {
-    fetchSubmissions();
-  }, [teacherEmail]); // Remove fetchSubmissions from deps to avoid infinite loop
-
-  useEffect(() => {
-    applyFilters();
-  }, [submissions, filters]); // Remove applyFilters from deps to avoid infinite loop
-
   const fetchSubmissions = async () => {
     try {
       setLoading(true);
@@ -123,6 +115,16 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
 
     setFilteredSubmissions(filtered);
   };
+
+  useEffect(() => {
+    if (teacherEmail) {
+      fetchSubmissions();
+    }
+  }, [teacherEmail]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    applyFilters();
+  }, [submissions, filters]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleGrade = (submission: Submission) => {
     setSelectedSubmission(submission);

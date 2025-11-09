@@ -45,33 +45,32 @@ export async function GET(request: NextRequest) {
       },
       orderBy: {
         createdAt: 'asc'
-      },
-      include: {
-        sender: {
-          select: {
-            name: true
-          }
-        },
-        recipient: {
-          select: {
-            name: true
-          }
-        }
       }
     });
     
-    // Get the message type directly from the result
-    type DbMessage = typeof messages[number];
+    // Get teacher and student names
+    const [teacher, student] = await Promise.all([
+      prisma.teacher.findUnique({
+        where: { id: teacherId },
+        select: { name: true }
+      }),
+      prisma.student.findUnique({
+        where: { id: studentId },
+        select: { name: true }
+      })
+    ]);
     
     // Format messages for client
-    const formattedMessages = messages.map((msg: DbMessage) => ({
+    const formattedMessages = messages.map((msg) => ({
       id: msg.id,
       senderId: msg.senderId,
       recipientId: msg.recipientId,
       content: msg.content,
       timestamp: msg.createdAt,
-      senderName: msg.sender.name,
+      senderName: msg.senderRole === 'teacher' ? teacher?.name : student?.name,
       senderRole: msg.senderRole,
+      isRead: msg.isRead,
+      readAt: msg.readAt
     }));
     
     return NextResponse.json({

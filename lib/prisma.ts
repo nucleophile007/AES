@@ -9,7 +9,15 @@ declare global {
 // Error handling and initialization check
 function createPrismaClient() {
   try {
-    const client = new PrismaClient();
+    const client = new PrismaClient({
+      log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+      // Add connection pool settings for better performance
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL,
+        },
+      },
+    });
     
     // Test the connection
     client.$connect()

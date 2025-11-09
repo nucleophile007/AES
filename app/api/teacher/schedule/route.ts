@@ -183,24 +183,37 @@ export async function POST(request: NextRequest) {
     
     if (id) {
       // Update existing schedule
+      const updateData: any = {
+        title,
+        description,
+        subject,
+        location,
+        startTime, // Just store the time string directly
+        endTime,   // Just store the time string directly
+        meetingLink: requestData.meetingLink,
+        status: requestData.status || "scheduled",
+        color: requestData.color || generateRandomColor(subject),
+        updatedAt: new Date()
+      };
+
+      // Only update date if provided
+      if (requestData.date) {
+        updateData.date = new Date(requestData.date);
+      }
+
       schedule = await prisma.classSchedule.update({
         where: { id: parseInt(id) },
-        data: {
-          title,
-          description,
-          subject,
-          location,
-          date: requestData.date ? new Date(requestData.date) : null,
-          startTime, // Just store the time string directly
-          endTime,   // Just store the time string directly
-          meetingLink: requestData.meetingLink,
-          status: requestData.status || "scheduled",
-          color: requestData.color || generateRandomColor(subject),
-          updatedAt: new Date()
-        }
+        data: updateData
       });
     } else {
-      // Create new schedule
+      // Create new schedule - date is required
+      if (!requestData.date) {
+        return NextResponse.json(
+          { success: false, error: 'Date is required for new schedule' },
+          { status: 400 }
+        );
+      }
+
       schedule = await prisma.classSchedule.create({
         data: {
           title,
@@ -208,7 +221,7 @@ export async function POST(request: NextRequest) {
           studentId: parseInt(studentId),
           teacherId: finalTeacherId,
           subject,
-          date: requestData.date ? new Date(requestData.date) : null,
+          date: new Date(requestData.date),
           startTime, // Just store the time string directly
           endTime,   // Just store the time string directly
           location,

@@ -41,22 +41,23 @@ model Teacher {
   id                Int                       @id @default(autoincrement())
   name              String
   email             String                    @unique
-  password          String                    @default("temp123")
+  password          String?
   programs          String[]
   createdAt         DateTime                  @default(now())
   updatedAt         DateTime                  @updatedAt
+  isActivated       Boolean                   @default(false)
   assignments       Assignment[]
+  classSchedules    ClassSchedule[]
   resources         Resource[]
   submissionRemarks StudentSubmissionRemark[]
   students          TeacherStudent[]
-  classSchedules    ClassSchedule[]
 }
 
 model Student {
   id                  Int                 @id @default(autoincrement())
   name                String
   email               String              @unique
-  password            String              @default("temp123")
+  password            String?
   grade               String
   schoolName          String
   parentName          String
@@ -65,13 +66,16 @@ model Student {
   program             String
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
+  isActivated         Boolean             @default(false)
   assignedAssignments Assignment[]        @relation("AssignedAssignments")
+  classSchedules      ClassSchedule[]
   enrollments         Enrollment[]
+  Payment             Payment[]
   assignedResources   StudentResource[]
   studentSubmissions  StudentSubmission[]
   submissions         Submission[]
   teacherLinks        TeacherStudent[]
-  classSchedules      ClassSchedule[]
+  Testimonial         Testimonial[]
 }
 
 model TeacherStudent {
@@ -128,13 +132,15 @@ model Submission {
 }
 
 model Enrollment {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   studentId Int
   program   String
   subject   String
-  startDate DateTime @default(now())
-  isActive  Boolean  @default(true)
-  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  startDate DateTime  @default(now())
+  isActive  Boolean   @default(true)
+  access    String    @default("unblocked")
+  student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  Payment   Payment[]
 
   @@unique([studentId, program, subject])
 }
@@ -213,53 +219,104 @@ model StudentSubmissionRemark {
 }
 
 model Message {
-  id            String   @id @default(uuid())
+  id            String    @id @default(uuid())
   senderId      Int
-  senderRole    String // 'teacher' or 'student'
+  senderRole    String
   recipientId   Int
-  recipientRole String // 'teacher' or 'student'
+  recipientRole String
   content       String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  isRead        Boolean  @default(false)
-  
-  // Relations (we can use dynamic references)
-  sender    User @relation("MessageSender", fields: [senderId], references: [id])
-  recipient User @relation("MessageRecipient", fields: [recipientId], references: [id])
-}
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  isRead        Boolean   @default(false)
+  readAt        DateTime?
 
-// Virtual User model for message relations
-model User {
-  id                 Int       @id
-  name               String
-  role               String    // 'teacher' or 'student'
-  sentMessages       Message[] @relation("MessageSender")
-  receivedMessages   Message[] @relation("MessageRecipient")
-  
-  @@map("users_view")
+  @@index([senderId, recipientId, createdAt])
+  @@index([recipientId, isRead])
+  @@index([createdAt(sort: Desc)])
 }
 
 model ClassSchedule {
-  id          Int       @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   title       String
-  date        DateTime?
+  date        DateTime
   startTime   String
   endTime     String
   subject     String
   description String?
   location    String?
   meetingLink String?
-  status      String?
+  status      String   @default("upcoming")
   color       String?
   studentId   Int
   teacherId   Int
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  // Relations
-  teacher     Teacher   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  student     Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher     Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 
   @@index([teacherId])
   @@index([studentId])
+}
+
+model ActivationRequest {
+  id        Int      @id @default(autoincrement())
+  email     String
+  role      String
+  token     String   @unique
+  userId    Int
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+
+  @@unique([email, role])
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+}
+
+model Payment {
+  id           Int        @id @default(autoincrement())
+  enrollmentId Int
+  studentId    Int
+  studentEmail String
+  studentName  String
+  parentName   String
+  parentEmail  String
+  parentPhone  String
+  program      String
+  subject      String
+  paymentInfo  String
+  amount       String?
+  dueDate      String
+  fileUrl      String?
+  fileName     String?
+  fileSize     Int?
+  status       String     @default("pending")
+  sentAt       DateTime   @default(now())
+  paidAt       DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime
+  Enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  Student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model Testimonial {
+  id         Int      @id @default(autoincrement())
+  studentId  Int
+  content    String
+  authorType String
+  authorName String
+  isApproved Boolean  @default(false)
+  isVisible  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+  Student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }

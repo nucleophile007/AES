@@ -30,6 +30,14 @@ export async function POST(request: NextRequest) {
     });
 
     if (student) {
+      // Check if password exists
+      if (!student.password) {
+        return NextResponse.json(
+          { success: false, error: 'Account not activated. Please check your email for activation link.' },
+          { status: 401 }
+        );
+      }
+
       // Verify password with bcrypt
       const isValidPassword = await bcrypt.compare(password, student.password);
       
@@ -88,6 +96,14 @@ export async function POST(request: NextRequest) {
     });
 
     if (teacher) {
+      // Check if password exists
+      if (!teacher.password) {
+        return NextResponse.json(
+          { success: false, error: 'Account not activated. Please check your email for activation link.' },
+          { status: 401 }
+        );
+      }
+
       // Verify password with bcrypt
       const isValidPassword = await bcrypt.compare(password, teacher.password);
       

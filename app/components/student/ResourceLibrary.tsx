@@ -15,7 +15,7 @@ import {
   ExternalLink,
   FileText,
   Video,
-  Image,
+  Image as ImageIcon,
   Link as LinkIcon,
   Search,
   Filter,
@@ -325,7 +325,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
       case 'video':
         return <Video className="h-5 w-5 text-red-500" />;
       case 'image':
-        return <Image className="h-5 w-5 text-green-500" />;
+        return <ImageIcon className="h-5 w-5 text-green-500" />;
       case 'link':
         return <LinkIcon className="h-5 w-5 text-purple-500" />;
       default:
