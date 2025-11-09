@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -96,21 +96,8 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
   const [recurrencePattern, setRecurrencePattern] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Fetch students assigned to this teacher
-  useEffect(() => {
-    fetchStudents();
-  }, [teacherEmail]);
-  
-  // Fetch events when selectedStudent changes
-  useEffect(() => {
-    if (selectedStudent) {
-      fetchEvents(selectedStudent);
-    } else {
-      setEvents([]);
-    }
-  }, [selectedStudent, teacherEmail]);
-
-  const fetchStudents = async () => {
+  // Define fetch functions before useEffect hooks
+  const fetchStudents = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/teacher/students?teacherEmail=${encodeURIComponent(teacherEmail)}`, {
@@ -144,9 +131,9 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [teacherEmail, selectedStudentId]);
 
-  const fetchEvents = async (studentId: number) => {
+  const fetchEvents = useCallback(async (studentId: number) => {
     try {
       setLoading(true);
       const response = await fetch(`/api/teacher/schedule?teacherEmail=${encodeURIComponent(teacherEmail)}&studentId=${studentId}`, {
@@ -211,7 +198,21 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [teacherEmail]);
+  
+  // Fetch students assigned to this teacher
+  useEffect(() => {
+    fetchStudents();
+  }, [fetchStudents]);
+  
+  // Fetch events when selectedStudent changes
+  useEffect(() => {
+    if (selectedStudent) {
+      fetchEvents(selectedStudent);
+    } else {
+      setEvents([]);
+    }
+  }, [selectedStudent, fetchEvents]);
 
   const handleAddEvent = async () => {
     if (!selectedStudent || !eventTitle || !eventSubject || !eventStartDate || !eventStartTime || !eventEndTime) {

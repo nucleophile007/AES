@@ -49,12 +49,6 @@ const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (isOpen && studentEmail) {
-      fetchStudentProgress();
-    }
-  }, [isOpen, studentEmail]);
-
   const fetchStudentProgress = async () => {
     try {
       setLoading(true);
@@ -75,12 +69,18 @@ const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
     }
   };
 
+  useEffect(() => {
+    if (isOpen && studentEmail) {
+      fetchStudentProgress();
+    }
+  }, [isOpen, studentEmail]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">
-            {studentName}'s Progress
+            {studentName}&apos;s Progress
           </DialogTitle>
         </DialogHeader>
 

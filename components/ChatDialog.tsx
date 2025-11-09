@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -58,8 +58,8 @@ export default function ChatDialog({
     subscribeToMessages 
   } = useSocket(userId, userRole);
   
-  // Fetch messages
-  const fetchMessages = async () => {
+  // Fetch messages - wrapped in useCallback to prevent dependency warnings
+  const fetchMessages = useCallback(async () => {
     if (!open || !userId || !recipientId) return;
     
     try {
@@ -131,7 +131,7 @@ export default function ChatDialog({
       // Keep this to reset loading state if needed
       setIsLoading(false);
     }
-  };
+  }, [open, userId, recipientId, userRole, userName, recipientName]); // Add all dependencies
 
   // Send message using WebSocket
   const sendMessage = async () => {
@@ -238,7 +238,7 @@ export default function ChatDialog({
     });
     
     return unsubscribe;
-  }, [open, isConnected, isAuthenticated, userId, recipientId]);
+  }, [open, isConnected, isAuthenticated, userId, recipientId, subscribeToMessages, userName, recipientName]);
 
   // Fetch messages when dialog opens
   useEffect(() => {
@@ -251,7 +251,7 @@ export default function ChatDialog({
         return () => clearInterval(intervalId);
       }
     }
-  }, [open, userId, recipientId, isConnected, isAuthenticated]);
+  }, [open, userId, recipientId, isConnected, isAuthenticated, fetchMessages]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -309,7 +309,7 @@ export default function ChatDialog({
                   )}
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  If messages don't appear, please close this dialog and try again.
+                  If messages don&apos;t appear, please close this dialog and try again.
                 </p>
               </div>
             ) : messages.length === 0 && !error ? (

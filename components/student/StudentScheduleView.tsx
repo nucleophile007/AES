@@ -63,10 +63,6 @@ const StudentScheduleView: React.FC<StudentScheduleViewProps> = ({ studentEmail 
   const [error, setError] = useState<string | null>(null);
   const [upcomingClasses, setUpcomingClasses] = useState<ClassEvent[]>([]);
 
-  useEffect(() => {
-    fetchEvents();
-  }, [studentEmail]);
-
   const fetchEvents = async () => {
     try {
       setLoading(true);
@@ -169,6 +165,12 @@ const StudentScheduleView: React.FC<StudentScheduleViewProps> = ({ studentEmail 
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (studentEmail) {
+      fetchEvents();
+    }
+  }, [studentEmail]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleEventSelect = (event: ClassEvent) => {
     setSelectedEvent(event);
