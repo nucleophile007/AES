@@ -9,10 +9,10 @@ export const r2Client = new S3Client({
     accessKeyId: process.env.R2_ACCESS_KEY_ID!,
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
   },
-  // Important: Force path-style URLs for R2 compatibility
-  forcePathStyle: false,
-  // Additional R2-specific configuration
-  signingRegion: "auto",
+  // CRITICAL: Must be true for Cloudflare R2
+  // Path-style: https://endpoint.com/bucket/key
+  // Virtual-hosted (won't work): https://bucket.endpoint.com/key
+  forcePathStyle: true,
 });
 
 // R2 bucket configuration
