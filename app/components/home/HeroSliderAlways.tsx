@@ -89,7 +89,7 @@ export function HeroSliderAlways({
               <img
                 src={slide.imageSrc || "/placeholder.svg?height=1080&width=1920&query=professional%20education%20hero"}
                 alt={slide.imageAlt || ""}
-                className="absolute inset-0 w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover blur-[2px]"
               />
 
               <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />

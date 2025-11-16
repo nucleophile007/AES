@@ -72,6 +72,17 @@ const faculty = [
     specialties: ["Natural Language Processing", "Sentiment Analysis", "Machine Translation", "Generative AI"],
     achievements: ["Suzuki Foundation Research Grant recipient", "IIT Hyderabad Research Excellence Award", "Text-to-Speech synthesis expert", "International research collaboration"],
     image: "/kjba.png",
+  },
+  {
+    name: "Dr. Sudharshan",
+    role: "Research Mentor & STEM Educator",
+    education: "Ph.D. in Cell Biology",
+    institution: "ACHARYA Educational Services",
+    experience: "Research & Teaching in Stem Cell Biology & Regenerative Medicine",
+    specialties: ["Stem Cell Biology", "iPSC Technology", "Organoid Development", "CRISPR-Cas9 Gene Editing", "Precision Medicine", "Tissue Engineering"],
+    achievements: ["Induced pluripotent stem cell (iPSC) technology expert", "Organoid development specialist", "Translational applications in regenerative medicine", "Drug discovery research", "Molecular characterization expertise", "Mentoring next generation of STEM students"],
+    bio: "I hold a Ph.D. in Cell Biology with a primary research focus on stem cell biology, particularly induced pluripotent stem cell (iPSC) technology, organoid development, and their translational applications in regenerative medicine and drug discovery. My background includes CRISPR-Cas9 gene editing and molecular characterization, which provide a strong foundation for exploring precision medicine and tissue engineering. At ACHARYA, I intend to apply my expertise, together with ongoing teaching initiatives, to cultivate curiosity and strengthen scientific aptitude among students. Additionally, I aim to mentor students and emerging scientific minds to ignite a passion for science that aligns with ACHARYA's mission of educating the next generation of STEM students and fostering a deeper understanding of science.",
+    image: "/sudharshan.png",
   }
 ];
 
@@ -765,7 +776,7 @@ export default function AboutPage() {
                  transition={{ duration: 1.5, delay: 0.3 }}
                >
                  <motion.div 
-                   className="relative w-80 h-80 rounded-full overflow-hidden"
+                   className="relative w-56 h-56 rounded-full overflow-hidden"
                    whileHover={{ 
                      scale: 1.05,
                      rotateY: 5,
@@ -804,9 +815,10 @@ export default function AboutPage() {
                    <Image
                      src="/kavya.png"
                      alt="Kavya S Rentachintala - Director of Operations & Marketing Strategy"
-                     width={320}
-                     height={320}
-                     className="w-full h-full object-cover"
+                     width={224}
+                     height={224}
+                     className="w-full h-full object-cover object-top"
+                     style={{ objectPosition: 'center top' }}
                    />
                    
                    {/* Hover Overlay */}
@@ -1107,235 +1119,112 @@ export default function AboutPage() {
             />
           </motion.div>
           
-          {/* Individual Mentor Sections - Enhanced with Smart Scrolling */}
-          {faculty.map((member, index) => (
-            <motion.div
-              key={`detailed-${index}`}
-              initial={{ opacity: 0, y: 50, scale: 0.95 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              viewport={{ once: true, amount: 0.2, margin: "-100px" }}
-              transition={{ 
-                duration: 1.2, 
-                delay: index * 0.2,
-                ease: "easeOut"
-              }}
-              className="max-w-6xl mx-auto mb-24 relative"
-            >
-              {/* Parallax Background Effect */}
+          {/* Individual Mentor Sections - 3 Column Grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+            {faculty.map((member, index) => (
               <motion.div
-                style={{
-                  y: backgroundY,
-                  opacity: backgroundOpacity
+                key={`detailed-${index}`}
+                initial={{ opacity: 0, y: 50, scale: 0.95 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ 
+                  duration: 1.2, 
+                  delay: index * 0.1,
+                  ease: "easeOut"
                 }}
-                className="absolute inset-0 bg-gradient-to-r from-yellow-400/5 to-amber-500/5 rounded-3xl blur-3xl -z-10"
-              />
-              
-              <div className="grid lg:grid-cols-2 gap-16 items-center">
-                {/* Left Side - Enhanced Image with Smart Scrolling */}
-                <motion.div 
-                  className="flex justify-center"
-                  whileInView={{ 
-                    rotateY: [15, 0],
-                    scale: [0.9, 1]
-                  }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{ duration: 1.5, delay: 0.3 }}
-                >
-                  <motion.div 
-                    className="relative w-80 h-80 rounded-full overflow-hidden"
-                    whileHover={{ 
-                      scale: 1.05,
-                      rotateY: 5,
-                      boxShadow: "0 25px 50px -12px rgba(251, 191, 36, 0.25)"
-                    }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    {/* Floating Elements Around Image */}
-                    <motion.div
-                      animate={{ 
-                        y: [0, -20, 0],
-                        rotate: [0, 360, 0]
-                      }}
-                      transition={{ 
-                        duration: 8, 
-                        repeat: Infinity, 
-                        ease: "easeInOut",
-                        y: { duration: 6, repeat: Infinity, ease: "easeInOut" }
-                      }}
-                      className="absolute -top-4 -right-4 w-8 h-8 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full shadow-lg z-10"
-                    />
-                    <motion.div
-                      animate={{ 
-                        y: [0, 15, 0],
-                        rotate: [0, -360, 0]
-                      }}
-                      transition={{ 
-                        duration: 10, 
-                        repeat: Infinity, 
-                        ease: "easeInOut",
-                        y: { duration: 7, repeat: Infinity, ease: "easeInOut" }
-                      }}
-                      className="absolute -bottom-4 -left-4 w-6 h-6 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full shadow-lg z-10"
-                    />
-                    
-                    <Image
-                      src={member.image}
-                      alt={`${member.name} - ${member.role}`}
-                      width={320}
-                      height={320}
-                      className="w-full h-full object-cover"
-                    />
-                    
-                    {/* Hover Overlay */}
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      whileHover={{ opacity: 1 }}
-                      className="absolute inset-0 bg-gradient-to-t from-[#1a2236]/80 via-transparent to-transparent flex items-end justify-center pb-8"
-                    >
-                      <motion.div
-                        initial={{ y: 20, opacity: 0 }}
-                        whileHover={{ y: 0, opacity: 1 }}
-                        transition={{ duration: 0.3 }}
-                        className="text-center"
-                      >
-                        <p className="text-white font-semibold text-lg">{member.name}</p>
-                        <p className="text-yellow-300 text-sm">{member.role}</p>
-                      </motion.div>
-                    </motion.div>
-                  </motion.div>
-                </motion.div>
-                
-                {/* Right Side - Enhanced Details with Smart Scrolling */}
-                <motion.div 
-                  className="space-y-8"
-                  initial={{ opacity: 0, x: 30 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{ duration: 1, delay: 0.5 }}
-                >
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.5 }}
-                    transition={{ duration: 0.8, delay: 0.7 }}
-                  >
-                    <motion.h4 
-                      className="text-3xl lg:text-4xl font-bold theme-text-light mb-3"
-                      whileInView={{ 
-                        backgroundPosition: ["0% 50%", "100% 50%"],
-                        backgroundSize: ["200% 200%", "200% 200%"]
-                      }}
-                      viewport={{ once: true, amount: 0.5 }}
-                      transition={{ duration: 2, delay: 0.8 }}
-                      style={{
-                        background: "linear-gradient(90deg, #fbbf24, #f59e0b, #d97706, #fbbf24)",
-                        backgroundSize: "200% 200%",
-                        backgroundClip: "text",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent"
-                      }}
-                    >
-                      {member.name}
-                    </motion.h4>
-                    
-                    <motion.p 
-                      className="text-xl text-yellow-400 font-semibold mb-6"
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true, amount: 0.5 }}
-                      transition={{ duration: 0.8, delay: 0.9 }}
-                    >
-                      {member.role}
-                    </motion.p>
-                  </motion.div>
+                className="relative"
+              >
+                {/* Enhanced Card Container */}
+                <div className="bg-slate-800/80 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-4 shadow-2xl relative overflow-hidden h-full">
+                  {/* Gradient Background Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 via-transparent to-amber-500/5 opacity-50"></div>
                   
-                  <motion.div 
-                    className="space-y-6"
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.3 }}
-                    transition={{ duration: 1, delay: 1.0 }}
-                  >
-                    {/* Education Box with Enhanced Animation */}
-                    <motion.div 
-                      className="bg-gradient-to-r from-yellow-400/10 to-amber-500/10 p-6 rounded-xl border border-yellow-400/20 backdrop-blur-sm"
-                      whileHover={{ 
-                        scale: 1.02,
-                        boxShadow: "0 20px 25px -5px rgba(251, 191, 36, 0.1), 0 10px 10px -5px rgba(251, 191, 36, 0.04)"
-                      }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <motion.p 
-                        className="text-sm font-semibold theme-text-light mb-3"
-                        initial={{ opacity: 0, x: -20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true, amount: 0.5 }}
-                        transition={{ duration: 0.6, delay: 1.1 }}
-                      >
-                        Education & Background
-                      </motion.p>
-                      <motion.p 
-                        className="text-base theme-text-muted mb-2"
-                        initial={{ opacity: 0, x: -20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true, amount: 0.5 }}
-                        transition={{ duration: 0.6, delay: 1.2 }}
-                      >
-                        {member.education}
-                      </motion.p>
-                      <motion.p 
-                        className="text-base text-yellow-400 font-medium"
-                        initial={{ opacity: 0, x: -20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true, amount: 0.5 }}
-                        transition={{ duration: 0.6, delay: 1.3 }}
-                      >
-                        {member.institution}
-                      </motion.p>
-                    </motion.div>
-                    
-                    {/* Experience Description with Staggered Animation */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true, amount: 0.5 }}
-                      transition={{ duration: 0.8, delay: 1.4 }}
-                      className="space-y-4"
-                    >
-                      <motion.p 
-                        className="text-lg theme-text-muted leading-relaxed"
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, amount: 0.5 }}
-                        transition={{ duration: 0.8, delay: 1.5 }}
-                      >
-                        {member.name} brings extensive experience in {member.experience.toLowerCase()}, specializing in {member.specialties.slice(0, 2).join(" and ")}. With a strong academic foundation from {member.institution}, they have developed expertise in {member.specialties.slice(2).join(", ")}.
-                      </motion.p>
+                  <div className="flex flex-col gap-4 relative z-10">
+                  {/* Image and Name Section */}
+                  <div className="flex flex-col items-center">
+                    <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-yellow-400/30 shadow-xl mx-auto">
+                      {/* Glowing Ring Effect */}
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-yellow-400/20 to-amber-500/20 blur-xl -z-10"></div>
                       
-                      <motion.p 
-                        className="text-lg theme-text-muted leading-relaxed"
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, amount: 0.5 }}
-                        transition={{ duration: 0.8, delay: 1.6 }}
-                      >
-                        Their key achievements include being a {member.achievements[0].toLowerCase()}, {member.achievements[1].toLowerCase()}, and {member.achievements[2].toLowerCase()}. They are committed to {member.achievements[3].toLowerCase()} and helping students achieve their academic goals.
-                      </motion.p>
-                    </motion.div>
-                  </motion.div>
-                </motion.div>
+                      <Image
+                        src={member.image}
+                        alt={`${member.name} - ${member.role}`}
+                        width={128}
+                        height={128}
+                        className="w-full h-full object-cover object-top"
+                        style={{ objectPosition: 'center top' }}
+                      />
+                    </div>
+                    
+                    {/* Name and Role */}
+                    <div className="mt-3 text-center">
+                      <h4 className="text-lg font-bold theme-text-light mb-1">{member.name}</h4>
+                      <p className="text-sm text-yellow-400 font-semibold">{member.role}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Education Box */}
+                  <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 p-3 rounded-xl border border-yellow-400/30 backdrop-blur-sm shadow-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <GraduationCap className="w-3.5 h-3.5 text-yellow-400" />
+                      <p className="text-xs font-bold text-yellow-400 uppercase tracking-wider">Education</p>
+                    </div>
+                    <p className="text-xs theme-text-light mb-1 font-medium">
+                      {member.education}
+                    </p>
+                    <p className="text-xs text-yellow-400 font-semibold">
+                      {member.institution}
+                    </p>
+                  </div>
+                  
+                  {/* Specialties Section */}
+                  {member.specialties && member.specialties.length > 0 && (
+                    <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 p-3 rounded-xl border border-yellow-400/30 backdrop-blur-sm shadow-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Star className="w-3.5 h-3.5 text-yellow-400" />
+                        <p className="text-xs font-bold text-yellow-400 uppercase tracking-wider">Specialties</p>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {member.specialties.slice(0, 2).map((specialty, idx) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-1 bg-yellow-400/10 border border-yellow-400/30 rounded-lg text-xs theme-text-light font-medium"
+                          >
+                            {specialty}
+                          </span>
+                        ))}
+                        {member.specialties.length > 2 && (
+                          <span className="px-2 py-1 bg-yellow-400/10 border border-yellow-400/30 rounded-lg text-xs theme-text-light font-medium">
+                            +{member.specialties.length - 2} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                    
+                  {/* Experience Description */}
+                  <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 p-3 rounded-xl border border-yellow-400/30 backdrop-blur-sm shadow-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <BookOpen className="w-3.5 h-3.5 text-yellow-400" />
+                      <p className="text-xs font-bold text-yellow-400 uppercase tracking-wider">About</p>
+                    </div>
+                    <div className="space-y-1">
+                      {member.bio ? (
+                        <p className="text-xs theme-text-muted leading-relaxed line-clamp-3">
+                          {member.bio}
+                        </p>
+                      ) : (
+                        <p className="text-xs theme-text-muted leading-relaxed line-clamp-3">
+                          {member.name} brings extensive experience in {member.experience.toLowerCase()}, specializing in {member.specialties?.slice(0, 2).join(" and ") || "their field"}.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
-              
-              {/* Decorative Bottom Line */}
-              <motion.div
-                initial={{ width: 0, opacity: 0 }}
-                whileInView={{ width: "100%", opacity: 1 }}
-                viewport={{ once: true, amount: 0.5 }}
-                transition={{ duration: 1.5, delay: 1.8 }}
-                className="h-px bg-gradient-to-r from-transparent via-yellow-400/50 to-transparent mt-12"
-              />
             </motion.div>
           ))}
+          </div>
         </div>
       </section>
 
