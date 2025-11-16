@@ -8,65 +8,27 @@ import Chatbot from "@/components/home/Chatbot";
 import { BookOpen, User } from "lucide-react";
 import Image from "next/image";
 
-// Dummy hero categories with improved pastel gradients and icons
+// Blog categories matching website theme
 const heroCategories = [
   {
     id: "student-spotlights",
     title: "Student Spotlights",
-    gradient: "from-rose-300 via-fuchsia-200 to-indigo-200",
-    icon: (props: React.SVGProps<SVGSVGElement>) => <User className="h-6 w-6 text-blue-700 group-hover:scale-125 group-hover:rotate-6 transition-transform duration-300" {...props} />, 
+    icon: (props: React.SVGProps<SVGSVGElement>) => <User className="h-6 w-6 text-yellow-400 group-hover:scale-125 group-hover:rotate-6 transition-transform duration-300" {...props} />, 
   },
   {
     id: "research-opportunities",
     title: "Research Opportunities and Ideas",
-    gradient: "from-orange-200 via-amber-200 to-yellow-100",
-    icon: (props: React.SVGProps<SVGSVGElement>) => <BookOpen className="h-6 w-6 text-amber-700 group-hover:rotate-12 group-hover:scale-110 transition-transform duration-300" {...props} />, 
+    icon: (props: React.SVGProps<SVGSVGElement>) => <BookOpen className="h-6 w-6 text-yellow-400 group-hover:rotate-12 group-hover:scale-110 transition-transform duration-300" {...props} />, 
   },
   {
     id: "education-admissions",
     title: "Education and College Admissions",
-    gradient: "from-sky-200 via-blue-200 to-cyan-100",
-    icon: (props: React.SVGProps<SVGSVGElement>) => <BookOpen className="h-6 w-6 text-sky-700 group-hover:rotate-180 group-hover:scale-110 transition-transform duration-300" {...props} />, 
-  },
-  {
-    id: "meet-mentors",
-    title: "Meet our Mentors",
-    gradient: "from-teal-200 via-emerald-200 to-lime-100",
-    icon: () => (
-      <div className="grid grid-cols-2 gap-1 group-hover:animate-bounce">
-        {[0, 1, 2, 3].map((delay, i) => (
-          <div
-            key={i}
-            className="w-2 h-2 bg-emerald-700 rounded-full animate-pulse"
-            style={{ animationDelay: `${i * 0.1}s` }}
-          ></div>
-        ))}
-      </div>
-    ),
+    icon: (props: React.SVGProps<SVGSVGElement>) => <BookOpen className="h-6 w-6 text-yellow-400 group-hover:rotate-180 group-hover:scale-110 transition-transform duration-300" {...props} />, 
   },
   {
     id: "conduct-research",
-    title: "How to Conduct and Showcase Research",
-    gradient: "from-yellow-200 via-orange-200 to-rose-100",
-    icon: (props: React.SVGProps<SVGSVGElement>) => <BookOpen className="h-6 w-6 text-orange-700 group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300" {...props} />, 
-  },
-  {
-    id: "about-aes",
-    title: "About AES",
-    gradient: "from-violet-200 via-fuchsia-100 to-amber-100",
-    icon: () => (
-      <div className="w-6 h-6 border-2 border-violet-700 rounded flex items-end justify-center p-1 group-hover:animate-wiggle">
-        <div className="flex space-x-0.5 items-end">
-          {[2, 3, 1].map((h, i) => (
-            <div
-              key={i}
-              className={`w-1 h-${h} bg-violet-700 rounded-sm animate-pulse`}
-              style={{ animationDelay: `${i * 0.1}s` }}
-            ></div>
-          ))}
-        </div>
-      </div>
-    ),
+    title: "Research Showcase",
+    icon: (props: React.SVGProps<SVGSVGElement>) => <BookOpen className="h-6 w-6 text-yellow-400 group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300" {...props} />, 
   },
 ];
 
@@ -97,34 +59,58 @@ export default function AESBlogPage() {
               Based on our experience at some of the top research institutions, the Acharya team and community have a lot of insights to offer you on all sorts of topics!
             </p>
           </div>
-          {/* Category Cards Grid - vibrant Polygence style */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {heroCategories.map(({ title, gradient, icon: Icon, id }, index) => (
-              <div
-                key={index}
-                className={`bg-gradient-to-br ${gradient} rounded-3xl p-6 sm:p-8 cursor-pointer shadow-xl hover:shadow-2xl hover:scale-[1.04] hover:-rotate-1 transition-all duration-300 group relative overflow-hidden animate-float`}
+          {/* Category Cards Grid - vibrant and eye-catching */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+            {heroCategories.map(({ title, icon: Icon, id }, index) => {
+              // Different gradient colors for each card
+              const gradients = [
+                "from-blue-500/20 via-purple-500/20 to-pink-500/20",
+                "from-yellow-400/20 via-orange-500/20 to-red-500/20",
+                "from-emerald-500/20 via-teal-500/20 to-cyan-500/20",
+                "from-rose-500/20 via-fuchsia-500/20 to-violet-500/20",
+              ];
+              const accentGradients = [
+                "from-blue-400 via-purple-400 to-pink-400",
+                "from-yellow-400 via-orange-400 to-red-400",
+                "from-emerald-400 via-teal-400 to-cyan-400",
+                "from-rose-400 via-fuchsia-400 to-violet-400",
+              ];
+              
+              return (
+                <div
+                  key={index}
+                  className="bg-gradient-to-br from-slate-800 via-slate-800/95 to-slate-900 border-2 border-slate-700/50 rounded-2xl p-8 cursor-pointer shadow-2xl relative overflow-hidden"
+                >
+                  {/* Vibrant accent bar on left - always visible */}
+                  <div className={`absolute left-0 top-0 h-full w-1.5 bg-gradient-to-b ${accentGradients[index]} opacity-60`}></div>
+                  
+                  {/* Background gradient overlay - always visible */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${gradients[index]} opacity-40 pointer-events-none`}></div>
 
-                style={{ willChange: 'transform' }}
-              >
-                {/* Shimmer */}
-                <div className="absolute inset-0 bg-white/10 animate-shimmer opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                  {/* Content */}
+                  <div className="relative z-10 flex flex-col h-full">
+                    {/* Icon section */}
+                    <div className="mb-6">
+                      <div className={`w-20 h-20 bg-gradient-to-br ${accentGradients[index]} border-2 border-yellow-400/50 rounded-2xl flex items-center justify-center shadow-2xl`}>
+                        <div className="w-full h-full bg-slate-900/40 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                          {typeof Icon === 'function' ? <Icon /> : null}
+                        </div>
+                      </div>
+                    </div>
 
-                {/* Content */}
-                <div className="flex items-center justify-between relative z-10">
-                  <div className="flex-1">
-                    <h3 className="text-gray-800 font-semibold text-xl sm:text-2xl mb-1 group-hover:scale-[1.06] transition-transform duration-300">
-                      {title}
-                    </h3>
-                    <p className="text-gray-600 text-sm sm:text-base">Click to explore more</p>
-                  </div>
-                  <div className="ml-4">
-                    <div className="w-14 h-14 bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center shadow-md group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-                      {typeof Icon === 'function' ? <Icon /> : null}
+                    {/* Title */}
+                    <div className="flex-1">
+                      <h3 className="text-white font-bold text-2xl sm:text-3xl mb-4 leading-tight drop-shadow-lg">
+                        {title}
+                      </h3>
+                      
+                      {/* Decorative line - always visible */}
+                      <div className={`h-1 bg-gradient-to-r ${accentGradients[index]} rounded-full opacity-50 w-16`}></div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>

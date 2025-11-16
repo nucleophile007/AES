@@ -1,9 +1,19 @@
 "use client"
 
-import { StickyTestimonialsSection, type Testimonial } from "@/components/testimonials/sticky-testimonials-section"
+import TestimonialSection from "@/components/testimonials/testimonial-section"
 import { motion } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
+import Header from "@/components/home/Header"
+import Footer from "@/components/home/Footer"
 
+interface Testimonial {
+  name: string
+  designation: string
+  school: string
+  quote: string
+  src: string
+  rating: number
+}
 
 const sections: {
   [key: string]: Testimonial[]
@@ -23,7 +33,7 @@ const sections: {
       designation: "Math Grade: D to A",
       school: "West Park High School",
       quote:
-        "ACHARYA Educational Services has great tutors who have helped me improve in math a lot. I went from a D to an A this year. Math is now easier than before when I was struggling everything finally clicked. My confidence in math has grown throughout the year.",
+        "Shanti Swaroop is a great tutor and has helped improve in math a lot. I went from a D to an A this year. Math is now easier than before when I was struggling everything finally clicked. My confidence in math has grown throughout the year.",
       src: "/testimonial-logos/WestParkHighSchool.png",
       rating: 5,
     },
@@ -41,7 +51,7 @@ const sections: {
       designation: "AP Calculus Confidence",
       school: "Folsom High School",
       quote:
-        "I joined because I wanted help in preparing for the AP Calculus exam, and these sessions definitely boosted my confidence in and familiarity with the subject. The tutors provided lots of good practice problems, explained concepts that I didn't understand at first, and were patient if it took me a while to figure something out. Overall, great experience!",
+        "I joined because I wanted help in preparing for the AP Calculus exam, and these sessions definitely boosted my confidence in and familiarity with the subject. Shanti provided lots of good practice problems, explained concepts that I didn't understand at first, and was patient if it took me a while to figure something out. Overall, great experience!",
       src: "/testimonial-logos/folsom.png",
       rating: 5,
     },
@@ -50,7 +60,7 @@ const sections: {
       designation: "Tailored Learning Method",
       school: "Folsom High School",
       quote:
-        "I have joined these classes to help me get hold and excel in some of the classes that I am taking in school. Tutors gained insights on how I learn and tailors the classes based on that which helps me to understand the different concepts even better. Their way of teaching is very unique and different from any other tutor.",
+        "I have joined these classes to help me get hold and excel in some of the classes that I am taking in school. Shanti Swaroop gained insights on how I learn and tailors the classes based on that which helps me to understand the different concepts even better. His way of teaching is very unique and different from any other tutor.",
       src: "/testimonial-logos/folsom.png",
       rating: 5,
     },
@@ -59,7 +69,7 @@ const sections: {
       designation: "Online Learning Success",
       school: "Granite Bay High School",
       quote:
-        "ACHARYA Educational Services has great tutors who have been so helpful to me as my tutor. They thoroughly explain every question I have to me and provide me with extra practice when needed. Being available via zoom makes tutoring easier and more accessible.",
+        "Shanti Swaroop is very helpful to me as my tutor. He thoroughly explains every question I have to me and provides me with extra practice when needed. Being available via zoom makes tutoring easier and more accessible.",
       src: "/testimonial-logos/GraniteBayHighSchool.png",
       rating: 5,
     },
@@ -77,7 +87,7 @@ const sections: {
       designation: "Patient Teaching Approach",
       school: "Sutter Middle School",
       quote:
-        "ACHARYA Educational Services has great tutors who are very patient and positive. Our daughter is having difficulty keeping up with the pace of her teacher at school. The tutors are better at explaining the concepts and allows her time to learn. They are very encouraging and helps to boost her confidence.",
+        "Shanti Swaroop is very patient and positive. Our daughter is having difficulty keeping up with the pace of her teacher at school. Shanti is better at explaining the concepts and allows her time to learn. He is very encouraging and helps to boost her confidence.",
       src: "/testimonial-logos/folsom.png",
       rating: 5,
     },
@@ -86,7 +96,7 @@ const sections: {
       designation: "Interactive Learning",
       school: "Folsom High School",
       quote:
-        "Amazing Service! ACHARYA Educational Services has great tutors who are very interactive and focused with my kid. They explain concepts very well in multiple different ways and also a very nice and understanding person. Great Tutor!",
+        "Amazing Service! Shanti Swaroop is very interactive and focused with my kid. He explains concepts very well in multiple different ways and also a very nice and understanding person. Great Tutor!",
       src: "/testimonial-logos/folsom.png",
       rating: 5,
     },
@@ -95,7 +105,7 @@ const sections: {
       designation: "Flexible Scheduling",
       school: "Folsom High School",
       quote:
-        "ACHARYA Educational Services has great tutors who have flexible scheduling and we worked together to find the best days to meet that provide the most benefit for my son. They make sure that my son is not just working on math when he is in his session but rather, they also ask that my son check in, provides updates and samples of what he is working on.",
+        "Shanti Swaroop has flexible scheduling and we worked together to find the best days to meet that provide the most benefit for my son. He makes sure that my son is not just working on math when he is in his session but rather, he also asks that my son check in, provides updates and samples of what he is working on.",
       src: "/testimonial-logos/folsom.png",
       rating: 5,
     },
@@ -104,7 +114,7 @@ const sections: {
       designation: "Professional Methodology",
       school: "Folsom High School",
       quote:
-        "ACHARYA Educational Services has great tutors who are a great Tutor! They are very professional and organized in their methodology. You can tell right away that they care about the students. They provide a game plan for their students. Would definitely recommend them.",
+        "Shanti Swaroop is a great Tutor! He is very professional and organized in his methodology. You can tell right away that he cares about the students. He provides a game plan for his students. Would definitely recommend him.",
       src: "/testimonial-logos/folsom.png",
       rating: 5,
     },
@@ -113,7 +123,7 @@ const sections: {
       designation: "Concept Breakdown",
       school: "Folsom High School",
       quote:
-        "The tutors have been really good about breaking down the steps of my son's struggles. They provided help with preparing for quizzes and tests. They have provided tips and tricks that helped math concepts makes sense that common core just is not accomplishing.",
+        "Shanti has been really good about breaking down the steps of my son's struggles. He provided help with preparing for quizzes and tests. He has provided tips and tricks that helped math concepts makes sense that common core just is not accomplishing.",
       src: "/testimonial-logos/folsom.png",
       rating: 5,
     },
@@ -294,9 +304,11 @@ const sections: {
 
 export default function Page() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Enhanced Header Section */}
-      <div className="pt-20 pb-16 px-4 relative overflow-hidden">
+    <main className="min-h-screen theme-bg-dark flex flex-col">
+      <Header />
+      
+      {/* Hero Section */}
+      <div className="pt-32 pb-16 mb-20 px-4 relative overflow-hidden">
         {/* Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-20 left-10 w-24 h-24 bg-yellow-400 rounded-full opacity-5 animate-float"></div>
@@ -313,24 +325,51 @@ export default function Page() {
             <Badge className="mb-6 bg-yellow-400/10 text-yellow-400 border-yellow-400/20 px-6 py-3 text-lg font-semibold">
               Student Success Stories
             </Badge>
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
-              The Teams We Empower
+            <h1 className="text-4xl md:text-6xl font-bold theme-text-light mb-6 leading-tight">
+              Student <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500">Success Stories</span>
             </h1>
-            <p className="text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
-              Explore real testimonials from our five programs. Scroll each section to reveal detailed stories in a sticky panel and discover how ACHARYA Educational Services transforms academic journeys.
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto leading-relaxed">
+              Hear directly from our students about their transformative experiences with ACHARYA Educational Services
             </p>
           </motion.div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <main className="mx-auto w-full max-w-6xl px-4 pb-20">
-        <StickyTestimonialsSection title="Tutoring" items={sections.tutoring} />
-        <StickyTestimonialsSection title="SAT Coaching" items={sections.satCoaching} />
-        <StickyTestimonialsSection title="College Prep" items={sections.collegePrep} />
-        <StickyTestimonialsSection title="Research Program" items={sections.researchProgram} />
-        <StickyTestimonialsSection title="Math Competition" items={sections.mathCompetition} />
-      </main>
-    </div>
+      {/* Testimonial Sections */}
+      <div className="container mx-auto px-4 py-20 space-y-24">
+        <TestimonialSection
+          title="Tutoring Program"
+          description="Academic excellence through personalized guidance"
+          testimonials={sections.tutoring}
+          color="from-blue-600 to-blue-400"
+        />
+        <TestimonialSection
+          title="SAT Coaching"
+          description="Score improvement strategies that deliver results"
+          testimonials={sections.satCoaching}
+          color="from-emerald-600 to-emerald-400"
+        />
+        <TestimonialSection
+          title="College Prep (UACHIEVE)"
+          description="Pathway to your dream university"
+          testimonials={sections.collegePrep}
+          color="from-purple-600 to-purple-400"
+        />
+        <TestimonialSection
+          title="Research Program"
+          description="Discover your passion for academic research"
+          testimonials={sections.researchProgram}
+          color="from-orange-600 to-orange-400"
+        />
+        <TestimonialSection
+          title="Math Competition"
+          description="Master advanced problem-solving techniques"
+          testimonials={sections.mathCompetition}
+          color="from-pink-600 to-pink-400"
+        />
+      </div>
+
+      <Footer />
+    </main>
   )
 }
