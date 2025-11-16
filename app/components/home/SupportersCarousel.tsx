@@ -10,26 +10,26 @@ const supporters = [
     logo: "/organisations/BICS Logo.PNG",
     alt: "BICS Logo"
   },
-  {
-    name: "Folsom High School",
-    logo: "/organisations/FHS.png",
-    alt: "Folsom High School Logo"
-  },
-  {
-    name: "Natomas High School",
-    logo: "/organisations/natomas.jpeg",
-    alt: "Natomas High School Logo"
-  },
-  {
-    name: "Sutter Middle School",
-    logo: "/organisations/Sutter_MiddleSchool.png",
-    alt: "Sutter Middle School Logo"
-  },
-  {
-    name: "Vista Del Lago High School",
-    logo: "/organisations/VISTA_DEL_LAGO.PNG",
-    alt: "Vista Del Lago High School Logo"
-  },
+  // {
+  //   name: "Folsom High School",
+  //   logo: "/organisations/FHS.png",
+  //   alt: "Folsom High School Logo"
+  // },
+  // {
+  //   name: "Natomas High School",
+  //   logo: "/organisations/natomas.jpeg",
+  //   alt: "Natomas High School Logo"
+  // },
+  // {
+  //   name: "Sutter Middle School",
+  //   logo: "/organisations/Sutter_MiddleSchool.png",
+  //   alt: "Sutter Middle School Logo"
+  // },
+  // {
+  //   name: "Vista Del Lago High School",
+  //   logo: "/organisations/VISTA_DEL_LAGO.PNG",
+  //   alt: "Vista Del Lago High School Logo"
+  // },
   {
     name: "Images Organization",
     logo: "/organisations/images.jpeg",

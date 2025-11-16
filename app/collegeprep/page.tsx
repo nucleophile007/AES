@@ -1828,8 +1828,15 @@ export default function CollegePrepPage() {
       </section>
 
       {/* College Acceptances Section */}
-      <section className="py-20 theme-bg-dark">
-        <div className="container mx-auto px-4">
+      <section className="py-20 theme-bg-dark relative overflow-hidden">
+        {/* Enhanced Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-32 right-10 w-24 h-24 bg-blue-400 rounded-full opacity-5 animate-float-reverse"></div>
+          <div className="absolute bottom-32 left-20 w-20 h-20 bg-purple-400 rounded-full opacity-5 animate-float"></div>
+          <div className="absolute top-1/2 right-1/3 w-16 h-16 bg-green-400 rounded-full opacity-5 animate-float-reverse"></div>
+        </div>
+        
+        <div className="container mx-auto px-4 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -1839,27 +1846,28 @@ export default function CollegePrepPage() {
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Where Our Students Have Been Accepted</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">Our students have gained admission to top colleges and universities across the country.</p>
           </motion.div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-8 items-center justify-center">
-            {colleges.map((college, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.05 }}
-                className="flex flex-col items-center"
-              >
-                                 <div className="w-32 h-32 bg-white rounded-full shadow-lg flex items-center justify-center mb-3 border-2 border-yellow-400/20 hover:scale-110 hover:shadow-xl transition-transform duration-300 overflow-hidden">
-                  <Image
-                    src={college.logo}
-                    alt={college.name}
-                     width={110}
-                     height={110}
-                    className="object-contain"
-                  />
+          
+          {/* Infinite Carousel */}
+          <div className="relative overflow-hidden group py-8">
+            <div className="flex animate-scroll group-hover:pause-animation">
+              {[...colleges, ...colleges].map((college, index) => (
+                <div
+                  key={`${college.name}-${index}`}
+                  className="flex-shrink-0 mx-6 md:mx-8 flex flex-col items-center justify-center"
+                >
+                  <div className="w-32 h-32 bg-white rounded-full shadow-lg flex items-center justify-center mb-3 border-2 border-yellow-400/20 hover:scale-110 hover:shadow-xl transition-transform duration-300 overflow-hidden">
+                    <Image
+                      src={college.logo}
+                      alt={college.name}
+                      width={110}
+                      height={110}
+                      className="object-contain transition-all duration-300"
+                    />
+                  </div>
+                  <span className="text-sm font-semibold theme-text-light text-center whitespace-nowrap">{college.name}</span>
                 </div>
-                <span className="text-sm font-semibold theme-text-light text-center mt-2">{college.name}</span>
-              </motion.div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>

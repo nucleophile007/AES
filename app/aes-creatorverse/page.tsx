@@ -10,6 +10,7 @@ import Link from "next/link";
 import Chatbot from "@/components/home/Chatbot";
 import Header from "@/components/home/Header";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import FocusSkillsSticky from "@/components/ui/focus-skills-sticky";
 
 const focusSkills = [
   {
@@ -233,9 +234,28 @@ export default function AESCreatorversePage() {
         </div>
       </section>
 
+      {/* Focus Skills Section (Sticky Alternating) */}
+      <section className="py-20 theme-bg-dark">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="text-center mb-12"
+          >
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Focus Skills</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light">Our Focus Skills</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto mt-4">
+              Develop essential skills in four key areas that will help you build your digital presence and community impact.
+            </p>
+          </motion.div>
+          <div className="relative">
+            <FocusSkillsSticky />
+          </div>
+        </div>
+      </section>
 
-{/* Program Features Section */}
-<section className="py-20 theme-bg-dark">
+      {/* Program Features Section */}
+      <section className="py-20 theme-bg-dark">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -248,7 +268,7 @@ export default function AESCreatorversePage() {
               Our structured approach helps you build a compelling social profile and establish your unique voice in the digital world.
             </p>
           </motion.div>
-                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {programFeatures.map((feature, index) => (
               <motion.div
                 key={index}
@@ -266,44 +286,6 @@ export default function AESCreatorversePage() {
                   <div className="px-6 pb-8 pt-2 flex-1 flex flex-col justify-center">
                     <p className="text-base theme-text-muted font-medium text-left">{feature.description}</p>
                   </div>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-      {/* Focus Skills Section */}
-      <section className="py-20 theme-bg-dark">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="text-center mb-16"
-          >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Focus Skills</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Our Focus Skills</h2>
-            <p className="text-xl theme-text-muted max-w-3xl mx-auto">
-              Develop essential skills in four key areas that will help you build your digital presence and community impact.
-            </p>
-          </motion.div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {focusSkills.map((skill, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card className="h-full flex flex-col bg-[#1a2236]/90 backdrop-blur-sm border border-yellow-400/20 hover:shadow-xl hover:border-yellow-400/40 transition-all duration-300 group relative">
-                  <CardHeader className="pb-2">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center mb-4 mx-auto">
-                      <skill.icon className="h-7 w-7 text-[#1a2236]" />
-                    </div>
-                    <CardTitle className="text-lg font-semibold text-center mb-2 theme-text-light">{skill.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-1 flex flex-col">
-                    <p className="text-base theme-text-muted text-center leading-relaxed">{skill.description}</p>
-                  </CardContent>
                 </Card>
               </motion.div>
             ))}
