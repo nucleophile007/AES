@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, User, RefreshCw, Wifi, WifiOff, Bell, BellOff, Check, CheckCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useRealtimeMessages } from "../../hooks/use-realtime-messages";
+import { useRealtimeMessages, Message } from "../../hooks/use-realtime-messages";
 import { useMessageNotifications, useReadReceipts } from "../../hooks/use-message-notifications";
 
 interface Mentor {
@@ -19,18 +19,6 @@ interface Mentor {
   name: string;
   email: string;
   program: string;
-}
-
-interface Message {
-  id: string;
-  senderId: number;
-  recipientId: number;
-  content: string;
-  timestamp: string;
-  senderName: string;
-  senderRole: 'student' | 'teacher';
-  isRead?: boolean;
-  readAt?: string | null;
 }
 
 interface MentorMessagesProps {

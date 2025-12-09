@@ -145,6 +145,103 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Check if user is a parent (database-based)
+    const parent = await prisma.parentAccount.findFirst({
+      where: { 
+        email: {
+          equals: email,
+          mode: 'insensitive'
+        }
+      },
+      include: {
+        Student: true
+      }
+    });
+
+    if (parent) {
+      // Check if account is activated
+      if (!parent.isActivated) {
+        return NextResponse.json(
+          { success: false, error: 'Please activate your account first. Check your email for the activation link.' },
+          { status: 401 }
+        );
+      }
+
+      // Check if password exists
+      if (!parent.password) {
+        return NextResponse.json(
+          { success: false, error: 'Please set your password using the activation link sent to your email.' },
+          { status: 401 }
+        );
+      }
+
+      // Verify password with bcrypt
+      const isValidPassword = await bcrypt.compare(password, parent.password);
+      
+      if (isValidPassword) {
+        const authUser: AuthUser = {
+          id: parent.id,
+          email: parent.email,
+          name: parent.name,
+          role: 'parent'
+        };
+
+        const token = generateToken(authUser);
+        
+        const responseData = {
+          success: true,
+          user: {
+            id: parent.id,
+            name: parent.name,
+            email: parent.email,
+            phone: parent.phone,
+            type: 'parent',
+            role: 'parent',
+            students: parent.Student.map((student: any) => ({
+              id: student.id,
+              name: student.name,
+              email: student.email,
+              grade: student.grade,
+              program: student.program
+            }))
+          },
+          token,
+          redirectTo: '/parent-dashboard'
+        };
+
+        const response = NextResponse.json(responseData);
+        setAuthCookie(response, token);
+        return response;
+      }
+    }
+
+    // Parent DEMO login (no DB) - fallback for testing
+    if (email === 'parent.demo@aes.com' && password === 'parent123') {
+      const authUser: AuthUser = {
+        id: 900000,
+        email,
+        name: 'Parent Demo',
+        role: 'parent'
+      };
+
+      const token = generateToken(authUser);
+      const responseData = {
+        success: true,
+        user: {
+          id: authUser.id,
+          name: authUser.name,
+          email: authUser.email,
+          type: 'parent',
+          role: 'parent'
+        },
+        token,
+        redirectTo: '/parent-dashboard'
+      };
+      const response = NextResponse.json(responseData);
+      setAuthCookie(response, token);
+      return response;
+    }
+
     // If we get here, credentials are invalid
     return NextResponse.json(
       { success: false, error: 'Invalid email or password' },

@@ -209,7 +209,9 @@ function ActivatePageContent() {
       ? 'teacher portal' 
       : userData?.role === 'STUDENT' 
         ? 'student portal' 
-        : 'admin dashboard';
+        : userData?.role === 'PARENT'
+          ? 'home page'
+          : 'admin dashboard';
 
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
@@ -225,7 +227,7 @@ function ActivatePageContent() {
             href={redirectUrl}
             className="inline-block bg-blue-600 text-white px-6 py-2 rounded-md font-medium hover:bg-blue-700"
           >
-            Go to {roleMessage === 'admin dashboard' ? 'Sign In' : 'Portal'}
+            Go to {roleMessage === 'admin dashboard' || roleMessage === 'home page' ? 'Home' : 'Portal'}
           </a>
         </div>
       </div>
