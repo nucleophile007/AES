@@ -139,6 +139,11 @@ export default function TeacherDashboard() {
   // Chat state
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [selectedChatStudent, setSelectedChatStudent] = useState<Student | null>(null);
+  const [selectedChatParent, setSelectedChatParent] = useState<{id: number, name: string} | null>(null);
+  
+  // Parent conversations state
+  const [parentConversations, setParentConversations] = useState<any[]>([]);
+  const [loadingParentConversations, setLoadingParentConversations] = useState(false);
   
   // Progress modal state
   const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
@@ -201,6 +206,28 @@ export default function TeacherDashboard() {
     }
   };
 
+  const fetchParentConversations = async () => {
+    if (!teacher?.id) return;
+    
+    try {
+      setLoadingParentConversations(true);
+      const response = await fetch(`/api/teacher/conversations?teacherId=${teacher.id}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        // Filter to only show parent conversations
+        const parents = data.conversations.filter((c: any) => c.recipientRole === 'parent');
+        setParentConversations(parents);
+      } else {
+        console.error('Failed to fetch parent conversations:', data.error);
+      }
+    } catch (err) {
+      console.error('Error fetching parent conversations:', err);
+    } finally {
+      setLoadingParentConversations(false);
+    }
+  };
+
   const handleAddRemark = async (submissionId: number) => {
     if (!remarkText.trim()) return;
     
@@ -248,6 +275,12 @@ export default function TeacherDashboard() {
       fetchStudentSubmissions();
     }
   }, [teacherEmail]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (teacher?.id) {
+      fetchParentConversations();
+    }
+  }, [teacher?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Early return for authentication loading (AFTER all hooks)
   if (authLoading || !authUser) {
@@ -443,6 +476,56 @@ export default function TeacherDashboard() {
 
           {/* Students Tab */}
           <TabsContent value="students">
+            {/* Parent Conversations Section */}
+            {parentConversations.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Users className="h-5 w-5 text-purple-500" />
+                  Parent Conversations
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                  {parentConversations.map((parent) => (
+                    <Card key={parent.recipientId} className="hover:shadow-lg transition-shadow border-purple-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <p className="font-semibold text-gray-900">{parent.recipientName}</p>
+                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">{parent.lastMessage}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {new Date(parent.lastMessageTime).toLocaleDateString()}
+                            </p>
+                            {parent.unreadCount > 0 && (
+                              <Badge className="mt-2 bg-purple-500 text-white">
+                                {parent.unreadCount} unread
+                              </Badge>
+                            )}
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="ml-3 text-purple-600 hover:bg-purple-50 border-purple-200"
+                            onClick={() => {
+                              setSelectedChatParent({ id: parent.recipientId, name: parent.recipientName });
+                              setSelectedChatStudent(null); // Clear student selection
+                              setIsChatOpen(true);
+                            }}
+                          >
+                            <MessageCircle className="h-4 w-4 mr-2" />
+                            Chat
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                <div className="border-t border-gray-200 my-6"></div>
+              </div>
+            )}
+
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <GraduationCap className="h-5 w-5 text-blue-500" />
+              Students
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredStudents.length === 0 && (
                 <div className="col-span-full text-center text-gray-400 py-12">
@@ -525,6 +608,7 @@ export default function TeacherDashboard() {
                           className="text-blue-600 hover:bg-blue-50"
                           onClick={() => {
                             setSelectedChatStudent(student);
+                            setSelectedChatParent(null); // Clear parent selection
                             setIsChatOpen(true);
                           }}
                         >
@@ -781,16 +865,41 @@ export default function TeacherDashboard() {
         </Tabs>
       </div>
       
-      {/* Chat Dialog */}
+      {/* Chat Dialog for Students */}
       {teacher && selectedChatStudent && (
         <CustomChatDialog
-          open={isChatOpen}
-          onOpenChange={setIsChatOpen}
+          open={isChatOpen && !!selectedChatStudent}
+          onOpenChange={(open) => {
+            setIsChatOpen(open);
+            if (!open) {
+              setSelectedChatStudent(null);
+            }
+          }}
           userRole="teacher"
           userId={teacher.id}
           userName={teacher.name}
           recipientId={selectedChatStudent.id}
           recipientName={selectedChatStudent.name}
+          recipientRole="student"
+        />
+      )}
+
+      {/* Chat Dialog for Parents */}
+      {teacher && selectedChatParent && (
+        <CustomChatDialog
+          open={isChatOpen && !!selectedChatParent}
+          onOpenChange={(open) => {
+            setIsChatOpen(open);
+            if (!open) {
+              setSelectedChatParent(null);
+            }
+          }}
+          userRole="teacher"
+          userId={teacher.id}
+          userName={teacher.name}
+          recipientId={selectedChatParent.id}
+          recipientName={selectedChatParent.name}
+          recipientRole="parent"
         />
       )}
 

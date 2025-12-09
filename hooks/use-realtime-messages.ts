@@ -3,14 +3,16 @@
 import { useEffect, useState, useCallback } from 'react';
 import { getPusherClient, getConversationChannelName } from '../lib/pusher-client';
 
-interface Message {
+export interface Message {
   id: string;
   senderId: number;
   recipientId: number;
   content: string;
   timestamp: string;
   senderName: string;
-  senderRole: 'student' | 'teacher';
+  senderRole: 'student' | 'teacher' | 'parent';
+  isRead?: boolean;
+  readAt?: string | null;
 }
 
 interface UseRealtimeMessagesOptions {

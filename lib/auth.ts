@@ -7,7 +7,7 @@ export interface AuthUser {
   id: number;
   email: string;
   name: string;
-  role: 'teacher' | 'student';
+  role: 'teacher' | 'student' | 'parent';
 }
 
 export interface JWTPayload extends AuthUser {
@@ -63,7 +63,7 @@ export function getUserFromRequest(request: NextRequest): JWTPayload | null {
 }
 
 // Check if user has required role
-export function hasRole(user: JWTPayload | null, requiredRole: 'teacher' | 'student'): boolean {
+export function hasRole(user: JWTPayload | null, requiredRole: 'teacher' | 'student' | 'parent'): boolean {
   return user?.role === requiredRole;
 }
 

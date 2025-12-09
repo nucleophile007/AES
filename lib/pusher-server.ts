@@ -28,7 +28,7 @@ export function triggerNewMessage(
     content: string;
     timestamp: string;
     senderName: string;
-    senderRole: 'student' | 'teacher';
+    senderRole: 'student' | 'teacher' | 'parent';
   }
 ) {
   const pusher = getPusherServer();
@@ -78,8 +78,17 @@ export async function triggerTypingIndicator(
 }
 
 // Helper to get conversation ID (consistent format)
-export function getConversationId(studentId: number, teacherId: number): string {
+// Works for any role combination: student-teacher, parent-teacher, etc.
+export function getConversationId(
+  participant1Id: number, 
+  participant2Id: number
+): string {
   // Always use smaller ID first for consistency
-  const [id1, id2] = [studentId, teacherId].sort((a, b) => a - b);
+  const [id1, id2] = [participant1Id, participant2Id].sort((a, b) => a - b);
   return `${id1}-${id2}`;
+}
+
+// Legacy function for backward compatibility
+export function getStudentTeacherConversationId(studentId: number, teacherId: number): string {
+  return getConversationId(studentId, teacherId);
 }
