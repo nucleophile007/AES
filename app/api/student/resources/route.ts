@@ -73,14 +73,17 @@ export async function GET(request: NextRequest) {
           isRequired: ar.isRequired,
           assignmentTitle: assignment.title
         })),
-        ...studentResources.map(sr => ({
-          ...sr.resource,
-          isStudentSpecific: true,
-          isRequired: false,
-          assignmentTitle: assignment.title,
-          assignedAt: sr.assignedAt,
-          viewedAt: sr.viewedAt
-        }))
+        ...studentResources.map(sr => {
+          const isPersonal = !sr.resource.isPublic;
+          return {
+            ...sr.resource,
+            isStudentSpecific: isPersonal,
+            isRequired: false,
+            assignmentTitle: assignment.title,
+            assignedAt: sr.assignedAt,
+            viewedAt: sr.viewedAt
+          };
+        })
       ];
 
       return NextResponse.json({
@@ -152,9 +155,10 @@ export async function GET(request: NextRequest) {
 
       // Student-specific resources
       studentSpecificResources.forEach(sr => {
+        const isPersonal = !sr.resource.isPublic;
         allResources.push({
           ...sr.resource,
-          isStudentSpecific: true,
+          isStudentSpecific: isPersonal,
           isRequired: false,
           assignedAt: sr.assignedAt,
           viewedAt: sr.viewedAt
