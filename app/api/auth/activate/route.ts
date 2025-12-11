@@ -29,14 +29,14 @@ export async function GET(request: NextRequest) {
     if (!success) {
       await timingSafeDelay();
       return NextResponse.json({ 
-        error: 'Too many verification attempts. Please try again later.',
+        error: 'Too many verification attempts. Please try again later -1.',
         resetAt 
       }, { status: 429 });
     }
 
     if (!token) {
       await timingSafeDelay();
-      return NextResponse.json({ error: 'Invalid activation link' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid activation link 1' }, { status: 400 });
     }
 
     // Find activation request by token
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     // Uniform error message for all failure cases (prevent timing attacks)
     if (!activationRequest || activationRequest.isUsed || new Date() > activationRequest.expiresAt) {
       await timingSafeDelay();
-      return NextResponse.json({ error: 'Invalid or expired activation link' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid or expired activation link 2' }, { status: 400 });
     }
 
     // Get user data based on role
@@ -66,12 +66,12 @@ export async function GET(request: NextRequest) {
       });
     } else {
       await timingSafeDelay();
-      return NextResponse.json({ error: 'Invalid activation link' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid activation link 3' }, { status: 400 });
     }
 
     if (!userData) {
       await timingSafeDelay();
-      return NextResponse.json({ error: 'Invalid activation link' }, { status: 404 });
+      return NextResponse.json({ error: 'Invalid activation link 4' }, { status: 404 });
     }
 
     // Return user info
@@ -84,9 +84,9 @@ export async function GET(request: NextRequest) {
       }
     }, { status: 200 });
   } catch (error) {
-    console.error('Error verifying activation token:', error);
+    console.error('Error verifying activation token: 5', error);
     await timingSafeDelay();
-    return NextResponse.json({ error: 'Invalid activation link' }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid activation link 5' }, { status: 400 });
   }
 }
 
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
     // 1. HTTPS enforcement in production
     if (process.env.NODE_ENV === 'production' && !isSecureConnection(request)) {
       return NextResponse.json({ 
-        error: 'Secure connection required. Please use HTTPS.' 
+        error: 'Secure connection required. Please use HTTPS. 6' 
       }, { status: 403 });
     }
 
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
 
     if (!token || !password) {
       await timingSafeDelay();
-      return NextResponse.json({ error: 'Token and password are required' }, { status: 400 });
+      return NextResponse.json({ error: 'Token and password are required 7' }, { status: 400 });
     }
 
     // 3. Password strength validation
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
     // 4. Check for common passwords
     if (isCommonPassword(password)) {
       return NextResponse.json({ 
-        error: 'This password is too common. Please choose a more unique password.' 
+        error: 'This password is too common. Please choose a more unique password. 8' 
       }, { status: 400 });
     }
 
@@ -155,23 +155,23 @@ export async function POST(request: NextRequest) {
           }
         });
       } catch (e) {
-        console.error('Failed to log activation attempt:', e);
+        console.error('Failed to log activation attempt: 9', e);
       }
       
       await timingSafeDelay();
-      return NextResponse.json({ error: 'Invalid or expired activation link' }, { status: 404 });
+      return NextResponse.json({ error: 'Invalid or expired activation link 10' }, { status: 404 });
     }
 
     // Check if already used
     if (activationRequest.isUsed) {
       await timingSafeDelay();
-      return NextResponse.json({ error: 'This activation link has already been used' }, { status: 400 });
+      return NextResponse.json({ error: 'This activation link has already been used 11' }, { status: 400 });
     }
 
     // Check if expired
     if (new Date() > activationRequest.expiresAt) {
       await timingSafeDelay();
-      return NextResponse.json({ error: 'This activation link has expired' }, { status: 400 });
+      return NextResponse.json({ error: 'This activation link has expired 12' }, { status: 400 });
     }
 
     // 6. Hash the password with increased rounds (12 instead of 10)
@@ -206,7 +206,7 @@ export async function POST(request: NextRequest) {
       });
     } else {
       await timingSafeDelay();
-      return NextResponse.json({ error: 'Invalid activation link' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid activation link 13' }, { status: 400 });
     }
 
     // 8. Mark activation request as used
@@ -231,7 +231,7 @@ export async function POST(request: NextRequest) {
         }
       });
     } catch (e) {
-      console.error('Failed to log security event:', e);
+      console.error('Failed to log security event: 14', e);
     }
 
     return NextResponse.json({ 
@@ -240,8 +240,8 @@ export async function POST(request: NextRequest) {
     }, { status: 200 });
 
   } catch (error) {
-    console.error('Error activating account:', error);
+    console.error('Error activating account: 15', error);
     await timingSafeDelay();
-    return NextResponse.json({ error: 'Failed to activate account. Please try again.' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to activate account. Please try again. 16' }, { status: 500 });
   }
 }
