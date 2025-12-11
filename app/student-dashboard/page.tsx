@@ -146,38 +146,42 @@ export default function StudentDashboard() {
   const [isResubmitting, setIsResubmitting] = useState(false);
   const [resubmissionId, setResubmissionId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [messageUnreadCount, setMessageUnreadCount] = useState(0);
   const [error, setError] = useState("");
   
   // Get student email from authenticated user
   const studentEmail = authUser?.email || "";
 
+  // Fetch data function
+  const fetchData = async () => {
+    if (!studentEmail) return;
+    
+    try {
+      setLoading(true);
+      
+      // Fetch student dashboard data
+      const response = await fetch(`/api/student/dashboard?studentEmail=${encodeURIComponent(studentEmail)}`);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch student data');
+      }
+      
+      setStudent(data.student);
+      setAssignments(data.assignments);
+      setSubmissions(data.submissions);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+      console.error("Error fetching data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Fetch initial data - Move this hook before any conditional returns
   useEffect(() => {
     // Only fetch data if we have a student email and auth is complete
     if (!authLoading && authUser && studentEmail) {
-      const fetchData = async () => {
-        try {
-          setLoading(true);
-          
-          // Fetch student dashboard data
-          const response = await fetch(`/api/student/dashboard?studentEmail=${encodeURIComponent(studentEmail)}`);
-          const data = await response.json();
-          
-          if (!response.ok) {
-            throw new Error(data.error || 'Failed to fetch student data');
-          }
-          
-          setStudent(data.student);
-          setAssignments(data.assignments);
-          setSubmissions(data.submissions);
-        } catch (err) {
-          setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
-          console.error("Error fetching data:", err);
-        } finally {
-          setLoading(false);
-        }
-      };
-
       fetchData();
     }
   }, [authLoading, authUser, studentEmail]);
@@ -389,7 +393,7 @@ export default function StudentDashboard() {
       icon: MessageCircle,
       isActive: activeTab === "messages",
       onClick: () => setActiveTab("messages"),
-      badge: 3,
+      badge: messageUnreadCount,
     },
   ];
 
@@ -685,19 +689,6 @@ export default function StudentDashboard() {
                       </CardContent>
                     </Card>
 
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-orange-100 rounded-lg">
-                            <Clock className="h-5 w-5 text-orange-600" />
-                          </div>
-                          <div>
-                            <p className="text-sm text-gray-600">Next Session</p>
-                            <p className="text-sm font-medium">Sep 10, 3:00 PM</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -757,8 +748,13 @@ export default function StudentDashboard() {
                   <div className="flex items-center justify-between">
                     <h2 className="text-2xl font-bold">Assignments</h2>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        <RefreshCw className="h-4 w-4 mr-2" />
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => fetchData()}
+                        disabled={loading}
+                      >
+                        <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
                         Refresh
                       </Button>
                     </div>
@@ -1192,10 +1188,20 @@ export default function StudentDashboard() {
                       </CardHeader>
                       <CardContent>
                         <div className="text-center space-y-2">
-                          <div className="text-3xl font-bold text-green-600">A-</div>
+                          <div className="text-3xl font-bold text-green-600">
+                            {student?.stats?.averageGrade 
+                              ? student.stats.averageGrade >= 90 ? 'A' 
+                                : student.stats.averageGrade >= 80 ? 'B'
+                                : student.stats.averageGrade >= 70 ? 'C'
+                                : student.stats.averageGrade >= 60 ? 'D'
+                                : 'F'
+                              : 'N/A'}
+                          </div>
                           <div className="text-sm text-gray-600">Current Grade</div>
-                          <Progress value={92} className="h-3" />
-                          <div className="text-xs text-gray-500">92% Average</div>
+                          <Progress value={student?.stats?.averageGrade || 0} className="h-3" />
+                          <div className="text-xs text-gray-500">
+                            {student?.stats?.averageGrade ? `${student.stats.averageGrade}% Average` : 'No grades yet'}
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -1209,10 +1215,22 @@ export default function StudentDashboard() {
                       </CardHeader>
                       <CardContent>
                         <div className="text-center space-y-2">
-                          <div className="text-3xl font-bold text-blue-600">8/10</div>
-                          <div className="text-sm text-gray-600">This Month</div>
-                          <Progress value={80} className="h-3" />
-                          <div className="text-xs text-gray-500">80% Completion Rate</div>
+                          <div className="text-3xl font-bold text-blue-600">
+                            {student?.stats?.gradedSubmissions || 0}/{student?.stats?.totalSubmissions || 0}
+                          </div>
+                          <div className="text-sm text-gray-600">Graded Assignments</div>
+                          <Progress 
+                            value={student?.stats?.totalSubmissions 
+                              ? (student.stats.gradedSubmissions / student.stats.totalSubmissions) * 100 
+                              : 0
+                            } 
+                            className="h-3" 
+                          />
+                          <div className="text-xs text-gray-500">
+                            {student?.stats?.totalSubmissions 
+                              ? Math.round((student.stats.gradedSubmissions / student.stats.totalSubmissions) * 100)
+                              : 0}% Graded
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -1221,14 +1239,23 @@ export default function StudentDashboard() {
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           <TrendingUp className="h-5 w-5" />
-                          Improvement
+                          Pending Assignments
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="text-center space-y-2">
-                          <div className="text-3xl font-bold text-purple-600">+12%</div>
-                          <div className="text-sm text-gray-600">Since Last Month</div>
-                          <div className="text-xs text-green-600 font-medium">↑ Trending Up</div>
+                          <div className="text-3xl font-bold text-purple-600">
+                            {student?.stats?.pendingAssignments || 0}
+                          </div>
+                          <div className="text-sm text-gray-600">Due Soon</div>
+                          <div className={cn(
+                            "text-xs font-medium",
+                            (student?.stats?.pendingAssignments || 0) > 0 ? "text-orange-600" : "text-green-600"
+                          )}>
+                            {(student?.stats?.pendingAssignments || 0) > 0 
+                              ? '⚠ Action Required' 
+                              : '✓ All Caught Up'}
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -1240,22 +1267,55 @@ export default function StudentDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                        {[
-                          { subject: "Mathematics", grade: "A-", percentage: 92, assignments: 5 },
-                          { subject: "Science", grade: "A", percentage: 95, assignments: 3 },
-                          { subject: "SAT Prep", grade: "B+", percentage: 88, assignments: 4 },
-                        ].map((item) => (
-                          <div key={item.subject} className="flex items-center gap-4">
-                            <div className="w-20 text-sm font-medium">{item.subject}</div>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-sm text-gray-600">{item.assignments} assignments</span>
-                                <span className="text-sm font-medium">{item.grade} ({item.percentage}%)</span>
+                        {(() => {
+                          // Group submissions by subject and calculate averages
+                          const subjectGrades = submissions
+                            .filter(s => s.grade !== null && s.grade !== undefined)
+                            .reduce((acc, submission) => {
+                              const subject = submission.assignmentSubject || "Other";
+                              if (!acc[subject]) {
+                                acc[subject] = { total: 0, count: 0, totalPoints: 0, earnedPoints: 0 };
+                              }
+                              acc[subject].count += 1;
+                              acc[subject].earnedPoints += submission.grade || 0;
+                              acc[subject].totalPoints += submission.totalPoints || 100;
+                              acc[subject].total = acc[subject].totalPoints > 0 
+                                ? Math.round((acc[subject].earnedPoints / acc[subject].totalPoints) * 100)
+                                : 0;
+                              return acc;
+                            }, {} as Record<string, {total: number, count: number, totalPoints: number, earnedPoints: number}>);
+
+                          const subjectArray = Object.entries(subjectGrades).map(([subject, data]) => ({
+                            subject,
+                            grade: data.total >= 90 ? 'A' 
+                                  : data.total >= 80 ? 'B'
+                                  : data.total >= 70 ? 'C'
+                                  : data.total >= 60 ? 'D'
+                                  : 'F',
+                            percentage: data.total,
+                            assignments: data.count
+                          }));
+
+                          return subjectArray.length > 0 ? (
+                            subjectArray.map((item) => (
+                              <div key={item.subject} className="flex items-center gap-4">
+                                <div className="w-32 text-sm font-medium truncate">{item.subject}</div>
+                                <div className="flex-1">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-sm text-gray-600">{item.assignments} graded</span>
+                                    <span className="text-sm font-medium">{item.grade} ({item.percentage}%)</span>
+                                  </div>
+                                  <Progress value={item.percentage} className="h-2" />
+                                </div>
                               </div>
-                              <Progress value={item.percentage} className="h-2" />
+                            ))
+                          ) : (
+                            <div className="text-center py-8 text-gray-500">
+                              <Trophy className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                              <p>No graded assignments yet</p>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })()}
                       </div>
                     </CardContent>
                   </Card>
@@ -1405,52 +1465,6 @@ export default function StudentDashboard() {
                 <div className="space-y-6">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-bold">Messages</h2>
-                    
-                    {/* Add debug button visible only in development */}
-                    {process.env.NODE_ENV === 'development' && (
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={async () => {
-                            try {
-                              const response = await fetch('/api/debug/setup-chat', { method: 'POST' });
-                              const data = await response.json();
-                              if (data.success) {
-                                alert('Chat system setup successfully! Please refresh the page.');
-                              } else {
-                                alert(`Setup failed: ${data.error}`);
-                              }
-                            } catch (err) {
-                              alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
-                              console.error('Error setting up chat:', err);
-                            }
-                          }}
-                        >
-                          <RefreshCw className="h-4 w-4 mr-2" />
-                          Setup Chat System
-                        </Button>
-                        
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={async () => {
-                            try {
-                              const response = await fetch(`/api/debug/messages?studentId=${student.id}&teacherId=18&debug=true`);
-                              const data = await response.json();
-                              console.log('Debug data:', data);
-                              alert(`Debug info logged to console. Found ${data.filteredMessages?.length || 0} messages.`);
-                            } catch (err) {
-                              alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
-                              console.error('Error debugging messages:', err);
-                            }
-                          }}
-                        >
-                          <RefreshCw className="h-4 w-4 mr-2" />
-                          Debug Messages
-                        </Button>
-                      </div>
-                    )}
                   </div>
                   
                   {/* Import and use our MentorMessages component */}
@@ -1459,6 +1473,7 @@ export default function StudentDashboard() {
                       studentId={student.id}
                       studentEmail={student.email}
                       studentName={student.name}
+                      onUnreadCountChange={setMessageUnreadCount}
                     />
                   )}
                 </div>

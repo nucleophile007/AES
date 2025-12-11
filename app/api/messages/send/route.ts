@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     // Verify authentication
     console.log('[Send Message] Starting authentication...');
     const authStart = Date.now();
-    const user = await getUserFromRequest(request);
+    const user = getUserFromRequest(request);
     console.log(`[Send Message] Auth completed in ${Date.now() - authStart}ms`);
     
     if (!user) {
@@ -51,10 +51,8 @@ export async function POST(request: NextRequest) {
     console.log(`[Send Message] Message created in ${Date.now() - dbStart}ms`);
     
     // Trigger Pusher event for real-time delivery (don't await - fire and forget)
-    const conversationId = getConversationId(
-      senderRole === 'student' ? senderId : recipientId,
-      senderRole === 'teacher' ? senderId : recipientId
-    );
+    // Generate conversation ID based on sender and recipient IDs (works for any role combination)
+    const conversationId = getConversationId(senderId, recipientId);
     
     // Fire and forget - don't wait for Pusher to respond
     triggerNewMessage(conversationId, {
@@ -64,7 +62,7 @@ export async function POST(request: NextRequest) {
       content: message.content,
       timestamp: message.createdAt.toISOString(),
       senderName: user.name,
-      senderRole: message.senderRole as 'student' | 'teacher',
+      senderRole: message.senderRole as 'student' | 'teacher' | 'parent',
     });
     
     console.log(`[Send Message] Total request time: ${Date.now() - startTime}ms`);

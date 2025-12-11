@@ -329,7 +329,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
 
   // Separate resources by category
   const assignmentResources = filteredResources.filter(r => r.assignmentTitle);
-  const generalResources = filteredResources.filter(r => !r.assignmentTitle);
+  const generalResources = filteredResources.filter(r => !r.assignmentTitle && !r.isStudentSpecific);
   const studentSpecificResources = filteredResources.filter(r => r.isStudentSpecific);
 
   if (loading) {

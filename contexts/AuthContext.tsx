@@ -108,7 +108,7 @@ export function useAuth() {
 }
 
 // Hook for checking if user has required role
-export function useRequireAuth(requiredRole?: 'teacher' | 'student') {
+export function useRequireAuth(requiredRole?: 'teacher' | 'student' | 'parent') {
   const { user, isLoading } = useAuth();
   
   useEffect(() => {
@@ -117,7 +117,11 @@ export function useRequireAuth(requiredRole?: 'teacher' | 'student') {
       window.location.href = '/';
     } else if (!isLoading && user && requiredRole && user.role !== requiredRole) {
       // Redirect to appropriate dashboard if wrong role
-      const redirectTo = user.role === 'teacher' ? '/teacher-dashboard' : '/student-dashboard';
+      const redirectTo = user.role === 'teacher'
+        ? '/teacher-dashboard'
+        : user.role === 'student'
+        ? '/student-dashboard'
+        : '/parent-dashboard';
       window.location.href = redirectTo;
     }
   }, [user, isLoading, requiredRole]);
