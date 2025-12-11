@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import AssignmentManager from "@/components/teacher/AssignmentManager";
 import SubmissionReviewer from "@/components/teacher/SubmissionReviewer";
 import CustomChatDialog from "../../components/CustomChatDialog";
@@ -40,6 +41,8 @@ import {
   Download,
   ExternalLink
 } from "lucide-react";
+
+type ResourceCategory = "assignment" | "personal" | "general";
 
 interface Student {
   id: number;
@@ -129,6 +132,34 @@ export default function TeacherDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Resource sending state
+  const [newResource, setNewResource] = useState<{
+    title: string;
+    description: string;
+    type: string;
+    linkUrl: string;
+    program: string;
+    subject: string;
+    grade: string;
+    category: ResourceCategory;
+    assignmentId: number | null;
+    studentIds: number[];
+  }>({
+    title: "",
+    description: "",
+    type: "document",
+    linkUrl: "",
+    program: "",
+    subject: "",
+    grade: "",
+    category: "personal",
+    assignmentId: null,
+    studentIds: []
+  });
+  const [newResourceFile, setNewResourceFile] = useState<File | null>(null);
+  const [sendingResource, setSendingResource] = useState(false);
+  const [resourceError, setResourceError] = useState<string | null>(null);
+
   // Student submissions state
   const [studentSubmissions, setStudentSubmissions] = useState<any[]>([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
@@ -139,6 +170,11 @@ export default function TeacherDashboard() {
   // Chat state
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [selectedChatStudent, setSelectedChatStudent] = useState<Student | null>(null);
+  const [selectedChatParent, setSelectedChatParent] = useState<{id: number, name: string} | null>(null);
+  
+  // Parent conversations state
+  const [parentConversations, setParentConversations] = useState<any[]>([]);
+  const [loadingParentConversations, setLoadingParentConversations] = useState(false);
   
   // Progress modal state
   const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
@@ -146,6 +182,16 @@ export default function TeacherDashboard() {
 
   // Get teacher email from authenticated user
   const teacherEmail = authUser?.email || "";
+
+  // Prefill defaults once teacher data is available
+  useEffect(() => {
+    if (teacher?.programs?.length) {
+      setNewResource((prev) => ({
+        ...prev,
+        program: prev.program || teacher.programs[0]
+      }));
+    }
+  }, [teacher]);
 
   // Fetch functions
   const fetchTeacherData = async () => {
@@ -183,6 +229,125 @@ export default function TeacherDashboard() {
     }
   };
 
+  const resetResourceForm = () => {
+    setNewResource({
+      title: "",
+      description: "",
+      type: "document",
+      linkUrl: "",
+      program: teacher?.programs?.[0] || "",
+      subject: "",
+      grade: "",
+      category: "personal",
+      assignmentId: null,
+      studentIds: []
+    });
+    setNewResourceFile(null);
+    setResourceError(null);
+  };
+
+  const handleSendResource = async () => {
+    setResourceError(null);
+
+    if (!teacherEmail) {
+      setResourceError("Teacher email not available.");
+      return;
+    }
+
+    if (!newResource.title.trim()) {
+      setResourceError("Title is required.");
+      return;
+    }
+
+    if (!newResource.type) {
+      setResourceError("Type is required.");
+      return;
+    }
+
+    if (!newResource.program || !newResource.subject || !newResource.grade) {
+      setResourceError("Program, subject, and grade are required.");
+      return;
+    }
+
+    if (newResource.studentIds.length === 0) {
+      setResourceError("Select at least one student.");
+      return;
+    }
+
+    if (newResource.category === "assignment" && !newResource.assignmentId) {
+      setResourceError("Select an assignment for this category.");
+      return;
+    }
+
+    if (newResource.type === "link" && !newResource.linkUrl) {
+      setResourceError("Provide a link URL for link type resources.");
+      return;
+    }
+
+    if (["document", "video", "image"].includes(newResource.type) && !newResourceFile && !newResource.linkUrl) {
+      setResourceError("Upload a file or provide a link for this resource.");
+      return;
+    }
+
+    setSendingResource(true);
+    try {
+      let fileUrl: string | null = null;
+
+      if (newResourceFile) {
+        const formData = new FormData();
+        formData.append("file", newResourceFile);
+        formData.append("studentId", "0");
+        formData.append("assignmentId", newResource.assignmentId ? newResource.assignmentId.toString() : "0");
+
+        const uploadResponse = await fetch("/api/upload-r2", {
+          method: "POST",
+          body: formData,
+        });
+
+        const uploadData = await uploadResponse.json();
+        if (!uploadData.success) {
+          throw new Error(uploadData.error || "Upload failed");
+        }
+        fileUrl = uploadData.fileUrl;
+      }
+
+      const payload = {
+        title: newResource.title,
+        description: newResource.description,
+        type: newResource.type,
+        fileUrl,
+        linkUrl: newResource.linkUrl || null,
+        fileName: newResourceFile?.name,
+        fileSize: newResourceFile?.size,
+        program: newResource.program,
+        subject: newResource.subject,
+        grade: newResource.grade,
+        teacherEmail,
+        isPublic: newResource.category === "general",
+        assignmentIds: newResource.category === "assignment" && newResource.assignmentId ? [newResource.assignmentId] : [],
+        studentIds: newResource.studentIds,
+      };
+
+      const createResponse = await fetch("/api/teacher/resources", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await createResponse.json();
+      if (!data.success) {
+        throw new Error(data.error || "Failed to send resource");
+      }
+
+      resetResourceForm();
+    } catch (err) {
+      setResourceError(err instanceof Error ? err.message : "Failed to send resource");
+      console.error("Send resource error:", err);
+    } finally {
+      setSendingResource(false);
+    }
+  };
+
   const fetchStudentSubmissions = async () => {
     try {
       setSubmissionsLoading(true);
@@ -198,6 +363,28 @@ export default function TeacherDashboard() {
       console.error('Error fetching student submissions:', err);
     } finally {
       setSubmissionsLoading(false);
+    }
+  };
+
+  const fetchParentConversations = async () => {
+    if (!teacher?.id) return;
+    
+    try {
+      setLoadingParentConversations(true);
+      const response = await fetch(`/api/teacher/conversations?teacherId=${teacher.id}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        // Filter to only show parent conversations
+        const parents = data.conversations.filter((c: any) => c.recipientRole === 'parent');
+        setParentConversations(parents);
+      } else {
+        console.error('Failed to fetch parent conversations:', data.error);
+      }
+    } catch (err) {
+      console.error('Error fetching parent conversations:', err);
+    } finally {
+      setLoadingParentConversations(false);
     }
   };
 
@@ -248,6 +435,12 @@ export default function TeacherDashboard() {
       fetchStudentSubmissions();
     }
   }, [teacherEmail]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (teacher?.id) {
+      fetchParentConversations();
+    }
+  }, [teacher?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Early return for authentication loading (AFTER all hooks)
   if (authLoading || !authUser) {
@@ -443,6 +636,56 @@ export default function TeacherDashboard() {
 
           {/* Students Tab */}
           <TabsContent value="students">
+            {/* Parent Conversations Section */}
+            {parentConversations.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Users className="h-5 w-5 text-purple-500" />
+                  Parent Conversations
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                  {parentConversations.map((parent) => (
+                    <Card key={parent.recipientId} className="hover:shadow-lg transition-shadow border-purple-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <p className="font-semibold text-gray-900">{parent.recipientName}</p>
+                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">{parent.lastMessage}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {new Date(parent.lastMessageTime).toLocaleDateString()}
+                            </p>
+                            {parent.unreadCount > 0 && (
+                              <Badge className="mt-2 bg-purple-500 text-white">
+                                {parent.unreadCount} unread
+                              </Badge>
+                            )}
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="ml-3 text-purple-600 hover:bg-purple-50 border-purple-200"
+                            onClick={() => {
+                              setSelectedChatParent({ id: parent.recipientId, name: parent.recipientName });
+                              setSelectedChatStudent(null); // Clear student selection
+                              setIsChatOpen(true);
+                            }}
+                          >
+                            <MessageCircle className="h-4 w-4 mr-2" />
+                            Chat
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                <div className="border-t border-gray-200 my-6"></div>
+              </div>
+            )}
+
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <GraduationCap className="h-5 w-5 text-blue-500" />
+              Students
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredStudents.length === 0 && (
                 <div className="col-span-full text-center text-gray-400 py-12">
@@ -525,6 +768,7 @@ export default function TeacherDashboard() {
                           className="text-blue-600 hover:bg-blue-50"
                           onClick={() => {
                             setSelectedChatStudent(student);
+                            setSelectedChatParent(null); // Clear parent selection
                             setIsChatOpen(true);
                           }}
                         >
@@ -553,9 +797,195 @@ export default function TeacherDashboard() {
             <SubmissionReviewer teacherEmail={teacherEmail} />
           </TabsContent>
 
-          {/* Resources Tab - Student Submissions */}
+          {/* Resources Tab - Send resources to students + review their submissions */}
           <TabsContent value="resources">
             <div className="space-y-6">
+              {/* Send resource to students */}
+              <Card className="border-blue-200">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Send className="h-5 w-5 text-blue-600" />
+                    Send Resource to Students
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">
+                    Choose a category (assignment / personal / general), attach a file or link, and target students.
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Title *</Label>
+                      <Input
+                        value={newResource.title}
+                        onChange={(e) => setNewResource({ ...newResource, title: e.target.value })}
+                        placeholder="Resource title"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Category *</Label>
+                      <select
+                        value={newResource.category}
+                        onChange={(e) => setNewResource({ ...newResource, category: e.target.value as ResourceCategory })}
+                        className="w-full px-3 py-2 border rounded-md bg-white"
+                      >
+                        <option value="assignment">Assignment</option>
+                        <option value="personal">Personal</option>
+                        <option value="general">General</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Description</Label>
+                      <Input
+                        value={newResource.description}
+                        onChange={(e) => setNewResource({ ...newResource, description: e.target.value })}
+                        placeholder="Short description (optional)"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Type *</Label>
+                      <select
+                        value={newResource.type}
+                        onChange={(e) => setNewResource({ ...newResource, type: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-md bg-white"
+                      >
+                        <option value="document">Document</option>
+                        <option value="video">Video</option>
+                        <option value="image">Image</option>
+                        <option value="link">Link</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>Program *</Label>
+                      <Input
+                        value={newResource.program}
+                        onChange={(e) => setNewResource({ ...newResource, program: e.target.value })}
+                        placeholder="Program"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Subject *</Label>
+                      <Input
+                        value={newResource.subject}
+                        onChange={(e) => setNewResource({ ...newResource, subject: e.target.value })}
+                        placeholder="Subject"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Grade *</Label>
+                      <Input
+                        value={newResource.grade}
+                        onChange={(e) => setNewResource({ ...newResource, grade: e.target.value })}
+                        placeholder="Grade"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {newResource.category === "assignment" && (
+                      <div className="space-y-2">
+                        <Label>Link to Assignment *</Label>
+                        <select
+                          value={newResource.assignmentId ?? ""}
+                          onChange={(e) =>
+                            setNewResource({
+                              ...newResource,
+                              assignmentId: e.target.value ? Number(e.target.value) : null
+                            })
+                          }
+                          className="w-full px-3 py-2 border rounded-md bg-white"
+                        >
+                          <option value="">Select assignment</option>
+                          {assignments.map((a) => (
+                            <option key={a.id} value={a.id}>
+                              {a.title}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <Label>Attach File (optional)</Label>
+                      <Input
+                        type="file"
+                        accept=".pdf,.doc,.docx,.txt,.jpg,.png,.ppt,.pptx,.xlsx,.mp4,.mov"
+                        onChange={(e) => setNewResourceFile(e.target.files?.[0] || null)}
+                      />
+                      <p className="text-xs text-gray-500">Or provide a link below.</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Link URL (optional)</Label>
+                      <Input
+                        placeholder="https://..."
+                        value={newResource.linkUrl}
+                        onChange={(e) => setNewResource({ ...newResource, linkUrl: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Select Students *</Label>
+                    <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
+                      {students.map((student) => (
+                        <label key={student.id} className="flex items-center gap-2 text-sm">
+                          <Checkbox
+                            checked={newResource.studentIds.includes(student.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setNewResource({
+                                  ...newResource,
+                                  studentIds: [...newResource.studentIds, student.id]
+                                });
+                              } else {
+                                setNewResource({
+                                  ...newResource,
+                                  studentIds: newResource.studentIds.filter((id) => id !== student.id)
+                                });
+                              }
+                            }}
+                          />
+                          <span className="flex-1">
+                            {student.name} <span className="text-gray-500">({student.email})</span>
+                          </span>
+                        </label>
+                      ))}
+                      {students.length === 0 && (
+                        <p className="text-sm text-gray-500">No students found.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-3">
+                    {resourceError && (
+                      <span className="text-sm text-red-600 mr-auto">{resourceError}</span>
+                    )}
+                    <Button
+                      onClick={handleSendResource}
+                      disabled={sendingResource || !newResource.title || !newResource.type || newResource.studentIds.length === 0}
+                    >
+                      {sendingResource ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4 mr-2" />
+                          Send Resource
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-xl font-semibold">Student Resource Submissions</h3>
@@ -781,16 +1211,41 @@ export default function TeacherDashboard() {
         </Tabs>
       </div>
       
-      {/* Chat Dialog */}
+      {/* Chat Dialog for Students */}
       {teacher && selectedChatStudent && (
         <CustomChatDialog
-          open={isChatOpen}
-          onOpenChange={setIsChatOpen}
+          open={isChatOpen && !!selectedChatStudent}
+          onOpenChange={(open) => {
+            setIsChatOpen(open);
+            if (!open) {
+              setSelectedChatStudent(null);
+            }
+          }}
           userRole="teacher"
           userId={teacher.id}
           userName={teacher.name}
           recipientId={selectedChatStudent.id}
           recipientName={selectedChatStudent.name}
+          recipientRole="student"
+        />
+      )}
+
+      {/* Chat Dialog for Parents */}
+      {teacher && selectedChatParent && (
+        <CustomChatDialog
+          open={isChatOpen && !!selectedChatParent}
+          onOpenChange={(open) => {
+            setIsChatOpen(open);
+            if (!open) {
+              setSelectedChatParent(null);
+            }
+          }}
+          userRole="teacher"
+          userId={teacher.id}
+          userName={teacher.name}
+          recipientId={selectedChatParent.id}
+          recipientName={selectedChatParent.name}
+          recipientRole="parent"
         />
       )}
 

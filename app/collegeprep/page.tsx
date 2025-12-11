@@ -702,6 +702,7 @@ const colleges = [
   { name: "UC Riverside", logo: "/college-logos/ucr.png" },
   { name: "UC Santa Barbara", logo: "/college-logos/ucsb.png" },
   { name: "UC Merced", logo: "/college-logos/ucm.png" },
+  { name: "UC Boulder", logo: "/college-logos/ucb.png" },
 ];
 
 // Helper function to generate initials from name

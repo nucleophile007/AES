@@ -64,6 +64,10 @@ export async function GET(request: NextRequest) {
       userData = await prisma.admin.findUnique({
         where: { id: activationRequest.userId }
       });
+    } else if (activationRequest.role === 'PARENT') {
+      userData = await prisma.parentAccount.findUnique({
+        where: { id: activationRequest.userId }
+      });
     } else {
       await timingSafeDelay();
       return NextResponse.json({ error: 'Invalid activation link 3' }, { status: 400 });
@@ -201,6 +205,15 @@ export async function POST(request: NextRequest) {
         where: { id: activationRequest.userId },
         data: {
           password: hashedPassword,
+          updatedAt: new Date()
+        }
+      });
+    } else if (activationRequest.role === 'PARENT') {
+      await prisma.parentAccount.update({
+        where: { id: activationRequest.userId },
+        data: {
+          password: hashedPassword,
+          isActivated: true,
           updatedAt: new Date()
         }
       });
