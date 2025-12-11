@@ -25,9 +25,10 @@ interface MentorMessagesProps {
   studentId: number;
   studentEmail: string;
   studentName: string;
+  onUnreadCountChange?: (count: number) => void;
 }
 
-export default function MentorMessages({ studentId, studentEmail, studentName }: MentorMessagesProps) {
+export default function MentorMessages({ studentId, studentEmail, studentName, onUnreadCountChange }: MentorMessagesProps) {
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -52,6 +53,11 @@ export default function MentorMessages({ studentId, studentEmail, studentName }:
       console.log('New message notification:', message);
     },
   });
+
+  // Bubble unread count to parent for sidebar badge
+  useEffect(() => {
+    onUnreadCountChange?.(unreadCount);
+  }, [unreadCount, onUnreadCountChange]);
 
   // Real-time message subscription
   const { isConnected, error: realtimeError } = useRealtimeMessages({

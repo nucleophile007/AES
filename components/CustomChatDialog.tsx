@@ -235,6 +235,10 @@ export default function CustomChatDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={`max-w-2xl w-full h-[600px] flex flex-col p-0 ${NO_SPINNER_CLASS}`}>
+        <DialogHeader className="sr-only">
+          <DialogTitle>Chat with {recipientName}</DialogTitle>
+        </DialogHeader>
+        
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
           <div className="flex items-center gap-3">
