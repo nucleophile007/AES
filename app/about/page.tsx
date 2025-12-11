@@ -12,78 +12,184 @@ import Footer from "@/components/home/Footer";
 import Chatbot from "@/components/home/Chatbot";
 import { useScroll, useTransform } from "framer-motion";
 
-const faculty = [
+// Categorize mentors by specialty area
+const mentorCategories = {
+  "Engg & AI": [
+    {
+      name: "Dr. Manasa Kandula",
+      role: "Assistant Professor",
+      education: "Ph.D. in Materials Science",
+      institution: "University of Massachusetts Amherst, USA",
+      experience: "Research & Teaching in Physics & Materials Science",
+      specialties: ["Soft Condensed Matter", "Advanced Microscopy", "Biological Materials", "Materials Science Engineering"],
+      achievements: ["Faculty Success Fellow 2024", "International research experience", "Undergraduate research mentor", "Interdisciplinary collaboration expert"],
+      image: "/mk.png",
+    },
+    {
+      name: "Dr. Rakesh Lingam",
+      role: "Assistant Professor",
+      education: "Ph.D in Mechanical and Aerospace Engineering",
+      institution: "Indian Institute of Technology Dharwad, India",
+      experience: "Research & Mentoring",
+      specialties: ["Mechanical Engineering", "Aerospace Engineering", "Innovation Mentoring", "Youth Development"],
+      achievements: ["Top engineering faculty", "Innovation advocate", "Youth mentor", "Future-ready education"],
+      image: "/rakesh-lingam.png",
+    },
+    {
+      name: "Dr. Konjengbam Anand",
+      role: "Assistant Professor",
+      education: "Ph.D. in Computer Science & Engineering",
+      institution: "Indian Institute of Technology Dharwad, India",
+      experience: "Research & Teaching in AI/ML",
+      specialties: ["Natural Language Processing", "Sentiment Analysis", "Machine Translation", "Generative AI"],
+      achievements: ["Suzuki Foundation Research Grant recipient", "IIT Hyderabad Research Excellence Award", "Text-to-Speech synthesis expert", "International research collaboration"],
+      image: "/kjba.png",
+    },
+    {
+      name: "Dr. Punaag",
+      role: "Engineering Mentor",
+      education: "Ph.D. in Engineering",
+      institution: "Leading Technical Institute",
+      experience: "Engineering Research & Education",
+      specialties: ["Engineering Design", "Technical Innovation", "Research Methodology", "Student Mentorship"],
+      achievements: ["Research excellence", "Innovation in education", "Industry collaboration", "Student success advocate"],
+      image: "/placeholder.svg",
+    },
+  ],
+  "Pre-Med, BIO & CHEM": [
+    {
+      name: "Dr. Sudharshan",
+      role: "Research Mentor & STEM Educator",
+      education: "Ph.D. in Cell Biology",
+      institution: "ACHARYA Educational Services",
+      experience: "Research & Teaching in Stem Cell Biology & Regenerative Medicine",
+      specialties: ["Stem Cell Biology", "iPSC Technology", "Organoid Development", "CRISPR-Cas9 Gene Editing", "Precision Medicine", "Tissue Engineering"],
+      achievements: ["Induced pluripotent stem cell (iPSC) technology expert", "Organoid development specialist", "Translational applications in regenerative medicine", "Drug discovery research", "Molecular characterization expertise", "Mentoring next generation of STEM students"],
+      bio: "I hold a Ph.D. in Cell Biology with a primary research focus on stem cell biology, particularly induced pluripotent stem cell (iPSC) technology, organoid development, and their translational applications in regenerative medicine and drug discovery. My background includes CRISPR-Cas9 gene editing and molecular characterization, which provide a strong foundation for exploring precision medicine and tissue engineering. At ACHARYA, I intend to apply my expertise, together with ongoing teaching initiatives, to cultivate curiosity and strengthen scientific aptitude among students. Additionally, I aim to mentor students and emerging scientific minds to ignite a passion for science that aligns with ACHARYA's mission of educating the next generation of STEM students and fostering a deeper understanding of science.",
+      image: "/sudharshan.png",
+    },
+    {
+      name: "Dr. Chennakesavulu",
+      role: "Biology & Chemistry Specialist",
+      education: "Ph.D. in Biological Sciences",
+      institution: "Premier Research Institution",
+      experience: "Research & Teaching in Biology & Chemistry",
+      specialties: ["Molecular Biology", "Organic Chemistry", "Biochemistry", "Laboratory Research"],
+      achievements: ["Published researcher", "Curriculum developer", "Pre-med advisor", "Research mentor"],
+      image: "/placeholder.svg",
+    },
+    {
+      name: "Dr. Padma Teja",
+      role: "Pre-Med Advisor & Chemistry Expert",
+      education: "Ph.D. in Chemistry",
+      institution: "Top-tier University",
+      experience: "Pre-Medical Education & Chemistry Research",
+      specialties: ["General Chemistry", "Organic Chemistry", "MCAT Preparation", "Medical School Advising"],
+      achievements: ["MCAT expert", "Medical school admissions advisor", "Research publications", "Student success mentor"],
+      image: "/placeholder.svg",
+    },
+  ],
+  "Law, Humanities & Social Sciences": [
+    {
+      name: "Bhavya Sree Kandala",
+      role: "Criminal Defense & Family Law Attorney",
+      education: "Master of Laws (LLM) from Seattle University School of Law",
+      institution: "Washington State, USA",
+      experience: "Criminal Defense & Family Law Practice",
+      specialties: ["Family Law", "Criminal Defense", "Divorce & Child Custody", "DUI & Traffic Defense"],
+      achievements: ["Licensed Washington State Attorney", "Comprehensive litigation expertise", "Client-centered legal advocacy", "Compassionate legal representation"],
+      image: "/bhavya-kandala.png",
+    },
+    {
+      name: "Laura",
+      role: "Humanities & Social Sciences Educator",
+      education: "Advanced degree in Humanities",
+      institution: "Leading University",
+      experience: "Teaching Humanities & Social Sciences",
+      specialties: ["Literature", "History", "Social Sciences", "Critical Thinking"],
+      achievements: ["Engaging educator", "Curriculum specialist", "Student advocate", "Academic excellence"],
+      image: "/placeholder.svg",
+    },
+    {
+      name: "Prathyusha",
+      role: "Research Mentor & Social Sciences Educator",
+      education: "Master's in Anthropology",
+      institution: "Leading University",
+      experience: "Social Research, Human Factors & User-Centered Research & Design",
+      specialties: ["Anthropology", "Sociology", "Research Projects & Essays", "Critical Thinking", "Academic Writing", "User-Centered Design"],
+      achievements: ["Global tech & NGO research experience", "Human factors specialist", "Student research mentor", "Academic excellence advocate"],
+      bio: "I'm an experienced researcher and passionate educator with a strong academic foundation in Anthropology and professional experience spanning social research, human factors, and user-centered research & design. Having the opportunity of working with organizations ranging from global tech leaders to social development projects and NGOs, I have developed a broad, applied perspective on the subjects I teach. Whether it's breaking down sociological theories into digestible content, guiding research projects & essays, or helping students sharpen their critical thinking and writing skills in general, I bring both academic knowledge and professional insight to every session that is essential for success at top universities. Beyond tutoring, I see myself as a mentor who helps students make meaningful connections between classroom learning and the world beyond, preparing them for both academic excellence and lifelong learning.",
+      image: "/placeholder.svg",
+    },
+  ],
+  "Associate Mentors": [
+    {
+      name: "Aneesh Bhardwaj",
+      role: "Mathematics Tutor & Speech & Debate Coach",
+      education: "Computer Engineering (3rd year undergraduate)",
+      institution: "UC Davis, USA",
+      experience: "Mathematics Tutoring & Speech & Debate Coaching",
+      specialties: ["IM1-IM3 Mathematics", "Precalculus", "Speech & Debate", "Analytical Problem Solving"],
+      achievements: ["6 years speech & debate experience", "National tournament competitor", "Science fair presenter", "Community mentor"],
+      image: "/aneesh.png",
+    },
+    {
+      name: "Eesha",
+      role: "Associate Mentor",
+      education: "Undergraduate Student",
+      institution: "Top University",
+      experience: "Academic Tutoring & Mentorship",
+      specialties: ["Academic Support", "Study Skills", "Peer Mentoring", "Student Success"],
+      achievements: ["Peer tutor", "Academic excellence", "Student leader", "Mentorship awards"],
+      image: "/placeholder.svg",
+    },
+    {
+      name: "Mithila",
+      role: "Associate Mentor",
+      education: "Undergraduate Student",
+      institution: "Leading College",
+      experience: "Academic Support & Peer Mentoring",
+      specialties: ["Tutoring", "Study Strategies", "Academic Coaching", "Student Development"],
+      achievements: ["Honor student", "Peer mentor", "Academic support specialist", "Student advocate"],
+      image: "/placeholder.svg",
+    },
+    {
+      name: "Sahasra",
+      role: "Associate Mentor",
+      education: "Undergraduate Student",
+      institution: "Distinguished University",
+      experience: "Peer Tutoring & Academic Guidance",
+      specialties: ["Academic Tutoring", "Learning Support", "Peer Leadership", "Student Mentoring"],
+      achievements: ["Dean's list student", "Peer educator", "Mentorship excellence", "Academic support leader"],
+      image: "/placeholder.svg",
+    },
+  ],
+};
+
+// Web & Content Team - Separate from mentors
+const webTeam = [
   {
-    name: "Bhavya Sree Kandala",
-    role: "Criminal Defense & Family Law Attorney",
-    education: "Master of Laws (LLM) from Seattle University School of Law",
-    institution: "Washington State, USA",
-    experience: "Criminal Defense & Family Law Practice",
-    specialties: ["Family Law", "Criminal Defense", "Divorce & Child Custody", "DUI & Traffic Defense"],
-    achievements: ["Licensed Washington State Attorney", "Comprehensive litigation expertise", "Client-centered legal advocacy", "Compassionate legal representation"],
-    image: "/bhavya-kandala.png",
-  },
-  {
-    name: "Dr. Manasa Kandula",
-    role: "Assistant Professor",
-    education: "Ph.D. in Materials Science",
-    institution: "University of Massachusetts Amherst, USA",
-    experience: "Research & Teaching in Physics & Materials Science",
-    specialties: ["Soft Condensed Matter", "Advanced Microscopy", "Biological Materials", "Materials Science Engineering"],
-    achievements: ["Faculty Success Fellow 2024", "International research experience", "Undergraduate research mentor", "Interdisciplinary collaboration expert"],
-    image: "/mk.png",
-  },
-  {
-    name: "Dr. Thejus R. Kartha",
-    role: "Asst. Professor",
-    education: "Ph.D in Computational Chemistry",
-    institution: "Indian Institute of Technology Hyderabad, India",
-    experience: "Research & Teaching",
-    specialties: ["Data Science", "AI/ML", "Infrared Signal Processing", "Computational Chemistry"],
-    achievements: ["Data-driven solutions expert", "AI/ML lecturer", "Science education advocate", "Arts enthusiast"],
-    image: "/thejus-r-kartha.png",
-  },
-  {
-    name: "Dr. Rakesh Lingam",
-    role: "Assistant Professor",
-    education: "Ph.D in Mechanical and Aerospace Engineering",
+    name: "Luv Shanker",
+    role: "Full Stack Web Developer",
+    education: "B.Tech in Computer Science & Engineering (Final Year)",
     institution: "Indian Institute of Technology Dharwad, India",
-    experience: "Research & Mentoring",
-    specialties: ["Mechanical Engineering", "Aerospace Engineering", "Innovation Mentoring", "Youth Development"],
-    achievements: ["Top engineering faculty", "Innovation advocate", "Youth mentor", "Future-ready education"],
-    image: "/rakesh-lingam.png",
+    experience: "Web Development & Software Engineering",
+    specialties: ["Full Stack Development", "React & Next.js", "Backend Development", "UI/UX Design"],
+    achievements: ["2+ years web development experience", "Modern web technologies expert", "Full stack proficiency", "IIT Dharwad student"],
+    bio: "Final year Computer Science student at IIT Dharwad with over 2 years of hands-on experience in web development. Specializes in building scalable web applications using modern technologies and frameworks.",
+    image: "/luv.png",
   },
   {
-    name: "Aneesh Bhardwaj",
-    role: "Mathematics Tutor & Speech & Debate Coach",
-    education: "Computer Engineering (3rd year undergraduate)",
-    institution: "UC Davis, USA",
-    experience: "Mathematics Tutoring & Speech & Debate Coaching",
-    specialties: ["IM1-IM3 Mathematics", "Precalculus", "Speech & Debate", "Analytical Problem Solving"],
-    achievements: ["6 years speech & debate experience", "National tournament competitor", "Science fair presenter", "Community mentor"],
-    image: "/aneesh.png",
-  },
-  {
-    name: "Dr. Konjengbam Anand",
-    role: "Assistant Professor",
-    education: "Ph.D. in Computer Science & Engineering",
+    name: "Deepak kumar singh",
+    role: "Full Stack Web Developer",
+    education: "B.Tech in Computer Science & Engineering (Final Year)",
     institution: "Indian Institute of Technology Dharwad, India",
-    experience: "Research & Teaching in AI/ML",
-    specialties: ["Natural Language Processing", "Sentiment Analysis", "Machine Translation", "Generative AI"],
-    achievements: ["Suzuki Foundation Research Grant recipient", "IIT Hyderabad Research Excellence Award", "Text-to-Speech synthesis expert", "International research collaboration"],
-    image: "/kjba.png",
+    experience: "Web Development & Software Engineering",
+    specialties: ["Full Stack Development", "Frontend Technologies", "Database Management", "API Development"],
+    achievements: ["2+ years web development experience", "Problem-solving expertise", "Collaborative development", "IIT Dharwad student"],
+    bio: "Final year Computer Science student at IIT Dharwad with 2+ years of professional web development experience. Passionate about creating efficient, user-friendly web solutions and working with cutting-edge technologies.",
+    image: "/deepak.png",
   },
-  {
-    name: "Dr. Sudharshan",
-    role: "Research Mentor & STEM Educator",
-    education: "Ph.D. in Cell Biology",
-    institution: "ACHARYA Educational Services",
-    experience: "Research & Teaching in Stem Cell Biology & Regenerative Medicine",
-    specialties: ["Stem Cell Biology", "iPSC Technology", "Organoid Development", "CRISPR-Cas9 Gene Editing", "Precision Medicine", "Tissue Engineering"],
-    achievements: ["Induced pluripotent stem cell (iPSC) technology expert", "Organoid development specialist", "Translational applications in regenerative medicine", "Drug discovery research", "Molecular characterization expertise", "Mentoring next generation of STEM students"],
-    bio: "I hold a Ph.D. in Cell Biology with a primary research focus on stem cell biology, particularly induced pluripotent stem cell (iPSC) technology, organoid development, and their translational applications in regenerative medicine and drug discovery. My background includes CRISPR-Cas9 gene editing and molecular characterization, which provide a strong foundation for exploring precision medicine and tissue engineering. At ACHARYA, I intend to apply my expertise, together with ongoing teaching initiatives, to cultivate curiosity and strengthen scientific aptitude among students. Additionally, I aim to mentor students and emerging scientific minds to ignite a passion for science that aligns with ACHARYA's mission of educating the next generation of STEM students and fostering a deeper understanding of science.",
-    image: "/sudharshan.png",
-  }
 ];
 
 const pillars = [
@@ -105,6 +211,7 @@ const pillars = [
 ];
 
 export default function AboutPage() {
+  const [selectedCategory, setSelectedCategory] = React.useState<string>("Engg & AI");
   const { scrollYProgress } = useScroll();
   
   // Create transform values at the top level to avoid hooks in callbacks
@@ -1119,115 +1226,352 @@ export default function AboutPage() {
             />
           </motion.div>
           
-          {/* Individual Mentor Sections - 3 Column Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-            {faculty.map((member, index) => (
+          {/* Category Tabs */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="flex flex-wrap justify-center gap-4 mb-12"
+          >
+            {Object.keys(mentorCategories).map((category) => (
+              <motion.button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+                  selectedCategory === category
+                    ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-900 shadow-lg shadow-yellow-400/30'
+                    : 'bg-slate-800/50 text-slate-300 border border-slate-700 hover:border-yellow-400/50 hover:text-yellow-400'
+                }`}
+              >
+                {category}
+              </motion.button>
+            ))}
+          </motion.div>
+          
+          {/* Individual Mentor Sections - Modern Card Design */}
+          <motion.div
+            key={selectedCategory}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -30 }}
+            transition={{ duration: 0.5 }}
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto"
+          >
+            {mentorCategories[selectedCategory as keyof typeof mentorCategories].map((member: any, index: number) => (
               <motion.div
-                key={`detailed-${index}`}
+                key={`${selectedCategory}-${index}`}
+                initial={{ opacity: 0, y: 50, scale: 0.95 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ 
+                  duration: 0.6, 
+                  delay: index * 0.1,
+                  ease: "easeOut"
+                }}
+                whileHover={{ 
+                  y: -8,
+                  transition: { duration: 0.3 }
+                }}
+                className="group relative"
+              >
+                {/* Card with Modern Glass Effect */}
+                <div className="relative bg-gradient-to-br from-slate-800/90 via-slate-800/80 to-slate-900/90 backdrop-blur-xl border border-slate-700/50 rounded-3xl overflow-hidden shadow-2xl h-full hover:border-yellow-400/50 transition-all duration-500">
+                  {/* Animated Gradient Background */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/10 via-amber-500/5 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  
+                  {/* Floating Accent Orbs */}
+                  <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-yellow-400/20 to-amber-500/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-gradient-to-br from-blue-400/20 to-purple-500/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  
+                  {/* Content Container */}
+                  <div className="relative z-10 p-6">
+                    {/* Profile Image with Enhanced Design */}
+                    <div className="relative mb-6 flex justify-center">
+                      <div className="relative">
+                        {/* Outer Glow Ring */}
+                        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 blur-xl opacity-30 group-hover:opacity-60 transition-opacity duration-500 scale-110"></div>
+                        
+                        {/* Image Container */}
+                        <div className="relative w-40 h-40 rounded-full overflow-hidden border-4 border-yellow-400/40 group-hover:border-yellow-400/80 transition-all duration-500 shadow-2xl">
+                          <Image
+                            src={member.image}
+                            alt={`${member.name} - ${member.role}`}
+                            width={160}
+                            height={160}
+                            className="w-full h-full object-cover object-top transform group-hover:scale-110 transition-transform duration-500"
+                            style={{ objectPosition: 'center top' }}
+                          />
+                          
+                          {/* Hover Overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Name and Role */}
+                    <div className="text-center mb-5">
+                      <h4 className="text-xl font-bold bg-gradient-to-r from-white via-slate-100 to-slate-200 bg-clip-text text-transparent mb-2 line-clamp-2 min-h-[3.5rem]">
+                        {member.name}
+                      </h4>
+                      <p className="text-sm font-semibold text-yellow-400 line-clamp-2 min-h-[2.5rem]">
+                        {member.role}
+                      </p>
+                    </div>
+                    
+                    {/* Divider */}
+                    <div className="h-px bg-gradient-to-r from-transparent via-yellow-400/30 to-transparent mb-4"></div>
+                    
+                    {/* Education */}
+                    <div className="mb-4 p-4 bg-slate-900/40 rounded-2xl border border-slate-700/30 group-hover:border-yellow-400/30 transition-colors duration-300">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center shadow-lg">
+                          <GraduationCap className="w-4 h-4 text-slate-900" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-yellow-400 uppercase tracking-wider mb-1">Education</p>
+                          <p className="text-sm theme-text-light font-medium mb-1 line-clamp-2">
+                            {member.education}
+                          </p>
+                          <p className="text-xs text-slate-400 line-clamp-1">
+                            {member.institution}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Bio/About */}
+                    <div className="mt-auto">
+                      <div className="flex items-center gap-2 mb-3">
+                        <BookOpen className="w-4 h-4 text-yellow-400" />
+                        <p className="text-xs font-bold text-yellow-400 uppercase tracking-wider">About</p>
+                      </div>
+                      <div className="relative">
+                        <p className="text-sm theme-text-muted leading-relaxed line-clamp-3">
+                          {member.bio ? member.bio : `${member.name} brings extensive experience in ${member.experience.toLowerCase()}, specializing in ${member.specialties?.slice(0, 2).join(" and ") || "their field"}.`}
+                        </p>
+                        
+                        {/* Read More Gradient */}
+                        <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-slate-800 to-transparent pointer-events-none"></div>
+                      </div>
+                    </div>
+                    
+                    {/* Achievements Badge */}
+                    {member.achievements && member.achievements.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-slate-700/30">
+                        <div className="flex items-center gap-2">
+                          <Trophy className="w-4 h-4 text-yellow-400" />
+                          <p className="text-xs text-slate-400">
+                            {member.achievements.length} Notable Achievements
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Bottom Accent Line */}
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Web & Content Team Section - Separate Section */}
+      <section className="py-12 theme-bg-dark relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <motion.div
+            animate={{ 
+              y: [0, -80, 0],
+              rotate: [0, 4, 0]
+            }}
+            transition={{ 
+              duration: 18, 
+              repeat: Infinity, 
+              ease: "linear",
+              y: { duration: 14, repeat: Infinity, ease: "easeInOut" }
+            }}
+            className="absolute top-16 right-16 w-28 h-28 bg-gradient-to-br from-blue-400/20 to-cyan-500/20 rounded-full blur-3xl"
+          />
+          <motion.div
+            animate={{ 
+              y: [0, 70, 0],
+              rotate: [0, -7, 0]
+            }}
+            transition={{ 
+              duration: 23, 
+              repeat: Infinity, 
+              ease: "linear",
+              y: { duration: 17, repeat: Infinity, ease: "easeInOut" }
+            }}
+            className="absolute bottom-16 left-16 w-24 h-24 bg-gradient-to-br from-purple-400/15 to-pink-500/15 rounded-full blur-2xl"
+          />
+          <motion.div
+            animate={{ 
+              y: [0, -50, 0],
+              scale: [1, 1.15, 1]
+            }}
+            transition={{ 
+              duration: 26, 
+              repeat: Infinity, 
+              ease: "linear",
+              y: { duration: 20, repeat: Infinity, ease: "easeInOut" }
+            }}
+            className="absolute top-1/2 right-1/4 w-16 h-16 bg-gradient-to-br from-cyan-400/10 to-blue-500/10 rounded-full blur-xl"
+          />
+        </div>
+
+        <div className="container mx-auto relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="text-center mb-16"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              viewport={{ once: true, amount: 0.5 }}
+              transition={{ duration: 1, delay: 0.2 }}
+              className="inline-block mb-6"
+            >
+              <Badge className="mb-4 bg-blue-400/10 text-blue-400 border-blue-400/20">
+                💻 Our Tech Team
+              </Badge>
+            </motion.div>
+            
+            <motion.h3
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.5 }}
+              transition={{ duration: 1, delay: 0.4 }}
+              className="text-4xl lg:text-5xl font-bold theme-text-light mb-6"
+            >
+              Web & Content Team
+            </motion.h3>
+            
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.5 }}
+              transition={{ duration: 1, delay: 0.6 }}
+              className="text-lg theme-text-muted max-w-3xl mx-auto"
+            >
+              Building and maintaining ACHARYA&apos;s digital platform with expertise and innovation
+            </motion.p>
+            
+            {/* Animated Underline */}
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              whileInView={{ width: "300px", opacity: 1 }}
+              viewport={{ once: true, amount: 0.5 }}
+              transition={{ duration: 1.2, delay: 0.8 }}
+              className="h-1 bg-gradient-to-r from-blue-400 to-cyan-500 mx-auto rounded-full shadow-lg mt-6"
+            />
+          </motion.div>
+
+          {/* Web Team Members */}
+          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {webTeam.map((member, index) => (
+              <motion.div
+                key={`webteam-${index}`}
                 initial={{ opacity: 0, y: 50, scale: 0.95 }}
                 whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 viewport={{ once: true, amount: 0.2 }}
                 transition={{ 
                   duration: 1.2, 
-                  delay: index * 0.1,
+                  delay: index * 0.2,
                   ease: "easeOut"
                 }}
                 className="relative"
               >
                 {/* Enhanced Card Container */}
-                <div className="bg-slate-800/80 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-4 shadow-2xl relative overflow-hidden h-full">
+                <div className="bg-slate-800/80 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 shadow-2xl relative overflow-hidden h-full">
                   {/* Gradient Background Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 via-transparent to-amber-500/5 opacity-50"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 via-transparent to-cyan-500/5 opacity-50"></div>
                   
                   <div className="flex flex-col gap-4 relative z-10">
-                  {/* Image and Name Section */}
-                  <div className="flex flex-col items-center">
-                    <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-yellow-400/30 shadow-xl mx-auto">
-                      {/* Glowing Ring Effect */}
-                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-yellow-400/20 to-amber-500/20 blur-xl -z-10"></div>
+                    {/* Image and Name Section */}
+                    <div className="flex flex-col items-center">
+                      <div className="relative w-40 h-40 rounded-full overflow-hidden border-4 border-blue-400/30 shadow-xl mx-auto">
+                        {/* Glowing Ring Effect */}
+                        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-400/20 to-cyan-500/20 blur-xl -z-10"></div>
+                        
+                        <Image
+                          src={member.image}
+                          alt={`${member.name} - ${member.role}`}
+                          width={160}
+                          height={160}
+                          className="w-full h-full object-cover object-top"
+                          style={{ objectPosition: 'center top' }}
+                        />
+                      </div>
                       
-                      <Image
-                        src={member.image}
-                        alt={`${member.name} - ${member.role}`}
-                        width={128}
-                        height={128}
-                        className="w-full h-full object-cover object-top"
-                        style={{ objectPosition: 'center top' }}
-                      />
+                      {/* Name and Role */}
+                      <div className="mt-4 text-center">
+                        <h4 className="text-2xl font-bold theme-text-light mb-2">{member.name}</h4>
+                        <p className="text-base text-blue-400 font-semibold">{member.role}</p>
+                      </div>
                     </div>
                     
-                    {/* Name and Role */}
-                    <div className="mt-3 text-center">
-                      <h4 className="text-lg font-bold theme-text-light mb-1">{member.name}</h4>
-                      <p className="text-sm text-yellow-400 font-semibold">{member.role}</p>
-                    </div>
-                  </div>
-                  
-                  {/* Education Box */}
-                  <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 p-3 rounded-xl border border-yellow-400/30 backdrop-blur-sm shadow-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <GraduationCap className="w-3.5 h-3.5 text-yellow-400" />
-                      <p className="text-xs font-bold text-yellow-400 uppercase tracking-wider">Education</p>
-                    </div>
-                    <p className="text-xs theme-text-light mb-1 font-medium">
-                      {member.education}
-                    </p>
-                    <p className="text-xs text-yellow-400 font-semibold">
-                      {member.institution}
-                    </p>
-                  </div>
-                  
-                  {/* Specialties Section */}
-                  {member.specialties && member.specialties.length > 0 && (
-                    <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 p-3 rounded-xl border border-yellow-400/30 backdrop-blur-sm shadow-lg">
+                    {/* Education Box */}
+                    <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 p-4 rounded-xl border border-blue-400/30 backdrop-blur-sm shadow-lg">
                       <div className="flex items-center gap-2 mb-2">
-                        <Star className="w-3.5 h-3.5 text-yellow-400" />
-                        <p className="text-xs font-bold text-yellow-400 uppercase tracking-wider">Specialties</p>
+                        <GraduationCap className="w-4 h-4 text-blue-400" />
+                        <p className="text-sm font-bold text-blue-400 uppercase tracking-wider">Education</p>
                       </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {member.specialties.slice(0, 2).map((specialty, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2 py-1 bg-yellow-400/10 border border-yellow-400/30 rounded-lg text-xs theme-text-light font-medium"
-                          >
-                            {specialty}
-                          </span>
-                        ))}
-                        {member.specialties.length > 2 && (
-                          <span className="px-2 py-1 bg-yellow-400/10 border border-yellow-400/30 rounded-lg text-xs theme-text-light font-medium">
-                            +{member.specialties.length - 2} more
-                          </span>
-                        )}
-                      </div>
+                      <p className="text-sm theme-text-light mb-1 font-medium">
+                        {member.education}
+                      </p>
+                      <p className="text-sm text-blue-400 font-semibold">
+                        {member.institution}
+                      </p>
                     </div>
-                  )}
                     
-                  {/* Experience Description */}
-                  <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 p-3 rounded-xl border border-yellow-400/30 backdrop-blur-sm shadow-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <BookOpen className="w-3.5 h-3.5 text-yellow-400" />
-                      <p className="text-xs font-bold text-yellow-400 uppercase tracking-wider">About</p>
-                    </div>
-                    <div className="space-y-1">
-                      {member.bio ? (
-                        <p className="text-xs theme-text-muted leading-relaxed line-clamp-3">
+                    {/* Specialties Section */}
+                    {member.specialties && member.specialties.length > 0 && (
+                      <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 p-4 rounded-xl border border-blue-400/30 backdrop-blur-sm shadow-lg">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Star className="w-4 h-4 text-blue-400" />
+                          <p className="text-sm font-bold text-blue-400 uppercase tracking-wider">Specialties</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {member.specialties.map((specialty: string, idx: number) => (
+                            <span
+                              key={idx}
+                              className="px-3 py-1.5 bg-blue-400/10 border border-blue-400/30 rounded-lg text-sm theme-text-light font-medium"
+                            >
+                              {specialty}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                      
+                    {/* Bio/About Description */}
+                    <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 p-4 rounded-xl border border-blue-400/30 backdrop-blur-sm shadow-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <BookOpen className="w-4 h-4 text-blue-400" />
+                        <p className="text-sm font-bold text-blue-400 uppercase tracking-wider">About</p>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-sm theme-text-muted leading-relaxed">
                           {member.bio}
                         </p>
-                      ) : (
-                        <p className="text-xs theme-text-muted leading-relaxed line-clamp-3">
-                          {member.name} brings extensive experience in {member.experience.toLowerCase()}, specializing in {member.specialties?.slice(0, 2).join(" and ") || "their field"}.
-                        </p>
-                      )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
-
 
       
       <Chatbot />
