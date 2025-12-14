@@ -108,6 +108,31 @@ const faculty = [
   }
 ];
 
+const webTeam = [
+  {
+    name: "Luv Shanker",
+    role: "Full Stack Web Developer",
+    education: "B.Tech in Computer Science & Engineering (Final Year)",
+    institution: "Indian Institute of Technology Dharwad, India",
+    experience: "Web Development & Software Engineering",
+    specialties: ["Full Stack Development", "React & Next.js", "Backend Development", "UI/UX Design"],
+    achievements: ["2+ years web development experience", "Modern web technologies expert", "Full stack proficiency", "IIT Dharwad student"],
+    bio: "Final year Computer Science student at IIT Dharwad with over 2 years of hands-on experience in web development. Specializes in building scalable web applications using modern technologies and frameworks.",
+    image: "/luv.png",
+  },
+  {
+    name: "Deepak Kumar Singh",
+    role: "Full Stack Web Developer",
+    education: "B.Tech in Computer Science & Engineering (Final Year)",
+    institution: "Indian Institute of Technology Dharwad, India",
+    experience: "Web Development & Software Engineering",
+    specialties: ["Full Stack Development", "Frontend Technologies", "Database Management", "API Development"],
+    achievements: ["2+ years web development experience", "Problem-solving expertise", "Collaborative development", "IIT Dharwad student"],
+    bio: "Final year Computer Science student at IIT Dharwad with 2+ years of professional web development experience. Passionate about creating efficient, user-friendly web solutions and working with cutting-edge technologies.",
+    image: "/deepak.png",
+  },
+];
+
 const pillars = [
   {
     icon: Users,
@@ -1060,6 +1085,154 @@ export default function AboutPage() {
               className="h-px bg-gradient-to-r from-transparent via-yellow-400/50 to-transparent mt-12"
             />
           </motion.div>
+        </div>
+      </section>
+
+      {/* Web Team Section */}
+      <section className="py-20 theme-bg-dark relative overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <motion.div
+            animate={{ 
+              y: [0, -80, 0],
+              rotate: [0, 3, 0]
+            }}
+            transition={{ 
+              duration: 18, 
+              repeat: Infinity, 
+              ease: "linear"
+            }}
+            className="absolute top-16 left-16 w-28 h-28 bg-gradient-to-br from-blue-400/20 to-cyan-500/20 rounded-full blur-3xl"
+          />
+          <motion.div
+            animate={{ 
+              y: [0, 60, 0],
+              rotate: [0, -6, 0]
+            }}
+            transition={{ 
+              duration: 22, 
+              repeat: Infinity, 
+              ease: "linear"
+            }}
+            className="absolute bottom-16 right-16 w-20 h-20 bg-gradient-to-br from-purple-400/15 to-pink-500/15 rounded-full blur-2xl"
+          />
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10">
+          {/* Section Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-16"
+          >
+            <Badge className="mb-4 bg-blue-400/10 text-blue-400 border-blue-400/30 px-5 py-2 text-sm font-medium">
+              Web Development Team
+            </Badge>
+            <h3 className="text-4xl lg:text-5xl font-bold text-white mb-6">
+              Our Web Team
+            </h3>
+            <div className="h-1 w-24 bg-blue-400 mx-auto"></div>
+          </motion.div>
+
+          {/* Web Team Members - Side by Side */}
+          <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-6">
+            {webTeam.map((member, index) => (
+              <motion.div
+                key={member.name}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.8, delay: index * 0.2 }}
+                className="group"
+              >
+                <div className="flex flex-col bg-[#1a2236]/50 backdrop-blur-sm rounded-2xl overflow-hidden border border-blue-400/10 hover:border-blue-400/30 transition-all duration-300 h-full">
+                  {/* Image Tile */}
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ duration: 0.3 }}
+                    className="relative h-[280px] overflow-hidden bg-gradient-to-br from-blue-500/10 to-purple-500/10"
+                  >
+                    <Image
+                      src={member.image}
+                      alt={member.name}
+                      fill
+                      className="object-cover object-center"
+                      quality={90}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#1a2236] via-transparent to-transparent opacity-60"></div>
+                  </motion.div>
+
+                  {/* Content Tile */}
+                  <div className="p-6 flex flex-col flex-grow">
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.6, delay: index * 0.2 + 0.2 }}
+                    >
+                      <h4 className="text-xl lg:text-2xl font-bold text-white mb-2">
+                        {member.name}
+                      </h4>
+                      <p className="text-blue-400 font-semibold text-base mb-4">
+                        {member.role}
+                      </p>
+                    </motion.div>
+
+                    {/* Education */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.6, delay: index * 0.2 + 0.4 }}
+                      className="mb-4"
+                    >
+                      <div className="flex items-start gap-2 mb-2">
+                        <GraduationCap className="h-4 w-4 text-blue-400 mt-1 flex-shrink-0" />
+                        <div>
+                          <p className="text-white font-semibold text-sm">{member.education}</p>
+                          <p className="text-xs theme-text-muted">{member.institution}</p>
+                        </div>
+                      </div>
+                    </motion.div>
+
+                    {/* Bio */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.6, delay: index * 0.2 + 0.6 }}
+                      className="mb-4 flex-grow"
+                    >
+                      <p className="text-sm theme-text-muted leading-relaxed">
+                        {member.bio}
+                      </p>
+                    </motion.div>
+
+                    {/* Specialties */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.6, delay: index * 0.2 + 0.8 }}
+                    >
+                      <div className="flex flex-wrap gap-2">
+                        {member.specialties.map((specialty, idx) => (
+                          <Badge
+                            key={idx}
+                            className="bg-blue-400/10 text-blue-400 border-blue-400/30 hover:bg-blue-400/20 transition-colors text-xs"
+                          >
+                            {specialty}
+                          </Badge>
+                        ))}
+                      </div>
+                    </motion.div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
