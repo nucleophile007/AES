@@ -14,6 +14,17 @@ import { useScroll, useTransform } from "framer-motion";
 
 const faculty = [
   {
+    name: "Dr. Shanti Swaroop Kandala",
+    role: "Founder/CEO/Research Program Director",
+    education: "Ph.D. in Mechanical and Aerospace Engineering",
+    institution: "Indian Institute of Technology Hyderabad, India",
+    experience: "Research, Leadership & Educational Innovation",
+    specialties: ["Mechanical Engineering", "Aerospace Engineering", "Research Program Development", "Educational Leadership", "Innovation & Mentoring"],
+    achievements: ["Founder & CEO of ACHARYA Educational Services", "Research Program Director", "M.S. in Aerospace Engineering from KAIST, South Korea", "Master in Liberal Arts from Ashoka (UPenn), India"],
+    bio: "Dr. Shanti Swaroop Kandala is the visionary founder and CEO of ACHARYA Educational Services, bringing extensive expertise in mechanical and aerospace engineering combined with a passion for educational excellence. With a Ph.D. from IIT Hyderabad, an M.S. from KAIST South Korea, and a Master in Liberal Arts from Ashoka (UPenn), he offers a unique interdisciplinary perspective. As Research Program Director, he guides students toward academic excellence while fostering innovation and critical thinking, bridging the gap between cutting-edge research and practical education.",
+    image: "/founder-image.png",
+  },
+  {
     name: "Bhavya Sree Kandala",
     role: "Criminal Defense & Family Law Attorney",
     education: "Master of Laws (LLM) from Seattle University School of Law",
@@ -22,6 +33,17 @@ const faculty = [
     specialties: ["Family Law", "Criminal Defense", "Divorce & Child Custody", "DUI & Traffic Defense"],
     achievements: ["Licensed Washington State Attorney", "Comprehensive litigation expertise", "Client-centered legal advocacy", "Compassionate legal representation"],
     image: "/bhavya-kandala.png",
+  },
+  {
+    name: "Prathyusha",
+    role: "Anthropology & Social Research Specialist",
+    education: "Advanced Studies in Anthropology",
+    institution: "Research & Academic Institution",
+    experience: "Social Research, Human Factors & User-Centered Design",
+    specialties: ["Anthropology", "Sociology", "Social Research", "Critical Thinking", "Academic Writing", "Research Methods"],
+    achievements: ["Experience with global tech leaders", "Social development projects", "NGO collaborations", "User-centered research & design"],
+    bio: "I'm an experienced researcher and passionate educator with a strong academic foundation in Anthropology and professional experience spanning social research, human factors, and user-centered research & design. Having the opportunity of working with organizations ranging from global tech leaders to social development projects and NGOs, I have developed a broad, applied perspective on the subjects I teach. Whether it's breaking down sociological theories into digestible content, guiding research projects & essays, or helping students sharpen their critical thinking and writing skills in general, I bring both academic knowledge and professional insight to every session that is essential for success at top universities. Beyond tutoring, I see myself as a mentor who helps students make meaningful connections between classroom learning and the world beyond, preparing them for both academic excellence and lifelong learning.",
+    image: "/prathyusa_image.jpg",
   },
   {
     name: "Dr. Manasa Kandula",
@@ -106,17 +128,52 @@ const pillars = [
 
 export default function AboutPage() {
   const { scrollYProgress } = useScroll();
+  const [selectedCategory, setSelectedCategory] = React.useState<string>("engg-ai");
   
   // Create transform values at the top level to avoid hooks in callbacks
   const backgroundY = useTransform(scrollYProgress, [0, 1], [0, -50]);
   const backgroundOpacity = useTransform(scrollYProgress, [0, 0.5, 1], [0.3, 0.6, 0.3]);
+
+  // Mentor categories (removed "All Mentors" option)
+  const categories = [
+    { 
+      id: "engg-ai", 
+      label: "Engg & AI", 
+      mentors: faculty.filter(m => 
+        ["Dr. Shanti Swaroop Kandala", "Dr. Manasa Kandula", "Dr. Rakesh Lingam", "Dr. Konjengbam Anand", "Dr. Thejus R. Kartha"].includes(m.name)
+      )
+    },
+    { 
+      id: "premed-bio-chem", 
+      label: "Pre-Med, BIO & CHEM", 
+      mentors: faculty.filter(m => 
+        ["Dr. Sudharshan"].includes(m.name)
+      )
+    },
+    { 
+      id: "law-humanities", 
+      label: "Law, Humanities & Social Sciences", 
+      mentors: faculty.filter(m => 
+        ["Bhavya Sree Kandala", "Prathyusha"].includes(m.name)
+      )
+    },
+    { 
+      id: "associate", 
+      label: "Associate Mentors", 
+      mentors: faculty.filter(m => 
+        ["Aneesh Bhardwaj"].includes(m.name)
+      )
+    }
+  ];
+
+  const filteredFaculty = categories.find(cat => cat.id === selectedCategory)?.mentors || [];
 
   return (
     <main className="min-h-screen theme-bg-dark flex flex-col">
       <Header />
       
       {/* Hero Section */}
-      <section className="theme-bg-dark py-16 lg:py-24 relative overflow-hidden">
+      <section className="theme-bg-dark py-4 lg:py-6 relative overflow-hidden">
         {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-20 left-10 w-20 h-20 bg-yellow-400 rounded-full opacity-10 animate-float"></div>
@@ -398,271 +455,8 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Words from Our Founder Section */}
-      <section className="py-24 theme-bg-dark relative overflow-hidden">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-10 left-20 w-32 h-32 bg-gradient-to-br from-yellow-400/20 to-amber-500/20 rounded-full blur-3xl animate-float"></div>
-          <div className="absolute top-40 right-32 w-24 h-24 bg-gradient-to-br from-blue-400/15 to-purple-500/15 rounded-full blur-2xl animate-float-reverse"></div>
-          <div className="absolute bottom-20 left-1/3 w-20 h-20 bg-gradient-to-br from-green-400/10 to-emerald-500/10 rounded-full blur-xl animate-float"></div>
-          <div className="absolute top-1/2 right-1/4 w-16 h-16 bg-gradient-to-br from-pink-400/15 to-rose-500/15 rounded-full blur-lg animate-float-reverse"></div>
-          
-          {/* Floating Geometric Shapes */}
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="absolute top-1/4 left-1/4 w-8 h-8 border-2 border-yellow-400/30 rounded-full"
-          />
-          <motion.div
-            animate={{ rotate: -360 }}
-            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-            className="absolute bottom-1/4 right-1/4 w-6 h-6 border-2 border-blue-400/30 transform rotate-45"
-          />
-        </div>
-
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          {/* Enhanced Header with Animated Elements */}
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            className="text-center mb-20"
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              whileInView={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="inline-block mb-6"
-            >
-              <Badge className="bg-gradient-to-r from-yellow-400/20 to-amber-500/20 text-yellow-400 border-yellow-400/40 px-6 py-3 text-lg font-semibold shadow-lg backdrop-blur-sm">
-                ✨ Founder&apos;s Words ✨
-              </Badge>
-            </motion.div>
-            
-            <motion.h2
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.4 }}
-              className="text-5xl lg:text-6xl font-black bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent mb-8"
-            >
-              Words from Our Founder
-            </motion.h2>
-            
-            {/* Animated Underline */}
-            <motion.div
-              initial={{ width: 0 }}
-              whileInView={{ width: "200px" }}
-              transition={{ duration: 1.2, delay: 0.6 }}
-              className="h-1 bg-gradient-to-r from-yellow-400 to-amber-500 mx-auto rounded-full shadow-lg"
-            />
-          </motion.div>
-          
-          <div className="max-w-7xl mx-auto">
-            <div className="grid lg:grid-cols-2 gap-16 items-center">
-              {/* Enhanced Founder's Message */}
-              <motion.div
-                initial={{ opacity: 0, x: -50 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 1, ease: "easeOut" }}
-                className="space-y-8 relative"
-              >
-                {/* Glowing Background for Message */}
-                <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/5 to-amber-500/5 rounded-3xl blur-3xl"></div>
-                
-                                                  <motion.div
-                   initial={{ opacity: 0, y: 20 }}
-                   whileInView={{ opacity: 1, y: 0 }}
-                   transition={{ duration: 0.8, delay: 0.8 }}
-                   className="relative z-10"
-                 >
-                   <motion.div
-                     initial={{ opacity: 0, scale: 0.9 }}
-                     whileInView={{ opacity: 1, scale: 1 }}
-                     transition={{ duration: 0.6, delay: 1 }}
-                     className="text-center mb-8"
-                   >
-                     {/* <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                       <span className="text-3xl">✨</span>
-                     </div> */}
-                     <h3 className="text-3xl lg:text-4xl font-bold theme-text-light mb-2 bg-gradient-to-r from-yellow-400 to-amber-500 bg-clip-text text-transparent">
-                       WELCOME TO ACHARYA
-                     </h3>
-                     <p className="text-lg theme-text-muted">A Message from Our Founder</p>
-                   </motion.div>
-                   
-                   <div className="space-y-6">
-                     <motion.div
-                       initial={{ opacity: 0, x: -20 }}
-                       whileInView={{ opacity: 1, x: 0 }}
-                       transition={{ duration: 0.8, delay: 1.2 }}
-                       className="relative"
-                     >
-                       <div className="flex items-start space-x-4">
-                         <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-yellow-400/20 to-amber-500/20 rounded-full flex items-center justify-center text-2xl">
-                           ✨
-                         </div>
-                         <div className="flex-1">
-                           <blockquote className="relative">
-                             <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-yellow-400 to-amber-500 rounded-full"></div>
-                             <div className="pl-6 space-y-4">
-                               <p className="text-lg theme-text-muted leading-relaxed italic font-medium">
-                                 &quot;Being passionate about teaching and mentoring students, we, at ACHARYA, would be thrilled to help young minds unlock their full potential and to prepare them for lifelong success.&quot;
-                               </p>
-                               
-                               <p className="text-lg theme-text-muted leading-relaxed italic font-medium">
-                                 &quot;Instant connection with students as my natural ability, I encourage mentors to strive to create a nurturing and motivating environment for your children to feel empowered and grow.&quot;
-                               </p>
-                               
-                               <p className="text-lg theme-text-muted leading-relaxed italic font-medium">
-                                 &quot;Through personalized teaching strategies, we aim to inspire confidence, foster critical thinking and cultivate a love for learning.&quot;
-                               </p>
-                               
-                               <p className="text-lg theme-text-muted leading-relaxed italic font-medium">
-                                 &quot;We believe that every student has the potential to excel and with little guidance and encouragement they are bound to achieve their dreams.&quot;
-                               </p>
-                             </div>
-                           </blockquote>
-                         </div>
-                       </div>
-                     </motion.div>
-                   </div>
-                   
-                   <motion.div
-                     initial={{ opacity: 0, y: 20 }}
-                     whileInView={{ opacity: 1, y: 0 }}
-                     transition={{ duration: 0.8, delay: 2.2 }}
-                     className="mt-8 pt-6 border-t border-yellow-400/20"
-                   >
-                     <div className="text-center">
-                       <p className="text-sm theme-text-muted mb-2">With dedication and passion,</p>
-                       <p className="text-lg font-semibold theme-text-light">Dr. Shanti Swaroop Kandala</p>
-                     </div>
-                   </motion.div>
-                 </motion.div>
-                
-                                 
-              </motion.div>
-
-                             {/* Enhanced Founder's Image */}
-               <motion.div
-                 initial={{ opacity: 0, x: 50 }}
-                 whileInView={{ opacity: 1, x: 0 }}
-                 transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
-                 className="flex flex-col items-center relative"
-               >
-                 {/* Reduced Background Glow Effects */}
-                 <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/20 to-amber-500/20 rounded-full blur-2xl"></div>
-                 <div className="absolute inset-8 bg-gradient-to-br from-blue-400/15 to-purple-500/15 rounded-full blur-xl"></div>
-                 
-                                   {/* Enhanced Founder's Image Container */}
-                  <motion.div
-                    whileHover={{ scale: 1.05, rotateY: 5 }}
-                    transition={{ duration: 0.3 }}
-                    className="relative"
-                  >
-                                         <div className="relative w-80 h-80 rounded-full overflow-hidden border-4 border-gradient-to-r from-yellow-400/30 to-amber-500/30 shadow-2xl">
-                      <motion.div
-                        whileHover={{ scale: 1.1 }}
-                        transition={{ duration: 0.3 }}
-                        className="w-full h-full"
-                      >
-                        <Image
-                          src="/founder-image.png"
-                          alt="Dr. Shanti Swaroop Kandala - Founder of ACHARYA"
-                          width={320}
-                          height={320}
-                          className="w-full h-full object-cover object-center"
-                        />
-                      </motion.div>
-                      
-                      {/* Overlay with Gradient */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#1a2236]/60 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
-                    </div>
-                    
-                    {/* Achievement Badges Removed */}
-                    
-                    {/* Static Decorative Elements */}
-                    <div className="absolute top-1/2 -right-8 w-6 h-6 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full shadow-lg"></div>
-                    
-                    <div className="absolute bottom-1/2 -left-8 w-4 h-4 bg-gradient-to-br from-pink-400 to-rose-500 rounded-full shadow-lg"></div>
-                  </motion.div>
-                 
-                                   {/* Founder's Signature Below Image - Now properly positioned */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 1.5 }}
-                    className="mt-8 text-center"
-                  >
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      whileInView={{ opacity: 1 }}
-                      transition={{ duration: 0.6, delay: 1.7 }}
-                      className="text-2xl font-bold theme-text-light mb-2"
-                    >
-                      Dr. Shanti Swaroop Kandala
-                    </motion.p>
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      whileInView={{ opacity: 1 }}
-                      transition={{ duration: 0.6, delay: 1.9 }}
-                      className="text-lg text-yellow-400 font-semibold mb-4"
-                    >
-                      Founder/CEO/Research Program Director
-                    </motion.p>
-                    <div className="space-y-2">
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        transition={{ duration: 0.6, delay: 2.1 }}
-                        className="text-sm theme-text-muted font-medium"
-                      >
-                        Ph.D. in Mechanical and Aerospace Engineering, IITH, India
-                      </motion.p>
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        transition={{ duration: 0.6, delay: 2.3 }}
-                        className="text-sm theme-text-muted font-medium"
-                      >
-                        M.S in Aerospace Engg., KAIST, South Korea
-                      </motion.p>
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        transition={{ duration: 0.6, delay: 2.5 }}
-                        className="text-sm theme-text-muted font-medium"
-                      >
-                        Master in Liberal Arts, Ashoka (UPenn), India
-                      </motion.p>
-                    </div>
-                  </motion.div>
-               </motion.div>
-             </div>
-           </div>
-         </div>
-        
-        {/* Additional CSS Animations */}
-        <style jsx>{`
-          @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(180deg); }
-          }
-          @keyframes float-reverse {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(20px) rotate(-180deg); }
-          }
-          .animate-float {
-            animation: float 6s ease-in-out infinite;
-          }
-          .animate-float-reverse {
-            animation: float-reverse 8s ease-in-out infinite;
-          }
-        `}</style>
-      </section>
-
              {/* Elite Educators Section */}
-       <section className="py-20 theme-bg-dark relative overflow-hidden">
+       <section className="theme-bg-dark relative overflow-hidden">
          {/* Smart Scrolling Background Elements */}
          <div className="absolute inset-0 overflow-hidden">
            <motion.div
@@ -704,234 +498,6 @@ export default function AboutPage() {
          </div>
          
          <div className="container mx-auto relative z-10">
-           <motion.div
-             initial={{ opacity: 0, y: 30 }}
-             whileInView={{ opacity: 1, y: 0 }}
-             viewport={{ once: true, amount: 0.3 }}
-             transition={{ duration: 0.8, ease: "easeOut" }}
-             className="text-center mb-16"
-           >
-             <motion.div
-               initial={{ scale: 0.8, opacity: 0 }}
-               whileInView={{ scale: 1, opacity: 1 }}
-               viewport={{ once: true, amount: 0.5 }}
-               transition={{ duration: 1, delay: 0.2 }}
-               className="inline-block mb-6"
-             >
-                <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-              Our Expert Team
-            </Badge>
-             </motion.div>
-             
-             <motion.h2
-               initial={{ opacity: 0, y: 20 }}
-               whileInView={{ opacity: 1, y: 0 }}
-               viewport={{ once: true, amount: 0.5 }}
-               transition={{ duration: 1, delay: 0.4 }}
-               className="text-4xl lg:text-5xl font-bold theme-text-light mb-6"
-             >
-               Elite Educators & Industry Professionals
-             </motion.h2>
-             
-             {/* Animated Underline */}
-             <motion.div
-               initial={{ width: 0, opacity: 0 }}
-               whileInView={{ width: "300px", opacity: 1 }}
-               viewport={{ once: true, amount: 0.5 }}
-               transition={{ duration: 1.2, delay: 0.6 }}
-               className="h-1 bg-gradient-to-r from-yellow-400 to-amber-500 mx-auto rounded-full shadow-lg"
-             />
-           </motion.div>
-                      
-           {/* Kavya S Rentachintala - Director of Operations & Marketing Strategy */}
-           <motion.div
-             initial={{ opacity: 0, y: 50, scale: 0.95 }}
-             whileInView={{ opacity: 1, y: 0, scale: 1 }}
-             viewport={{ once: true, amount: 0.2, margin: "-100px" }}
-             transition={{ 
-               duration: 1.2, 
-               delay: 0.2,
-               ease: "easeOut"
-             }}
-             className="max-w-6xl mx-auto mb-16 relative"
-           >
-             {/* Parallax Background Effect */}
-             <motion.div
-               style={{
-                 y: backgroundY,
-                 opacity: backgroundOpacity
-               }}
-               className="absolute inset-0 bg-gradient-to-r from-yellow-400/5 to-amber-500/5 rounded-3xl blur-3xl -z-10"
-             />
-             
-             <div className="grid lg:grid-cols-2 gap-16 items-center">
-               {/* Left Side - Enhanced Image with Smart Scrolling */}
-               <motion.div 
-                 className="flex justify-center"
-                 whileInView={{ 
-                   rotateY: [15, 0],
-                   scale: [0.9, 1]
-                 }}
-                 viewport={{ once: true, amount: 0.3 }}
-                 transition={{ duration: 1.5, delay: 0.3 }}
-               >
-                 <motion.div 
-                   className="relative w-56 h-56 rounded-full overflow-hidden"
-                   whileHover={{ 
-                     scale: 1.05,
-                     rotateY: 5,
-                     boxShadow: "0 25px 50px -12px rgba(251, 191, 36, 0.25)"
-                   }}
-                   transition={{ duration: 0.3 }}
-                 >
-                   {/* Floating Elements Around Image */}
-                   <motion.div
-                     animate={{ 
-                       y: [0, -20, 0],
-                       rotate: [0, 360, 0]
-                     }}
-                     transition={{ 
-                       duration: 8, 
-                       repeat: Infinity, 
-                       ease: "easeInOut",
-                       y: { duration: 6, repeat: Infinity, ease: "easeInOut" }
-                     }}
-                     className="absolute -top-4 -right-4 w-8 h-8 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full shadow-lg z-10"
-                   />
-                   <motion.div
-                     animate={{ 
-                       y: [0, 15, 0],
-                       rotate: [0, -360, 0]
-                     }}
-                     transition={{ 
-                       duration: 10, 
-                       repeat: Infinity, 
-                       ease: "easeInOut",
-                       y: { duration: 7, repeat: Infinity, ease: "easeInOut" }
-                     }}
-                     className="absolute -bottom-4 -left-4 w-6 h-6 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full shadow-lg z-10"
-                   />
-                   
-                   <Image
-                     src="/kavya.png"
-                     alt="Kavya S Rentachintala - Director of Operations & Marketing Strategy"
-                     width={224}
-                     height={224}
-                     className="w-full h-full object-cover object-top"
-                     style={{ objectPosition: 'center top' }}
-                   />
-                   
-                   {/* Hover Overlay */}
-                   <motion.div
-                     initial={{ opacity: 0 }}
-                     whileHover={{ opacity: 1 }}
-                     className="absolute inset-0 bg-gradient-to-t from-[#1a2236]/80 via-transparent to-transparent flex items-end justify-center pb-8"
-                   >
-                     <motion.div
-                       initial={{ y: 20, opacity: 0 }}
-                       whileHover={{ y: 0, opacity: 1 }}
-                       transition={{ duration: 0.3 }}
-                       className="text-center"
-                     >
-                       <p className="text-white font-semibold text-lg">Kavya S Rentachintala</p>
-                       <p className="text-yellow-300 text-sm">Director of Operations & Marketing Strategy</p>
-                     </motion.div>
-                   </motion.div>
-                 </motion.div>
-               </motion.div>
-               
-               {/* Right Side - Enhanced Details with Smart Scrolling */}
-               <motion.div 
-                 className="space-y-8"
-                 initial={{ opacity: 0, x: 30 }}
-                 whileInView={{ opacity: 1, x: 0 }}
-                 viewport={{ once: true, amount: 0.3 }}
-                 transition={{ duration: 1, delay: 0.5 }}
-               >
-                 <motion.div
-                   initial={{ opacity: 0, y: 20 }}
-                   whileInView={{ opacity: 1, y: 0 }}
-                   viewport={{ once: true, amount: 0.5 }}
-                   transition={{ duration: 0.8, delay: 0.7 }}
-                 >
-                   <motion.h4 
-                     className="text-3xl lg:text-4xl font-bold theme-text-light mb-3"
-                     whileInView={{ 
-                       backgroundPosition: ["0% 50%", "100% 50%"],
-                       backgroundSize: ["200% 200%", "200% 200%"]
-                     }}
-                     viewport={{ once: true, amount: 0.5 }}
-                     transition={{ duration: 2, delay: 0.8 }}
-                     style={{
-                       background: "linear-gradient(90deg, #fbbf24, #f59e0b, #d97706, #fbbf24)",
-                       backgroundSize: "200% 200%",
-                       backgroundClip: "text",
-                       WebkitBackgroundClip: "text",
-                       WebkitTextFillColor: "transparent"
-                     }}
-                   >
-                     Kavya S Rentachintala
-                   </motion.h4>
-                   
-                   <motion.p 
-                     className="text-xl text-yellow-400 font-semibold mb-6"
-                     initial={{ opacity: 0, y: 20 }}
-                     whileInView={{ opacity: 1, y: 0 }}
-                     viewport={{ once: true, amount: 0.5 }}
-                     transition={{ duration: 0.8, delay: 0.9 }}
-                   >
-                     Director of Operations & Marketing Strategy
-                   </motion.p>
-                 </motion.div>
-                 
-                 <motion.div 
-                   className="space-y-6"
-                   initial={{ opacity: 0, y: 30 }}
-                   whileInView={{ opacity: 1, y: 0 }}
-                   viewport={{ once: true, amount: 0.3 }}
-                   transition={{ duration: 1, delay: 1.0 }}
-                 >
-                   {/* Experience Description with Staggered Animation */}
-                   <motion.div
-                     initial={{ opacity: 0, y: 20 }}
-                     whileInView={{ opacity: 1, y: 0 }}
-                     viewport={{ once: true, amount: 0.5 }}
-                     transition={{ duration: 0.8, delay: 1.1 }}
-                     className="space-y-4"
-                   >
-                     <motion.p 
-                       className="text-lg theme-text-muted leading-relaxed"
-                       initial={{ opacity: 0, y: 20 }}
-                       whileInView={{ opacity: 1, y: 0 }}
-                       viewport={{ once: true, amount: 0.5 }}
-                       transition={{ duration: 0.8, delay: 1.2 }}
-                     >
-                       As a Silicon Engineer in a day and a super mom for two ambitious kids in the evening, Kavya is driving the Marketing and Operations activities including the day-to-day operations.
-                     </motion.p>
-                     
-                     <motion.p 
-                       className="text-lg theme-text-muted leading-relaxed"
-                       initial={{ opacity: 0, y: 20 }}
-                       whileInView={{ opacity: 1, y: 0 }}
-                       viewport={{ once: true, amount: 0.5 }}
-                       transition={{ duration: 0.8, delay: 1.3 }}
-                     >
-                       Leveraging her creativity, acumen and AI skills, she rose to be the prime contact for scheduling our events, webinars and yearly seminars with local organizations. She also handles &quot;on-the-board&quot; intitation meetings with potential parents/students to customize services based on student&apos;s profiles. As bearing the marketing hat, she creates lively flyers, digital content, drive ads and social campaigns for ACHARYA.
-                     </motion.p>
-                   </motion.div>
-                 </motion.div>
-               </motion.div>
-             </div>
-             
-             {/* Decorative Bottom Line */}
-             <motion.div
-               initial={{ width: 0, opacity: 0 }}
-               whileInView={{ width: "100%", opacity: 1 }}
-               viewport={{ once: true, amount: 0.5 }}
-               transition={{ duration: 1.5, delay: 1.5 }}
-               className="h-px bg-gradient-to-r from-transparent via-yellow-400/50 to-transparent mt-12"
-             />
-           </motion.div>
           {/* <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
@@ -1025,7 +591,7 @@ export default function AboutPage() {
       </section>
 
       {/* Faculty Section */}
-      <section className="py-20 theme-bg-dark relative overflow-hidden">
+      <section className="py-20 theme-bg-dark relative overflow-hidden -mt-16">
         {/* Smart Scrolling Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
           <motion.div
@@ -1084,8 +650,8 @@ export default function AboutPage() {
               transition={{ duration: 1, delay: 0.2 }}
               className="inline-block mb-6"
             >
-              <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-              Our Distinguished Mentors
+              <Badge className="bg-yellow-400/10 text-yellow-400 border-yellow-400/30 px-5 py-2 text-sm font-medium">
+              Our Expert Team
             </Badge>
             </motion.div>
             
@@ -1094,7 +660,7 @@ export default function AboutPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 1, delay: 0.4 }}
-              className="text-4xl lg:text-5xl font-bold theme-text-light mb-6"
+              className="text-4xl lg:text-5xl font-bold text-white mb-6"
             >
               Meet Our Distinguished Mentors
             </motion.h3>
@@ -1112,124 +678,392 @@ export default function AboutPage() {
             {/* Animated Underline */}
             <motion.div
               initial={{ width: 0, opacity: 0 }}
-              whileInView={{ width: "300px", opacity: 1 }}
+              whileInView={{ width: "100px", opacity: 1 }}
               viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 1.2, delay: 0.8 }}
-              className="h-1 bg-gradient-to-r from-yellow-400 to-amber-500 mx-auto rounded-full shadow-lg mt-6"
+              className="h-1 bg-yellow-400 mx-auto mt-6"
             />
           </motion.div>
           
-          {/* Individual Mentor Sections - 3 Column Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-            {faculty.map((member, index) => (
+          {/* Filter Section - 4 Categories Only */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="max-w-7xl mx-auto px-4 mb-12"
+          >
+            <div className="flex flex-wrap justify-center items-center gap-3">
+              {categories.map((category) => (
+                <motion.button
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.id)}
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 ${
+                    selectedCategory === category.id
+                      ? "bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-900 shadow-lg shadow-yellow-400/30"
+                      : "bg-slate-800/60 text-slate-300 border border-slate-700/50 hover:border-yellow-400/50 hover:text-yellow-400"
+                  }`}
+                >
+                  {category.label}
+                  <span className="ml-2 text-xs opacity-75">
+                    ({category.mentors.length})
+                  </span>
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+          
+          {/* Individual Mentor Sections - Separated Tiles Design */}
+          <div className="space-y-8 max-w-7xl mx-auto px-4">
+            {filteredFaculty.map((member, index) => (
               <motion.div
                 key={`detailed-${index}`}
-                initial={{ opacity: 0, y: 50, scale: 0.95 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                viewport={{ once: true, amount: 0.2 }}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.15 }}
                 transition={{ 
-                  duration: 1.2, 
-                  delay: index * 0.1,
+                  duration: 0.5, 
+                  delay: index * 0.05,
                   ease: "easeOut"
                 }}
-                className="relative"
+                className="group"
               >
-                {/* Enhanced Card Container */}
-                <div className="bg-slate-800/80 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-4 shadow-2xl relative overflow-hidden h-full">
-                  {/* Gradient Background Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 via-transparent to-amber-500/5 opacity-50"></div>
-                  
-                  <div className="flex flex-col gap-4 relative z-10">
-                  {/* Image and Name Section */}
-                  <div className="flex flex-col items-center">
-                    <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-yellow-400/30 shadow-xl mx-auto">
-                      {/* Glowing Ring Effect */}
-                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-yellow-400/20 to-amber-500/20 blur-xl -z-10"></div>
-                      
-                      <Image
-                        src={member.image}
-                        alt={`${member.name} - ${member.role}`}
-                        width={128}
-                        height={128}
-                        className="w-full h-full object-cover object-top"
-                        style={{ objectPosition: 'center top' }}
-                      />
-                    </div>
-                    
-                    {/* Name and Role */}
-                    <div className="mt-3 text-center">
-                      <h4 className="text-lg font-bold theme-text-light mb-1">{member.name}</h4>
-                      <p className="text-sm text-yellow-400 font-semibold">{member.role}</p>
-                    </div>
-                  </div>
-                  
-                  {/* Education Box */}
-                  <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 p-3 rounded-xl border border-yellow-400/30 backdrop-blur-sm shadow-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <GraduationCap className="w-3.5 h-3.5 text-yellow-400" />
-                      <p className="text-xs font-bold text-yellow-400 uppercase tracking-wider">Education</p>
-                    </div>
-                    <p className="text-xs theme-text-light mb-1 font-medium">
-                      {member.education}
-                    </p>
-                    <p className="text-xs text-yellow-400 font-semibold">
-                      {member.institution}
-                    </p>
-                  </div>
-                  
-                  {/* Specialties Section */}
-                  {member.specialties && member.specialties.length > 0 && (
-                    <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 p-3 rounded-xl border border-yellow-400/30 backdrop-blur-sm shadow-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Star className="w-3.5 h-3.5 text-yellow-400" />
-                        <p className="text-xs font-bold text-yellow-400 uppercase tracking-wider">Specialties</p>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {member.specialties.slice(0, 2).map((specialty, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2 py-1 bg-yellow-400/10 border border-yellow-400/30 rounded-lg text-xs theme-text-light font-medium"
+                <div className="flex flex-col md:flex-row gap-6">
+                  {/* Left Tile - Image Section (Separated) */}
+                  <motion.div 
+                    className="md:w-80 flex-shrink-0"
+                    whileHover={{ y: -4 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="relative p-[1px] rounded-2xl bg-gradient-to-br from-yellow-400/50 via-amber-500/50 to-yellow-600/50 h-full">
+                      <div className="bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 rounded-2xl p-8 h-full flex flex-col items-center justify-center relative overflow-hidden">
+                        {/* Animated background orbs */}
+                        <motion.div
+                          className="absolute top-0 right-0 w-40 h-40 bg-yellow-400/20 rounded-full blur-3xl"
+                          animate={{
+                            scale: [1, 1.3, 1],
+                            opacity: [0.2, 0.4, 0.2],
+                          }}
+                          transition={{
+                            duration: 5,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                          }}
+                        />
+                        <motion.div
+                          className="absolute bottom-0 left-0 w-32 h-32 bg-amber-500/15 rounded-full blur-2xl"
+                          animate={{
+                            scale: [1.2, 1, 1.2],
+                            opacity: [0.15, 0.3, 0.15],
+                          }}
+                          transition={{
+                            duration: 4,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                            delay: 1
+                          }}
+                        />
+                        
+                        <div className="relative z-10 text-center">
+                          {/* High Quality Image */}
+                          <motion.div 
+                            className="relative w-48 h-48 mx-auto mb-6 rounded-2xl overflow-hidden shadow-2xl ring-4 ring-yellow-400/40 group-hover:ring-yellow-400/70 transition-all duration-300"
+                            whileHover={{ scale: 1.05 }}
+                            transition={{ duration: 0.3 }}
                           >
-                            {specialty}
-                          </span>
-                        ))}
-                        {member.specialties.length > 2 && (
-                          <span className="px-2 py-1 bg-yellow-400/10 border border-yellow-400/30 rounded-lg text-xs theme-text-light font-medium">
-                            +{member.specialties.length - 2} more
-                          </span>
-                        )}
+                            <Image
+                              src={member.image}
+                              alt={`${member.name}`}
+                              width={256}
+                              height={256}
+                              quality={100}
+                              priority={index < 2}
+                              className="w-full h-full object-cover object-top"
+                              style={{ objectPosition: 'center top' }}
+                            />
+                            {/* Gradient overlay on hover */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          </motion.div>
+                          
+                          {/* Name in Image Tile */}
+                          <div className="space-y-2">
+                            <h4 className="text-2xl font-bold bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">
+                              {member.name}
+                            </h4>
+                            <p className="text-base text-slate-300 font-medium">
+                              {member.role}
+                            </p>
+                          </div>
+                          
+                          {/* Decorative bottom accent */}
+                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-yellow-400/50 to-transparent"></div>
+                        </div>
                       </div>
                     </div>
-                  )}
-                    
-                  {/* Experience Description */}
-                  <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 p-3 rounded-xl border border-yellow-400/30 backdrop-blur-sm shadow-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <BookOpen className="w-3.5 h-3.5 text-yellow-400" />
-                      <p className="text-xs font-bold text-yellow-400 uppercase tracking-wider">About</p>
+                  </motion.div>
+                  
+                  {/* Right Tile - Content Section (Separated) */}
+                  <motion.div 
+                    className="flex-1"
+                    whileHover={{ y: -4 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="relative p-[1px] rounded-2xl bg-gradient-to-br from-yellow-400/50 via-amber-500/50 to-yellow-600/50 h-full">
+                      <div className="bg-gradient-to-br from-slate-800 via-slate-800/95 to-slate-900 rounded-2xl p-8 md:p-10 h-full">
+                        <div className="space-y-7">
+                          {/* Education */}
+                          <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.1 }}
+                            className="group/item"
+                          >
+                            <div className="flex items-start gap-4 mb-3">
+                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-400/25 to-amber-500/25 flex items-center justify-center flex-shrink-0 group-hover/item:scale-110 transition-transform duration-300 shadow-lg">
+                                <GraduationCap className="w-6 h-6 text-yellow-400" />
+                              </div>
+                              <div className="flex-1">
+                                <h5 className="text-sm font-bold text-yellow-400 uppercase tracking-wider mb-3">Education</h5>
+                                <p className="text-lg text-white font-semibold leading-snug mb-2">
+                                  {member.education}
+                                </p>
+                                <p className="text-sm text-yellow-400/90 font-medium">
+                                  {member.institution}
+                                </p>
+                              </div>
+                            </div>
+                          </motion.div>
+                          
+                          {/* Divider */}
+                          <div className="h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
+                          
+                          {/* About */}
+                          <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="group/item"
+                          >
+                            <div className="flex items-start gap-4">
+                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-400/25 to-amber-500/25 flex items-center justify-center flex-shrink-0 group-hover/item:scale-110 transition-transform duration-300 shadow-lg">
+                                <BookOpen className="w-6 h-6 text-yellow-400" />
+                              </div>
+                              <div className="flex-1">
+                                <h5 className="text-sm font-bold text-yellow-400 uppercase tracking-wider mb-3">About</h5>
+                                <p className="text-base text-slate-300 leading-relaxed">
+                                  {member.bio || `${member.name} brings extensive experience in ${member.experience.toLowerCase()}, specializing in ${member.specialties?.slice(0, 2).join(" and ") || "their field"}.`}
+                                </p>
+                              </div>
+                            </div>
+                          </motion.div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      {member.bio ? (
-                        <p className="text-xs theme-text-muted leading-relaxed line-clamp-3">
-                          {member.bio}
-                        </p>
-                      ) : (
-                        <p className="text-xs theme-text-muted leading-relaxed line-clamp-3">
-                          {member.name} brings extensive experience in {member.experience.toLowerCase()}, specializing in {member.specialties?.slice(0, 2).join(" and ") || "their field"}.
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                  </motion.div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
+      {/* Kavya S Rentachintala - Director of Operations & Marketing Strategy */}
+      <section className="py-20 theme-bg-dark relative overflow-hidden">
+        <div className="container mx-auto relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: true, amount: 0.2, margin: "-100px" }}
+            transition={{ 
+              duration: 1.2, 
+              delay: 0.2,
+              ease: "easeOut"
+            }}
+            className="max-w-6xl mx-auto mb-16 relative"
+          >
+            {/* Parallax Background Effect */}
+            <motion.div
+              style={{
+                y: backgroundY,
+                opacity: backgroundOpacity
+              }}
+              className="absolute inset-0 bg-gradient-to-r from-yellow-400/5 to-amber-500/5 rounded-3xl blur-3xl -z-10"
+            />
+            
+            <div className="grid lg:grid-cols-2 gap-16 items-center">
+              {/* Left Side - Enhanced Image with Smart Scrolling */}
+              <motion.div 
+                className="flex justify-center"
+                whileInView={{ 
+                  rotateY: [15, 0],
+                  scale: [0.9, 1]
+                }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 1.5, delay: 0.3 }}
+              >
+                <motion.div 
+                  className="relative w-56 h-56 rounded-full overflow-hidden"
+                  whileHover={{ 
+                    scale: 1.05,
+                    rotateY: 5,
+                    boxShadow: "0 25px 50px -12px rgba(251, 191, 36, 0.25)"
+                  }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {/* Floating Elements Around Image */}
+                  <motion.div
+                    animate={{ 
+                      y: [0, -20, 0],
+                      rotate: [0, 360, 0]
+                    }}
+                    transition={{ 
+                      duration: 8, 
+                      repeat: Infinity, 
+                      ease: "easeInOut",
+                      y: { duration: 6, repeat: Infinity, ease: "easeInOut" }
+                    }}
+                    className="absolute -top-4 -right-4 w-8 h-8 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full shadow-lg z-10"
+                  />
+                  <motion.div
+                    animate={{ 
+                      y: [0, 15, 0],
+                      rotate: [0, -360, 0]
+                    }}
+                    transition={{ 
+                      duration: 10, 
+                      repeat: Infinity, 
+                      ease: "easeInOut",
+                      y: { duration: 7, repeat: Infinity, ease: "easeInOut" }
+                    }}
+                    className="absolute -bottom-4 -left-4 w-6 h-6 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full shadow-lg z-10"
+                  />
+                  
+                  <Image
+                    src="/kavya.png"
+                    alt="Kavya S Rentachintala - Director of Operations & Marketing Strategy"
+                    width={224}
+                    height={224}
+                    className="w-full h-full object-cover object-top"
+                    style={{ objectPosition: 'center top' }}
+                  />
+                  
+                  {/* Hover Overlay */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    whileHover={{ opacity: 1 }}
+                    className="absolute inset-0 bg-gradient-to-t from-[#1a2236]/80 via-transparent to-transparent flex items-end justify-center pb-8"
+                  >
+                    <motion.div
+                      initial={{ y: 20, opacity: 0 }}
+                      whileHover={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                      className="text-center"
+                    >
+                      <p className="text-white font-semibold text-lg">Kavya S Rentachintala</p>
+                      <p className="text-yellow-300 text-sm">Director of Operations & Marketing Strategy</p>
+                    </motion.div>
+                  </motion.div>
+                </motion.div>
+              </motion.div>
+              
+              {/* Right Side - Enhanced Details with Smart Scrolling */}
+              <motion.div 
+                className="space-y-8"
+                initial={{ opacity: 0, x: 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 1, delay: 0.5 }}
+              >
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.5 }}
+                  transition={{ duration: 0.8, delay: 0.7 }}
+                >
+                  <motion.h4 
+                    className="text-3xl lg:text-4xl font-bold theme-text-light mb-3"
+                    whileInView={{ 
+                      backgroundPosition: ["0% 50%", "100% 50%"],
+                      backgroundSize: ["200% 200%", "200% 200%"]
+                    }}
+                    viewport={{ once: true, amount: 0.5 }}
+                    transition={{ duration: 2, delay: 0.8 }}
+                    style={{
+                      background: "linear-gradient(90deg, #fbbf24, #f59e0b, #d97706, #fbbf24)",
+                      backgroundSize: "200% 200%",
+                      backgroundClip: "text",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent"
+                    }}
+                  >
+                    Kavya S Rentachintala
+                  </motion.h4>
+                  
+                  <motion.p 
+                    className="text-xl text-yellow-400 font-semibold mb-6"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.5 }}
+                    transition={{ duration: 0.8, delay: 0.9 }}
+                  >
+                    Director of Operations & Marketing Strategy
+                  </motion.p>
+                </motion.div>
+                
+                <motion.div 
+                  className="space-y-6"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{ duration: 1, delay: 1.0 }}
+                >
+                  {/* Experience Description with Staggered Animation */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.5 }}
+                    transition={{ duration: 0.8, delay: 1.1 }}
+                    className="space-y-4"
+                  >
+                    <motion.p 
+                      className="text-lg theme-text-muted leading-relaxed"
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, amount: 0.5 }}
+                      transition={{ duration: 0.8, delay: 1.2 }}
+                    >
+                      As a Silicon Engineer in a day and a super mom for two ambitious kids in the evening, Kavya is driving the Marketing and Operations activities including the day-to-day operations.
+                    </motion.p>
+                    
+                    <motion.p 
+                      className="text-lg theme-text-muted leading-relaxed"
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, amount: 0.5 }}
+                      transition={{ duration: 0.8, delay: 1.3 }}
+                    >
+                      Leveraging her creativity, acumen and AI skills, she rose to be the prime contact for scheduling our events, webinars and yearly seminars with local organizations. She also handles &quot;on-the-board&quot; intitation meetings with potential parents/students to customize services based on student&apos;s profiles. As bearing the marketing hat, she creates lively flyers, digital content, drive ads and social campaigns for ACHARYA.
+                    </motion.p>
+                  </motion.div>
+                </motion.div>
+              </motion.div>
+            </div>
+            
+            {/* Decorative Bottom Line */}
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              whileInView={{ width: "100%", opacity: 1 }}
+              viewport={{ once: true, amount: 0.5 }}
+              transition={{ duration: 1.5, delay: 1.5 }}
+              className="h-px bg-gradient-to-r from-transparent via-yellow-400/50 to-transparent mt-12"
+            />
+          </motion.div>
+        </div>
+      </section>
 
-      
+
       <Chatbot />
       <Footer />
     </main>
