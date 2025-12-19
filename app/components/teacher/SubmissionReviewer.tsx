@@ -21,6 +21,7 @@ import {
   AlertCircle,
   ExternalLink
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Submission {
   id: number;
@@ -54,6 +55,7 @@ interface SubmissionReviewerProps {
 }
 
 export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerProps) {
+  const { toast } = useToast();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [filteredSubmissions, setFilteredSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,7 +81,11 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
       setSubmissions(data.submissions);
     } catch (error) {
       console.error('Error fetching submissions:', error);
-      alert(error instanceof Error ? error.message : 'Failed to fetch submissions');
+      toast({
+        variant: "destructive",
+        title: "Failed to load submissions",
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
     } finally {
       setLoading(false);
     }
@@ -167,11 +173,19 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
 
       setIsGradeDialogOpen(false);
       setSelectedSubmission(null);
-      alert('Submission graded successfully');
+      toast({
+        title: "Submission graded",
+        description: "Your feedback has been saved successfully.",
+        className: "border-green-500 bg-green-50 text-green-900",
+      });
 
     } catch (error) {
       console.error('Error grading submission:', error);
-      alert(error instanceof Error ? error.message : 'Failed to grade submission');
+      toast({
+        variant: "destructive",
+        title: "Failed to grade submission",
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
     }
   };
 
