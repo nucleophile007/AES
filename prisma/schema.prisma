@@ -274,6 +274,20 @@ model ActivationRequest {
   @@unique([email, role])
 }
 
+model PasswordResetRequest {
+  id        Int      @id @default(autoincrement())
+  role      String
+  userId    Int
+  tokenHash String   @unique
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role, userId])
+  @@index([expiresAt])
+}
+
 model Admin {
   id        Int      @id @default(autoincrement())
   name      String

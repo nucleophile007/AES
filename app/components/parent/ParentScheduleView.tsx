@@ -199,7 +199,7 @@ const ParentScheduleView: React.FC<ParentScheduleViewProps> = ({ parentEmail }) 
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5 text-blue-600" /> Children’s Schedule
+              <CalendarIcon className="h-5 w-5 text-blue-600" /> Student&apos;s Schedule
             </CardTitle>
           </CardHeader>
           <CardContent>
