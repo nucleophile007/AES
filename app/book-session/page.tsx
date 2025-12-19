@@ -255,8 +255,7 @@ export default function BookSessionPage() {
     "SAT Coaching", 
     "College Prep",
     "Olympiads",
-    "Research Program",
-    "Profile Building"
+    "Research Program"
   ]
 
   // Grade options
