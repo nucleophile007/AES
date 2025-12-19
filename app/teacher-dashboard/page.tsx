@@ -1,9 +1,27 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { useRequireAuth } from "../../contexts/AuthContext";
 import "../components/chat-no-spinner.css";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarFooter,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarInset,
+  SidebarTrigger,
+  SidebarSeparator,
+} from "@/components/ui/sidebar";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +30,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import AssignmentManager from "@/components/teacher/AssignmentManager";
 import SubmissionReviewer from "@/components/teacher/SubmissionReviewer";
 import CustomChatDialog from "../../components/CustomChatDialog";
@@ -121,6 +142,7 @@ interface Assignment {
 export default function TeacherDashboard() {
   // Authentication - require teacher role
   const { user: authUser, isLoading: authLoading } = useRequireAuth('teacher');
+  const { toast } = useToast();
 
   // All state hooks must be declared first
   const [teacher, setTeacher] = useState<Teacher | null>(null);
@@ -250,42 +272,90 @@ export default function TeacherDashboard() {
     setResourceError(null);
 
     if (!teacherEmail) {
-      setResourceError("Teacher email not available.");
+      const message = "Teacher email not available.";
+      setResourceError(message);
+      toast({
+        variant: "destructive",
+        title: "Cannot send resource",
+        description: message,
+      });
       return;
     }
 
     if (!newResource.title.trim()) {
-      setResourceError("Title is required.");
+      const message = "Title is required.";
+      setResourceError(message);
+      toast({
+        title: "Missing title",
+        description: message,
+        className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+      });
       return;
     }
 
     if (!newResource.type) {
-      setResourceError("Type is required.");
+      const message = "Type is required.";
+      setResourceError(message);
+      toast({
+        title: "Missing type",
+        description: message,
+        className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+      });
       return;
     }
 
     if (!newResource.program || !newResource.subject || !newResource.grade) {
-      setResourceError("Program, subject, and grade are required.");
+      const message = "Program, subject, and grade are required.";
+      setResourceError(message);
+      toast({
+        title: "Missing details",
+        description: message,
+        className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+      });
       return;
     }
 
     if (newResource.studentIds.length === 0) {
-      setResourceError("Select at least one student.");
+      const message = "Select at least one student.";
+      setResourceError(message);
+      toast({
+        title: "No students selected",
+        description: message,
+        className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+      });
       return;
     }
 
     if (newResource.category === "assignment" && !newResource.assignmentId) {
-      setResourceError("Select an assignment for this category.");
+      const message = "Select an assignment for this category.";
+      setResourceError(message);
+      toast({
+        title: "Assignment required",
+        description: message,
+        className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+      });
       return;
     }
 
     if (newResource.type === "link" && !newResource.linkUrl) {
-      setResourceError("Provide a link URL for link type resources.");
+      const message = "Provide a link URL for link type resources.";
+      setResourceError(message);
+      toast({
+        title: "Link URL required",
+        description: message,
+        className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+      });
       return;
     }
 
     if (["document", "video", "image"].includes(newResource.type) && !newResourceFile && !newResource.linkUrl) {
-      setResourceError("Upload a file or provide a link for this resource.");
+      const message = "Upload a file or provide a link for this resource.";
+      setResourceError(message);
+      toast({
+        title: "File or link required",
+        description: message,
+        className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+      });
       return;
     }
 
@@ -340,9 +410,20 @@ export default function TeacherDashboard() {
       }
 
       resetResourceForm();
+      toast({
+        title: "Resource sent",
+        description: "Your resource has been shared with the selected students.",
+        className: "border-green-500 bg-green-50 text-green-900",
+      });
     } catch (err) {
-      setResourceError(err instanceof Error ? err.message : "Failed to send resource");
+      const message = err instanceof Error ? err.message : "Failed to send resource";
+      setResourceError(message);
       console.error("Send resource error:", err);
+      toast({
+        variant: "destructive",
+        title: "Failed to send resource",
+        description: message,
+      });
     } finally {
       setSendingResource(false);
     }
@@ -470,182 +551,186 @@ export default function TeacherDashboard() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-50 p-8">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading teacher dashboard...</p>
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <RefreshCw className="h-8 w-8 animate-spin text-brand-blue mx-auto mb-4" />
+              <p className="text-gray-600">Loading teacher dashboard...</p>
+            </div>
           </div>
         </div>
-      </main>
+      </SidebarProvider>
     );
   }
 
   if (error) {
     return (
-      <main className="min-h-screen bg-gray-50 p-8">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center py-12">
-            <div className="text-red-600 text-xl mb-4">Error: {error}</div>
-            <Button onClick={fetchTeacherData}>Try Again</Button>
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-red-600 text-xl mb-4">Error: {error}</div>
+              <Button onClick={fetchTeacherData}>Try Again</Button>
+            </div>
           </div>
         </div>
-      </main>
+      </SidebarProvider>
     );
   }
 
   if (!teacher) {
     return (
-      <main className="min-h-screen bg-gray-50 p-8">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center py-12">
-            <div className="text-gray-600 text-xl">Teacher not found</div>
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-gray-600 text-xl">Teacher not found</div>
+            </div>
           </div>
         </div>
-      </main>
+      </SidebarProvider>
     );
   }
 
+  // Sidebar items
+  const sidebarItems = [
+    {
+      title: "Students",
+      icon: Users,
+      value: "students",
+    },
+    {
+      title: "Assignments",
+      icon: BookOpen,
+      value: "assignments",
+    },
+    {
+      title: "Submissions",
+      icon: FileText,
+      value: "submissions",
+    },
+    {
+      title: "Resources",
+      icon: GraduationCap,
+      value: "resources",
+    },
+    {
+      title: "Schedule",
+      icon: Calendar,
+      value: "schedule",
+    },
+  ];
+
   return (
-    <main className="min-h-screen bg-gray-50 p-8 teacher-chat-no-spinner">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold mb-1 flex items-center gap-2">
-              <Users className="h-7 w-7 text-blue-600" /> Teacher Dashboard
-            </h1>
-            <p className="text-gray-600 text-sm">
-              Welcome, <span className="font-semibold">{teacher.name}</span>! Manage your students and assignments below.
-            </p>
-          </div>
-          <div className="flex gap-2 items-center">
-            <Input
-              placeholder="Search..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-64"
-            />
-            <Button
-              variant="outline"
-              onClick={async () => {
-                try {
-                  await fetch('/api/auth/logout', { 
-                    method: 'POST',
-                    credentials: 'include'
-                  });
-                  window.location.href = '/';
-                } catch (error) {
-                  console.error('Logout failed:', error);
-                  window.location.href = '/';
-                }
-              }}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
-          </div>
-        </div>
-
-        {/* Main Content Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="students">Students</TabsTrigger>
-            <TabsTrigger value="assignments">Assignments</TabsTrigger>
-            <TabsTrigger value="submissions">Submissions</TabsTrigger>
-            <TabsTrigger value="resources">Resources</TabsTrigger>
-            <TabsTrigger value="schedule">Schedule</TabsTrigger>
-          </TabsList>
-
-          {/* Overview Tab */}
-          <TabsContent value="overview">
-            <div className="space-y-6">
-              {/* Program Filter */}
-              <Tabs value={selectedProgram || "all"} onValueChange={v => setSelectedProgram(v === "all" ? null : v)}>
-                <TabsList className="flex flex-wrap gap-2">
-                  <TabsTrigger value="all">All Programs</TabsTrigger>
-                  {teacher?.programs.map((program) => (
-                    <TabsTrigger key={program} value={program}>{program}</TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
-
-              {/* Recent Activity */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5" />
-                      Recent Student Activity
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {students.slice(0, 5).map((student) => (
-                        <div key={student.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                          <div className="flex items-center gap-3">
-                            <User className="h-4 w-4 text-gray-400" />
-                            <div>
-                              <p className="text-sm font-medium">{student.name}</p>
-                              <p className="text-xs text-gray-500">{student.program}</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-xs text-gray-500">
-                              {student.recentSubmissions.length} submissions
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <FileText className="h-5 w-5" />
-                      Assignment Status
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {assignments.slice(0, 5).map((assignment) => (
-                        <div key={assignment.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                          <div>
-                            <p className="text-sm font-medium">{assignment.title}</p>
-                            <p className="text-xs text-gray-500">{assignment.subject}</p>
-                          </div>
-                          <div className="text-right">
-                            <div className="flex items-center gap-2">
-                              <CheckCircle className="h-3 w-3 text-green-500" />
-                              <span className="text-xs">{assignment.submissions?.filter(s => s.grade !== null).length || 0}</span>
-                              <AlertCircle className="h-3 w-3 text-orange-500" />
-                              <span className="text-xs">{assignment.submissions?.filter(s => s.grade === null).length || 0}</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
+        <Sidebar variant="inset" className="border-r">
+          <SidebarHeader className="border-b p-4">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10 border-2 border-brand-blue">
+                <AvatarFallback className="bg-gradient-to-br from-brand-blue to-brand-teal text-white font-semibold">
+                  {teacher?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'T'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-sidebar-foreground truncate">
+                  {teacher?.name || "Teacher"}
+                </p>
+                <p className="text-xs text-sidebar-foreground/70 truncate">
+                  {teacher?.email || ""}
+                </p>
               </div>
             </div>
-          </TabsContent>
+          </SidebarHeader>
+          
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {sidebarItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        isActive={activeTab === item.value}
+                        onClick={() => setActiveTab(item.value)}
+                        className="w-full"
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
 
-          {/* Students Tab */}
-          <TabsContent value="students">
+          <SidebarFooter className="border-t p-4">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={async () => {
+                    try {
+                      await fetch('/api/auth/logout', { 
+                        method: 'POST',
+                        credentials: 'include'
+                      });
+                      window.location.href = '/';
+                    } catch (error) {
+                      console.error('Logout failed:', error);
+                      window.location.href = '/';
+                    }
+                  }}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarFooter>
+        </Sidebar>
+
+        <SidebarInset className="flex-1">
+          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <div className="flex items-center gap-2 flex-1">
+              <h1 className="text-lg font-semibold bg-gradient-to-r from-brand-blue to-brand-teal bg-clip-text text-transparent">
+                Teacher Dashboard
+              </h1>
+            </div>
+            <div className="flex gap-2 items-center">
+              <Input
+                placeholder="Search students..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-64"
+              />
+            </div>
+          </header>
+
+          <div className="flex flex-1 flex-col gap-4 p-4 md:p-6 teacher-chat-no-spinner">
+
+            {/* Students Tab */}
+            {activeTab === "students" && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="space-y-6"
+              >
             {/* Parent Conversations Section */}
             {parentConversations.length > 0 && (
               <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <Users className="h-5 w-5 text-purple-500" />
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-brand-blue">
+                  <Users className="h-5 w-5" />
                   Parent Conversations
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                   {parentConversations.map((parent) => (
-                    <Card key={parent.recipientId} className="hover:shadow-lg transition-shadow border-purple-200">
+                    <Card key={parent.recipientId} className="border-2 hover:shadow-xl transition-all hover:border-brand-teal">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
@@ -682,8 +767,8 @@ export default function TeacherDashboard() {
               </div>
             )}
 
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <GraduationCap className="h-5 w-5 text-blue-500" />
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-brand-blue">
+              <GraduationCap className="h-5 w-5" />
               Students
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -693,10 +778,10 @@ export default function TeacherDashboard() {
                 </div>
               )}
               {filteredStudents.map((student) => (
-                <Card key={student.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <User className="h-5 w-5 text-blue-500" />
+                <Card key={student.id} className="border-2 hover:shadow-xl transition-all hover:border-brand-blue">
+                  <CardHeader className="bg-gradient-to-r from-brand-blue/5 to-brand-teal/5">
+                    <CardTitle className="flex items-center gap-2 text-brand-blue">
+                      <User className="h-5 w-5" />
                       {student.name}
                     </CardTitle>
                     <div className="text-xs text-gray-500">{student.email}</div>
@@ -705,10 +790,10 @@ export default function TeacherDashboard() {
                     <div className="space-y-3">
                       {/* Program Badges */}
                       <div className="flex flex-wrap gap-2">
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        <Badge variant="outline" className="bg-brand-blue/10 text-brand-blue border-brand-blue/30">
                           {student.program}
                         </Badge>
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                        <Badge variant="outline" className="bg-brand-teal/10 text-brand-teal border-brand-teal/30">
                           {student.grade}
                         </Badge>
                       </div>
@@ -765,7 +850,7 @@ export default function TeacherDashboard() {
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="text-blue-600 hover:bg-blue-50"
+                          className="text-brand-blue hover:bg-brand-blue/10"
                           onClick={() => {
                             setSelectedChatStudent(student);
                             setSelectedChatParent(null); // Clear parent selection
@@ -780,36 +865,54 @@ export default function TeacherDashboard() {
                 </Card>
               ))}
             </div>
-          </TabsContent>
+              </motion.div>
+            )}
 
-          {/* Assignments Tab */}
-          <TabsContent value="assignments">
-            <AssignmentManager 
+            {/* Assignments Tab */}
+            {activeTab === "assignments" && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+              <AssignmentManager 
               teacherEmail={teacherEmail}
               assignments={assignments}
               onAssignmentCreated={fetchAssignments}
               onAssignmentUpdated={fetchAssignments}
-            />
-          </TabsContent>
+              />
+              </motion.div>
+            )}
 
-          {/* Submissions Tab */}
-          <TabsContent value="submissions">
-            <SubmissionReviewer teacherEmail={teacherEmail} />
-          </TabsContent>
+            {/* Submissions Tab */}
+            {activeTab === "submissions" && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+              <SubmissionReviewer teacherEmail={teacherEmail} />
+              </motion.div>
+            )}
 
-          {/* Resources Tab - Send resources to students + review their submissions */}
-          <TabsContent value="resources">
-            <div className="space-y-6">
+            {/* Resources Tab */}
+            {activeTab === "resources" && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="space-y-6"
+              >
               {/* Send resource to students */}
-              <Card className="border-blue-200">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Send className="h-5 w-5 text-blue-600" />
+              <Card className="border-2 border-brand-blue/30 bg-gradient-to-br from-white to-brand-blue/5 hover:shadow-xl transition-all">
+                <CardHeader className="pb-3 bg-gradient-to-r from-brand-blue/10 to-brand-teal/10">
+                  <CardTitle className="text-lg flex items-center gap-2 text-brand-blue">
+                    <Send className="h-5 w-5" />
                     Send Resource to Students
                   </CardTitle>
-                  <p className="text-sm text-gray-600">
+                  <CardDescription>
                     Choose a category (assignment / personal / general), attach a file or link, and target students.
-                  </p>
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1188,29 +1291,30 @@ export default function TeacherDashboard() {
                   ))}
                 </div>
               )}
-            </div>
-          </TabsContent>
+              </motion.div>
+            )}
 
-          {/* Schedule Tab */}
-          <TabsContent value="schedule">
-            <div className="space-y-6">
-              {/* Import StudentScheduler */}
-              <div className="w-full">
-                {activeTab === "schedule" && (
-                  <div className="w-full">
-                    {/* Using dynamic import pattern for client components */}
-                    {(() => {
-                      const StudentScheduler = require("../../components/teacher/StudentScheduler").default;
-                      return <StudentScheduler teacherEmail={teacherEmail} />;
-                    })()}
-                  </div>
-                )}
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+            {/* Schedule Tab */}
+            {activeTab === "schedule" && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="space-y-6"
+              >
+                {/* Import StudentScheduler */}
+                <div className="w-full">
+                  {(() => {
+                    const StudentScheduler = require("../../components/teacher/StudentScheduler").default;
+                    return <StudentScheduler teacherEmail={teacherEmail} />;
+                  })()}
+                </div>
+              </motion.div>
+            )}
+          </div>
+        </SidebarInset>
       </div>
-      
+
       {/* Chat Dialog for Students */}
       {teacher && selectedChatStudent && (
         <CustomChatDialog
@@ -1259,6 +1363,6 @@ export default function TeacherDashboard() {
           studentEmail={selectedProgressStudent.email}
         />
       )}
-    </main>
+    </SidebarProvider>
   );
 }

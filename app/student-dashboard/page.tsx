@@ -1,9 +1,9 @@
 "use client";
 
-"use client";
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRequireAuth } from "../../contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import {
   SidebarProvider,
   Sidebar,
@@ -148,6 +148,7 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [messageUnreadCount, setMessageUnreadCount] = useState(0);
   const [error, setError] = useState("");
+  const { toast } = useToast();
   
   // Get student email from authenticated user
   const studentEmail = authUser?.email || "";
@@ -171,8 +172,14 @@ export default function StudentDashboard() {
       setAssignments(data.assignments);
       setSubmissions(data.submissions);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+      const message = err instanceof Error ? err.message : 'Failed to load dashboard data';
+      setError(message);
       console.error("Error fetching data:", err);
+      toast({
+        variant: "destructive",
+        title: "Failed to load dashboard",
+        description: message,
+      });
     } finally {
       setLoading(false);
     }
@@ -201,15 +208,19 @@ export default function StudentDashboard() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Pending</Badge>;
+        return <Badge variant="outline" className="bg-gradient-to-r from-yellow-200 to-orange-200 text-yellow-800 border-2 border-yellow-400 font-bold shadow-md">⏳ Pending</Badge>;
       case "submitted":
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Submitted</Badge>;
+        return <Badge variant="outline" className="bg-gradient-to-r from-blue-200 to-cyan-200 text-blue-800 border-2 border-blue-400 font-bold shadow-md">✅ Submitted</Badge>;
       case "graded":
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Graded</Badge>;
+        return <Badge variant="outline" className="bg-gradient-to-r from-green-200 to-emerald-200 text-green-800 border-2 border-green-400 font-bold shadow-md">🎉 Graded</Badge>;
       case "overdue":
-        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Overdue</Badge>;
+        return <Badge variant="outline" className="bg-gradient-to-r from-red-200 to-pink-200 text-red-800 border-2 border-red-400 font-bold shadow-md">⚠️ Overdue</Badge>;
+      case "active":
+        return <Badge variant="outline" className="bg-gradient-to-r from-purple-200 to-pink-200 text-purple-800 border-2 border-purple-400 font-bold shadow-md">✨ Active</Badge>;
+      case "completed":
+        return <Badge variant="outline" className="bg-gradient-to-r from-green-200 to-teal-200 text-green-800 border-2 border-green-400 font-bold shadow-md">🏆 Completed</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline" className="bg-gradient-to-r from-gray-200 to-slate-200 text-gray-800 border-2 border-gray-400 font-bold">{status}</Badge>;
     }
   };
 
@@ -303,19 +314,33 @@ export default function StudentDashboard() {
           // Add to submissions list
           setSubmissions([submissionData.submission, ...submissions]);
         }
-        
+
         // Reset form
         setSelectedAssignment(null);
         setSubmissionText("");
         setSubmissionFile(null);
         setIsResubmitting(false);
         setResubmissionId(null);
+
+        toast({
+          title: isResubmitting ? "Submission updated" : "Assignment submitted",
+          description: isResubmitting
+            ? "Your updated work has been sent to your mentor."
+            : "Your assignment has been submitted successfully.",
+          className: "border-green-500 bg-green-50 text-green-900",
+        });
       } else {
         throw new Error(submissionData.error || 'Submission failed');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Submission failed');
+      const message = err instanceof Error ? err.message : 'Submission failed';
+      setError(message);
       console.error("Error submitting assignment:", err);
+      toast({
+        variant: "destructive",
+        title: "Submission failed",
+        description: message,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -473,20 +498,20 @@ export default function StudentDashboard() {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-gray-50">
-        <Sidebar variant="inset">
-          <SidebarHeader className="border-b p-4">
+      <div className="flex min-h-screen w-full bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
+        <Sidebar variant="inset" className="border-r-2 border-purple-200 bg-gradient-to-b from-white via-pink-50/30 to-purple-50/30">
+          <SidebarHeader className="border-b-2 border-purple-200 p-4 bg-gradient-to-r from-pink-100 to-purple-100">
             <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
-                <AvatarFallback className="bg-blue-100 text-blue-600">
+              <Avatar className="h-12 w-12 border-2 border-purple-300 shadow-lg">
+                <AvatarFallback className="bg-gradient-to-br from-pink-400 via-purple-400 to-blue-400 text-white font-bold text-lg">
                   {student.name.split(' ').map(n => n[0]).join('')}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-sidebar-foreground truncate">
+                <p className="text-sm font-bold text-purple-900 truncate">
                   {student.name}
                 </p>
-                <p className="text-xs text-sidebar-foreground/70 truncate">
+                <p className="text-xs text-purple-700 truncate font-medium">
                   {student.grade} • {student.schoolName}
                 </p>
               </div>
@@ -498,21 +523,36 @@ export default function StudentDashboard() {
               <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {sidebarItems.slice(0, 4).map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        isActive={item.isActive}
-                        onClick={item.onClick}
-                        className="w-full"
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                        {item.badge && (
-                          <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>
-                        )}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+                  {sidebarItems.slice(0, 4).map((item, idx) => {
+                    const colors = [
+                      "from-pink-500 to-purple-500",
+                      "from-purple-500 to-blue-500",
+                      "from-blue-500 to-cyan-500",
+                      "from-green-500 to-teal-500"
+                    ];
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          isActive={item.isActive}
+                          onClick={item.onClick}
+                          className={cn(
+                            "w-full transition-all hover:scale-105",
+                            item.isActive 
+                              ? `bg-gradient-to-r ${colors[idx]} text-white shadow-lg font-bold` 
+                              : "hover:bg-gradient-to-r hover:from-pink-100 hover:to-purple-100 text-purple-700"
+                          )}
+                        >
+                          <item.icon className={cn("h-5 w-5", item.isActive ? "text-white" : "text-purple-600")} />
+                          <span className="font-semibold">{item.title}</span>
+                          {item.badge && (
+                            <SidebarMenuBadge className={item.isActive ? "bg-white text-purple-600" : "bg-purple-200 text-purple-800"}>
+                              {item.badge}
+                            </SidebarMenuBadge>
+                          )}
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -523,21 +563,35 @@ export default function StudentDashboard() {
               <SidebarGroupLabel>Academic Tools</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {sidebarItems.slice(4, 7).map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        isActive={item.isActive}
-                        onClick={item.onClick}
-                        className="w-full"
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                        {item.badge && (
-                          <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>
-                        )}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+                  {sidebarItems.slice(4, 7).map((item, idx) => {
+                    const colors = [
+                      "from-orange-500 to-red-500",
+                      "from-teal-500 to-green-500",
+                      "from-indigo-500 to-purple-500"
+                    ];
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          isActive={item.isActive}
+                          onClick={item.onClick}
+                          className={cn(
+                            "w-full transition-all hover:scale-105",
+                            item.isActive 
+                              ? `bg-gradient-to-r ${colors[idx]} text-white shadow-lg font-bold` 
+                              : "hover:bg-gradient-to-r hover:from-orange-100 hover:to-red-100 text-purple-700"
+                          )}
+                        >
+                          <item.icon className={cn("h-5 w-5", item.isActive ? "text-white" : "text-orange-600")} />
+                          <span className="font-semibold">{item.title}</span>
+                          {item.badge && (
+                            <SidebarMenuBadge className={item.isActive ? "bg-white text-orange-600" : "bg-orange-200 text-orange-800"}>
+                              {item.badge}
+                            </SidebarMenuBadge>
+                          )}
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -548,31 +602,44 @@ export default function StudentDashboard() {
               <SidebarGroupLabel>Communication</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {sidebarItems.slice(7).map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        isActive={item.isActive}
-                        onClick={item.onClick}
-                        className="w-full"
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                        {item.badge && (
-                          <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>
-                        )}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+                  {sidebarItems.slice(7).map((item, idx) => {
+                    const colors = [
+                      "from-cyan-500 to-blue-500",
+                      "from-pink-500 to-rose-500"
+                    ];
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          isActive={item.isActive}
+                          onClick={item.onClick}
+                          className={cn(
+                            "w-full transition-all hover:scale-105",
+                            item.isActive 
+                              ? `bg-gradient-to-r ${colors[idx]} text-white shadow-lg font-bold` 
+                              : "hover:bg-gradient-to-r hover:from-cyan-100 hover:to-blue-100 text-purple-700"
+                          )}
+                        >
+                          <item.icon className={cn("h-5 w-5", item.isActive ? "text-white" : "text-cyan-600")} />
+                          <span className="font-semibold">{item.title}</span>
+                          {item.badge && (
+                            <SidebarMenuBadge className={item.isActive ? "bg-white text-cyan-600" : "bg-cyan-200 text-cyan-800"}>
+                              {item.badge}
+                            </SidebarMenuBadge>
+                          )}
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
 
-          <SidebarFooter className="border-t p-4">
+          <SidebarFooter className="border-t-2 border-purple-200 p-4 bg-gradient-to-r from-pink-50/50 to-purple-50/50">
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton>
-                  <Settings className="h-4 w-4" />
+                <SidebarMenuButton className="hover:bg-gradient-to-r hover:from-purple-100 hover:to-pink-100 text-purple-700 font-semibold transition-all hover:scale-105">
+                  <Settings className="h-5 w-5 text-purple-600" />
                   <span>Settings</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -590,9 +657,9 @@ export default function StudentDashboard() {
                       window.location.href = '/';
                     }
                   }}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  className="text-red-600 hover:text-red-700 hover:bg-gradient-to-r hover:from-red-100 hover:to-pink-100 font-semibold transition-all hover:scale-105"
                 >
-                  <LogOut className="h-4 w-4" />
+                  <LogOut className="h-5 w-5" />
                   <span>Logout</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -601,14 +668,16 @@ export default function StudentDashboard() {
         </Sidebar>
 
         <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b-2 border-purple-200 bg-gradient-to-r from-pink-100 via-purple-100 to-blue-100 px-4 shadow-sm">
+            <SidebarTrigger className="-ml-1 text-purple-700 hover:text-purple-900" />
+            <Separator orientation="vertical" className="mr-2 h-4 bg-purple-300" />
             <div className="flex-1">
-              <h1 className="text-lg font-semibold">Student Dashboard</h1>
+              <h1 className="text-lg font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
+                🎓 Student Dashboard
+              </h1>
             </div>
-            <Button variant="ghost" size="sm">
-              <Bell className="h-4 w-4" />
+            <Button variant="ghost" size="sm" className="hover:bg-purple-200 rounded-full">
+              <Bell className="h-5 w-5 text-purple-600" />
             </Button>
           </header>
 
@@ -639,106 +708,186 @@ export default function StudentDashboard() {
               >
               {activeTab === "overview" && (
                 <div className="space-y-6">
+                  {/* Welcome Banner */}
+                  <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 p-6 text-white shadow-xl"
+                  >
+                    <div className="absolute top-0 right-0 text-6xl opacity-20">🎉</div>
+                    <div className="relative z-10">
+                      <h2 className="text-2xl font-bold mb-2">Hey {student.name.split(' ')[0]}! 👋</h2>
+                      <p className="text-pink-100">Ready to learn something awesome today?</p>
+                    </div>
+                  </motion.div>
+
                   {/* Quick Stats */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-blue-100 rounded-lg">
-                            <FileText className="h-5 w-5 text-blue-600" />
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.1 }}
+                      whileHover={{ scale: 1.05, rotate: 2 }}
+                    >
+                      <Card className="border-2 border-blue-300 bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-xl transition-all">
+                        <CardContent className="p-5">
+                          <div className="flex items-center gap-3">
+                            <div className="p-3 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl shadow-lg">
+                              <FileText className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-blue-700">Active Assignments</p>
+                              <p className="text-3xl font-bold text-blue-900">{assignments.filter(a => a.status === "active").length}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm text-gray-600">Active Assignments</p>
-                            <p className="text-2xl font-bold">{assignments.filter(a => a.status === "active").length}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
 
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-green-100 rounded-lg">
-                            <Trophy className="h-5 w-5 text-green-600" />
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.2 }}
+                      whileHover={{ scale: 1.05, rotate: -2 }}
+                    >
+                      <Card className="border-2 border-green-300 bg-gradient-to-br from-green-50 to-green-100 hover:shadow-xl transition-all">
+                        <CardContent className="p-5">
+                          <div className="flex items-center gap-3">
+                            <div className="p-3 bg-gradient-to-br from-green-400 to-green-600 rounded-xl shadow-lg">
+                              <Trophy className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-green-700">Completed 🎉</p>
+                              <p className="text-3xl font-bold text-green-900">{submissions.filter(s => s.grade !== null && s.grade !== undefined).length}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm text-gray-600">Completed</p>
-                            <p className="text-2xl font-bold">{submissions.filter(s => s.grade !== null && s.grade !== undefined).length}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
 
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-purple-100 rounded-lg">
-                            <GraduationCap className="h-5 w-5 text-purple-600" />
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.3 }}
+                      whileHover={{ scale: 1.05, rotate: 2 }}
+                    >
+                      <Card className="border-2 border-purple-300 bg-gradient-to-br from-purple-50 to-purple-100 hover:shadow-xl transition-all">
+                        <CardContent className="p-5">
+                          <div className="flex items-center gap-3">
+                            <div className="p-3 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl shadow-lg">
+                              <Star className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-purple-700">Average Grade</p>
+                              <p className="text-3xl font-bold text-purple-900">
+                                {submissions.filter(s => s.grade !== null && s.grade !== undefined).length > 0 
+                                  ? Math.round(submissions.filter(s => s.grade !== null && s.grade !== undefined)
+                                      .reduce((acc, s) => acc + (s.grade || 0), 0) / 
+                                      submissions.filter(s => s.grade !== null && s.grade !== undefined).length) + '%'
+                                  : 'N/A'}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm text-gray-600">Average Grade</p>
-                            <p className="text-2xl font-bold">
-                              {submissions.filter(s => s.grade !== null && s.grade !== undefined).length > 0 
-                                ? Math.round(submissions.filter(s => s.grade !== null && s.grade !== undefined)
-                                    .reduce((acc, s) => acc + (s.grade || 0), 0) / 
-                                    submissions.filter(s => s.grade !== null && s.grade !== undefined).length) + '%'
-                                : 'N/A'}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
 
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.4 }}
+                      whileHover={{ scale: 1.05, rotate: -2 }}
+                    >
+                      <Card className="border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-orange-100 hover:shadow-xl transition-all">
+                        <CardContent className="p-5">
+                          <div className="flex items-center gap-3">
+                            <div className="p-3 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl shadow-lg">
+                              <Award className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-orange-700">Achievements</p>
+                              <p className="text-3xl font-bold text-orange-900">⭐</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Recent Assignments */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <FileText className="h-5 w-5" />
-                          Recent Assignments
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3">
-                          {assignments.slice(0, 3).map((assignment) => (
-                            <div key={assignment.id} className="flex items-center justify-between p-3 border rounded-lg">
-                              <div className="flex-1">
-                                <p className="font-medium text-sm">{assignment.title}</p>
-                                <p className="text-xs text-gray-600">{assignment.subject} • Due {assignment.dueDate}</p>
-                              </div>
-                              {getStatusBadge(assignment.status)}
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.5 }}
+                    >
+                      <Card className="border-2 border-pink-200 bg-gradient-to-br from-pink-50 to-white hover:shadow-xl transition-all">
+                        <CardHeader className="bg-gradient-to-r from-pink-100 to-purple-100 rounded-t-lg">
+                          <CardTitle className="flex items-center gap-2 text-purple-800">
+                            <FileText className="h-6 w-6 text-pink-600" />
+                            📝 Recent Assignments
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4">
+                          <div className="space-y-3">
+                            {assignments.slice(0, 3).map((assignment, idx) => (
+                              <motion.div
+                                key={assignment.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.6 + idx * 0.1 }}
+                                whileHover={{ scale: 1.02, x: 5 }}
+                                className="flex items-center justify-between p-4 border-2 border-pink-200 rounded-xl bg-white hover:bg-gradient-to-r hover:from-pink-50 hover:to-purple-50 transition-all cursor-pointer"
+                              >
+                                <div className="flex-1">
+                                  <p className="font-bold text-sm text-gray-800">{assignment.title}</p>
+                                  <p className="text-xs text-gray-600 mt-1">{assignment.subject} • Due {assignment.dueDate}</p>
+                                </div>
+                                {getStatusBadge(assignment.status)}
+                              </motion.div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
 
                     {/* Upcoming Events */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Calendar className="h-5 w-5" />
-                          Upcoming Events
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3">
-                          {assignments.slice(0, 3).map((assignment) => (
-                            <div key={assignment.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <Calendar className="h-5 w-5 text-blue-600" />
-                              </div>
-                              <div className="flex-1">
-                                <p className="font-medium text-sm">{assignment.title}</p>
-                                <p className="text-xs text-gray-600">Due {assignment.dueDate}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.5 }}
+                    >
+                      <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white hover:shadow-xl transition-all">
+                        <CardHeader className="bg-gradient-to-r from-blue-100 to-cyan-100 rounded-t-lg">
+                          <CardTitle className="flex items-center gap-2 text-blue-800">
+                            <Calendar className="h-6 w-6 text-blue-600" />
+                            📅 Upcoming Events
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4">
+                          <div className="space-y-3">
+                            {assignments.slice(0, 3).map((assignment, idx) => (
+                              <motion.div
+                                key={assignment.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.6 + idx * 0.1 }}
+                                whileHover={{ scale: 1.02, x: 5 }}
+                                className="flex items-center gap-3 p-4 border-2 border-blue-200 rounded-xl bg-white hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 transition-all cursor-pointer"
+                              >
+                                <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                                  <Calendar className="h-7 w-7 text-white" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-bold text-sm text-gray-800">{assignment.title}</p>
+                                  <p className="text-xs text-gray-600 mt-1">Due {assignment.dueDate}</p>
+                                </div>
+                              </motion.div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
                   </div>
                 </div>
               )}
@@ -746,7 +895,9 @@ export default function StudentDashboard() {
               {activeTab === "assignments" && (
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold">Assignments</h2>
+                    <h2 className="text-3xl font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
+                      📚 Assignments
+                    </h2>
                     <div className="flex gap-2">
                       <Button 
                         variant="outline" 
@@ -770,7 +921,13 @@ export default function StudentDashboard() {
                                                    existingSubmission.grade === null;
                       
                       return (
-                      <Card key={assignment.id} className="hover:shadow-md transition-shadow">
+                      <motion.div
+                        key={assignment.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        whileHover={{ scale: 1.02 }}
+                      >
+                      <Card className="border-2 border-purple-200 bg-gradient-to-br from-white via-pink-50/30 to-purple-50/30 hover:shadow-xl transition-all">
                         <CardContent className="p-6">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
@@ -839,13 +996,16 @@ export default function StudentDashboard() {
                               {!existingSubmission && !deadlinePassed && (
                                 <Dialog>
                                   <DialogTrigger asChild>
-                                    <Button onClick={() => {
-                                      setSelectedAssignment(assignment);
-                                      setIsResubmitting(false);
-                                      setResubmissionId(null);
-                                    }}>
+                                    <Button 
+                                      onClick={() => {
+                                        setSelectedAssignment(assignment);
+                                        setIsResubmitting(false);
+                                        setResubmissionId(null);
+                                      }}
+                                      className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold shadow-lg hover:scale-105 transition-all"
+                                    >
                                       <Send className="h-4 w-4 mr-2" />
-                                      Submit Assignment
+                                      Submit Assignment 🚀
                                     </Button>
                                   </DialogTrigger>
                                   <DialogContent className="max-w-2xl">
@@ -902,15 +1062,19 @@ export default function StudentDashboard() {
                               {canResubmitAssignment && (
                                 <Dialog>
                                   <DialogTrigger asChild>
-                                    <Button variant="outline" onClick={() => {
-                                      setSelectedAssignment(assignment);
-                                      setSubmissionText(existingSubmission.content || "");
-                                      setSubmissionFile(null);
-                                      setIsResubmitting(true);
-                                      setResubmissionId(existingSubmission.id);
-                                    }}>
+                                    <Button 
+                                      variant="outline" 
+                                      onClick={() => {
+                                        setSelectedAssignment(assignment);
+                                        setSubmissionText(existingSubmission.content || "");
+                                        setSubmissionFile(null);
+                                        setIsResubmitting(true);
+                                        setResubmissionId(existingSubmission.id);
+                                      }}
+                                      className="border-2 border-orange-400 bg-gradient-to-r from-orange-50 to-yellow-50 hover:from-orange-100 hover:to-yellow-100 text-orange-700 font-bold hover:scale-105 transition-all"
+                                    >
                                       <RefreshCw className="h-4 w-4 mr-2" />
-                                      Resubmit
+                                      Resubmit 🔄
                                     </Button>
                                   </DialogTrigger>
                                   <DialogContent className="max-w-2xl">
@@ -988,6 +1152,7 @@ export default function StudentDashboard() {
                           </div>
                         </CardContent>
                       </Card>
+                      </motion.div>
                       );
                     })}
                   </div>
@@ -997,7 +1162,9 @@ export default function StudentDashboard() {
               {activeTab === "submissions" && (
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold">My Submissions</h2>
+                    <h2 className="text-3xl font-bold bg-gradient-to-r from-green-600 via-teal-600 to-blue-600 bg-clip-text text-transparent">
+                      ✨ My Submissions
+                    </h2>
                   </div>
 
                   <div className="grid gap-4">
@@ -1006,7 +1173,13 @@ export default function StudentDashboard() {
                       const deadlinePassed = assignment ? isDeadlinePassed(assignment.dueDate) : true;
                       
                       return (
-                        <Card key={submission.id}>
+                        <motion.div
+                          key={submission.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          whileHover={{ scale: 1.01 }}
+                        >
+                        <Card className="border-2 border-green-200 bg-gradient-to-br from-white via-green-50/30 to-teal-50/30 hover:shadow-xl transition-all">
                         <CardContent className="p-6">
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex-1">
@@ -1147,26 +1320,33 @@ export default function StudentDashboard() {
                           </div>
                         </CardContent>
                       </Card>
+                      </motion.div>
                       );
                     })}
 
                     {submissions.length === 0 && (
-                      <Card>
-                        <CardContent className="p-8 text-center">
-                          <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                          <h3 className="text-lg font-medium text-gray-900 mb-2">No Submissions Yet</h3>
-                          <p className="text-gray-600 mb-4">
-                            You haven&apos;t submitted any assignments yet. 
-                          </p>
-                          <Button 
-                            variant="outline" 
-                            onClick={() => setActiveTab("assignments")}
-                          >
-                            <FileText className="h-4 w-4 mr-2" />
-                            View Assignments
-                          </Button>
-                        </CardContent>
-                      </Card>
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                      >
+                        <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
+                          <CardContent className="p-12 text-center">
+                            <div className="text-6xl mb-4">📝</div>
+                            <h3 className="text-2xl font-bold text-purple-800 mb-2">No Submissions Yet</h3>
+                            <p className="text-purple-600 mb-6 text-lg">
+                              You haven&apos;t submitted any assignments yet. Let&apos;s get started! 🚀
+                            </p>
+                            <Button 
+                              className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold shadow-lg hover:scale-105 transition-all"
+                              onClick={() => setActiveTab("assignments")}
+                              size="lg"
+                            >
+                              <FileText className="h-5 w-5 mr-2" />
+                              View Assignments
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
                     )}
                   </div>
                 </div>
@@ -1175,17 +1355,24 @@ export default function StudentDashboard() {
               {activeTab === "grades" && (
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold">Grades & Performance</h2>
+                    <h2 className="text-3xl font-bold bg-gradient-to-r from-yellow-600 via-orange-600 to-red-600 bg-clip-text text-transparent">
+                      🏆 Grades & Performance
+                    </h2>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Trophy className="h-5 w-5" />
-                          Overall Performance
-                        </CardTitle>
-                      </CardHeader>
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      whileHover={{ scale: 1.05 }}
+                    >
+                      <Card className="border-2 border-yellow-300 bg-gradient-to-br from-yellow-50 to-orange-50 hover:shadow-xl transition-all">
+                        <CardHeader className="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-t-lg">
+                          <CardTitle className="flex items-center gap-2 text-orange-800">
+                            <Trophy className="h-6 w-6 text-yellow-600" />
+                            Overall Performance
+                          </CardTitle>
+                        </CardHeader>
                       <CardContent>
                         <div className="text-center space-y-2">
                           <div className="text-3xl font-bold text-green-600">
@@ -1205,11 +1392,18 @@ export default function StudentDashboard() {
                         </div>
                       </CardContent>
                     </Card>
+                    </motion.div>
 
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Target className="h-5 w-5" />
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.1 }}
+                      whileHover={{ scale: 1.05 }}
+                    >
+                    <Card className="border-2 border-blue-300 bg-gradient-to-br from-blue-50 to-cyan-50 hover:shadow-xl transition-all">
+                      <CardHeader className="bg-gradient-to-r from-blue-100 to-cyan-100 rounded-t-lg">
+                        <CardTitle className="flex items-center gap-2 text-blue-800">
+                          <Target className="h-6 w-6 text-blue-600" />
                           Assignments Completed
                         </CardTitle>
                       </CardHeader>
@@ -1234,11 +1428,18 @@ export default function StudentDashboard() {
                         </div>
                       </CardContent>
                     </Card>
+                    </motion.div>
 
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <TrendingUp className="h-5 w-5" />
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.2 }}
+                      whileHover={{ scale: 1.05 }}
+                    >
+                    <Card className="border-2 border-purple-300 bg-gradient-to-br from-purple-50 to-pink-50 hover:shadow-xl transition-all">
+                      <CardHeader className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-t-lg">
+                        <CardTitle className="flex items-center gap-2 text-purple-800">
+                          <TrendingUp className="h-6 w-6 text-purple-600" />
                           Pending Assignments
                         </CardTitle>
                       </CardHeader>
@@ -1259,9 +1460,15 @@ export default function StudentDashboard() {
                         </div>
                       </CardContent>
                     </Card>
+                    </motion.div>
                   </div>
 
-                  <Card>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                  <Card className="border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-white hover:shadow-xl transition-all">
                     <CardHeader>
                       <CardTitle>Grade Breakdown by Subject</CardTitle>
                     </CardHeader>
@@ -1319,6 +1526,7 @@ export default function StudentDashboard() {
                       </div>
                     </CardContent>
                   </Card>
+                  </motion.div>
                 </div>
               )}
 
