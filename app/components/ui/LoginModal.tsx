@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useAuth } from "../../../contexts/AuthContext";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +26,53 @@ export function LoginModal({ children }: LoginModalProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<"login" | "forgot">("login");
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (!nextOpen) {
+      setIsLoading(false);
+      setMode("login");
+      setPassword("");
+      setShowPassword(false);
+    }
+  };
+
+  const handlePasswordResetRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/password-reset/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || data?.success === false) {
+        toast.error(data?.error || "Reset email not sent");
+        return;
+      }
+
+      toast.success(data?.message || "Reset link sent to your email.");
+
+      // Close modal and redirect automatically
+      setOpen(false);
+      setMode("login");
+      setPassword("");
+      setShowPassword(false);
+      window.setTimeout(() => {
+        window.location.href = "/";
+      }, 700);
+    } catch (error) {
+      console.error("Password reset request failed:", error);
+      toast.error("Server error. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,97 +104,139 @@ export function LoginModal({ children }: LoginModalProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-md bg-gradient-to-br from-[#1a2236] to-[#0f1419] border border-yellow-400/20 backdrop-blur-xl">
         <DialogHeader className="space-y-3">
           <DialogTitle className="text-2xl font-bold text-center bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent">
-            Welcome Back
+            {mode === "login" ? "Welcome Back" : "Reset Password"}
           </DialogTitle>
           <DialogDescription className="text-center text-yellow-400/70">
-            Sign in to your ACHARYA account to continue
+            {mode === "login"
+              ? "Sign in to your ACHARYA account to continue"
+              : "Enter your email and we’ll send a reset link."}
           </DialogDescription>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4 mt-6">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-yellow-400/90 font-medium">
-              Email
-            </Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-yellow-400/60" />
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 bg-white/5 border-yellow-400/20 text-white placeholder:text-yellow-400/50 focus:border-yellow-400/40 focus:ring-yellow-400/20"
-                required
-              />
+
+        {mode === "login" ? (
+          <form onSubmit={handleSubmit} className="space-y-4 mt-6">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-yellow-400/90 font-medium">
+                Email
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-yellow-400/60" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10 bg-white/5 border-yellow-400/20 text-white placeholder:text-yellow-400/50 focus:border-yellow-400/40 focus:ring-yellow-400/20"
+                  required
+                />
+              </div>
             </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-yellow-400/90 font-medium">
-              Password
-            </Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-yellow-400/60" />
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 pr-10 bg-white/5 border-yellow-400/20 text-white placeholder:text-yellow-400/50 focus:border-yellow-400/40 focus:ring-yellow-400/20"
-                required
-              />
+
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-yellow-400/90 font-medium">
+                Password
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-yellow-400/60" />
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10 pr-10 bg-white/5 border-yellow-400/20 text-white placeholder:text-yellow-400/50 focus:border-yellow-400/40 focus:ring-yellow-400/20"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-yellow-400/60 hover:text-yellow-400/80 transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <label className="flex items-center space-x-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="rounded border-yellow-400/20 text-yellow-400 focus:ring-yellow-400/20 bg-white/5"
+                />
+                <span className="text-yellow-400/70">Remember me</span>
+              </label>
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-yellow-400/60 hover:text-yellow-400/80 transition-colors"
+                className="text-sm text-yellow-400 hover:text-yellow-300 transition-colors"
+                onClick={() => setMode("forgot")}
               >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
+                Forgot password?
               </button>
             </div>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <label className="flex items-center space-x-2 text-sm">
-              <input
-                type="checkbox"
-                className="rounded border-yellow-400/20 text-yellow-400 focus:ring-yellow-400/20 bg-white/5"
-              />
-              <span className="text-yellow-400/70">Remember me</span>
-            </label>
-            <button
-              type="button"
-              className="text-sm text-yellow-400 hover:text-yellow-300 transition-colors"
+
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-yellow-400/90 via-amber-500/90 to-orange-500/90 hover:from-yellow-400 hover:via-amber-500 hover:to-orange-500 text-[#1a2236] font-bold shadow-lg hover:shadow-xl hover:shadow-yellow-400/20 transition-all duration-300 transform hover:scale-[1.02] backdrop-blur-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Forgot password?
-            </button>
-          </div>
-          
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-gradient-to-r from-yellow-400/90 via-amber-500/90 to-orange-500/90 hover:from-yellow-400 hover:via-amber-500 hover:to-orange-500 text-[#1a2236] font-bold shadow-lg hover:shadow-xl hover:shadow-yellow-400/20 transition-all duration-300 transform hover:scale-[1.02] backdrop-blur-md disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? (
-              <div className="flex items-center justify-center space-x-2">
-                <div className="w-4 h-4 border-2 border-[#1a2236]/30 border-t-[#1a2236] rounded-full animate-spin"></div>
-                <span>Signing in...</span>
+              {isLoading ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="w-4 h-4 border-2 border-[#1a2236]/30 border-t-[#1a2236] rounded-full animate-spin"></div>
+                  <span>Signing in...</span>
+                </div>
+              ) : (
+                "Sign In"
+              )}
+            </Button>
+          </form>
+        ) : (
+          <form onSubmit={handlePasswordResetRequest} className="space-y-4 mt-6">
+            <div className="space-y-2">
+              <Label htmlFor="resetEmail" className="text-yellow-400/90 font-medium">
+                Email
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-yellow-400/60" />
+                <Input
+                  id="resetEmail"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10 bg-white/5 border-yellow-400/20 text-white placeholder:text-yellow-400/50 focus:border-yellow-400/40 focus:ring-yellow-400/20"
+                  required
+                />
               </div>
-            ) : (
-              "Sign In"
-            )}
-          </Button>
-        </form>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                className="flex-1 bg-white/5 border border-yellow-400/20 text-yellow-300 hover:bg-white/10"
+                onClick={() => setMode("login")}
+              >
+                Back
+              </Button>
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="flex-1 bg-gradient-to-r from-yellow-400/90 via-amber-500/90 to-orange-500/90 text-[#1a2236] font-bold disabled:opacity-50"
+              >
+                {isLoading ? "Sending..." : "Send link"}
+              </Button>
+            </div>
+          </form>
+        )}
         
       </DialogContent>
     </Dialog>

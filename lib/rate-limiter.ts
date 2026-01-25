@@ -83,8 +83,13 @@ class RateLimiter {
 // Create singleton instances
 export const activationRateLimiter = new RateLimiter(5, 15); // 5 attempts per 15 minutes
 export const verificationRateLimiter = new RateLimiter(10, 15); // 10 verifications per 15 minutes
+export const passwordResetRequestRateLimiter = new RateLimiter(5, 15); // 5 requests per 15 minutes
+export const passwordResetConfirmRateLimiter = new RateLimiter(10, 15); // 10 confirmations per 15 minutes
 
 // Rate limit by IP + token for more granular control
-export function getRateLimitKey(type: 'activation' | 'verification', identifier: string): string {
+export function getRateLimitKey(
+  type: 'activation' | 'verification' | 'passwordResetRequest' | 'passwordResetConfirm',
+  identifier: string
+): string {
   return `${type}:${identifier}`;
 }
