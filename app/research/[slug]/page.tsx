@@ -1,71 +1,109 @@
-import Header from "@/components/home/Header";
-import Footer from "@/components/home/Footer";
-import Chatbot from "@/components/home/Chatbot";
-import Link from "next/link";
+"use client"
 
-export default async function ResearchPostPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
-  const title = slug
-    .split("-")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+import { useState } from "react"
+import Header from "@/components/home/Header"
+import Footer from "@/components/home/Footer"
+import Chatbot from "@/components/home/Chatbot"
+import { Breadcrumb } from "@/app/components/research/breadcrumb"
+import { AuthorSection } from "@/app/components/research/author-section"
+import { TableOfContents } from "@/app/components/research/table-of-contents"
+import { ArticleContent } from "@/app/components/research/article-content"
+import { AccessModal } from "@/app/components/research/access-modal"
+import { RelatedTopics } from "@/app/components/research/related-topics"
+import { Sparkles } from "lucide-react"
+
+const tableOfContentsItems = [
+  { id: "introduction", label: "Introduction" },
+  { id: "nanosensor-detection", label: "Nanosensor Detection" },
+  { id: "car-t-therapy", label: "CAR-T Cell Therapy" },
+  { id: "research-slides", label: "Research Slides" },
+  { id: "presentation", label: "Presentation" },
+  { id: "future-implications", label: "Future Implications" },
+  { id: "sources", label: "Sources" },
+]
+
+export default function ResearchPostPage() {
+  const [showModal, setShowModal] = useState(false)
+  const [hasAccess, setHasAccess] = useState(false)
+  const [activeSection, setActiveSection] = useState("introduction")
+
+  const handleSlideView = (slideIndex: number) => {
+    if (slideIndex >= 2 && !hasAccess) {
+      setShowModal(true)
+    }
+  }
+
+  const handleAccessGranted = () => {
+    setHasAccess(true)
+    setShowModal(false)
+  }
 
   return (
     <main className="min-h-screen theme-bg-dark flex flex-col">
       <Header />
 
-      <section className="theme-bg-medium py-10 sm:py-12 border-b border-yellow-400/10 pt-20 sm:pt-24">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav aria-label="Breadcrumb" className="mb-4">
-            <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm theme-text-muted">
-              <li>
-                <Link href="/blog" className="hover:underline hover:text-yellow-400 transition-colors">
-                  Acharya Blog
-                </Link>
-              </li>
-              <li className="opacity-60">/</li>
-              <li>
-                <Link href="/research" className="hover:underline hover:text-yellow-400 transition-colors">
-                  Research Showcase
-                </Link>
-              </li>
-              <li className="opacity-60">/</li>
-              <li className="text-yellow-400 font-semibold">
-                {title}
-              </li>
-            </ol>
-          </nav>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-yellow-400 tracking-tight drop-shadow-sm">
-            {title}
-          </h1>
-          <p className="mt-4 theme-text-muted max-w-3xl">
-            This detail page is a placeholder for now. When you add real research posts, this route can render the full article content.
-          </p>
-        </div>
-      </section>
+      {/* Hero Header with gradient */}
+      <div className="relative overflow-hidden border-b border-slate-700/50">
+        {/* Background gradient effect */}
+        <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 via-transparent to-yellow-400/10" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-yellow-400/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 
-      <section className="theme-bg-dark py-10 sm:py-12">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="rounded-3xl border-2 border-slate-700/50 bg-gradient-to-br from-slate-800 via-slate-800/95 to-slate-900 p-6 sm:p-8 shadow-2xl">
-            <div className="theme-text-light font-semibold mb-2">Coming soon</div>
-            <div className="theme-text-muted">
-              Want me to wire this to real content (DB / CMS / markdown files)?
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="py-4 pt-20 sm:pt-24">
+            <Breadcrumb />
+          </div>
+
+          {/* Title Section */}
+          <div className="py-12 lg:py-16">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-yellow-400/10 border border-yellow-400/20 rounded-full text-xs font-medium text-yellow-400">
+                <Sparkles className="w-3 h-3" />
+                Featured Research
+              </span>
+              <span className="text-xs theme-text-muted">Published Dec 2024</span>
             </div>
-            <div className="mt-6">
-              <Link href="/research" className="text-yellow-400 font-semibold hover:underline">
-                ← Back to category
-              </Link>
-            </div>
+
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-semibold theme-text-light leading-tight mb-6 max-w-4xl text-balance">
+              Cancer: CAR-T Cell Therapy & Nanosensor Detection
+            </h1>
+
+            <p className="text-lg md:text-xl theme-text-muted max-w-3xl leading-relaxed mb-8">
+              Exploring revolutionary approaches to cancer treatment through activity-based nanosensors and chimeric
+              antigen receptor T-cell therapy.
+            </p>
+
+            <AuthorSection />
           </div>
         </div>
-      </section>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="flex flex-col lg:flex-row gap-12">
+          {/* Article Content */}
+          <article className="flex-1 w-full lg:max-w-none">
+            <ArticleContent
+              onSectionChange={setActiveSection}
+              hasAccess={hasAccess}
+              onSlideView={handleSlideView}
+              onRequestAccess={() => setShowModal(true)}
+            />
+          </article>
+
+          {/* Sidebar - Sticky */}
+          <aside className="hidden lg:block w-80 shrink-0">
+            <div className="sticky top-28 space-y-8 max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-hide">
+              <TableOfContents items={tableOfContentsItems} activeSection={activeSection} />
+              <RelatedTopics />
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      <AccessModal isOpen={showModal} onClose={() => setShowModal(false)} onSubmit={handleAccessGranted} />
 
       <Footer />
       <Chatbot />
     </main>
-  );
+  )
 }
