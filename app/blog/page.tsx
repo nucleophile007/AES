@@ -17,7 +17,7 @@ const heroCategories = [
   },
   {
     id: "education-admissions",
-    title: "Education and College Admissions",
+    title: "Acharya blog",
     icon: (props: React.SVGProps<SVGSVGElement>) => <BookOpen className="h-6 w-6 text-yellow-400 group-hover:rotate-180 group-hover:scale-110 transition-transform duration-300" {...props} />,
   },
   {
