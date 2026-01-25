@@ -48,6 +48,7 @@ model Teacher {
   isActivated       Boolean                   @default(false)
   assignments       Assignment[]
   classSchedules    ClassSchedule[]
+  mentorProfile     Mentor?
   resources         Resource[]
   submissionRemarks StudentSubmissionRemark[]
   students          TeacherStudent[]
@@ -72,7 +73,7 @@ model Student {
   classSchedules      ClassSchedule[]
   enrollments         Enrollment[]
   Payment             Payment[]
-  ParentAccount       ParentAccount?      @relation(fields: [parentAccountId], references: [id])
+  parentAccount       ParentAccount?      @relation(fields: [parentAccountId], references: [id])
   assignedResources   StudentResource[]
   studentSubmissions  StudentSubmission[]
   submissions         Submission[]
@@ -269,7 +270,7 @@ model ActivationRequest {
   expiresAt DateTime
   isUsed    Boolean  @default(false)
   createdAt DateTime @default(now())
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
 
   @@unique([email, role])
 }
@@ -316,11 +317,11 @@ model Testimonial {
   content    String
   authorType String
   authorName String
-  videoLink  String?
   isApproved Boolean  @default(false)
   isVisible  Boolean  @default(true)
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  updatedAt  DateTime
+  videoLink  String?
   Student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
@@ -365,8 +366,20 @@ model Feedback {
   createdAt   DateTime  @default(now())
   reviewedAt  DateTime?
 
-  @@index([parentId])
   @@index([createdAt])
+  @@index([parentId])
+}
+
+model ParentAccount {
+  id          Int       @id @default(autoincrement())
+  name        String
+  email       String    @unique
+  phone       String?
+  password    String?
+  isActivated Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  students    Student[]
 }
 
 model TransactionReceipt {
@@ -386,19 +399,45 @@ model TransactionReceipt {
   createdAt       DateTime  @default(now())
   reviewedAt      DateTime?
 
+  @@index([createdAt])
   @@index([parentId])
   @@index([status])
-  @@index([createdAt])
 }
 
-model ParentAccount {
-  id          Int       @id @default(autoincrement())
-  name        String
-  email       String    @unique
-  phone       String?
-  password    String?
-  isActivated Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime
-  Student     Student[]
+model PasswordResetRequest {
+  id        Int      @id @default(autoincrement())
+  role      String
+  userId    Int
+  tokenHash String   @unique
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+
+  @@index([expiresAt])
+  @@index([role, userId])
+}
+
+model Mentor {
+  id           Int      @id @default(autoincrement())
+  teacherId    Int?     @unique
+  name         String
+  role         String
+  workplace    String
+  education    String
+  institution  String
+  image        String
+  experience   String?
+  specialties  String[]
+  achievements String[]
+  department   String   @default("General")
+  bio          String   @db.Text
+  isActive     Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  teacher      Teacher? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+
+  @@index([isActive, displayOrder])
+  @@index([teacherId])
 }

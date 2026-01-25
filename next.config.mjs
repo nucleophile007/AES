@@ -1,7 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['images.unsplash.com', 'cdn.builder.io'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.builder.io',
+      },
+      {
+        protocol: 'https',
+        hostname: 'pub-6860df273959446786e5c3556348f4b4.r2.dev',
+      },
+    ],
   },
   reactStrictMode: true,
   webpack: (config, { dev }) => {
