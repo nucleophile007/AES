@@ -36,13 +36,13 @@ import { cn } from "@/lib/utils";
 import AssignmentManager from "@/components/teacher/AssignmentManager";
 import SubmissionReviewer from "@/components/teacher/SubmissionReviewer";
 import CustomChatDialog from "../../components/CustomChatDialog";
-import StudentProgressModal from "../../components/teacher/StudentProgressModal";
-import { 
-  User, 
-  BookOpen, 
-  GraduationCap, 
-  Search, 
-  Users, 
+import StudentProgressModal from "../../components/teacher/RealStudentProgressModal";
+import {
+  User,
+  BookOpen,
+  GraduationCap,
+  Search,
+  Users,
   Calendar,
   Clock,
   FileText,
@@ -188,16 +188,16 @@ export default function TeacherDashboard() {
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [remarkText, setRemarkText] = useState("");
   const [isAddingRemark, setIsAddingRemark] = useState(false);
-  
+
   // Chat state
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [selectedChatStudent, setSelectedChatStudent] = useState<Student | null>(null);
-  const [selectedChatParent, setSelectedChatParent] = useState<{id: number, name: string} | null>(null);
-  
+  const [selectedChatParent, setSelectedChatParent] = useState<{ id: number, name: string } | null>(null);
+
   // Parent conversations state
   const [parentConversations, setParentConversations] = useState<any[]>([]);
   const [loadingParentConversations, setLoadingParentConversations] = useState(false);
-  
+
   // Progress modal state
   const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
   const [selectedProgressStudent, setSelectedProgressStudent] = useState<Student | null>(null);
@@ -221,7 +221,7 @@ export default function TeacherDashboard() {
       setLoading(true);
       const response = await fetch(`/api/teacher/students?teacherEmail=${encodeURIComponent(teacherEmail)}`);
       const data = await response.json();
-      
+
       if (response.ok && data.teacher) {
         setTeacher(data.teacher);
         setStudents(data.students || []);
@@ -240,7 +240,7 @@ export default function TeacherDashboard() {
     try {
       const response = await fetch(`/api/teacher/assignments?teacherEmail=${encodeURIComponent(teacherEmail)}`);
       const data = await response.json();
-      
+
       if (data.success) {
         setAssignments(data.assignments);
       } else {
@@ -434,7 +434,7 @@ export default function TeacherDashboard() {
       setSubmissionsLoading(true);
       const response = await fetch(`/api/teacher/submissions/resources?teacherEmail=${encodeURIComponent(teacherEmail)}`);
       const data = await response.json();
-      
+
       if (data.success) {
         setStudentSubmissions(data.submissions);
       } else {
@@ -449,12 +449,12 @@ export default function TeacherDashboard() {
 
   const fetchParentConversations = async () => {
     if (!teacher?.id) return;
-    
+
     try {
       setLoadingParentConversations(true);
       const response = await fetch(`/api/teacher/conversations?teacherId=${teacher.id}`);
       const data = await response.json();
-      
+
       if (data.success) {
         // Filter to only show parent conversations
         const parents = data.conversations.filter((c: any) => c.recipientRole === 'parent');
@@ -471,7 +471,7 @@ export default function TeacherDashboard() {
 
   const handleAddRemark = async (submissionId: number) => {
     if (!remarkText.trim()) return;
-    
+
     try {
       setIsAddingRemark(true);
       const response = await fetch('/api/teacher/submissions/resources', {
@@ -485,9 +485,9 @@ export default function TeacherDashboard() {
           remark: remarkText,
         }),
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         // Refresh submissions
         await fetchStudentSubmissions();
@@ -643,7 +643,7 @@ export default function TeacherDashboard() {
               </div>
             </div>
           </SidebarHeader>
-          
+
           <SidebarContent>
             <SidebarGroup>
               <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
@@ -672,7 +672,7 @@ export default function TeacherDashboard() {
                 <SidebarMenuButton
                   onClick={async () => {
                     try {
-                      await fetch('/api/auth/logout', { 
+                      await fetch('/api/auth/logout', {
                         method: 'POST',
                         credentials: 'include'
                       });
@@ -721,150 +721,150 @@ export default function TeacherDashboard() {
                 transition={{ duration: 0.5 }}
                 className="space-y-6"
               >
-            {/* Parent Conversations Section */}
-            {parentConversations.length > 0 && (
-              <div className="mb-6">
+                {/* Parent Conversations Section */}
+                {parentConversations.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-brand-blue">
+                      <Users className="h-5 w-5" />
+                      Parent Conversations
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                      {parentConversations.map((parent) => (
+                        <Card key={parent.recipientId} className="border-2 hover:shadow-xl transition-all hover:border-brand-teal">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <p className="font-semibold text-gray-900">{parent.recipientName}</p>
+                                <p className="text-sm text-gray-600 mt-1 line-clamp-2">{parent.lastMessage}</p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {new Date(parent.lastMessageTime).toLocaleDateString()}
+                                </p>
+                                {parent.unreadCount > 0 && (
+                                  <Badge className="mt-2 bg-purple-500 text-white">
+                                    {parent.unreadCount} unread
+                                  </Badge>
+                                )}
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="ml-3 text-purple-600 hover:bg-purple-50 border-purple-200"
+                                onClick={() => {
+                                  setSelectedChatParent({ id: parent.recipientId, name: parent.recipientName });
+                                  setSelectedChatStudent(null); // Clear student selection
+                                  setIsChatOpen(true);
+                                }}
+                              >
+                                <MessageCircle className="h-4 w-4 mr-2" />
+                                Chat
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                    <div className="border-t border-gray-200 my-6"></div>
+                  </div>
+                )}
+
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-brand-blue">
-                  <Users className="h-5 w-5" />
-                  Parent Conversations
+                  <GraduationCap className="h-5 w-5" />
+                  Students
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                  {parentConversations.map((parent) => (
-                    <Card key={parent.recipientId} className="border-2 hover:shadow-xl transition-all hover:border-brand-teal">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <p className="font-semibold text-gray-900">{parent.recipientName}</p>
-                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">{parent.lastMessage}</p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {new Date(parent.lastMessageTime).toLocaleDateString()}
-                            </p>
-                            {parent.unreadCount > 0 && (
-                              <Badge className="mt-2 bg-purple-500 text-white">
-                                {parent.unreadCount} unread
-                              </Badge>
-                            )}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredStudents.length === 0 && (
+                    <div className="col-span-full text-center text-gray-400 py-12">
+                      No students found.
+                    </div>
+                  )}
+                  {filteredStudents.map((student) => (
+                    <Card key={student.id} className="border-2 hover:shadow-xl transition-all hover:border-brand-blue">
+                      <CardHeader className="bg-gradient-to-r from-brand-blue/5 to-brand-teal/5">
+                        <CardTitle className="flex items-center gap-2 text-brand-blue">
+                          <User className="h-5 w-5" />
+                          {student.name}
+                        </CardTitle>
+                        <div className="text-xs text-gray-500">{student.email}</div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          {/* Program Badges */}
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant="outline" className="bg-brand-blue/10 text-brand-blue border-brand-blue/30">
+                              {student.program}
+                            </Badge>
+                            <Badge variant="outline" className="bg-brand-teal/10 text-brand-teal border-brand-teal/30">
+                              {student.grade}
+                            </Badge>
                           </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="ml-3 text-purple-600 hover:bg-purple-50 border-purple-200"
-                            onClick={() => {
-                              setSelectedChatParent({ id: parent.recipientId, name: parent.recipientName });
-                              setSelectedChatStudent(null); // Clear student selection
-                              setIsChatOpen(true);
-                            }}
-                          >
-                            <MessageCircle className="h-4 w-4 mr-2" />
-                            Chat
-                          </Button>
+
+                          {/* School Info */}
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <School className="h-4 w-4" />
+                            {student.schoolName}
+                          </div>
+
+                          {/* Parent Info */}
+                          <div className="text-xs text-gray-500 space-y-1">
+                            <div className="flex items-center gap-1">
+                              <User className="h-3 w-3" />
+                              Parent: {student.parentName}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Mail className="h-3 w-3" />
+                              {student.parentEmail}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Phone className="h-3 w-3" />
+                              {student.parentPhone}
+                            </div>
+                          </div>
+
+                          {/* Recent Submissions */}
+                          {student.recentSubmissions.length > 0 && (
+                            <div className="text-xs">
+                              <div className="font-medium text-gray-700 mb-1">Recent Submissions:</div>
+                              {student.recentSubmissions.slice(0, 2).map((submission, idx) => (
+                                <div key={idx} className="text-gray-500 flex justify-between">
+                                  <span>{submission.assignment.title}</span>
+                                  <span className={submission.grade ? 'text-green-600' : 'text-orange-600'}>
+                                    {submission.grade ? `${submission.grade}%` : 'Pending'}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="flex gap-2 mt-3">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1"
+                              onClick={() => {
+                                setSelectedProgressStudent(student);
+                                setIsProgressModalOpen(true);
+                              }}
+                            >
+                              View Details
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-brand-blue hover:bg-brand-blue/10"
+                              onClick={() => {
+                                setSelectedChatStudent(student);
+                                setSelectedChatParent(null); // Clear parent selection
+                                setIsChatOpen(true);
+                              }}
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
                   ))}
                 </div>
-                <div className="border-t border-gray-200 my-6"></div>
-              </div>
-            )}
-
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-brand-blue">
-              <GraduationCap className="h-5 w-5" />
-              Students
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredStudents.length === 0 && (
-                <div className="col-span-full text-center text-gray-400 py-12">
-                  No students found.
-                </div>
-              )}
-              {filteredStudents.map((student) => (
-                <Card key={student.id} className="border-2 hover:shadow-xl transition-all hover:border-brand-blue">
-                  <CardHeader className="bg-gradient-to-r from-brand-blue/5 to-brand-teal/5">
-                    <CardTitle className="flex items-center gap-2 text-brand-blue">
-                      <User className="h-5 w-5" />
-                      {student.name}
-                    </CardTitle>
-                    <div className="text-xs text-gray-500">{student.email}</div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {/* Program Badges */}
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant="outline" className="bg-brand-blue/10 text-brand-blue border-brand-blue/30">
-                          {student.program}
-                        </Badge>
-                        <Badge variant="outline" className="bg-brand-teal/10 text-brand-teal border-brand-teal/30">
-                          {student.grade}
-                        </Badge>
-                      </div>
-                      
-                      {/* School Info */}
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <School className="h-4 w-4" />
-                        {student.schoolName}
-                      </div>
-                      
-                      {/* Parent Info */}
-                      <div className="text-xs text-gray-500 space-y-1">
-                        <div className="flex items-center gap-1">
-                          <User className="h-3 w-3" />
-                          Parent: {student.parentName}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Mail className="h-3 w-3" />
-                          {student.parentEmail}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Phone className="h-3 w-3" />
-                          {student.parentPhone}
-                        </div>
-                      </div>
-                      
-                      {/* Recent Submissions */}
-                      {student.recentSubmissions.length > 0 && (
-                        <div className="text-xs">
-                          <div className="font-medium text-gray-700 mb-1">Recent Submissions:</div>
-                          {student.recentSubmissions.slice(0, 2).map((submission, idx) => (
-                            <div key={idx} className="text-gray-500 flex justify-between">
-                              <span>{submission.assignment.title}</span>
-                              <span className={submission.grade ? 'text-green-600' : 'text-orange-600'}>
-                                {submission.grade ? `${submission.grade}%` : 'Pending'}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      
-                      <div className="flex gap-2 mt-3">
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="flex-1"
-                          onClick={() => {
-                            setSelectedProgressStudent(student);
-                            setIsProgressModalOpen(true);
-                          }}
-                        >
-                          View Details
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="text-brand-blue hover:bg-brand-blue/10"
-                          onClick={() => {
-                            setSelectedChatStudent(student);
-                            setSelectedChatParent(null); // Clear parent selection
-                            setIsChatOpen(true);
-                          }}
-                        >
-                          <MessageCircle className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
               </motion.div>
             )}
 
@@ -875,12 +875,12 @@ export default function TeacherDashboard() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-              <AssignmentManager 
-              teacherEmail={teacherEmail}
-              assignments={assignments}
-              onAssignmentCreated={fetchAssignments}
-              onAssignmentUpdated={fetchAssignments}
-              />
+                <AssignmentManager
+                  teacherEmail={teacherEmail}
+                  assignments={assignments}
+                  onAssignmentCreated={fetchAssignments}
+                  onAssignmentUpdated={fetchAssignments}
+                />
               </motion.div>
             )}
 
@@ -891,7 +891,7 @@ export default function TeacherDashboard() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-              <SubmissionReviewer teacherEmail={teacherEmail} />
+                <SubmissionReviewer teacherEmail={teacherEmail} />
               </motion.div>
             )}
 
@@ -903,394 +903,394 @@ export default function TeacherDashboard() {
                 transition={{ duration: 0.5 }}
                 className="space-y-6"
               >
-              {/* Send resource to students */}
-              <Card className="border-2 border-brand-blue/30 bg-gradient-to-br from-white to-brand-blue/5 hover:shadow-xl transition-all">
-                <CardHeader className="pb-3 bg-gradient-to-r from-brand-blue/10 to-brand-teal/10">
-                  <CardTitle className="text-lg flex items-center gap-2 text-brand-blue">
-                    <Send className="h-5 w-5" />
-                    Send Resource to Students
-                  </CardTitle>
-                  <CardDescription>
-                    Choose a category (assignment / personal / general), attach a file or link, and target students.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Title *</Label>
-                      <Input
-                        value={newResource.title}
-                        onChange={(e) => setNewResource({ ...newResource, title: e.target.value })}
-                        placeholder="Resource title"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Category *</Label>
-                      <select
-                        value={newResource.category}
-                        onChange={(e) => setNewResource({ ...newResource, category: e.target.value as ResourceCategory })}
-                        className="w-full px-3 py-2 border rounded-md bg-white"
-                      >
-                        <option value="assignment">Assignment</option>
-                        <option value="personal">Personal</option>
-                        <option value="general">General</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Description</Label>
-                      <Input
-                        value={newResource.description}
-                        onChange={(e) => setNewResource({ ...newResource, description: e.target.value })}
-                        placeholder="Short description (optional)"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Type *</Label>
-                      <select
-                        value={newResource.type}
-                        onChange={(e) => setNewResource({ ...newResource, type: e.target.value })}
-                        className="w-full px-3 py-2 border rounded-md bg-white"
-                      >
-                        <option value="document">Document</option>
-                        <option value="video">Video</option>
-                        <option value="image">Image</option>
-                        <option value="link">Link</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>Program *</Label>
-                      <Input
-                        value={newResource.program}
-                        onChange={(e) => setNewResource({ ...newResource, program: e.target.value })}
-                        placeholder="Program"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Subject *</Label>
-                      <Input
-                        value={newResource.subject}
-                        onChange={(e) => setNewResource({ ...newResource, subject: e.target.value })}
-                        placeholder="Subject"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Grade *</Label>
-                      <Input
-                        value={newResource.grade}
-                        onChange={(e) => setNewResource({ ...newResource, grade: e.target.value })}
-                        placeholder="Grade"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {newResource.category === "assignment" && (
+                {/* Send resource to students */}
+                <Card className="border-2 border-brand-blue/30 bg-gradient-to-br from-white to-brand-blue/5 hover:shadow-xl transition-all">
+                  <CardHeader className="pb-3 bg-gradient-to-r from-brand-blue/10 to-brand-teal/10">
+                    <CardTitle className="text-lg flex items-center gap-2 text-brand-blue">
+                      <Send className="h-5 w-5" />
+                      Send Resource to Students
+                    </CardTitle>
+                    <CardDescription>
+                      Choose a category (assignment / personal / general), attach a file or link, and target students.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Link to Assignment *</Label>
+                        <Label>Title *</Label>
+                        <Input
+                          value={newResource.title}
+                          onChange={(e) => setNewResource({ ...newResource, title: e.target.value })}
+                          placeholder="Resource title"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Category *</Label>
                         <select
-                          value={newResource.assignmentId ?? ""}
-                          onChange={(e) =>
-                            setNewResource({
-                              ...newResource,
-                              assignmentId: e.target.value ? Number(e.target.value) : null
-                            })
-                          }
+                          value={newResource.category}
+                          onChange={(e) => setNewResource({ ...newResource, category: e.target.value as ResourceCategory })}
                           className="w-full px-3 py-2 border rounded-md bg-white"
                         >
-                          <option value="">Select assignment</option>
-                          {assignments.map((a) => (
-                            <option key={a.id} value={a.id}>
-                              {a.title}
-                            </option>
-                          ))}
+                          <option value="assignment">Assignment</option>
+                          <option value="personal">Personal</option>
+                          <option value="general">General</option>
                         </select>
                       </div>
-                    )}
-
-                    <div className="space-y-2">
-                      <Label>Attach File (optional)</Label>
-                      <Input
-                        type="file"
-                        accept=".pdf,.doc,.docx,.txt,.jpg,.png,.ppt,.pptx,.xlsx,.mp4,.mov"
-                        onChange={(e) => setNewResourceFile(e.target.files?.[0] || null)}
-                      />
-                      <p className="text-xs text-gray-500">Or provide a link below.</p>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>Link URL (optional)</Label>
-                      <Input
-                        placeholder="https://..."
-                        value={newResource.linkUrl}
-                        onChange={(e) => setNewResource({ ...newResource, linkUrl: e.target.value })}
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Description</Label>
+                        <Input
+                          value={newResource.description}
+                          onChange={(e) => setNewResource({ ...newResource, description: e.target.value })}
+                          placeholder="Short description (optional)"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Type *</Label>
+                        <select
+                          value={newResource.type}
+                          onChange={(e) => setNewResource({ ...newResource, type: e.target.value })}
+                          className="w-full px-3 py-2 border rounded-md bg-white"
+                        >
+                          <option value="document">Document</option>
+                          <option value="video">Video</option>
+                          <option value="image">Image</option>
+                          <option value="link">Link</option>
+                        </select>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label>Select Students *</Label>
-                    <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
-                      {students.map((student) => (
-                        <label key={student.id} className="flex items-center gap-2 text-sm">
-                          <Checkbox
-                            checked={newResource.studentIds.includes(student.id)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setNewResource({
-                                  ...newResource,
-                                  studentIds: [...newResource.studentIds, student.id]
-                                });
-                              } else {
-                                setNewResource({
-                                  ...newResource,
-                                  studentIds: newResource.studentIds.filter((id) => id !== student.id)
-                                });
-                              }
-                            }}
-                          />
-                          <span className="flex-1">
-                            {student.name} <span className="text-gray-500">({student.email})</span>
-                          </span>
-                        </label>
-                      ))}
-                      {students.length === 0 && (
-                        <p className="text-sm text-gray-500">No students found.</p>
-                      )}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>Program *</Label>
+                        <Input
+                          value={newResource.program}
+                          onChange={(e) => setNewResource({ ...newResource, program: e.target.value })}
+                          placeholder="Program"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Subject *</Label>
+                        <Input
+                          value={newResource.subject}
+                          onChange={(e) => setNewResource({ ...newResource, subject: e.target.value })}
+                          placeholder="Subject"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Grade *</Label>
+                        <Input
+                          value={newResource.grade}
+                          onChange={(e) => setNewResource({ ...newResource, grade: e.target.value })}
+                          placeholder="Grade"
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center justify-end gap-3">
-                    {resourceError && (
-                      <span className="text-sm text-red-600 mr-auto">{resourceError}</span>
-                    )}
-                    <Button
-                      onClick={handleSendResource}
-                      disabled={sendingResource || !newResource.title || !newResource.type || newResource.studentIds.length === 0}
-                    >
-                      {sendingResource ? (
-                        <>
-                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="h-4 w-4 mr-2" />
-                          Send Resource
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-xl font-semibold">Student Resource Submissions</h3>
-                  <p className="text-gray-600">Review and provide feedback on work submitted by students</p>
-                </div>
-                <Button onClick={fetchStudentSubmissions} variant="outline">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Refresh
-                </Button>
-              </div>
-
-              {submissionsLoading ? (
-                <div className="text-center py-12">
-                  <RefreshCw className="h-8 w-8 animate-spin mx-auto text-gray-400" />
-                  <p className="mt-4 text-gray-600">Loading submissions...</p>
-                </div>
-              ) : studentSubmissions.length === 0 ? (
-                <div className="text-center py-12">
-                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Student Submissions</h3>
-                  <p className="text-gray-600">
-                    Students haven&apos;t submitted any resources for review yet.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid gap-6">
-                  {studentSubmissions.map((submission) => (
-                    <Card key={submission.id} className="hover:shadow-lg transition-shadow">
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <CardTitle className="text-lg mb-1">{submission.title}</CardTitle>
-                            <div className="flex items-center gap-4 text-sm text-gray-600">
-                              <span className="flex items-center gap-1">
-                                <User className="h-4 w-4" />
-                                {submission.student.name} ({submission.student.grade})
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-4 w-4" />
-                                {new Date(submission.submittedAt).toLocaleDateString()}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Users className="h-4 w-4" />
-                                {submission.allTeachers.length} teacher{submission.allTeachers.length !== 1 ? 's' : ''}
-                              </span>
-                            </div>
-                            {submission.description && (
-                              <p className="text-gray-600 mt-2">{submission.description}</p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={submission.hasMyRemark ? 'default' : 'secondary'}>
-                              {submission.hasMyRemark ? 'Reviewed' : 'Needs Review'}
-                            </Badge>
-                          </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {newResource.category === "assignment" && (
+                        <div className="space-y-2">
+                          <Label>Link to Assignment *</Label>
+                          <select
+                            value={newResource.assignmentId ?? ""}
+                            onChange={(e) =>
+                              setNewResource({
+                                ...newResource,
+                                assignmentId: e.target.value ? Number(e.target.value) : null
+                              })
+                            }
+                            className="w-full px-3 py-2 border rounded-md bg-white"
+                          >
+                            <option value="">Select assignment</option>
+                            {assignments.map((a) => (
+                              <option key={a.id} value={a.id}>
+                                {a.title}
+                              </option>
+                            ))}
+                          </select>
                         </div>
-                      </CardHeader>
-                      
-                      <CardContent className="space-y-4">
-                        {/* Content Preview */}
-                        {submission.content && (
-                          <div className="bg-gray-50 p-4 rounded-lg">
-                            <p className="text-sm font-medium text-gray-700 mb-2">Content:</p>
-                            <p className="text-sm text-gray-800 whitespace-pre-wrap line-clamp-4">
-                              {submission.content}
-                            </p>
-                          </div>
-                        )}
+                      )}
 
-                        {/* File Attachment */}
-                        {submission.fileUrl && submission.fileName && (
-                          <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
-                            <FileText className="h-6 w-6 text-blue-600" />
+                      <div className="space-y-2">
+                        <Label>Attach File (optional)</Label>
+                        <Input
+                          type="file"
+                          accept=".pdf,.doc,.docx,.txt,.jpg,.png,.ppt,.pptx,.xlsx,.mp4,.mov"
+                          onChange={(e) => setNewResourceFile(e.target.files?.[0] || null)}
+                        />
+                        <p className="text-xs text-gray-500">Or provide a link below.</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Link URL (optional)</Label>
+                        <Input
+                          placeholder="https://..."
+                          value={newResource.linkUrl}
+                          onChange={(e) => setNewResource({ ...newResource, linkUrl: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Select Students *</Label>
+                      <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
+                        {students.map((student) => (
+                          <label key={student.id} className="flex items-center gap-2 text-sm">
+                            <Checkbox
+                              checked={newResource.studentIds.includes(student.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setNewResource({
+                                    ...newResource,
+                                    studentIds: [...newResource.studentIds, student.id]
+                                  });
+                                } else {
+                                  setNewResource({
+                                    ...newResource,
+                                    studentIds: newResource.studentIds.filter((id) => id !== student.id)
+                                  });
+                                }
+                              }}
+                            />
+                            <span className="flex-1">
+                              {student.name} <span className="text-gray-500">({student.email})</span>
+                            </span>
+                          </label>
+                        ))}
+                        {students.length === 0 && (
+                          <p className="text-sm text-gray-500">No students found.</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-3">
+                      {resourceError && (
+                        <span className="text-sm text-red-600 mr-auto">{resourceError}</span>
+                      )}
+                      <Button
+                        onClick={handleSendResource}
+                        disabled={sendingResource || !newResource.title || !newResource.type || newResource.studentIds.length === 0}
+                      >
+                        {sendingResource ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="h-4 w-4 mr-2" />
+                            Send Resource
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-semibold">Student Resource Submissions</h3>
+                    <p className="text-gray-600">Review and provide feedback on work submitted by students</p>
+                  </div>
+                  <Button onClick={fetchStudentSubmissions} variant="outline">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Refresh
+                  </Button>
+                </div>
+
+                {submissionsLoading ? (
+                  <div className="text-center py-12">
+                    <RefreshCw className="h-8 w-8 animate-spin mx-auto text-gray-400" />
+                    <p className="mt-4 text-gray-600">Loading submissions...</p>
+                  </div>
+                ) : studentSubmissions.length === 0 ? (
+                  <div className="text-center py-12">
+                    <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Student Submissions</h3>
+                    <p className="text-gray-600">
+                      Students haven&apos;t submitted any resources for review yet.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid gap-6">
+                    {studentSubmissions.map((submission) => (
+                      <Card key={submission.id} className="hover:shadow-lg transition-shadow">
+                        <CardHeader>
+                          <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <p className="text-sm font-medium text-blue-900">{submission.fileName}</p>
-                              {submission.fileSize && (
-                                <p className="text-xs text-blue-700">
-                                  {(submission.fileSize / 1024 / 1024).toFixed(2)} MB
-                                </p>
+                              <CardTitle className="text-lg mb-1">{submission.title}</CardTitle>
+                              <div className="flex items-center gap-4 text-sm text-gray-600">
+                                <span className="flex items-center gap-1">
+                                  <User className="h-4 w-4" />
+                                  {submission.student.name} ({submission.student.grade})
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-4 w-4" />
+                                  {new Date(submission.submittedAt).toLocaleDateString()}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Users className="h-4 w-4" />
+                                  {submission.allTeachers.length} teacher{submission.allTeachers.length !== 1 ? 's' : ''}
+                                </span>
+                              </div>
+                              {submission.description && (
+                                <p className="text-gray-600 mt-2">{submission.description}</p>
                               )}
                             </div>
-                            <div className="flex gap-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => window.open(submission.fileUrl, '_blank')}
-                              >
-                                <Eye className="h-4 w-4 mr-1" />
-                                View
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => {
-                                  const link = document.createElement('a');
-                                  link.href = submission.fileUrl;
-                                  link.download = submission.fileName;
-                                  link.click();
-                                }}
-                              >
-                                <Download className="h-4 w-4 mr-1" />
-                                Download
-                              </Button>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={submission.hasMyRemark ? 'default' : 'secondary'}>
+                                {submission.hasMyRemark ? 'Reviewed' : 'Needs Review'}
+                              </Badge>
                             </div>
                           </div>
-                        )}
+                        </CardHeader>
 
-                        {/* All Teachers */}
-                        <div>
-                          <p className="text-sm font-medium text-gray-700 mb-2">Sent to teachers:</p>
-                          <div className="flex flex-wrap gap-2">
-                            {submission.allTeachers.map((teacher: any) => (
-                              <Badge 
-                                key={teacher.id} 
-                                variant="outline" 
-                                className={teacher.email === teacherEmail ? 'bg-blue-50 border-blue-200' : ''}
-                              >
-                                {teacher.name} {teacher.email === teacherEmail && '(You)'}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
+                        <CardContent className="space-y-4">
+                          {/* Content Preview */}
+                          {submission.content && (
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                              <p className="text-sm font-medium text-gray-700 mb-2">Content:</p>
+                              <p className="text-sm text-gray-800 whitespace-pre-wrap line-clamp-4">
+                                {submission.content}
+                              </p>
+                            </div>
+                          )}
 
-                        {/* Existing Remarks */}
-                        {submission.teacherRemarks.length > 0 && (
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium text-gray-700">Your previous feedback:</p>
-                            {submission.teacherRemarks.map((remark: any) => (
-                              <div key={remark.id} className="bg-green-50 p-3 rounded-lg border-l-4 border-green-200">
-                                <div className="flex items-start justify-between mb-1">
-                                  <p className="text-sm font-medium text-green-900">Your Feedback</p>
-                                  <p className="text-xs text-green-600">
-                                    {new Date(remark.updatedAt).toLocaleDateString()}
+                          {/* File Attachment */}
+                          {submission.fileUrl && submission.fileName && (
+                            <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
+                              <FileText className="h-6 w-6 text-blue-600" />
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-blue-900">{submission.fileName}</p>
+                                {submission.fileSize && (
+                                  <p className="text-xs text-blue-700">
+                                    {(submission.fileSize / 1024 / 1024).toFixed(2)} MB
                                   </p>
-                                </div>
-                                <p className="text-sm text-green-800">{remark.remark}</p>
+                                )}
                               </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Add/Update Remark */}
-                        <div className="pt-4 border-t">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button 
-                                variant={submission.hasMyRemark ? "outline" : "default"}
-                                onClick={() => {
-                                  setSelectedSubmission(submission);
-                                  setRemarkText(submission.teacherRemarks[0]?.remark || "");
-                                }}
-                              >
-                                <MessageCircle className="h-4 w-4 mr-2" />
-                                {submission.hasMyRemark ? 'Update Feedback' : 'Add Feedback'}
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-2xl">
-                              <DialogHeader>
-                                <DialogTitle>
-                                  {submission.hasMyRemark ? 'Update' : 'Add'} Feedback for &quot;{submission.title}&quot;
-                                </DialogTitle>
-                              </DialogHeader>
-                              
-                              <div className="space-y-4">
-                                <div>
-                                  <Label htmlFor="remark">Your Feedback</Label>
-                                  <Textarea
-                                    id="remark"
-                                    placeholder="Provide constructive feedback for the student..."
-                                    value={remarkText}
-                                    onChange={(e) => setRemarkText(e.target.value)}
-                                    rows={6}
-                                  />
-                                </div>
-                              </div>
-                              
-                              <DialogFooter>
+                              <div className="flex gap-2">
                                 <Button
-                                  onClick={() => handleAddRemark(submission.id)}
-                                  disabled={isAddingRemark || !remarkText.trim()}
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => window.open(submission.fileUrl, '_blank')}
                                 >
-                                  {isAddingRemark ? (
-                                    <>
-                                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                      Saving...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Send className="h-4 w-4 mr-2" />
-                                      {submission.hasMyRemark ? 'Update' : 'Send'} Feedback
-                                    </>
-                                  )}
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  View
                                 </Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    const link = document.createElement('a');
+                                    link.href = submission.fileUrl;
+                                    link.download = submission.fileName;
+                                    link.click();
+                                  }}
+                                >
+                                  <Download className="h-4 w-4 mr-1" />
+                                  Download
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* All Teachers */}
+                          <div>
+                            <p className="text-sm font-medium text-gray-700 mb-2">Sent to teachers:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {submission.allTeachers.map((teacher: any) => (
+                                <Badge
+                                  key={teacher.id}
+                                  variant="outline"
+                                  className={teacher.email === teacherEmail ? 'bg-blue-50 border-blue-200' : ''}
+                                >
+                                  {teacher.name} {teacher.email === teacherEmail && '(You)'}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Existing Remarks */}
+                          {submission.teacherRemarks.length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-sm font-medium text-gray-700">Your previous feedback:</p>
+                              {submission.teacherRemarks.map((remark: any) => (
+                                <div key={remark.id} className="bg-green-50 p-3 rounded-lg border-l-4 border-green-200">
+                                  <div className="flex items-start justify-between mb-1">
+                                    <p className="text-sm font-medium text-green-900">Your Feedback</p>
+                                    <p className="text-xs text-green-600">
+                                      {new Date(remark.updatedAt).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                  <p className="text-sm text-green-800">{remark.remark}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Add/Update Remark */}
+                          <div className="pt-4 border-t">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant={submission.hasMyRemark ? "outline" : "default"}
+                                  onClick={() => {
+                                    setSelectedSubmission(submission);
+                                    setRemarkText(submission.teacherRemarks[0]?.remark || "");
+                                  }}
+                                >
+                                  <MessageCircle className="h-4 w-4 mr-2" />
+                                  {submission.hasMyRemark ? 'Update Feedback' : 'Add Feedback'}
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-2xl">
+                                <DialogHeader>
+                                  <DialogTitle>
+                                    {submission.hasMyRemark ? 'Update' : 'Add'} Feedback for &quot;{submission.title}&quot;
+                                  </DialogTitle>
+                                </DialogHeader>
+
+                                <div className="space-y-4">
+                                  <div>
+                                    <Label htmlFor="remark">Your Feedback</Label>
+                                    <Textarea
+                                      id="remark"
+                                      placeholder="Provide constructive feedback for the student..."
+                                      value={remarkText}
+                                      onChange={(e) => setRemarkText(e.target.value)}
+                                      rows={6}
+                                    />
+                                  </div>
+                                </div>
+
+                                <DialogFooter>
+                                  <Button
+                                    onClick={() => handleAddRemark(submission.id)}
+                                    disabled={isAddingRemark || !remarkText.trim()}
+                                  >
+                                    {isAddingRemark ? (
+                                      <>
+                                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                        Saving...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Send className="h-4 w-4 mr-2" />
+                                        {submission.hasMyRemark ? 'Update' : 'Send'} Feedback
+                                      </>
+                                    )}
+                                  </Button>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             )}
 

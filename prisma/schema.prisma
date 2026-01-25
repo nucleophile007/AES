@@ -52,6 +52,7 @@ model Teacher {
   resources         Resource[]
   submissionRemarks StudentSubmissionRemark[]
   students          TeacherStudent[]
+  progressReports   ProgressReport[]
 }
 
 model Student {
@@ -79,6 +80,7 @@ model Student {
   submissions         Submission[]
   teacherLinks        TeacherStudent[]
   Testimonial         Testimonial[]
+  progressReports     ProgressReport[]
 }
 
 model TeacherStudent {
@@ -418,19 +420,6 @@ model TransactionReceipt {
   @@index([status])
 }
 
-model PasswordResetRequest {
-  id        Int      @id @default(autoincrement())
-  role      String
-  userId    Int
-  tokenHash String   @unique
-  expiresAt DateTime
-  isUsed    Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime
-
-  @@index([expiresAt])
-  @@index([role, userId])
-}
 
 model Mentor {
   id           Int      @id @default(autoincrement())
@@ -453,5 +442,26 @@ model Mentor {
   teacher      Teacher? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
 
   @@index([isActive, displayOrder])
+  @@index([teacherId])
+}
+
+model ProgressReport {
+  id                 Int      @id @default(autoincrement())
+  studentId          Int
+  teacherId          Int
+  reportDate         DateTime @default(now())
+  
+  overallProgress    String   @db.Text
+  milestonesAchieved String?  @db.Text // JSON string or text
+  publications       String?  @db.Text // JSON string or text
+  nextSteps          String?  @db.Text // JSON string: { task, month }[]
+  
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  student            Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher            Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
   @@index([teacherId])
 }
