@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
         videoLink: videoLink || null,
         isApproved: false,
         isVisible: false,
+        updatedAt: new Date(),
       },
       include: {
         Student: {

@@ -16,6 +16,22 @@ import { MentorGridSkeleton } from "@/components/ui/MentorSkeleton";
 
 // Faculty data fetched from API now
 
+interface Mentor {
+  id: number;
+  name: string;
+  department: string;
+  role: string;
+  image: string;
+  education: string;
+  institution: string;
+  bio: string;
+  experience: string;
+  specialties: string[];
+  achievements?: string[];
+  workplace?: string;
+  priority?: boolean;
+}
+
 const webTeam = [
   {
     name: "Luv Shanker",
@@ -66,7 +82,7 @@ export default function AboutPage() {
   const [selectedCategory, setSelectedCategory] = React.useState<string>("engg-ai");
 
   // Use SWR for caching and stale-while-revalidate
-  const { data, error, isLoading } = useSWR('/api/mentors', fetcher, {
+  const { data, error, isLoading } = useSWR<{ mentors: Mentor[] }>('/api/mentors', fetcher, {
     revalidateOnFocus: false,
     revalidateIfStale: true,
     dedupingInterval: 60000, // 1 minute deduplication
@@ -901,7 +917,7 @@ export default function AboutPage() {
                   </p>
 
                   <p className="text-base theme-text-muted leading-relaxed">
-                    Leveraging her creativity, acumen and AI skills, she rose to be the prime contact for scheduling our events, webinars and yearly seminars with local organizations. She also handles "on-the-board" intitation meetings with potential parents/students to customize services based on student's profiles. As bearing the marketing hat, she creates lively flyers, digital content, drive ads and social campaigns for ACHARYA.
+                    Leveraging her creativity, acumen and AI skills, she rose to be the prime contact for scheduling our events, webinars and yearly seminars with local organizations. She also handles &quot;on-the-board&quot; intitation meetings with potential parents/students to customize services based on student&apos;s profiles. As bearing the marketing hat, she creates lively flyers, digital content, drive ads and social campaigns for ACHARYA.
                   </p>
                 </motion.div>
               </div>
