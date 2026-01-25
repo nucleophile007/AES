@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
       // Verify password with bcrypt
       const isValidPassword = await bcrypt.compare(password, student.password);
-      
+
       if (isValidPassword) {
         const authUser: AuthUser = {
           id: student.id,
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
         };
 
         const token = generateToken(authUser);
-        
+
         const responseData = {
           success: true,
           user: {
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
 
       // Verify password with bcrypt
       const isValidPassword = await bcrypt.compare(password, teacher.password);
-      
+
       if (isValidPassword) {
         const authUser: AuthUser = {
           id: teacher.id,
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
         };
 
         const token = generateToken(authUser);
-        
+
         const responseData = {
           success: true,
           user: {
@@ -147,14 +147,14 @@ export async function POST(request: NextRequest) {
 
     // Check if user is a parent (database-based)
     const parent = await prisma.parentAccount.findFirst({
-      where: { 
+      where: {
         email: {
           equals: email,
           mode: 'insensitive'
         }
       },
       include: {
-        Student: true
+        students: true
       }
     });
 
@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
 
       // Verify password with bcrypt
       const isValidPassword = await bcrypt.compare(password, parent.password);
-      
+
       if (isValidPassword) {
         const authUser: AuthUser = {
           id: parent.id,
@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
         };
 
         const token = generateToken(authUser);
-        
+
         const responseData = {
           success: true,
           user: {
@@ -197,7 +197,7 @@ export async function POST(request: NextRequest) {
             phone: parent.phone,
             type: 'parent',
             role: 'parent',
-            students: parent.Student.map((student: any) => ({
+            students: parent.students.map((student: any) => ({
               id: student.id,
               name: student.name,
               email: student.email,

@@ -64,6 +64,7 @@ import {
 import { cn } from "@/lib/utils";
 import ResourceLibrary from "@/components/student/ResourceLibrary";
 import MentorMessages from "../../components/student/MentorMessages";
+import ProgressReportList from "@/components/common/ProgressReportList";
 
 // Mock data - replace with actual API calls
 const mockUpcomingEvents = [
@@ -139,6 +140,7 @@ export default function StudentDashboard() {
   const [student, setStudent] = useState<Student | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [progressReports, setProgressReports] = useState<any[]>([]);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [submissionText, setSubmissionText] = useState("");
   const [submissionFile, setSubmissionFile] = useState<File | null>(null);
@@ -149,28 +151,35 @@ export default function StudentDashboard() {
   const [messageUnreadCount, setMessageUnreadCount] = useState(0);
   const [error, setError] = useState("");
   const { toast } = useToast();
-  
+
   // Get student email from authenticated user
   const studentEmail = authUser?.email || "";
 
   // Fetch data function
   const fetchData = async () => {
     if (!studentEmail) return;
-    
+
     try {
       setLoading(true);
-      
+
       // Fetch student dashboard data
       const response = await fetch(`/api/student/dashboard?studentEmail=${encodeURIComponent(studentEmail)}`);
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || 'Failed to fetch student data');
       }
-      
+
       setStudent(data.student);
       setAssignments(data.assignments);
       setSubmissions(data.submissions);
+
+      // Fetch progress reports
+      const reportsResponse = await fetch('/api/student/progress-report');
+      const reportsData = await reportsResponse.json();
+      if (reportsResponse.ok) {
+        setProgressReports(reportsData.reports || []);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load dashboard data';
       setError(message);
@@ -226,12 +235,12 @@ export default function StudentDashboard() {
 
   const handleSubmission = async () => {
     if (!selectedAssignment || !student) return;
-    
+
     setIsSubmitting(true);
-    
+
     try {
       let fileUrl = null;
-      
+
       // Upload file to R2 if provided
       if (submissionFile) {
         try {
@@ -240,16 +249,16 @@ export default function StudentDashboard() {
           formData.append('file', submissionFile);
           formData.append('studentId', student.id.toString());
           formData.append('assignmentId', selectedAssignment.id.toString());
-          
+
           const uploadResponse = await fetch('/api/upload-r2', {
             method: 'POST',
             body: formData,
           });
-          
+
           const uploadData = await uploadResponse.json();
-          
+
           console.log('Upload response:', uploadData);
-          
+
           if (uploadData.success) {
             fileUrl = uploadData.fileUrl;
           } else {
@@ -261,29 +270,29 @@ export default function StudentDashboard() {
           throw uploadError;
         }
       }
-      
+
       // Submit assignment
-      const endpoint = isResubmitting && resubmissionId 
-        ? '/api/student/submissions' 
+      const endpoint = isResubmitting && resubmissionId
+        ? '/api/student/submissions'
         : '/api/student/submissions';
-      
+
       const requestBody = isResubmitting && resubmissionId
         ? {
-            studentEmail: student.email,
-            assignmentId: selectedAssignment.id,
-            content: submissionText,
-            fileUrl,
-            fileName: submissionFile?.name,
-            fileSize: submissionFile?.size,
-          }
+          studentEmail: student.email,
+          assignmentId: selectedAssignment.id,
+          content: submissionText,
+          fileUrl,
+          fileName: submissionFile?.name,
+          fileSize: submissionFile?.size,
+        }
         : {
-            studentEmail: student.email,
-            assignmentId: selectedAssignment.id,
-            content: submissionText,
-            fileUrl,
-            fileName: submissionFile?.name,
-            fileSize: submissionFile?.size,
-          };
+          studentEmail: student.email,
+          assignmentId: selectedAssignment.id,
+          content: submissionText,
+          fileUrl,
+          fileName: submissionFile?.name,
+          fileSize: submissionFile?.size,
+        };
 
       const submissionResponse = await fetch(endpoint, {
         method: isResubmitting ? 'PUT' : 'POST',
@@ -292,9 +301,9 @@ export default function StudentDashboard() {
         },
         body: JSON.stringify(requestBody),
       });
-      
+
       const submissionData = await submissionResponse.json();
-      
+
       if (submissionData.success) {
         if (isResubmitting) {
           // Update submissions list for resubmission
@@ -310,7 +319,7 @@ export default function StudentDashboard() {
               : assignment
           );
           setAssignments(updatedAssignments);
-          
+
           // Add to submissions list
           setSubmissions([submissionData.submission, ...submissions]);
         }
@@ -348,11 +357,11 @@ export default function StudentDashboard() {
 
   const handleResubmission = async (submission: Submission) => {
     if (!student) return;
-    
+
     // Find the corresponding assignment
     const assignment = assignments.find(a => a.id === submission.assignmentId);
     if (!assignment) return;
-    
+
     // Set up for resubmission
     setSelectedAssignment(assignment);
     setSubmissionText(submission.content || "");
@@ -438,11 +447,11 @@ export default function StudentDashboard() {
     // Find the corresponding assignment
     const assignment = assignments.find(a => a.id === submission.assignmentId);
     if (!assignment) return false;
-    
+
     // Can resubmit if deadline hasn't passed and submission is submitted (but not graded yet)
-    return !isDeadlinePassed(assignment.dueDate) && 
-           submission.status === 'submitted' && 
-           submission.grade === null;
+    return !isDeadlinePassed(assignment.dueDate) &&
+      submission.status === 'submitted' &&
+      submission.grade === null;
   };
 
   const getGradeColor = (percentage: number) => {
@@ -517,7 +526,7 @@ export default function StudentDashboard() {
               </div>
             </div>
           </SidebarHeader>
-          
+
           <SidebarContent>
             <SidebarGroup>
               <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
@@ -537,8 +546,8 @@ export default function StudentDashboard() {
                           onClick={item.onClick}
                           className={cn(
                             "w-full transition-all hover:scale-105",
-                            item.isActive 
-                              ? `bg-gradient-to-r ${colors[idx]} text-white shadow-lg font-bold` 
+                            item.isActive
+                              ? `bg-gradient-to-r ${colors[idx]} text-white shadow-lg font-bold`
                               : "hover:bg-gradient-to-r hover:from-pink-100 hover:to-purple-100 text-purple-700"
                           )}
                         >
@@ -576,8 +585,8 @@ export default function StudentDashboard() {
                           onClick={item.onClick}
                           className={cn(
                             "w-full transition-all hover:scale-105",
-                            item.isActive 
-                              ? `bg-gradient-to-r ${colors[idx]} text-white shadow-lg font-bold` 
+                            item.isActive
+                              ? `bg-gradient-to-r ${colors[idx]} text-white shadow-lg font-bold`
                               : "hover:bg-gradient-to-r hover:from-orange-100 hover:to-red-100 text-purple-700"
                           )}
                         >
@@ -614,8 +623,8 @@ export default function StudentDashboard() {
                           onClick={item.onClick}
                           className={cn(
                             "w-full transition-all hover:scale-105",
-                            item.isActive 
-                              ? `bg-gradient-to-r ${colors[idx]} text-white shadow-lg font-bold` 
+                            item.isActive
+                              ? `bg-gradient-to-r ${colors[idx]} text-white shadow-lg font-bold`
                               : "hover:bg-gradient-to-r hover:from-cyan-100 hover:to-blue-100 text-purple-700"
                           )}
                         >
@@ -644,10 +653,10 @@ export default function StudentDashboard() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton 
+                <SidebarMenuButton
                   onClick={async () => {
                     try {
-                      await fetch('/api/auth/logout', { 
+                      await fetch('/api/auth/logout', {
                         method: 'POST',
                         credentials: 'include'
                       });
@@ -706,986 +715,994 @@ export default function StudentDashboard() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
-              {activeTab === "overview" && (
-                <div className="space-y-6">
-                  {/* Welcome Banner */}
-                  <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 p-6 text-white shadow-xl"
-                  >
-                    <div className="absolute top-0 right-0 text-6xl opacity-20">🎉</div>
-                    <div className="relative z-10">
-                      <h2 className="text-2xl font-bold mb-2">Hey {student.name.split(' ')[0]}! 👋</h2>
-                      <p className="text-pink-100">Ready to learn something awesome today?</p>
-                    </div>
-                  </motion.div>
-
-                  {/* Quick Stats */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {activeTab === "overview" && (
+                  <div className="space-y-6">
+                    {/* Welcome Banner */}
                     <motion.div
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.1 }}
-                      whileHover={{ scale: 1.05, rotate: 2 }}
+                      initial={{ opacity: 0, y: -20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 p-6 text-white shadow-xl"
                     >
-                      <Card className="border-2 border-blue-300 bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-xl transition-all">
-                        <CardContent className="p-5">
-                          <div className="flex items-center gap-3">
-                            <div className="p-3 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl shadow-lg">
-                              <FileText className="h-6 w-6 text-white" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-semibold text-blue-700">Active Assignments</p>
-                              <p className="text-3xl font-bold text-blue-900">{assignments.filter(a => a.status === "active").length}</p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <div className="absolute top-0 right-0 text-6xl opacity-20">🎉</div>
+                      <div className="relative z-10">
+                        <h2 className="text-2xl font-bold mb-2">Hey {student.name.split(' ')[0]}! 👋</h2>
+                        <p className="text-pink-100">Ready to learn something awesome today?</p>
+                      </div>
                     </motion.div>
 
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.2 }}
-                      whileHover={{ scale: 1.05, rotate: -2 }}
-                    >
-                      <Card className="border-2 border-green-300 bg-gradient-to-br from-green-50 to-green-100 hover:shadow-xl transition-all">
-                        <CardContent className="p-5">
-                          <div className="flex items-center gap-3">
-                            <div className="p-3 bg-gradient-to-br from-green-400 to-green-600 rounded-xl shadow-lg">
-                              <Trophy className="h-6 w-6 text-white" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-semibold text-green-700">Completed 🎉</p>
-                              <p className="text-3xl font-bold text-green-900">{submissions.filter(s => s.grade !== null && s.grade !== undefined).length}</p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.3 }}
-                      whileHover={{ scale: 1.05, rotate: 2 }}
-                    >
-                      <Card className="border-2 border-purple-300 bg-gradient-to-br from-purple-50 to-purple-100 hover:shadow-xl transition-all">
-                        <CardContent className="p-5">
-                          <div className="flex items-center gap-3">
-                            <div className="p-3 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl shadow-lg">
-                              <Star className="h-6 w-6 text-white" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-semibold text-purple-700">Average Grade</p>
-                              <p className="text-3xl font-bold text-purple-900">
-                                {submissions.filter(s => s.grade !== null && s.grade !== undefined).length > 0 
-                                  ? Math.round(submissions.filter(s => s.grade !== null && s.grade !== undefined)
-                                      .reduce((acc, s) => acc + (s.grade || 0), 0) / 
-                                      submissions.filter(s => s.grade !== null && s.grade !== undefined).length) + '%'
-                                  : 'N/A'}
-                              </p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.4 }}
-                      whileHover={{ scale: 1.05, rotate: -2 }}
-                    >
-                      <Card className="border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-orange-100 hover:shadow-xl transition-all">
-                        <CardContent className="p-5">
-                          <div className="flex items-center gap-3">
-                            <div className="p-3 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl shadow-lg">
-                              <Award className="h-6 w-6 text-white" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-semibold text-orange-700">Achievements</p>
-                              <p className="text-3xl font-bold text-orange-900">⭐</p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  </div>
-
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Recent Assignments */}
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.5 }}
-                    >
-                      <Card className="border-2 border-pink-200 bg-gradient-to-br from-pink-50 to-white hover:shadow-xl transition-all">
-                        <CardHeader className="bg-gradient-to-r from-pink-100 to-purple-100 rounded-t-lg">
-                          <CardTitle className="flex items-center gap-2 text-purple-800">
-                            <FileText className="h-6 w-6 text-pink-600" />
-                            📝 Recent Assignments
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4">
-                          <div className="space-y-3">
-                            {assignments.slice(0, 3).map((assignment, idx) => (
-                              <motion.div
-                                key={assignment.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.6 + idx * 0.1 }}
-                                whileHover={{ scale: 1.02, x: 5 }}
-                                className="flex items-center justify-between p-4 border-2 border-pink-200 rounded-xl bg-white hover:bg-gradient-to-r hover:from-pink-50 hover:to-purple-50 transition-all cursor-pointer"
-                              >
-                                <div className="flex-1">
-                                  <p className="font-bold text-sm text-gray-800">{assignment.title}</p>
-                                  <p className="text-xs text-gray-600 mt-1">{assignment.subject} • Due {assignment.dueDate}</p>
-                                </div>
-                                {getStatusBadge(assignment.status)}
-                              </motion.div>
-                            ))}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-
-                    {/* Upcoming Events */}
-                    <motion.div
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.5 }}
-                    >
-                      <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white hover:shadow-xl transition-all">
-                        <CardHeader className="bg-gradient-to-r from-blue-100 to-cyan-100 rounded-t-lg">
-                          <CardTitle className="flex items-center gap-2 text-blue-800">
-                            <Calendar className="h-6 w-6 text-blue-600" />
-                            📅 Upcoming Events
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4">
-                          <div className="space-y-3">
-                            {assignments.slice(0, 3).map((assignment, idx) => (
-                              <motion.div
-                                key={assignment.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.6 + idx * 0.1 }}
-                                whileHover={{ scale: 1.02, x: 5 }}
-                                className="flex items-center gap-3 p-4 border-2 border-blue-200 rounded-xl bg-white hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 transition-all cursor-pointer"
-                              >
-                                <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                                  <Calendar className="h-7 w-7 text-white" />
-                                </div>
-                                <div className="flex-1">
-                                  <p className="font-bold text-sm text-gray-800">{assignment.title}</p>
-                                  <p className="text-xs text-gray-600 mt-1">Due {assignment.dueDate}</p>
-                                </div>
-                              </motion.div>
-                            ))}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === "assignments" && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-3xl font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
-                      📚 Assignments
-                    </h2>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => fetchData()}
-                        disabled={loading}
-                      >
-                        <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
-                        Refresh
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4">
-                    {assignments.map((assignment) => {
-                      // Find if there's a submission for this assignment
-                      const existingSubmission = submissions.find(s => s.assignmentId === assignment.id);
-                      const deadlinePassed = isDeadlinePassed(assignment.dueDate);
-                      const canResubmitAssignment = existingSubmission && 
-                                                   !deadlinePassed && 
-                                                   existingSubmission.grade === null;
-                      
-                      return (
-                      <motion.div
-                        key={assignment.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        whileHover={{ scale: 1.02 }}
-                      >
-                      <Card className="border-2 border-purple-200 bg-gradient-to-br from-white via-pink-50/30 to-purple-50/30 hover:shadow-xl transition-all">
-                        <CardContent className="p-6">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <h3 className="text-lg font-semibold">{assignment.title}</h3>
-                                {existingSubmission ? getStatusBadge(existingSubmission.status) : getStatusBadge("pending")}
-                              </div>
-                              <p className="text-gray-600 mb-3">{assignment.description}</p>
-                              
-                              {/* Resource indicator */}
-                              {assignment.resources && assignment.resources.length > 0 && (
-                                <div className="flex items-center gap-2 mb-3">
-                                  <BookOpen className="h-4 w-4 text-blue-500" />
-                                  <span className="text-sm text-blue-600">
-                                    {assignment.resources.length} resource{assignment.resources.length !== 1 ? 's' : ''} available
-                                  </span>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="h-6 px-2 text-xs"
-                                    onClick={() => setActiveTab("resources")}
-                                  >
-                                    View Resources
-                                  </Button>
-                                </div>
-                              )}
-                              <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
-                                <span className="flex items-center gap-1">
-                                  <BookOpen className="h-4 w-4" />
-                                  {assignment.subject}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="h-4 w-4" />
-                                  Due: {assignment.dueDate}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Star className="h-4 w-4" />
-                                  {assignment.totalPoints} points
-                                </span>
-                              </div>
-                              
-                              {/* Deadline status indicator */}
-                              <div className="flex items-center gap-2 text-sm">
-                                {deadlinePassed ? (
-                                  <span className="flex items-center gap-1 text-red-600">
-                                    <AlertCircle className="h-4 w-4" />
-                                    Deadline passed
-                                  </span>
-                                ) : (
-                                  <span className="flex items-center gap-1 text-green-600">
-                                    <CheckCircle className="h-4 w-4" />
-                                    Still accepting submissions
-                                  </span>
-                                )}
-                                
-                                {existingSubmission && (
-                                  <span className="text-gray-500">
-                                    • Submitted on {existingSubmission.submittedAt}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            
-                            <div className="flex flex-col gap-2">
-                              {/* Submit button for new assignments */}
-                              {!existingSubmission && !deadlinePassed && (
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <Button 
-                                      onClick={() => {
-                                        setSelectedAssignment(assignment);
-                                        setIsResubmitting(false);
-                                        setResubmissionId(null);
-                                      }}
-                                      className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold shadow-lg hover:scale-105 transition-all"
-                                    >
-                                      <Send className="h-4 w-4 mr-2" />
-                                      Submit Assignment 🚀
-                                    </Button>
-                                  </DialogTrigger>
-                                  <DialogContent className="max-w-2xl">
-                                    <DialogHeader>
-                                      <DialogTitle>Submit Assignment: {selectedAssignment?.title}</DialogTitle>
-                                    </DialogHeader>
-                                    <div className="space-y-4">
-                                      <div className="space-y-2">
-                                        <Label htmlFor="submission">Written Response</Label>
-                                        <Textarea
-                                          id="submission"
-                                          placeholder="Enter your assignment response here..."
-                                          value={submissionText}
-                                          onChange={(e) => setSubmissionText(e.target.value)}
-                                          rows={6}
-                                        />
-                                      </div>
-                                      <div className="space-y-2">
-                                        <Label htmlFor="file">File Upload (Optional)</Label>
-                                        <Input
-                                          id="file"
-                                          type="file"
-                                          accept=".pdf,.doc,.docx,.txt,.jpg,.png"
-                                          onChange={(e) => setSubmissionFile(e.target.files?.[0] || null)}
-                                        />
-                                        <p className="text-xs text-gray-500">
-                                          Accepted formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB)
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <DialogFooter>
-                                      <Button
-                                        onClick={handleSubmission}
-                                        disabled={isSubmitting || (!submissionText.trim() && !submissionFile)}
-                                      >
-                                        {isSubmitting ? (
-                                          <>
-                                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                            Submitting...
-                                          </>
-                                        ) : (
-                                          <>
-                                            <Send className="h-4 w-4 mr-2" />
-                                            Submit Assignment
-                                          </>
-                                        )}
-                                      </Button>
-                                    </DialogFooter>
-                                  </DialogContent>
-                                </Dialog>
-                              )}
-                              
-                              {/* Resubmit button for submitted assignments */}
-                              {canResubmitAssignment && (
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <Button 
-                                      variant="outline" 
-                                      onClick={() => {
-                                        setSelectedAssignment(assignment);
-                                        setSubmissionText(existingSubmission.content || "");
-                                        setSubmissionFile(null);
-                                        setIsResubmitting(true);
-                                        setResubmissionId(existingSubmission.id);
-                                      }}
-                                      className="border-2 border-orange-400 bg-gradient-to-r from-orange-50 to-yellow-50 hover:from-orange-100 hover:to-yellow-100 text-orange-700 font-bold hover:scale-105 transition-all"
-                                    >
-                                      <RefreshCw className="h-4 w-4 mr-2" />
-                                      Resubmit 🔄
-                                    </Button>
-                                  </DialogTrigger>
-                                  <DialogContent className="max-w-2xl">
-                                    <DialogHeader>
-                                      <DialogTitle>Resubmit Assignment: {selectedAssignment?.title}</DialogTitle>
-                                      <p className="text-sm text-orange-600 bg-orange-50 p-3 rounded-lg mt-2">
-                                        ⚠️ Your previous submission will be replaced with this new one.
-                                      </p>
-                                    </DialogHeader>
-                                    <div className="space-y-4">
-                                      <div className="space-y-2">
-                                        <Label htmlFor="resubmission">Updated Response</Label>
-                                        <Textarea
-                                          id="resubmission"
-                                          placeholder="Enter your updated assignment response here..."
-                                          value={submissionText}
-                                          onChange={(e) => setSubmissionText(e.target.value)}
-                                          rows={6}
-                                        />
-                                      </div>
-                                      <div className="space-y-2">
-                                        <Label htmlFor="resubmit-file">File Upload (Optional)</Label>
-                                        <Input
-                                          id="resubmit-file"
-                                          type="file"
-                                          accept=".pdf,.doc,.docx,.txt,.jpg,.png"
-                                          onChange={(e) => setSubmissionFile(e.target.files?.[0] || null)}
-                                        />
-                                        <p className="text-xs text-gray-500">
-                                          Accepted formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB)
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <DialogFooter>
-                                      <Button
-                                        onClick={handleSubmission}
-                                        disabled={isSubmitting || (!submissionText.trim() && !submissionFile)}
-                                      >
-                                        {isSubmitting ? (
-                                          <>
-                                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                            Resubmitting...
-                                          </>
-                                        ) : (
-                                          <>
-                                            <RefreshCw className="h-4 w-4 mr-2" />
-                                            Resubmit Assignment
-                                          </>
-                                        )}
-                                      </Button>
-                                    </DialogFooter>
-                                  </DialogContent>
-                                </Dialog>
-                              )}
-                              
-                              {/* Status indicators for completed/graded submissions */}
-                              {existingSubmission && existingSubmission.grade !== undefined && (
-                                <div className="text-center">
-                                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                                    <Trophy className="h-3 w-3 mr-1" />
-                                    Graded: {existingSubmission.grade}/{assignment.totalPoints}
-                                  </Badge>
-                                </div>
-                              )}
-                              
-                              {deadlinePassed && existingSubmission && existingSubmission.grade === undefined && (
-                                <div className="text-center">
-                                  <Badge variant="secondary" className="bg-gray-100 text-gray-600">
-                                    <Clock className="h-3 w-3 mr-1" />
-                                    Awaiting Grade
-                                  </Badge>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      </motion.div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {activeTab === "submissions" && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-3xl font-bold bg-gradient-to-r from-green-600 via-teal-600 to-blue-600 bg-clip-text text-transparent">
-                      ✨ My Submissions
-                    </h2>
-                  </div>
-
-                  <div className="grid gap-4">
-                    {submissions.map((submission) => {
-                      const assignment = assignments.find(a => a.id === submission.assignmentId);
-                      const deadlinePassed = assignment ? isDeadlinePassed(assignment.dueDate) : true;
-                      
-                      return (
-                        <motion.div
-                          key={submission.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          whileHover={{ scale: 1.01 }}
-                        >
-                        <Card className="border-2 border-green-200 bg-gradient-to-br from-white via-green-50/30 to-teal-50/30 hover:shadow-xl transition-all">
-                        <CardContent className="p-6">
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex-1">
-                              <h3 className="text-lg font-semibold">{submission.assignmentTitle}</h3>
-                              <p className="text-sm text-gray-600">
-                                Submitted on {new Date(submission.submittedAt).toLocaleDateString('en-US', {
-                                  year: 'numeric',
-                                  month: 'long', 
-                                  day: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </p>
-                              {assignment && (
-                                <p className="text-sm text-gray-500 mt-1">
-                                  Due: {new Date(assignment.dueDate).toLocaleDateString('en-US', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric'
-                                  })}
-                                  {deadlinePassed && <span className="text-red-500 ml-2">(Submitted after deadline)</span>}
-                                  {!deadlinePassed && <span className="text-green-500 ml-2">(Submitted on time)</span>}
-                                </p>
-                              )}
-                              {assignment && (
-                                <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
-                                  <span className="flex items-center gap-1">
-                                    <BookOpen className="h-4 w-4" />
-                                    {assignment.subject}
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    <Star className="h-4 w-4" />
-                                    {assignment.totalPoints} points
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    <RefreshCw className="h-4 w-4" />
-                                    Submission #{submission.id}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {getStatusBadge(submission.status)}
-                            </div>
-                          </div>
-                          
-                          {/* Submission Content */}
-                          {submission.content && (
-                            <div className="mb-4">
-                              <h4 className="text-sm font-medium text-gray-700 mb-2">Written Response:</h4>
-                              <div className="bg-gray-50 p-4 rounded-lg">
-                                <p className="text-sm text-gray-800 whitespace-pre-wrap">{submission.content}</p>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* File Attachment */}
-                          {submission.fileUrl && submission.fileName && (
-                            <div className="mb-4">
-                              <h4 className="text-sm font-medium text-gray-700 mb-2">File Attachment:</h4>
-                              <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-blue-100 rounded-lg">
-                                      <FileText className="h-5 w-5 text-blue-600" />
-                                    </div>
-                                    <div>
-                                      <p className="text-sm font-medium text-blue-900">{submission.fileName}</p>
-                                      {submission.fileSize && (
-                                        <p className="text-xs text-blue-700">
-                                          {(submission.fileSize / 1024 / 1024).toFixed(2)} MB
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className="flex gap-2">
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm"
-                                      onClick={() => window.open(submission.fileUrl, '_blank')}
-                                    >
-                                      <Eye className="h-4 w-4 mr-2" />
-                                      View
-                                    </Button>
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm"
-                                      onClick={() => {
-                                        const link = document.createElement('a');
-                                        if (submission.fileUrl) {
-                                          link.href = submission.fileUrl;
-                                          link.download = submission.fileName ?? "download";
-                                          link.click();
-                                        }
-                                      }}
-                                    >
-                                      <Download className="h-4 w-4 mr-2" />
-                                      Download
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                          
-                          {/* Grade Display */}
-                          {submission.grade !== null && submission.grade !== undefined && assignment && (
-                            <div className="mb-4">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="text-sm text-gray-600">Grade:</span>
-                                <span className={cn("text-lg font-bold", getGradeColor(calculateGradePercentage(submission.grade, assignment.totalPoints)))}>
-                                  {submission.grade}/{assignment.totalPoints} ({calculateGradePercentage(submission.grade, assignment.totalPoints)}%)
-                                </span>
-                              </div>
-                              <Progress 
-                                value={calculateGradePercentage(submission.grade, assignment.totalPoints)} 
-                                className="h-2"
-                              />
-                            </div>
-                          )}
-
-                          {/* Teacher Feedback */}
-                          {submission.feedback && (
-                            <div className="bg-blue-50 p-4 rounded-lg">
-                              <p className="text-sm font-medium text-blue-900 mb-1">Teacher Feedback:</p>
-                              <p className="text-sm text-blue-800 whitespace-pre-wrap">{submission.feedback}</p>
-                            </div>
-                          )}
-
-                          {/* Submission Status Info */}
-                          <div className="mt-4 pt-4 border-t border-gray-200">
-                            <div className="flex items-center justify-between text-xs text-gray-500">
-                              <span>Submission ID: #{submission.id}</span>
-                              <span>
-                                {submission.grade !== null && submission.grade !== undefined ? 'Graded' : 'Awaiting Review'}
-                              </span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      </motion.div>
-                      );
-                    })}
-
-                    {submissions.length === 0 && (
+                    {/* Quick Stats */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                       <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.1 }}
+                        whileHover={{ scale: 1.05, rotate: 2 }}
                       >
-                        <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
-                          <CardContent className="p-12 text-center">
-                            <div className="text-6xl mb-4">📝</div>
-                            <h3 className="text-2xl font-bold text-purple-800 mb-2">No Submissions Yet</h3>
-                            <p className="text-purple-600 mb-6 text-lg">
-                              You haven&apos;t submitted any assignments yet. Let&apos;s get started! 🚀
-                            </p>
-                            <Button 
-                              className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold shadow-lg hover:scale-105 transition-all"
-                              onClick={() => setActiveTab("assignments")}
-                              size="lg"
-                            >
-                              <FileText className="h-5 w-5 mr-2" />
-                              View Assignments
-                            </Button>
+                        <Card className="border-2 border-blue-300 bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-xl transition-all">
+                          <CardContent className="p-5">
+                            <div className="flex items-center gap-3">
+                              <div className="p-3 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl shadow-lg">
+                                <FileText className="h-6 w-6 text-white" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-blue-700">Active Assignments</p>
+                                <p className="text-3xl font-bold text-blue-900">{assignments.filter(a => a.status === "active").length}</p>
+                              </div>
+                            </div>
                           </CardContent>
                         </Card>
                       </motion.div>
-                    )}
-                  </div>
-                </div>
-              )}
 
-              {activeTab === "grades" && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-3xl font-bold bg-gradient-to-r from-yellow-600 via-orange-600 to-red-600 bg-clip-text text-transparent">
-                      🏆 Grades & Performance
-                    </h2>
-                  </div>
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.2 }}
+                        whileHover={{ scale: 1.05, rotate: -2 }}
+                      >
+                        <Card className="border-2 border-green-300 bg-gradient-to-br from-green-50 to-green-100 hover:shadow-xl transition-all">
+                          <CardContent className="p-5">
+                            <div className="flex items-center gap-3">
+                              <div className="p-3 bg-gradient-to-br from-green-400 to-green-600 rounded-xl shadow-lg">
+                                <Trophy className="h-6 w-6 text-white" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-green-700">Completed 🎉</p>
+                                <p className="text-3xl font-bold text-green-900">{submissions.filter(s => s.grade !== null && s.grade !== undefined).length}</p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      whileHover={{ scale: 1.05 }}
-                    >
-                      <Card className="border-2 border-yellow-300 bg-gradient-to-br from-yellow-50 to-orange-50 hover:shadow-xl transition-all">
-                        <CardHeader className="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-t-lg">
-                          <CardTitle className="flex items-center gap-2 text-orange-800">
-                            <Trophy className="h-6 w-6 text-yellow-600" />
-                            Overall Performance
-                          </CardTitle>
-                        </CardHeader>
-                      <CardContent>
-                        <div className="text-center space-y-2">
-                          <div className="text-3xl font-bold text-green-600">
-                            {student?.stats?.averageGrade 
-                              ? student.stats.averageGrade >= 90 ? 'A' 
-                                : student.stats.averageGrade >= 80 ? 'B'
-                                : student.stats.averageGrade >= 70 ? 'C'
-                                : student.stats.averageGrade >= 60 ? 'D'
-                                : 'F'
-                              : 'N/A'}
-                          </div>
-                          <div className="text-sm text-gray-600">Current Grade</div>
-                          <Progress value={student?.stats?.averageGrade || 0} className="h-3" />
-                          <div className="text-xs text-gray-500">
-                            {student?.stats?.averageGrade ? `${student.stats.averageGrade}% Average` : 'No grades yet'}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    </motion.div>
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.3 }}
+                        whileHover={{ scale: 1.05, rotate: 2 }}
+                      >
+                        <Card className="border-2 border-purple-300 bg-gradient-to-br from-purple-50 to-purple-100 hover:shadow-xl transition-all">
+                          <CardContent className="p-5">
+                            <div className="flex items-center gap-3">
+                              <div className="p-3 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl shadow-lg">
+                                <Star className="h-6 w-6 text-white" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-purple-700">Average Grade</p>
+                                <p className="text-3xl font-bold text-purple-900">
+                                  {submissions.filter(s => s.grade !== null && s.grade !== undefined).length > 0
+                                    ? Math.round(submissions.filter(s => s.grade !== null && s.grade !== undefined)
+                                      .reduce((acc, s) => acc + (s.grade || 0), 0) /
+                                      submissions.filter(s => s.grade !== null && s.grade !== undefined).length) + '%'
+                                    : 'N/A'}
+                                </p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
 
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.1 }}
-                      whileHover={{ scale: 1.05 }}
-                    >
-                    <Card className="border-2 border-blue-300 bg-gradient-to-br from-blue-50 to-cyan-50 hover:shadow-xl transition-all">
-                      <CardHeader className="bg-gradient-to-r from-blue-100 to-cyan-100 rounded-t-lg">
-                        <CardTitle className="flex items-center gap-2 text-blue-800">
-                          <Target className="h-6 w-6 text-blue-600" />
-                          Assignments Completed
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-center space-y-2">
-                          <div className="text-3xl font-bold text-blue-600">
-                            {student?.stats?.gradedSubmissions || 0}/{student?.stats?.totalSubmissions || 0}
-                          </div>
-                          <div className="text-sm text-gray-600">Graded Assignments</div>
-                          <Progress 
-                            value={student?.stats?.totalSubmissions 
-                              ? (student.stats.gradedSubmissions / student.stats.totalSubmissions) * 100 
-                              : 0
-                            } 
-                            className="h-3" 
-                          />
-                          <div className="text-xs text-gray-500">
-                            {student?.stats?.totalSubmissions 
-                              ? Math.round((student.stats.gradedSubmissions / student.stats.totalSubmissions) * 100)
-                              : 0}% Graded
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    </motion.div>
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.4 }}
+                        whileHover={{ scale: 1.05, rotate: -2 }}
+                      >
+                        <Card className="border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-orange-100 hover:shadow-xl transition-all">
+                          <CardContent className="p-5">
+                            <div className="flex items-center gap-3">
+                              <div className="p-3 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl shadow-lg">
+                                <Award className="h-6 w-6 text-white" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-orange-700">Achievements</p>
+                                <p className="text-3xl font-bold text-orange-900">⭐</p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    </div>
 
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.2 }}
-                      whileHover={{ scale: 1.05 }}
-                    >
-                    <Card className="border-2 border-purple-300 bg-gradient-to-br from-purple-50 to-pink-50 hover:shadow-xl transition-all">
-                      <CardHeader className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-t-lg">
-                        <CardTitle className="flex items-center gap-2 text-purple-800">
-                          <TrendingUp className="h-6 w-6 text-purple-600" />
-                          Pending Assignments
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-center space-y-2">
-                          <div className="text-3xl font-bold text-purple-600">
-                            {student?.stats?.pendingAssignments || 0}
-                          </div>
-                          <div className="text-sm text-gray-600">Due Soon</div>
-                          <div className={cn(
-                            "text-xs font-medium",
-                            (student?.stats?.pendingAssignments || 0) > 0 ? "text-orange-600" : "text-green-600"
-                          )}>
-                            {(student?.stats?.pendingAssignments || 0) > 0 
-                              ? '⚠ Action Required' 
-                              : '✓ All Caught Up'}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    </motion.div>
-                  </div>
-
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                  >
-                  <Card className="border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-white hover:shadow-xl transition-all">
-                    <CardHeader>
-                      <CardTitle>Grade Breakdown by Subject</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {(() => {
-                          // Group submissions by subject and calculate averages
-                          const subjectGrades = submissions
-                            .filter(s => s.grade !== null && s.grade !== undefined)
-                            .reduce((acc, submission) => {
-                              const subject = submission.assignmentSubject || "Other";
-                              if (!acc[subject]) {
-                                acc[subject] = { total: 0, count: 0, totalPoints: 0, earnedPoints: 0 };
-                              }
-                              acc[subject].count += 1;
-                              acc[subject].earnedPoints += submission.grade || 0;
-                              acc[subject].totalPoints += submission.totalPoints || 100;
-                              acc[subject].total = acc[subject].totalPoints > 0 
-                                ? Math.round((acc[subject].earnedPoints / acc[subject].totalPoints) * 100)
-                                : 0;
-                              return acc;
-                            }, {} as Record<string, {total: number, count: number, totalPoints: number, earnedPoints: number}>);
-
-                          const subjectArray = Object.entries(subjectGrades).map(([subject, data]) => ({
-                            subject,
-                            grade: data.total >= 90 ? 'A' 
-                                  : data.total >= 80 ? 'B'
-                                  : data.total >= 70 ? 'C'
-                                  : data.total >= 60 ? 'D'
-                                  : 'F',
-                            percentage: data.total,
-                            assignments: data.count
-                          }));
-
-                          return subjectArray.length > 0 ? (
-                            subjectArray.map((item) => (
-                              <div key={item.subject} className="flex items-center gap-4">
-                                <div className="w-32 text-sm font-medium truncate">{item.subject}</div>
-                                <div className="flex-1">
-                                  <div className="flex items-center justify-between mb-1">
-                                    <span className="text-sm text-gray-600">{item.assignments} graded</span>
-                                    <span className="text-sm font-medium">{item.grade} ({item.percentage}%)</span>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Recent Assignments */}
+                      <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.5 }}
+                      >
+                        <Card className="border-2 border-pink-200 bg-gradient-to-br from-pink-50 to-white hover:shadow-xl transition-all">
+                          <CardHeader className="bg-gradient-to-r from-pink-100 to-purple-100 rounded-t-lg">
+                            <CardTitle className="flex items-center gap-2 text-purple-800">
+                              <FileText className="h-6 w-6 text-pink-600" />
+                              📝 Recent Assignments
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="p-4">
+                            <div className="space-y-3">
+                              {assignments.slice(0, 3).map((assignment, idx) => (
+                                <motion.div
+                                  key={assignment.id}
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: 0.6 + idx * 0.1 }}
+                                  whileHover={{ scale: 1.02, x: 5 }}
+                                  className="flex items-center justify-between p-4 border-2 border-pink-200 rounded-xl bg-white hover:bg-gradient-to-r hover:from-pink-50 hover:to-purple-50 transition-all cursor-pointer"
+                                >
+                                  <div className="flex-1">
+                                    <p className="font-bold text-sm text-gray-800">{assignment.title}</p>
+                                    <p className="text-xs text-gray-600 mt-1">{assignment.subject} • Due {assignment.dueDate}</p>
                                   </div>
-                                  <Progress value={item.percentage} className="h-2" />
-                                </div>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="text-center py-8 text-gray-500">
-                              <Trophy className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                              <p>No graded assignments yet</p>
+                                  {getStatusBadge(assignment.status)}
+                                </motion.div>
+                              ))}
                             </div>
-                          );
-                        })()}
-                      </div>
-                    </CardContent>
-                  </Card>
-                  </motion.div>
-                </div>
-              )}
+                          </CardContent>
+                        </Card>
+                      </motion.div>
 
-              {activeTab === "schedule" && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold">Schedule & Events</h2>
-                    <Button>
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Book Session
-                    </Button>
+                      {/* Upcoming Events */}
+                      <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.5 }}
+                      >
+                        <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white hover:shadow-xl transition-all">
+                          <CardHeader className="bg-gradient-to-r from-blue-100 to-cyan-100 rounded-t-lg">
+                            <CardTitle className="flex items-center gap-2 text-blue-800">
+                              <Calendar className="h-6 w-6 text-blue-600" />
+                              📅 Upcoming Events
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="p-4">
+                            <div className="space-y-3">
+                              {assignments.slice(0, 3).map((assignment, idx) => (
+                                <motion.div
+                                  key={assignment.id}
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: 0.6 + idx * 0.1 }}
+                                  whileHover={{ scale: 1.02, x: 5 }}
+                                  className="flex items-center gap-3 p-4 border-2 border-blue-200 rounded-xl bg-white hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 transition-all cursor-pointer"
+                                >
+                                  <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                                    <Calendar className="h-7 w-7 text-white" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className="font-bold text-sm text-gray-800">{assignment.title}</p>
+                                    <p className="text-xs text-gray-600 mt-1">Due {assignment.dueDate}</p>
+                                  </div>
+                                </motion.div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    </div>
                   </div>
+                )}
 
-                  {/* StudentScheduleView Component */}
-                  {studentEmail && (() => {
-                    const StudentScheduleView = require("../../components/student/StudentScheduleView").default;
-                    return <StudentScheduleView studentEmail={studentEmail} />;
-                  })()}
-                </div>
-              )}
+                {activeTab === "assignments" && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-3xl font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
+                        📚 Assignments
+                      </h2>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => fetchData()}
+                          disabled={loading}
+                        >
+                          <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
+                          Refresh
+                        </Button>
+                      </div>
+                    </div>
 
-              {activeTab === "progress" && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold">Academic Progress</h2>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Assignment Completion</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          {/* Group assignments by subject */}
-                          {(() => {
-                            // Group assignments by subject
-                            const bySubject = assignments.reduce((acc, assignment) => {
-                              const subject = assignment.subject || "Other";
-                              if (!acc[subject]) {
-                                acc[subject] = { total: 0, completed: 0 };
-                              }
-                              acc[subject].total += 1;
-                              // Count completed assignments
-                              if (submissions.some(s => s.assignmentId === assignment.id && s.status === "graded")) {
-                                acc[subject].completed += 1;
-                              }
-                              return acc;
-                            }, {} as Record<string, {total: number, completed: number}>);
-                            
-                            // Convert to array for rendering
-                            return Object.entries(bySubject).map(([subject, counts]) => (
-                              <div key={subject} className="space-y-2">
-                                <div className="flex justify-between">
-                                  <span className="text-sm font-medium">{subject}</span>
-                                  <span className="text-sm text-gray-600">
-                                    {counts.completed}/{counts.total} completed
-                                  </span>
+                    <div className="grid gap-4">
+                      {assignments.map((assignment) => {
+                        // Find if there's a submission for this assignment
+                        const existingSubmission = submissions.find(s => s.assignmentId === assignment.id);
+                        const deadlinePassed = isDeadlinePassed(assignment.dueDate);
+                        const canResubmitAssignment = existingSubmission &&
+                          !deadlinePassed &&
+                          existingSubmission.grade === null;
+
+                        return (
+                          <motion.div
+                            key={assignment.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            whileHover={{ scale: 1.02 }}
+                          >
+                            <Card className="border-2 border-purple-200 bg-gradient-to-br from-white via-pink-50/30 to-purple-50/30 hover:shadow-xl transition-all">
+                              <CardContent className="p-6">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-3 mb-2">
+                                      <h3 className="text-lg font-semibold">{assignment.title}</h3>
+                                      {existingSubmission ? getStatusBadge(existingSubmission.status) : getStatusBadge("pending")}
+                                    </div>
+                                    <p className="text-gray-600 mb-3">{assignment.description}</p>
+
+                                    {/* Resource indicator */}
+                                    {assignment.resources && assignment.resources.length > 0 && (
+                                      <div className="flex items-center gap-2 mb-3">
+                                        <BookOpen className="h-4 w-4 text-blue-500" />
+                                        <span className="text-sm text-blue-600">
+                                          {assignment.resources.length} resource{assignment.resources.length !== 1 ? 's' : ''} available
+                                        </span>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-6 px-2 text-xs"
+                                          onClick={() => setActiveTab("resources")}
+                                        >
+                                          View Resources
+                                        </Button>
+                                      </div>
+                                    )}
+                                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
+                                      <span className="flex items-center gap-1">
+                                        <BookOpen className="h-4 w-4" />
+                                        {assignment.subject}
+                                      </span>
+                                      <span className="flex items-center gap-1">
+                                        <Calendar className="h-4 w-4" />
+                                        Due: {assignment.dueDate}
+                                      </span>
+                                      <span className="flex items-center gap-1">
+                                        <Star className="h-4 w-4" />
+                                        {assignment.totalPoints} points
+                                      </span>
+                                    </div>
+
+                                    {/* Deadline status indicator */}
+                                    <div className="flex items-center gap-2 text-sm">
+                                      {deadlinePassed ? (
+                                        <span className="flex items-center gap-1 text-red-600">
+                                          <AlertCircle className="h-4 w-4" />
+                                          Deadline passed
+                                        </span>
+                                      ) : (
+                                        <span className="flex items-center gap-1 text-green-600">
+                                          <CheckCircle className="h-4 w-4" />
+                                          Still accepting submissions
+                                        </span>
+                                      )}
+
+                                      {existingSubmission && (
+                                        <span className="text-gray-500">
+                                          • Submitted on {existingSubmission.submittedAt}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="flex flex-col gap-2">
+                                    {/* Submit button for new assignments */}
+                                    {!existingSubmission && !deadlinePassed && (
+                                      <Dialog>
+                                        <DialogTrigger asChild>
+                                          <Button
+                                            onClick={() => {
+                                              setSelectedAssignment(assignment);
+                                              setIsResubmitting(false);
+                                              setResubmissionId(null);
+                                            }}
+                                            className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold shadow-lg hover:scale-105 transition-all"
+                                          >
+                                            <Send className="h-4 w-4 mr-2" />
+                                            Submit Assignment 🚀
+                                          </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-2xl">
+                                          <DialogHeader>
+                                            <DialogTitle>Submit Assignment: {selectedAssignment?.title}</DialogTitle>
+                                          </DialogHeader>
+                                          <div className="space-y-4">
+                                            <div className="space-y-2">
+                                              <Label htmlFor="submission">Written Response</Label>
+                                              <Textarea
+                                                id="submission"
+                                                placeholder="Enter your assignment response here..."
+                                                value={submissionText}
+                                                onChange={(e) => setSubmissionText(e.target.value)}
+                                                rows={6}
+                                              />
+                                            </div>
+                                            <div className="space-y-2">
+                                              <Label htmlFor="file">File Upload (Optional)</Label>
+                                              <Input
+                                                id="file"
+                                                type="file"
+                                                accept=".pdf,.doc,.docx,.txt,.jpg,.png"
+                                                onChange={(e) => setSubmissionFile(e.target.files?.[0] || null)}
+                                              />
+                                              <p className="text-xs text-gray-500">
+                                                Accepted formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB)
+                                              </p>
+                                            </div>
+                                          </div>
+                                          <DialogFooter>
+                                            <Button
+                                              onClick={handleSubmission}
+                                              disabled={isSubmitting || (!submissionText.trim() && !submissionFile)}
+                                            >
+                                              {isSubmitting ? (
+                                                <>
+                                                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                                  Submitting...
+                                                </>
+                                              ) : (
+                                                <>
+                                                  <Send className="h-4 w-4 mr-2" />
+                                                  Submit Assignment
+                                                </>
+                                              )}
+                                            </Button>
+                                          </DialogFooter>
+                                        </DialogContent>
+                                      </Dialog>
+                                    )}
+
+                                    {/* Resubmit button for submitted assignments */}
+                                    {canResubmitAssignment && (
+                                      <Dialog>
+                                        <DialogTrigger asChild>
+                                          <Button
+                                            variant="outline"
+                                            onClick={() => {
+                                              setSelectedAssignment(assignment);
+                                              setSubmissionText(existingSubmission.content || "");
+                                              setSubmissionFile(null);
+                                              setIsResubmitting(true);
+                                              setResubmissionId(existingSubmission.id);
+                                            }}
+                                            className="border-2 border-orange-400 bg-gradient-to-r from-orange-50 to-yellow-50 hover:from-orange-100 hover:to-yellow-100 text-orange-700 font-bold hover:scale-105 transition-all"
+                                          >
+                                            <RefreshCw className="h-4 w-4 mr-2" />
+                                            Resubmit 🔄
+                                          </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-2xl">
+                                          <DialogHeader>
+                                            <DialogTitle>Resubmit Assignment: {selectedAssignment?.title}</DialogTitle>
+                                            <p className="text-sm text-orange-600 bg-orange-50 p-3 rounded-lg mt-2">
+                                              ⚠️ Your previous submission will be replaced with this new one.
+                                            </p>
+                                          </DialogHeader>
+                                          <div className="space-y-4">
+                                            <div className="space-y-2">
+                                              <Label htmlFor="resubmission">Updated Response</Label>
+                                              <Textarea
+                                                id="resubmission"
+                                                placeholder="Enter your updated assignment response here..."
+                                                value={submissionText}
+                                                onChange={(e) => setSubmissionText(e.target.value)}
+                                                rows={6}
+                                              />
+                                            </div>
+                                            <div className="space-y-2">
+                                              <Label htmlFor="resubmit-file">File Upload (Optional)</Label>
+                                              <Input
+                                                id="resubmit-file"
+                                                type="file"
+                                                accept=".pdf,.doc,.docx,.txt,.jpg,.png"
+                                                onChange={(e) => setSubmissionFile(e.target.files?.[0] || null)}
+                                              />
+                                              <p className="text-xs text-gray-500">
+                                                Accepted formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB)
+                                              </p>
+                                            </div>
+                                          </div>
+                                          <DialogFooter>
+                                            <Button
+                                              onClick={handleSubmission}
+                                              disabled={isSubmitting || (!submissionText.trim() && !submissionFile)}
+                                            >
+                                              {isSubmitting ? (
+                                                <>
+                                                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                                  Resubmitting...
+                                                </>
+                                              ) : (
+                                                <>
+                                                  <RefreshCw className="h-4 w-4 mr-2" />
+                                                  Resubmit Assignment
+                                                </>
+                                              )}
+                                            </Button>
+                                          </DialogFooter>
+                                        </DialogContent>
+                                      </Dialog>
+                                    )}
+
+                                    {/* Status indicators for completed/graded submissions */}
+                                    {existingSubmission && existingSubmission.grade !== undefined && (
+                                      <div className="text-center">
+                                        <Badge variant="secondary" className="bg-green-100 text-green-800">
+                                          <Trophy className="h-3 w-3 mr-1" />
+                                          Graded: {existingSubmission.grade}/{assignment.totalPoints}
+                                        </Badge>
+                                      </div>
+                                    )}
+
+                                    {deadlinePassed && existingSubmission && existingSubmission.grade === undefined && (
+                                      <div className="text-center">
+                                        <Badge variant="secondary" className="bg-gray-100 text-gray-600">
+                                          <Clock className="h-3 w-3 mr-1" />
+                                          Awaiting Grade
+                                        </Badge>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                                <Progress 
-                                  value={counts.total > 0 ? (counts.completed / counts.total) * 100 : 0} 
-                                  className="h-2" 
-                                />
-                                <div className="text-xs text-gray-500">
-                                  {counts.total - counts.completed} remaining
-                                </div>
-                              </div>
-                            ));
-                          })()}
-                        </div>
-                      </CardContent>
-                    </Card>
+                              </CardContent>
+                            </Card>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Assignment Statistics</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-6">
-                          {/* Assignment counts */}
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-blue-50 p-4 rounded-lg text-center">
-                              <div className="text-3xl font-bold text-blue-600">
-                                {submissions.length}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                Submissions
-                              </div>
-                            </div>
-                            <div className="bg-green-50 p-4 rounded-lg text-center">
+                {activeTab === "submissions" && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-3xl font-bold bg-gradient-to-r from-green-600 via-teal-600 to-blue-600 bg-clip-text text-transparent">
+                        ✨ My Submissions
+                      </h2>
+                    </div>
+
+                    <div className="grid gap-4">
+                      {submissions.map((submission) => {
+                        const assignment = assignments.find(a => a.id === submission.assignmentId);
+                        const deadlinePassed = assignment ? isDeadlinePassed(assignment.dueDate) : true;
+
+                        return (
+                          <motion.div
+                            key={submission.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            whileHover={{ scale: 1.01 }}
+                          >
+                            <Card className="border-2 border-green-200 bg-gradient-to-br from-white via-green-50/30 to-teal-50/30 hover:shadow-xl transition-all">
+                              <CardContent className="p-6">
+                                <div className="flex items-start justify-between mb-4">
+                                  <div className="flex-1">
+                                    <h3 className="text-lg font-semibold">{submission.assignmentTitle}</h3>
+                                    <p className="text-sm text-gray-600">
+                                      Submitted on {new Date(submission.submittedAt).toLocaleDateString('en-US', {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })}
+                                    </p>
+                                    {assignment && (
+                                      <p className="text-sm text-gray-500 mt-1">
+                                        Due: {new Date(assignment.dueDate).toLocaleDateString('en-US', {
+                                          year: 'numeric',
+                                          month: 'long',
+                                          day: 'numeric'
+                                        })}
+                                        {deadlinePassed && <span className="text-red-500 ml-2">(Submitted after deadline)</span>}
+                                        {!deadlinePassed && <span className="text-green-500 ml-2">(Submitted on time)</span>}
+                                      </p>
+                                    )}
+                                    {assignment && (
+                                      <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
+                                        <span className="flex items-center gap-1">
+                                          <BookOpen className="h-4 w-4" />
+                                          {assignment.subject}
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                          <Star className="h-4 w-4" />
+                                          {assignment.totalPoints} points
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                          <RefreshCw className="h-4 w-4" />
+                                          Submission #{submission.id}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {getStatusBadge(submission.status)}
+                                  </div>
+                                </div>
+
+                                {/* Submission Content */}
+                                {submission.content && (
+                                  <div className="mb-4">
+                                    <h4 className="text-sm font-medium text-gray-700 mb-2">Written Response:</h4>
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                      <p className="text-sm text-gray-800 whitespace-pre-wrap">{submission.content}</p>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* File Attachment */}
+                                {submission.fileUrl && submission.fileName && (
+                                  <div className="mb-4">
+                                    <h4 className="text-sm font-medium text-gray-700 mb-2">File Attachment:</h4>
+                                    <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                          <div className="p-2 bg-blue-100 rounded-lg">
+                                            <FileText className="h-5 w-5 text-blue-600" />
+                                          </div>
+                                          <div>
+                                            <p className="text-sm font-medium text-blue-900">{submission.fileName}</p>
+                                            {submission.fileSize && (
+                                              <p className="text-xs text-blue-700">
+                                                {(submission.fileSize / 1024 / 1024).toFixed(2)} MB
+                                              </p>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => window.open(submission.fileUrl, '_blank')}
+                                          >
+                                            <Eye className="h-4 w-4 mr-2" />
+                                            View
+                                          </Button>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                              const link = document.createElement('a');
+                                              if (submission.fileUrl) {
+                                                link.href = submission.fileUrl;
+                                                link.download = submission.fileName ?? "download";
+                                                link.click();
+                                              }
+                                            }}
+                                          >
+                                            <Download className="h-4 w-4 mr-2" />
+                                            Download
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Grade Display */}
+                                {submission.grade !== null && submission.grade !== undefined && assignment && (
+                                  <div className="mb-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <span className="text-sm text-gray-600">Grade:</span>
+                                      <span className={cn("text-lg font-bold", getGradeColor(calculateGradePercentage(submission.grade, assignment.totalPoints)))}>
+                                        {submission.grade}/{assignment.totalPoints} ({calculateGradePercentage(submission.grade, assignment.totalPoints)}%)
+                                      </span>
+                                    </div>
+                                    <Progress
+                                      value={calculateGradePercentage(submission.grade, assignment.totalPoints)}
+                                      className="h-2"
+                                    />
+                                  </div>
+                                )}
+
+                                {/* Teacher Feedback */}
+                                {submission.feedback && (
+                                  <div className="bg-blue-50 p-4 rounded-lg">
+                                    <p className="text-sm font-medium text-blue-900 mb-1">Teacher Feedback:</p>
+                                    <p className="text-sm text-blue-800 whitespace-pre-wrap">{submission.feedback}</p>
+                                  </div>
+                                )}
+
+                                {/* Submission Status Info */}
+                                <div className="mt-4 pt-4 border-t border-gray-200">
+                                  <div className="flex items-center justify-between text-xs text-gray-500">
+                                    <span>Submission ID: #{submission.id}</span>
+                                    <span>
+                                      {submission.grade !== null && submission.grade !== undefined ? 'Graded' : 'Awaiting Review'}
+                                    </span>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </motion.div>
+                        );
+                      })}
+
+                      {submissions.length === 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                        >
+                          <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
+                            <CardContent className="p-12 text-center">
+                              <div className="text-6xl mb-4">📝</div>
+                              <h3 className="text-2xl font-bold text-purple-800 mb-2">No Submissions Yet</h3>
+                              <p className="text-purple-600 mb-6 text-lg">
+                                You haven&apos;t submitted any assignments yet. Let&apos;s get started! 🚀
+                              </p>
+                              <Button
+                                className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold shadow-lg hover:scale-105 transition-all"
+                                onClick={() => setActiveTab("assignments")}
+                                size="lg"
+                              >
+                                <FileText className="h-5 w-5 mr-2" />
+                                View Assignments
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "grades" && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-3xl font-bold bg-gradient-to-r from-yellow-600 via-orange-600 to-red-600 bg-clip-text text-transparent">
+                        🏆 Grades & Performance
+                      </h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        whileHover={{ scale: 1.05 }}
+                      >
+                        <Card className="border-2 border-yellow-300 bg-gradient-to-br from-yellow-50 to-orange-50 hover:shadow-xl transition-all">
+                          <CardHeader className="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-t-lg">
+                            <CardTitle className="flex items-center gap-2 text-orange-800">
+                              <Trophy className="h-6 w-6 text-yellow-600" />
+                              Overall Performance
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-center space-y-2">
                               <div className="text-3xl font-bold text-green-600">
-                                {submissions.filter(s => s.status === "graded").length}
+                                {student?.stats?.averageGrade
+                                  ? student.stats.averageGrade >= 90 ? 'A'
+                                    : student.stats.averageGrade >= 80 ? 'B'
+                                      : student.stats.averageGrade >= 70 ? 'C'
+                                        : student.stats.averageGrade >= 60 ? 'D'
+                                          : 'F'
+                                  : 'N/A'}
                               </div>
-                              <div className="text-sm text-gray-600">
-                                Completed
-                              </div>
-                            </div>
-                            <div className="bg-yellow-50 p-4 rounded-lg text-center">
-                              <div className="text-3xl font-bold text-yellow-600">
-                                {assignments.filter(a => 
-                                  !submissions.some(s => s.assignmentId === a.id)
-                                ).length}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                Pending
+                              <div className="text-sm text-gray-600">Current Grade</div>
+                              <Progress value={student?.stats?.averageGrade || 0} className="h-3" />
+                              <div className="text-xs text-gray-500">
+                                {student?.stats?.averageGrade ? `${student.stats.averageGrade}% Average` : 'No grades yet'}
                               </div>
                             </div>
-                            <div className="bg-purple-50 p-4 rounded-lg text-center">
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.1 }}
+                        whileHover={{ scale: 1.05 }}
+                      >
+                        <Card className="border-2 border-blue-300 bg-gradient-to-br from-blue-50 to-cyan-50 hover:shadow-xl transition-all">
+                          <CardHeader className="bg-gradient-to-r from-blue-100 to-cyan-100 rounded-t-lg">
+                            <CardTitle className="flex items-center gap-2 text-blue-800">
+                              <Target className="h-6 w-6 text-blue-600" />
+                              Assignments Completed
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-center space-y-2">
+                              <div className="text-3xl font-bold text-blue-600">
+                                {student?.stats?.gradedSubmissions || 0}/{student?.stats?.totalSubmissions || 0}
+                              </div>
+                              <div className="text-sm text-gray-600">Graded Assignments</div>
+                              <Progress
+                                value={student?.stats?.totalSubmissions
+                                  ? (student.stats.gradedSubmissions / student.stats.totalSubmissions) * 100
+                                  : 0
+                                }
+                                className="h-3"
+                              />
+                              <div className="text-xs text-gray-500">
+                                {student?.stats?.totalSubmissions
+                                  ? Math.round((student.stats.gradedSubmissions / student.stats.totalSubmissions) * 100)
+                                  : 0}% Graded
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.2 }}
+                        whileHover={{ scale: 1.05 }}
+                      >
+                        <Card className="border-2 border-purple-300 bg-gradient-to-br from-purple-50 to-pink-50 hover:shadow-xl transition-all">
+                          <CardHeader className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-t-lg">
+                            <CardTitle className="flex items-center gap-2 text-purple-800">
+                              <TrendingUp className="h-6 w-6 text-purple-600" />
+                              Pending Assignments
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-center space-y-2">
                               <div className="text-3xl font-bold text-purple-600">
-                                {assignments.length}
+                                {student?.stats?.pendingAssignments || 0}
                               </div>
-                              <div className="text-sm text-gray-600">
-                                Total Assignments
+                              <div className="text-sm text-gray-600">Due Soon</div>
+                              <div className={cn(
+                                "text-xs font-medium",
+                                (student?.stats?.pendingAssignments || 0) > 0 ? "text-orange-600" : "text-green-600"
+                              )}>
+                                {(student?.stats?.pendingAssignments || 0) > 0
+                                  ? '⚠ Action Required'
+                                  : '✓ All Caught Up'}
                               </div>
                             </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    </div>
+
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      <Card className="border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-white hover:shadow-xl transition-all">
+                        <CardHeader>
+                          <CardTitle>Grade Breakdown by Subject</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            {(() => {
+                              // Group submissions by subject and calculate averages
+                              const subjectGrades = submissions
+                                .filter(s => s.grade !== null && s.grade !== undefined)
+                                .reduce((acc, submission) => {
+                                  const subject = submission.assignmentSubject || "Other";
+                                  if (!acc[subject]) {
+                                    acc[subject] = { total: 0, count: 0, totalPoints: 0, earnedPoints: 0 };
+                                  }
+                                  acc[subject].count += 1;
+                                  acc[subject].earnedPoints += submission.grade || 0;
+                                  acc[subject].totalPoints += submission.totalPoints || 100;
+                                  acc[subject].total = acc[subject].totalPoints > 0
+                                    ? Math.round((acc[subject].earnedPoints / acc[subject].totalPoints) * 100)
+                                    : 0;
+                                  return acc;
+                                }, {} as Record<string, { total: number, count: number, totalPoints: number, earnedPoints: number }>);
+
+                              const subjectArray = Object.entries(subjectGrades).map(([subject, data]) => ({
+                                subject,
+                                grade: data.total >= 90 ? 'A'
+                                  : data.total >= 80 ? 'B'
+                                    : data.total >= 70 ? 'C'
+                                      : data.total >= 60 ? 'D'
+                                        : 'F',
+                                percentage: data.total,
+                                assignments: data.count
+                              }));
+
+                              return subjectArray.length > 0 ? (
+                                subjectArray.map((item) => (
+                                  <div key={item.subject} className="flex items-center gap-4">
+                                    <div className="w-32 text-sm font-medium truncate">{item.subject}</div>
+                                    <div className="flex-1">
+                                      <div className="flex items-center justify-between mb-1">
+                                        <span className="text-sm text-gray-600">{item.assignments} graded</span>
+                                        <span className="text-sm font-medium">{item.grade} ({item.percentage}%)</span>
+                                      </div>
+                                      <Progress value={item.percentage} className="h-2" />
+                                    </div>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="text-center py-8 text-gray-500">
+                                  <Trophy className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                                  <p>No graded assignments yet</p>
+                                </div>
+                              );
+                            })()}
                           </div>
-                          
-                          {/* Activity summary */}
-                          <div className="text-center pt-2 border-t">
-                            <p className="text-sm font-medium text-gray-700 mb-1">
-                              Recent Activity
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {submissions.length > 0 
-                                ? `Last submission: ${new Date(
-                                    submissions.sort((a, b) => 
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  </div>
+                )}
+
+                {activeTab === "schedule" && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-2xl font-bold">Schedule & Events</h2>
+                      <Button>
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Book Session
+                      </Button>
+                    </div>
+
+                    {/* StudentScheduleView Component */}
+                    {studentEmail && (() => {
+                      const StudentScheduleView = require("../../components/student/StudentScheduleView").default;
+                      return <StudentScheduleView studentEmail={studentEmail} />;
+                    })()}
+                  </div>
+                )}
+
+                {activeTab === "progress" && (
+                  <div className="space-y-6">
+                    <h2 className="text-2xl font-bold">Academic Progress</h2>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Assignment Completion</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            {/* Group assignments by subject */}
+                            {(() => {
+                              // Group assignments by subject
+                              const bySubject = assignments.reduce((acc, assignment) => {
+                                const subject = assignment.subject || "Other";
+                                if (!acc[subject]) {
+                                  acc[subject] = { total: 0, completed: 0 };
+                                }
+                                acc[subject].total += 1;
+                                // Count completed assignments
+                                if (submissions.some(s => s.assignmentId === assignment.id && s.status === "graded")) {
+                                  acc[subject].completed += 1;
+                                }
+                                return acc;
+                              }, {} as Record<string, { total: number, completed: number }>);
+
+                              // Convert to array for rendering
+                              return Object.entries(bySubject).map(([subject, counts]) => (
+                                <div key={subject} className="space-y-2">
+                                  <div className="flex justify-between">
+                                    <span className="text-sm font-medium">{subject}</span>
+                                    <span className="text-sm text-gray-600">
+                                      {counts.completed}/{counts.total} completed
+                                    </span>
+                                  </div>
+                                  <Progress
+                                    value={counts.total > 0 ? (counts.completed / counts.total) * 100 : 0}
+                                    className="h-2"
+                                  />
+                                  <div className="text-xs text-gray-500">
+                                    {counts.total - counts.completed} remaining
+                                  </div>
+                                </div>
+                              ));
+                            })()}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Assignment Statistics</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-6">
+                            {/* Assignment counts */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="bg-blue-50 p-4 rounded-lg text-center">
+                                <div className="text-3xl font-bold text-blue-600">
+                                  {submissions.length}
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  Submissions
+                                </div>
+                              </div>
+                              <div className="bg-green-50 p-4 rounded-lg text-center">
+                                <div className="text-3xl font-bold text-green-600">
+                                  {submissions.filter(s => s.status === "graded").length}
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  Completed
+                                </div>
+                              </div>
+                              <div className="bg-yellow-50 p-4 rounded-lg text-center">
+                                <div className="text-3xl font-bold text-yellow-600">
+                                  {assignments.filter(a =>
+                                    !submissions.some(s => s.assignmentId === a.id)
+                                  ).length}
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  Pending
+                                </div>
+                              </div>
+                              <div className="bg-purple-50 p-4 rounded-lg text-center">
+                                <div className="text-3xl font-bold text-purple-600">
+                                  {assignments.length}
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  Total Assignments
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Activity summary */}
+                            <div className="text-center pt-2 border-t">
+                              <p className="text-sm font-medium text-gray-700 mb-1">
+                                Recent Activity
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {submissions.length > 0
+                                  ? `Last submission: ${new Date(
+                                    submissions.sort((a, b) =>
                                       new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
                                     )[0]?.submittedAt
                                   ).toLocaleDateString()}`
-                                : 'No submissions yet'
-                              }
-                            </p>
+                                  : 'No submissions yet'
+                                }
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-              )}
+                        </CardContent>
+                      </Card>
+                    </div>
 
-              {activeTab === "resources" && (
-                <ResourceLibrary studentEmail={studentEmail} />
-              )}
-
-              {activeTab === "messages" && (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold">Messages</h2>
+                    <div className="mt-8">
+                      <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-purple-600" />
+                        Evaluations & Progress Reports/Marksheet
+                      </h3>
+                      <ProgressReportList reports={progressReports} />
+                    </div>
                   </div>
-                  
-                  {/* Import and use our MentorMessages component */}
-                  {student && (
-                    <MentorMessages 
-                      studentId={student.id}
-                      studentEmail={student.email}
-                      studentName={student.name}
-                      onUnreadCountChange={setMessageUnreadCount}
-                    />
-                  )}
-                </div>
-              )}
+                )}
+
+                {activeTab === "resources" && (
+                  <ResourceLibrary studentEmail={studentEmail} />
+                )}
+
+                {activeTab === "messages" && (
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-2xl font-bold">Messages</h2>
+                    </div>
+
+                    {/* Import and use our MentorMessages component */}
+                    {student && (
+                      <MentorMessages
+                        studentId={student.id}
+                        studentEmail={student.email}
+                        studentName={student.name}
+                        onUnreadCountChange={setMessageUnreadCount}
+                      />
+                    )}
+                  </div>
+                )}
               </motion.div>
             )}
           </div>
