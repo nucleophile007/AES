@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Save, X, Calendar, FileText, Users, Clock } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Assignment {
   id: number;
@@ -225,6 +226,7 @@ const AssignmentForm = ({
 };
 
 export default function AssignmentManager({ teacherEmail, assignments, onAssignmentCreated, onAssignmentUpdated }: AssignmentManagerProps) {
+  const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
@@ -305,7 +307,11 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
 
   const handleSubmit = async () => {
     if (!formData.title || !formData.description || !formData.program || !formData.subject || !formData.dueDate || !formData.studentId) {
-      alert("Please fill in all required fields including student selection");
+      toast({
+        title: "Missing information",
+        description: "Please fill in all required fields including student selection.",
+        className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+      });
       return;
     }
 
@@ -350,11 +356,19 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
         onAssignmentCreated();
       }
 
-      alert(data.message || 'Assignment saved successfully');
+      toast({
+        title: "Assignment saved",
+        description: data.message || "The assignment has been saved successfully.",
+        className: "border-green-500 bg-green-50 text-green-900",
+      });
 
     } catch (error) {
       console.error('Error saving assignment:', error);
-      alert(error instanceof Error ? error.message : 'Failed to save assignment');
+      toast({
+        variant: "destructive",
+        title: "Failed to save assignment",
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
     } finally {
       setLoading(false);
     }
@@ -377,11 +391,19 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
       }
 
       onAssignmentUpdated();
-      alert('Assignment deleted successfully');
+      toast({
+        title: "Assignment deleted",
+        description: "The assignment has been deleted successfully.",
+        className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+      });
 
     } catch (error) {
       console.error('Error deleting assignment:', error);
-      alert(error instanceof Error ? error.message : 'Failed to delete assignment');
+      toast({
+        variant: "destructive",
+        title: "Failed to delete assignment",
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
     }
   };
 
