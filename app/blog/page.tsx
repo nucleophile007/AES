@@ -13,22 +13,17 @@ const heroCategories = [
   {
     id: "student-spotlights",
     title: "Student Spotlights",
-    icon: (props: React.SVGProps<SVGSVGElement>) => <User className="h-6 w-6 text-yellow-400 group-hover:scale-125 group-hover:rotate-6 transition-transform duration-300" {...props} />, 
-  },
-  {
-    id: "research-opportunities",
-    title: "Research Opportunities and Ideas",
-    icon: (props: React.SVGProps<SVGSVGElement>) => <BookOpen className="h-6 w-6 text-yellow-400 group-hover:rotate-12 group-hover:scale-110 transition-transform duration-300" {...props} />, 
+    icon: (props: React.SVGProps<SVGSVGElement>) => <User className="h-6 w-6 text-yellow-400 group-hover:scale-125 group-hover:rotate-6 transition-transform duration-300" {...props} />,
   },
   {
     id: "education-admissions",
     title: "Education and College Admissions",
-    icon: (props: React.SVGProps<SVGSVGElement>) => <BookOpen className="h-6 w-6 text-yellow-400 group-hover:rotate-180 group-hover:scale-110 transition-transform duration-300" {...props} />, 
+    icon: (props: React.SVGProps<SVGSVGElement>) => <BookOpen className="h-6 w-6 text-yellow-400 group-hover:rotate-180 group-hover:scale-110 transition-transform duration-300" {...props} />,
   },
   {
     id: "conduct-research",
     title: "Research Showcase",
-    icon: (props: React.SVGProps<SVGSVGElement>) => <BookOpen className="h-6 w-6 text-yellow-400 group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300" {...props} />, 
+    icon: (props: React.SVGProps<SVGSVGElement>) => <BookOpen className="h-6 w-6 text-yellow-400 group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300" {...props} />,
   },
 ];
 
@@ -59,8 +54,8 @@ export default function AESBlogPage() {
               Based on our experience at some of the top research institutions, the Acharya team and community have a lot of insights to offer you on all sorts of topics!
             </p>
           </div>
-          {/* Category Cards Grid - vibrant and eye-catching */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+          {/* Category Cards Grid - 3 columns for 3 tiles */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {heroCategories.map(({ title, icon: Icon, id }, index) => {
               // Different gradient colors for each card
               const gradients = [
@@ -75,7 +70,7 @@ export default function AESBlogPage() {
                 "from-emerald-400 via-teal-400 to-cyan-400",
                 "from-rose-400 via-fuchsia-400 to-violet-400",
               ];
-              
+
               return (
                 <div
                   key={index}
@@ -83,7 +78,7 @@ export default function AESBlogPage() {
                 >
                   {/* Vibrant accent bar on left - always visible */}
                   <div className={`absolute left-0 top-0 h-full w-1.5 bg-gradient-to-b ${accentGradients[index]} opacity-60`}></div>
-                  
+
                   {/* Background gradient overlay - always visible */}
                   <div className={`absolute inset-0 bg-gradient-to-br ${gradients[index]} opacity-40 pointer-events-none`}></div>
 
@@ -103,7 +98,7 @@ export default function AESBlogPage() {
                       <h3 className="text-white font-bold text-2xl sm:text-3xl mb-4 leading-tight drop-shadow-lg">
                         {title}
                       </h3>
-                      
+
                       {/* Decorative line - always visible */}
                       <div className={`h-1 bg-gradient-to-r ${accentGradients[index]} rounded-full opacity-50 w-16`}></div>
                     </div>
