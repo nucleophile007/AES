@@ -20,7 +20,7 @@ export default function Header() {
     >
       {/* Enhanced backdrop blur layer */}
       <div className="absolute inset-0 bg-gradient-to-r from-[#1a2236]/20 via-[#1a2236]/15 to-[#1a2236]/20 backdrop-blur-3xl"></div>
-      
+
       {/* Subtle animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-0 left-1/4 w-32 h-32 bg-yellow-400/3 rounded-full blur-3xl animate-pulse"></div>
@@ -31,7 +31,7 @@ export default function Header() {
       <div className="container mx-auto py-4 px-4 flex items-center justify-between relative z-10">
         {/* Logo and Brand */}
         <Link href="/">
-          <motion.div 
+          <motion.div
             className="flex items-center space-x-3 group cursor-pointer"
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 400 }}
@@ -55,24 +55,24 @@ export default function Header() {
             </div>
           </motion.div>
         </Link>
-        
+
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center space-x-8">
           <NavbarDemo />
         </nav>
-        
+
         {/* Desktop Buttons */}
         <div className="hidden md:flex items-center space-x-4">
           <LoginModal>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="hidden sm:inline-flex border-yellow-400/20 text-yellow-400/90 hover:bg-yellow-400/10 hover:border-yellow-400/30 backdrop-blur-md transition-all duration-300 bg-white/5"
             >
               Login
             </Button>
           </LoginModal>
           <Link href="/book-session">
-            <Button 
+            <Button
               className="bg-gradient-to-r from-yellow-400/90 via-amber-500/90 to-orange-500/90 hover:from-yellow-400 hover:via-amber-500 hover:to-orange-500 text-[#1a2236] font-bold shadow-lg hover:shadow-xl hover:shadow-yellow-400/20 transition-all duration-300 transform hover:scale-105 backdrop-blur-md"
             >
               <Sparkles className="mr-2 h-4 w-4" />
@@ -106,10 +106,10 @@ export default function Header() {
             <nav className="space-y-4">
               <Link href="/#home" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Home</Link>
               <Link href="/about" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">About</Link>
-              
+
               {/* Programs Dropdown */}
               <div className="space-y-2">
-                <button 
+                <button
                   onClick={() => setOpenDropdown(openDropdown === 'programs' ? null : 'programs')}
                   className="flex items-center justify-between w-full text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm"
                 >
@@ -127,7 +127,7 @@ export default function Header() {
 
               {/* Profile Enrichment Dropdown */}
               <div className="space-y-2">
-                <button 
+                <button
                   onClick={() => setOpenDropdown(openDropdown === 'profile' ? null : 'profile')}
                   className="flex items-center justify-between w-full text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm"
                 >
@@ -148,6 +148,7 @@ export default function Header() {
               <Link href="/#mentors" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Mentors</Link>
               <Link href="/#animatedtestimonials" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Testimonials</Link>
               <Link href="/blog" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Blog</Link>
+              <Link href="/events" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Events</Link>
               <Link href="/#cta" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Contact</Link>
             </nav>
             <div className="pt-4 border-t border-yellow-400/10 space-y-3">

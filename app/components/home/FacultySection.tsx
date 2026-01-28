@@ -1,75 +1,56 @@
 "use client";
 import React from "react";
 import { motion } from "framer-motion";
+import useSWR from "swr";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Trophy, Linkedin, Globe, Mail } from "lucide-react";
+import { FacultyGridSkeleton } from "@/components/ui/MentorSkeleton";
 
-const faculty = [
-  {
-    name: "Dr. Rajesh Acharya",
-    role: "Founder & Lead Mathematics Educator",
-    education: "Ph.D. in Applied Mathematics",
-    institution: "IIT Delhi Alumni",
-    experience: "15+ years",
-    specialties: ["Advanced Calculus", "Linear Algebra", "Competition Math", "AP Mathematics"],
-    achievements: ["500+ students mentored", "98% improvement rate", "Research publications"],
-    image: "/placeholder.svg",
-  },
-  {
-    name: "Dr. Priya Sharma",
-    role: "Head of Sciences Department",
-    education: "Ph.D. in Biochemistry",
-    institution: "University Faculty",
-    experience: "12+ years",
-    specialties: ["AP Chemistry", "Organic Chemistry", "Biology", "Pre-Med Prep"],
-    achievements: ["Medical school guidance", "Research mentor", "Lab experience"],
-    image: "/placeholder.svg",
-  },
-  {
-    name: "Prof. Ankit Gupta",
-    role: "Physics & Engineering Specialist",
-    education: "M.Tech in Engineering Physics",
-    institution: "IIT Bombay Alumni",
-    experience: "10+ years",
-    specialties: ["AP Physics C", "Mechanics", "Electromagnetism", "Engineering Prep"],
-    achievements: ["Industry experience", "Patent holder", "Competition coach"],
-    image: "/placeholder.svg",
-  },
-  {
-    name: "Dr. Meera Patel",
-    role: "SAT & Test Prep Expert",
-    education: "Ph.D. in Education",
-    institution: "Stanford University",
-    experience: "8+ years",
-    specialties: ["SAT Math", "SAT Reading", "Test Strategies", "College Prep"],
-    achievements: ["1500+ average score improvement", "College counselor", "Admissions expert"],
-    image: "/placeholder.svg",
-  },
-  {
-    name: "Prof. Vikram Singh",
-    role: "Research Programs Director",
-    education: "Ph.D. in Computer Science",
-    institution: "IIT Kanpur Alumni",
-    experience: "14+ years",
-    specialties: ["Research Methodology", "Data Analysis", "Programming", "Project Mentoring"],
-    achievements: ["Published researcher", "Startup founder", "Innovation mentor"],
-    image: "/placeholder.svg",
-  },
-  {
-    name: "Dr. Kavita Reddy",
-    role: "Humanities & Law Coordinator",
-    education: "Ph.D. in English Literature",
-    institution: "University Faculty",
-    experience: "11+ years",
-    specialties: ["Academic Writing", "Critical Analysis", "Law Prep", "Liberal Arts"],
-    achievements: ["Writing coach", "Publication editor", "Legal education expert"],
-    image: "/placeholder.svg",
-  },
-];
+interface Mentor {
+  id: number;
+  name: string;
+  role: string;
+  education: string;
+  institution: string;
+  experience: string | null;
+  specialties: string[];
+  achievements: string[];
+  image: string;
+  bio: string;
+}
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function FacultySection() {
+  const { data, error, isLoading } = useSWR('/api/mentors', fetcher, {
+    revalidateOnFocus: false,
+    revalidateIfStale: true,
+    dedupingInterval: 60000,
+  });
+
+  const mentors: Mentor[] = data?.mentors || [];
+
+  if (isLoading) {
+    return (
+      <section className="py-20 bg-white">
+        <div className="container mx-auto">
+          <div className="text-center mb-12">
+            <h3 className="text-3xl font-bold text-text-dark mb-4">
+              Meet Our Distinguished Faculty
+            </h3>
+            <p className="text-lg text-text-light max-w-3xl mx-auto">
+              Our team combines academic excellence from top institutions with
+              practical teaching experience
+            </p>
+          </div>
+          <FacultyGridSkeleton count={6} />
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-20 bg-white">
       <div className="container mx-auto">
@@ -87,7 +68,7 @@ export default function FacultySection() {
           </p>
         </motion.div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {faculty.map((member, index) => (
+          {mentors.map((member, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, scale: 0.9 }}
@@ -110,7 +91,7 @@ export default function FacultySection() {
                     {member.role}
                   </CardDescription>
                   <Badge className="bg-brand-orange/10 text-brand-orange border-brand-orange/20 text-xs">
-                    {member.experience}
+                    {member.experience || "Expert"}
                   </Badge>
                 </CardHeader>
                 <CardContent className="space-y-4">

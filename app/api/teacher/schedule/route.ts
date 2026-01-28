@@ -14,14 +14,14 @@ function generateRandomColor(subject: string): string {
     '#7F45E5', // Purple
     '#F06292', // Pink
   ];
-  
+
   // Simple hash function to create consistent colors for the same subject
   let hash = 0;
   for (let i = 0; i < subject.length; i++) {
     hash = ((hash << 5) - hash) + subject.charCodeAt(i);
     hash |= 0; // Convert to 32bit integer
   }
-  
+
   return colors[Math.abs(hash) % colors.length];
 }
 
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const teacherEmail = url.searchParams.get('teacherEmail');
     const studentId = url.searchParams.get('studentId');
-    
+
     // Check if user is authorized (must be a teacher)
     if (!hasRole(user, 'teacher')) {
       return NextResponse.json({ error: 'Unauthorized access' }, { status: 403 });
@@ -61,17 +61,17 @@ export async function GET(request: NextRequest) {
     if (!teacher) {
       return NextResponse.json({ error: 'Teacher not found' }, { status: 404 });
     }
-    
+
     // Build query filter based on parameters
     const filter: any = {
       teacherId: teacher.id
     };
-    
+
     // Add studentId filter if provided
     if (studentId) {
       filter.studentId = parseInt(studentId);
     }
-    
+
     // Fetch class schedules
     const schedules = await prisma.classSchedule.findMany({
       where: filter,
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
         startTime: 'asc'
       }
     });
-    
+
     // Format dates for JSON response
     const formattedSchedules = schedules.map(schedule => {
       // Create a new object to avoid type issues
@@ -102,16 +102,16 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       schedules: formattedSchedules
     }, { status: 200 });
-    
+
   } catch (error: any) {
     console.error('Error fetching schedules:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message || 'Failed to fetch schedules' 
+    return NextResponse.json({
+      success: false,
+      error: error.message || 'Failed to fetch schedules'
     }, { status: 500 });
   }
 }
@@ -131,11 +131,11 @@ export async function POST(request: NextRequest) {
     }
 
     const requestData = await request.json();
-    const { 
+    const {
       id,
-      title, 
+      title,
       description,
-      studentId, 
+      studentId,
       teacherId,
       subject,
       startTime,
@@ -162,11 +162,11 @@ export async function POST(request: NextRequest) {
         where: { email: user.email },
         select: { id: true }
       });
-      
+
       if (!teacher) {
         return NextResponse.json({ error: 'Teacher not found' }, { status: 404 });
       }
-      
+
       finalTeacherId = teacher.id;
     }
 
@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
     }
 
     let schedule;
-    
+
     if (id) {
       // Update existing schedule
       const updateData: any = {
@@ -214,23 +214,89 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      schedule = await prisma.classSchedule.create({
-        data: {
-          title,
-          description,
-          studentId: parseInt(studentId),
-          teacherId: finalTeacherId,
-          subject,
-          date: new Date(requestData.date),
-          startTime, // Just store the time string directly
-          endTime,   // Just store the time string directly
-          location,
-          meetingLink: requestData.meetingLink || null,
-          status: "scheduled",
-          color: generateRandomColor(subject),
-          updatedAt: new Date()
+      const { isRecurring, recurrencePattern, recurrenceEndDate } = requestData;
+
+      if (isRecurring && recurrencePattern && recurrenceEndDate) {
+        // Handle recurrence
+        const startDate = new Date(requestData.date);
+        const endDate = new Date(recurrenceEndDate);
+        const eventsToCreate = [];
+
+        let currentDate = new Date(startDate);
+
+        // Loop to generate dates
+        while (currentDate <= endDate) {
+          eventsToCreate.push({
+            title,
+            description,
+            studentId: parseInt(studentId),
+            teacherId: finalTeacherId,
+            subject,
+            date: new Date(currentDate),
+            startTime,
+            endTime,
+            location,
+            meetingLink: requestData.meetingLink || null,
+            status: "scheduled",
+            color: generateRandomColor(subject),
+            updatedAt: new Date()
+          }); // removed createdAt to let DB handle default or add if needed
+
+          // Increment date based on pattern
+          if (recurrencePattern === 'weekly') {
+            currentDate.setDate(currentDate.getDate() + 7);
+          } else if (recurrencePattern === 'biweekly') {
+            currentDate.setDate(currentDate.getDate() + 14);
+          } else if (recurrencePattern === 'monthly') {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+          } else {
+            break; // Unknown pattern, prevent infinite loop
+          }
         }
-      });
+
+        // Batch create using transaction or createMany if supported (SQLite doesn't support createMany easily with relations but here it's simple fields)
+        // prisma.classSchedule.createMany is supported in most SQL dbs.
+        // But let's check creating the first one to return it, or just use createMany and return count.
+        // The frontend expects `schedule` object in response. We can return the FIRST created schedule.
+
+        if (eventsToCreate.length > 0) {
+          await prisma.classSchedule.createMany({
+            data: eventsToCreate
+          });
+
+          // We need to return "schedule" object. Let's return the first one (re-fetched or constructed)
+          // Constructing it is faster.
+          schedule = {
+            id: 0, // Placeholder ID since createMany doesn't return IDs
+            ...eventsToCreate[0],
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+        } else {
+          // Should not happen if start <= end
+          return NextResponse.json({ success: false, error: 'Invalid date range for recurrence' }, { status: 400 });
+        }
+
+      } else {
+        // Single event creation
+        schedule = await prisma.classSchedule.create({
+          data: {
+            title,
+            description,
+            studentId: parseInt(studentId),
+            teacherId: finalTeacherId,
+            subject,
+            date: new Date(requestData.date),
+            startTime, // Just store the time string directly
+            endTime,   // Just store the time string directly
+            location,
+            meetingLink: requestData.meetingLink || null,
+            status: "scheduled",
+            color: generateRandomColor(subject),
+            updatedAt: new Date()
+          }
+        });
+      }
     }
 
     // Format dates for response
@@ -241,16 +307,16 @@ export async function POST(request: NextRequest) {
       updatedAt: schedule.updatedAt ? new Date(schedule.updatedAt).toISOString() : new Date().toISOString()
     };
 
-    return NextResponse.json({ 
-      success: true, 
-      schedule: formattedSchedule 
+    return NextResponse.json({
+      success: true,
+      schedule: formattedSchedule
     }, { status: id ? 200 : 201 });
-    
+
   } catch (error: any) {
     console.error('Error saving schedule:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message || 'Failed to save schedule' 
+    return NextResponse.json({
+      success: false,
+      error: error.message || 'Failed to save schedule'
     }, { status: 500 });
   }
 }
@@ -272,7 +338,7 @@ export async function DELETE(request: NextRequest) {
     // Extract the schedule ID from the URL
     const url = new URL(request.url);
     const id = url.searchParams.get('id');
-    
+
     if (!id) {
       return NextResponse.json({
         success: false,
@@ -309,16 +375,16 @@ export async function DELETE(request: NextRequest) {
       where: { id: parseInt(id) }
     });
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Schedule deleted successfully' 
+    return NextResponse.json({
+      success: true,
+      message: 'Schedule deleted successfully'
     }, { status: 200 });
-    
+
   } catch (error: any) {
     console.error('Error deleting schedule:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message || 'Failed to delete schedule' 
+    return NextResponse.json({
+      success: false,
+      error: error.message || 'Failed to delete schedule'
     }, { status: 500 });
   }
 }
