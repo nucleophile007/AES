@@ -457,3 +457,62 @@
 .pause-animation {
   animation-play-state: paused;
 }
+
+/* Custom Scrollbar Styling */
+@layer utilities {
+  /* Webkit browsers (Chrome, Safari, Edge) */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgb(192, 132, 252) 0%, rgb(168, 85, 247) 100%);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgb(168, 85, 247) 0%, rgb(147, 51, 234) 100%);
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+  }
+
+  /* Pink scrollbar variant for main content */
+  .scrollbar-thumb-pink-400::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgb(244, 114, 182) 0%, rgb(236, 72, 153) 100%);
+  }
+
+  .scrollbar-thumb-pink-400::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgb(236, 72, 153) 0%, rgb(219, 39, 119) 100%);
+    box-shadow: 0 0 10px rgba(236, 72, 153, 0.4);
+  }
+
+  .scrollbar-track-pink-100::-webkit-scrollbar-track {
+    background: rgb(252, 231, 243);
+    border-radius: 10px;
+  }
+
+  /* Purple scrollbar variant for sidebar */
+  .scrollbar-thumb-purple-400::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgb(192, 132, 252) 0%, rgb(168, 85, 247) 100%);
+  }
+
+  .scrollbar-thumb-purple-400::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgb(168, 85, 247) 0%, rgb(147, 51, 234) 100%);
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+  }
+
+  .scrollbar-thumb-purple-500::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgb(168, 85, 247) 0%, rgb(126, 34, 206) 100%);
+  }
+
+  .scrollbar-track-purple-100::-webkit-scrollbar-track {
+    background: rgb(243, 232, 255);
+    border-radius: 10px;
+  }
+}
