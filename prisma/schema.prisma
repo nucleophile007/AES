@@ -49,10 +49,10 @@ model Teacher {
   assignments       Assignment[]
   classSchedules    ClassSchedule[]
   mentorProfile     Mentor?
+  progressReports   ProgressReport[]
   resources         Resource[]
   submissionRemarks StudentSubmissionRemark[]
   students          TeacherStudent[]
-  progressReports   ProgressReport[]
 }
 
 model Student {
@@ -74,13 +74,13 @@ model Student {
   classSchedules      ClassSchedule[]
   enrollments         Enrollment[]
   Payment             Payment[]
+  progressReports     ProgressReport[]
   parentAccount       ParentAccount?      @relation(fields: [parentAccountId], references: [id])
   assignedResources   StudentResource[]
   studentSubmissions  StudentSubmission[]
   submissions         Submission[]
   teacherLinks        TeacherStudent[]
   Testimonial         Testimonial[]
-  progressReports     ProgressReport[]
 }
 
 model TeacherStudent {
@@ -328,17 +328,33 @@ model Payment {
 }
 
 model Testimonial {
-  id         Int      @id @default(autoincrement())
-  studentId  Int
-  content    String
-  authorType String
-  authorName String
-  isApproved Boolean  @default(false)
-  isVisible  Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime
-  videoLink  String?
-  Student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  id                      Int       @id @default(autoincrement())
+  studentId               Int?
+  content                 String?
+  authorType              String?
+  authorName              String?
+  isApproved              Boolean   @default(false)
+  isVisible               Boolean   @default(true)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  videoLink               String?
+  beforeAfterExpectations String?
+  consentToFeature        Boolean   @default(false)
+  experienceDescription   String?
+  grade                   String?
+  programs                String[]
+  rating                  Int?
+  school                  String?
+  studentInfo             String?
+  studentName             String?
+  submittedAt             DateTime?
+  successStory            String?
+  beforeAfterApproved     Boolean   @default(false)
+  contentApproved         Boolean   @default(false)
+  programsApproved        Boolean   @default(false)
+  ratingApproved          Boolean   @default(false)
+  successStoryApproved    Boolean   @default(false)
+  Student                 Student?  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model SecurityLog {
@@ -371,16 +387,40 @@ model FailedActivation {
 }
 
 model Feedback {
-  id          Int       @id @default(autoincrement())
-  parentId    Int
-  parentName  String
-  parentEmail String
-  message     String
-  rating      Int?
-  status      String    @default("new")
-  response    String?
-  createdAt   DateTime  @default(now())
-  reviewedAt  DateTime?
+  id                        Int       @id @default(autoincrement())
+  parentId                  Int?
+  parentName                String?
+  parentEmail               String?
+  status                    String    @default("new")
+  response                  String?
+  createdAt                 DateTime  @default(now())
+  reviewedAt                DateTime?
+  beforeAfterApproved       Boolean   @default(false)
+  beforeAfterExpectations   String?
+  childExperience           String?
+  childExperienceApproved   Boolean   @default(false)
+  consentToFeature          Boolean   @default(false)
+  favoriteThingToShare      String?
+  grade                     String?
+  heardAbout                String?
+  isApproved                Boolean   @default(false)
+  isVisible                 Boolean   @default(true)
+  overallExperience         String?
+  overallExperienceApproved Boolean   @default(false)
+  programs                  String[]
+  programsApproved          Boolean   @default(false)
+  schedulingRating          Int?
+  schedulingRatingApproved  Boolean   @default(false)
+  school                    String?
+  studentName               String?
+  studentRating             Int?
+  studentRatingApproved     Boolean   @default(false)
+  submittedAt               DateTime?
+  successStory              String?
+  successStoryApproved      Boolean   @default(false)
+  suggestions               String?
+  updatedAt                 DateTime
+  wouldRecommend            String?
 
   @@index([createdAt])
   @@index([parentId])
@@ -420,7 +460,6 @@ model TransactionReceipt {
   @@index([status])
 }
 
-
 model Mentor {
   id           Int      @id @default(autoincrement())
   teacherId    Int?     @unique
@@ -433,35 +472,166 @@ model Mentor {
   experience   String?
   specialties  String[]
   achievements String[]
-  department   String   @default("General")
-  bio          String   @db.Text
+  bio          String
   isActive     Boolean  @default(true)
   displayOrder Int      @default(0)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-  teacher      Teacher? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
-
+  department   String   @default("General")
+  teacher      Teacher? @relation(fields: [teacherId], references: [id])
+  
   @@index([isActive, displayOrder])
   @@index([teacherId])
 }
 
 model ProgressReport {
-  id                 Int      @id @default(autoincrement())
-  studentId          Int
-  teacherId          Int
-  reportDate         DateTime @default(now())
-  
-  overallProgress    String   @db.Text
-  milestonesAchieved String?  @db.Text // JSON string or text
-  publications       String?  @db.Text // JSON string or text
-  nextSteps          String?  @db.Text // JSON string: { task, month }[]
-  
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  studentId    Int
+  teacherId    Int
+  reportDate   DateTime @default(now())
+  reportPeriod String? // e.g., "January 2026", "Q1 2026", "Week 1-4"
+  subject      String? // Subject/Program area
 
-  student            Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  teacher            Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  // Academic Progress
+  overallProgress String // Overall summary/description
+  progressRating  Int? // 1-5 or 1-10 rating scale
+  attendanceRate  Float? // Percentage (0-100)
+
+  // Achievements & Milestones
+  milestonesAchieved String? // JSON array of milestones
+  publications       String? // JSON array of publications/work
+  skillsImproved     String? // JSON array of skills developed
+
+  // Performance Areas (JSON for flexibility)
+  strengthsAreas   String? // What student excels at
+  improvementAreas String? // Areas needing attention
+
+  // Goals & Planning
+  nextSteps       String? // JSON array of next objectives
+  recommendations String? // Teacher's recommendations
+  parentNotes     String? // Notes specifically for parents
+
+  // Engagement & Behavior
+  classParticipation String? // Notes on participation
+  homeworkCompletion Float? // Percentage (0-100)
+
+  // Visibility & Status
+  isVisible Boolean @default(true) // Can student/parent see this?
+  status    String  @default("draft") // draft, published, archived
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher   Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 
   @@index([studentId])
   @@index([teacherId])
+  @@index([reportDate])
+  @@index([status])
+}
+
+model GeneralEvent {
+  id                   Int       @id @default(autoincrement())
+  title                String
+  description          String    @db.Text
+  category             String // Workshop, Seminar, Webinar, Bootcamp, etc.
+  eventDate            DateTime
+  eventTime            String // e.g., "10:00 AM - 12:00 PM"
+  location             String // Online (Zoom), AES Center, etc.
+  image                String? // URL or path to event image
+  maxParticipants      Int? // Maximum number of participants (null = unlimited)
+  registrationDeadline DateTime? // Last date to register
+  status               String    @default("upcoming") // upcoming, ongoing, completed, cancelled
+  isPublished          Boolean   @default(false) // Publish to main website
+  isFeatured           Boolean   @default(false) // Show on homepage carousel
+
+  // Additional details
+  targetAudience String? // Who should attend
+  requirements   String?  @db.Text // Prerequisites or requirements
+  agenda         String?  @db.Text // Event agenda/schedule
+  speakers       Json? // Array of speaker details
+  tags           String[] // For categorization and search
+
+  // Registration Form Configuration (Admin decides which fields are required)
+  registrationFormConfig Json? // JSON object defining required/optional fields
+  // Example: { "studentPhone": "optional", "studentGrade": "required", "schoolName": "optional", "parentPhone": "required", "specialRequirements": "hidden" }
+  customFields           Json? // Admin can add custom fields specific to this event
+  // Example: [{ "name": "tshirtSize", "label": "T-Shirt Size", "type": "select", "options": ["S", "M", "L", "XL"], "required": true }]
+
+  // Payment & Pricing
+  registrationFee    Float?  @default(0) // Event registration fee
+  earlyBirdFee       Float? // Early bird pricing
+  earlyBirdDeadline  DateTime? // Early bird deadline
+  requiresPayment    Boolean @default(false)
+  
+  // Contact & Admin
+  contactEmail String?
+  contactPhone String?
+  createdBy    String? // Admin email who created the event
+  publishedBy  String? // Admin who published it
+  publishedAt  DateTime? // When it was published
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  registrations EventRegistration[]
+
+  @@index([eventDate])
+  @@index([status])
+  @@index([isPublished])
+  @@index([isFeatured])
+  @@index([category])
+}
+
+model EventRegistration {
+  id      Int @id @default(autoincrement())
+  eventId Int
+
+  // Core Registrant Information (always collected)
+  studentName  String
+  studentEmail String
+  
+  // Optional/Configurable Fields (based on event's registrationFormConfig)
+  studentPhone String?
+  studentGrade String?
+  schoolName   String?
+
+  // Parent/Guardian Information
+  parentName  String
+  parentEmail String
+  parentPhone String?
+
+  // Custom Field Responses (based on event's customFields)
+  customFieldResponses Json? // Stores answers to custom questions
+  // Example: { "tshirtSize": "M", "dietaryRestrictions": "Vegetarian", "emergencyContact": "555-1234" }
+
+  // Registration Details
+  registrationStatus String  @default("pending") // pending, registered, confirmed, cancelled, waitlist, attended, no-show
+  paymentStatus      String? @default("pending") // pending, paid, refunded, waived, failed
+  paymentAmount      Float?  @default(0)
+  paymentMethod      String? // card, cash, bank_transfer, waived
+  transactionId      String? // Payment gateway transaction ID
+
+  // Additional fields
+  specialRequirements String? @db.Text // Dietary restrictions, accessibility needs, etc.
+  howDidYouHear       String? // Marketing tracking
+  notes               String? @db.Text // Admin notes
+  adminNotes          String? @db.Text // Private admin notes
+
+  // Attendance tracking
+  checkedInAt         DateTime?
+  attendanceConfirmed Boolean   @default(false)
+  certificateIssued   Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event GeneralEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, studentEmail]) // Prevent duplicate registrations
+  @@index([eventId])
+  @@index([studentEmail])
+  @@index([parentEmail])
+  @@index([registrationStatus])
+  @@index([paymentStatus])
 }
