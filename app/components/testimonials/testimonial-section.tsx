@@ -11,7 +11,7 @@ interface Testimonial {
   school: string
   quote: string
   src: string
-  rating: number
+  rating?: number
 }
 
 interface TestimonialSectionProps {
@@ -27,14 +27,29 @@ export default function TestimonialSection({ title, description, testimonials, c
 
   // Auto-advance testimonials
   useEffect(() => {
-    if (!isAutoPlay) return
+    if (!isAutoPlay || !testimonials || testimonials.length === 0) return
 
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % testimonials.length)
     }, 5000)
 
     return () => clearInterval(timer)
-  }, [isAutoPlay, testimonials.length])
+  }, [isAutoPlay, testimonials])
+
+  // Safety check for empty testimonials - must come after hooks
+  if (!testimonials || testimonials.length === 0) {
+    return (
+      <section className="w-full">
+        <div className="mb-12">
+          <h2 className="text-4xl md:text-5xl font-bold theme-text-light mb-3">{title}</h2>
+          <p className="text-lg theme-text-muted">{description}</p>
+        </div>
+        <div className="text-center text-slate-400 py-12">
+          <p>No testimonials available at the moment.</p>
+        </div>
+      </section>
+    )
+  }
 
   const next = () => {
     setCurrent((prev) => (prev + 1) % testimonials.length)
@@ -54,7 +69,11 @@ export default function TestimonialSection({ title, description, testimonials, c
   const prevIndex = getTestimonialIndex(-1)
   const nextIndex = getTestimonialIndex(1)
 
-  const renderTestimonialCard = (testimonial: Testimonial, index: number, isCenter: boolean, position: 'left' | 'center' | 'right') => {
+  const renderTestimonialCard = (testimonial: Testimonial | undefined, index: number, isCenter: boolean, position: 'left' | 'center' | 'right') => {
+    if (!testimonial) {
+      return null
+    }
+
     return (
       <motion.div
         key={`${testimonial.name}-${index}-${current}`}
@@ -83,15 +102,17 @@ export default function TestimonialSection({ title, description, testimonials, c
         }`}
       >
         {/* Rating */}
-        <div className="flex gap-1 mb-4 md:mb-6 flex-shrink-0">
-          {Array.from({ length: testimonial.rating }).map((_, i) => (
-            <Star
-              key={i}
-              size={isCenter ? 20 : 16}
-              className="fill-yellow-400 text-yellow-400"
-            />
-          ))}
-        </div>
+        {testimonial.rating && (
+          <div className="flex gap-1 mb-4 md:mb-6 flex-shrink-0">
+            {Array.from({ length: testimonial.rating }).map((_, i) => (
+              <Star
+                key={i}
+                size={isCenter ? 20 : 16}
+                className="fill-yellow-400 text-yellow-400"
+              />
+            ))}
+          </div>
+        )}
 
         {/* Quote */}
         <blockquote className="mb-6 md:mb-8 flex-1 overflow-hidden flex flex-col min-h-0">

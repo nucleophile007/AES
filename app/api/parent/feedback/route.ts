@@ -22,8 +22,10 @@ export async function POST(request: NextRequest) {
         parentId: user.id,
         parentName: user.name ?? "",
         parentEmail: user.email ?? "",
-        message,
-        rating,
+        overallExperience: message,
+        studentRating: rating,
+        submittedAt: new Date(),
+        updatedAt: new Date(),
       },
     });
 
