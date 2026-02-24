@@ -34,12 +34,12 @@ function Navbar({ className }: { className?: string }) {
               src="/nav-college.png"
               description="SAT, ACT, and college application guidance."
             />
-            <ProductItem
+            {/* <ProductItem
               title="SAT Coaching"
               href="/satcoaching"
               src="/nav-sat.png"
               description="Comprehensive SAT preparation and strategies."
-            />
+            /> */}
           </div>
         </MenuItem>
         <MenuItem setActive={setActive} active={active} item="Profile Enrichment" className="text-yellow-400/90 hover:text-yellow-300 transition-colors font-medium">
