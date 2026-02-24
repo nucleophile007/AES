@@ -353,17 +353,33 @@ model Payment {
 }
 
 model Testimonial {
-  id         Int      @id @default(autoincrement())
-  studentId  Int
-  content    String
-  authorType String
-  authorName String
-  isApproved Boolean  @default(false)
-  isVisible  Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime
-  videoLink  String?
-  Student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  id                      Int       @id @default(autoincrement())
+  studentId               Int?
+  content                 String?
+  authorType              String?
+  authorName              String?
+  isApproved              Boolean   @default(false)
+  isVisible               Boolean   @default(true)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  videoLink               String?
+  beforeAfterExpectations String?
+  consentToFeature        Boolean   @default(false)
+  experienceDescription   String?
+  grade                   String?
+  programs                String[]
+  rating                  Int?
+  school                  String?
+  studentInfo             String?
+  studentName             String?
+  submittedAt             DateTime?
+  successStory            String?
+  beforeAfterApproved     Boolean   @default(false)
+  contentApproved         Boolean   @default(false)
+  programsApproved        Boolean   @default(false)
+  ratingApproved          Boolean   @default(false)
+  successStoryApproved    Boolean   @default(false)
+  Student                 Student?  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model SecurityLog {
@@ -396,16 +412,40 @@ model FailedActivation {
 }
 
 model Feedback {
-  id          Int       @id @default(autoincrement())
-  parentId    Int
-  parentName  String
-  parentEmail String
-  message     String
-  rating      Int?
-  status      String    @default("new")
-  response    String?
-  createdAt   DateTime  @default(now())
-  reviewedAt  DateTime?
+  id                        Int       @id @default(autoincrement())
+  parentId                  Int?
+  parentName                String?
+  parentEmail               String?
+  status                    String    @default("new")
+  response                  String?
+  createdAt                 DateTime  @default(now())
+  reviewedAt                DateTime?
+  beforeAfterApproved       Boolean   @default(false)
+  beforeAfterExpectations   String?
+  childExperience           String?
+  childExperienceApproved   Boolean   @default(false)
+  consentToFeature          Boolean   @default(false)
+  favoriteThingToShare      String?
+  grade                     String?
+  heardAbout                String?
+  isApproved                Boolean   @default(false)
+  isVisible                 Boolean   @default(true)
+  overallExperience         String?
+  overallExperienceApproved Boolean   @default(false)
+  programs                  String[]
+  programsApproved          Boolean   @default(false)
+  schedulingRating          Int?
+  schedulingRatingApproved  Boolean   @default(false)
+  school                    String?
+  studentName               String?
+  studentRating             Int?
+  studentRatingApproved     Boolean   @default(false)
+  submittedAt               DateTime?
+  successStory              String?
+  successStoryApproved      Boolean   @default(false)
+  suggestions               String?
+  updatedAt                 DateTime
+  wouldRecommend            String?
 
   @@index([createdAt])
   @@index([parentId])
@@ -457,12 +497,12 @@ model Mentor {
   experience   String?
   specialties  String[]
   achievements String[]
+  department   String   @default("General")
   bio          String
   isActive     Boolean  @default(true)
   displayOrder Int      @default(0)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-  department   String   @default("General")
   teacher      Teacher? @relation(fields: [teacherId], references: [id])
 
   @@index([isActive, displayOrder])
@@ -619,4 +659,37 @@ model EventRegistration {
   @@index([parentEmail])
   @@index([registrationStatus])
   @@index([paymentStatus])
+}
+
+model AccessRequest {
+  id         String   @id @default(cuid())
+  name       String
+  email      String
+  createdAt  DateTime @default(now())
+  approved   Boolean  @default(false)
+  phone      String?
+  reason     String?
+  researchId String
+  research   Research @relation(fields: [researchId], references: [id])
+}
+
+model Research {
+  id             String          @id @default(cuid())
+  title          String
+  slug           String          @unique
+  description    String?
+  createdAt      DateTime        @default(now())
+  author         String?
+  published      Boolean         @default(true)
+  pdfFilename    String?
+  accessRequests AccessRequest[]
+  slides         Slide[]
+}
+
+model Slide {
+  id            String   @id @default(cuid())
+  researchId    String
+  order         Int
+  imageFilename String
+  research      Research @relation(fields: [researchId], references: [id])
 }

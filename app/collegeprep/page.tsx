@@ -457,12 +457,57 @@ const StrengthBasedDiscoveryInfographic = () => {
 // TestimonialsSection Component
 // // TestimonialsSection Component
 const TestimonialsSection = () => {
-  const [selectedTestimonial, setSelectedTestimonial] = React.useState(testimonialCards[0])
+  const [testimonialCards, setTestimonialCards] = React.useState(fallbackTestimonials)
+  const [loading, setLoading] = React.useState(true)
+  const [selectedTestimonial, setSelectedTestimonial] = React.useState(fallbackTestimonials[0])
   const [isVisible, setIsVisible] = React.useState(false)
   const [currentIndex, setCurrentIndex] = React.useState(0)
   const [animatingIndex, setAnimatingIndex] = React.useState(0)
 
   const intervalRef = React.useRef<NodeJS.Timeout | null>(null)
+
+  // Fetch testimonials from API
+  React.useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        const response = await fetch("/api/testimonials")
+        const data = await response.json()
+        
+        if (data.success && data.testimonials && data.testimonials.length > 0) {
+          // Filter testimonials for "UACHIEVE COLLEGE ADMISSIONS PREP" program
+          const collegeTestimonials = data.testimonials
+            .filter((t: any) => {
+              // Check if programs array includes UACHIEVE (case-insensitive)
+              return t.programs && Array.isArray(t.programs) && 
+                     t.programs.some((p: string) => p.toLowerCase().includes('uachieve'))
+            })
+            .map((t: any) => ({
+              id: t.id || Math.random(),
+              name: t.studentName || "Student",
+              designation: t.grade || "Student",
+              grade: t.grade || "Student",
+              // Keep all sections separate
+              successStory: t.successStory,
+              content: t.content || t.experienceDescription,
+              rating: t.rating,
+              initials: t.studentName ? t.studentName.split(" ").map((n: string) => n[0]).join("") : "ST"
+            }))
+          
+          if (collegeTestimonials.length > 0) {
+            setTestimonialCards(collegeTestimonials)
+            setSelectedTestimonial(collegeTestimonials[0])
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching testimonials:", error)
+        // Keep fallback testimonials on error
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTestimonials()
+  }, [])
 
   React.useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 300)
@@ -481,7 +526,7 @@ const TestimonialsSection = () => {
         return nextIndex
       })
     }, 5500)
-  }, [])
+  }, [testimonialCards])
 
   React.useEffect(() => {
     startAutoRotation()
@@ -513,6 +558,43 @@ const TestimonialsSection = () => {
     setCurrentIndex(nextIndex)
     setAnimatingIndex(nextIndex)
     startAutoRotation()
+  }
+
+  const renderTestimonialContent = (testimonial: any) => {
+    // If it's a fallback testimonial with JSX content
+    if (typeof testimonial.content !== 'string' && testimonial.content?.props) {
+      return testimonial.content
+    }
+    
+    // For API testimonials, show all approved sections
+    return (
+      <div className="space-y-4">
+        {/* Success Story Section */}
+        {testimonial.successStory && (
+          <div>
+            <p className="text-slate-200 text-base italic leading-relaxed">
+              &quot;{testimonial.successStory}&quot;
+            </p>
+          </div>
+        )}
+        
+        {/* Content/Experience Section */}
+        {testimonial.content && (
+          <div>
+            <p className="text-slate-200 text-base leading-relaxed">
+              &quot;{testimonial.content}&quot;
+            </p>
+          </div>
+        )}
+        
+        {/* If neither section exists (shouldn't happen but fallback) */}
+        {!testimonial.successStory && !testimonial.content && (
+          <p className="text-slate-200 text-base leading-relaxed">
+            Great college prep experience!
+          </p>
+        )}
+      </div>
+    )
   }
 
   return (
@@ -575,14 +657,17 @@ const TestimonialsSection = () => {
               <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-400/10 rounded-full blur-3xl"></div>
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-400/10 rounded-full blur-3xl"></div>
               <div className="relative z-10">
-              <div className="flex gap-1 mb-4">
-                {[...Array(selectedTestimonial.rating || 5)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                ))}
-              </div>
+              {/* Rating Stars - Only show if rating exists */}
+              {selectedTestimonial.rating && (
+                <div className="flex gap-1 mb-6">
+                  {[...Array(selectedTestimonial.rating)].map((_, i) => (
+                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+              )}
 
-              <blockquote className="theme-text-light text-lg leading-relaxed mb-6 font-medium">
-                {selectedTestimonial.content}
+              <blockquote className="theme-text-light leading-relaxed mb-6 font-medium">
+                {renderTestimonialContent(selectedTestimonial)}
               </blockquote>
 
               <div className="flex items-center gap-4">
@@ -715,7 +800,8 @@ const getInitials = (name: string) => {
     .slice(0, 2); // Take max 2 initials
 }
 
-const testimonialCards = [
+// Fallback testimonials (static data to show when API fails or no data)
+const fallbackTestimonials = [
   {
     id: 0,
     name: "Eesha's Parent: Srinivas Eerpina",
