@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
 import {
   FileText,
   CheckCircle,
@@ -46,6 +47,7 @@ const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
   studentName,
   studentEmail,
 }) => {
+  const { toast } = useToast();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +57,7 @@ const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
   const [activeTab, setActiveTab] = useState("overview");
   const [progressReports, setProgressReports] = useState<any[]>([]);
   const [isCreatingReport, setIsCreatingReport] = useState(false);
+  const [editingReportId, setEditingReportId] = useState<number | null>(null);
 
   // New Report Form State
   const [newReport, setNewReport] = useState({
@@ -103,24 +106,38 @@ const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
     }
   };
 
-  const handleCreateReport = async () => {
+  const handleCreateReport = async (shouldPublish = false) => {
     if (!newReport.overallProgress) return;
 
     try {
       setSubmittingReport(true);
-      const response = await fetch('/api/teacher/progress-report', {
-        method: 'POST',
+      
+      const isEditing = editingReportId !== null;
+      const url = '/api/teacher/progress-report';
+      const method = isEditing ? 'PUT' : 'POST';
+      
+      const body: any = {
+        overallProgress: newReport.overallProgress,
+        milestonesAchieved: newReport.milestonesAchieved,
+        publications: newReport.publications,
+        nextSteps: newReport.nextSteps,
+        status: shouldPublish ? 'published' : 'draft',
+        isVisible: shouldPublish,
+      };
+
+      if (isEditing) {
+        body.reportId = editingReportId;
+      } else {
+        body.studentId = studentId;
+        body.teacherEmail = null;
+      }
+
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          studentId,
-          overallProgress: newReport.overallProgress,
-          milestonesAchieved: newReport.milestonesAchieved, // Storing as string or parse if needed
-          publications: newReport.publications,
-          nextSteps: newReport.nextSteps,
-          teacherEmail: null // Backend will infer from session or we can pass if context needed
-        })
+        body: JSON.stringify(body)
       });
 
       if (response.ok) {
@@ -130,17 +147,189 @@ const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
         if (reportsResponse.ok) setProgressReports(reportsData.reports || []);
 
         setIsCreatingReport(false);
+        setEditingReportId(null);
         setNewReport({ overallProgress: "", milestonesAchieved: "", publications: "", nextSteps: "" });
+        
+        const action = isEditing ? 'updated' : 'created';
+        toast({
+          title: shouldPublish ? "Report Published!" : "Draft Saved",
+          description: shouldPublish 
+            ? `Report ${action} and published! Students and parents can now see it.` 
+            : `Report ${action} as draft. Click publish when ready to share.`,
+          className: shouldPublish ? "border-green-500 bg-green-50 text-green-900" : "border-blue-500 bg-blue-50 text-blue-900",
+        });
       } else {
         const err = await response.json();
-        alert(err.error || "Failed to create report");
+        toast({
+          variant: "destructive",
+          title: "Failed to Save Report",
+          description: err.error || "Failed to save report",
+        });
       }
     } catch (e) {
       console.error(e);
-      alert("Error creating report");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Error saving report",
+      });
     } finally {
       setSubmittingReport(false);
     }
+  };
+
+  const handlePublishDraft = async (reportId: number) => {
+    if (!confirm('Publish this report? Students and parents will be able to see it.')) return;
+
+    try {
+      const response = await fetch('/api/teacher/progress-report', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          reportId,
+          action: 'publish'
+        })
+      });
+
+      if (response.ok) {
+        // Refresh reports list
+        const reportsResponse = await fetch(`/api/teacher/progress-report?studentId=${studentId}`);
+        const reportsData = await reportsResponse.json();
+        if (reportsResponse.ok) setProgressReports(reportsData.reports || []);
+        
+        toast({
+          title: "Report Published!",
+          description: "Report published successfully! Students and parents can now see it.",
+          className: "border-green-500 bg-green-50 text-green-900",
+        });
+      } else {
+        const err = await response.json();
+        toast({
+          variant: "destructive",
+          title: "Failed to Publish",
+          description: err.error || "Failed to publish report",
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Error publishing report",
+      });
+    }
+  };
+
+  const handleUnpublishReport = async (reportId: number) => {
+    if (!confirm('Unpublish this report? It will be saved as draft and hidden from students.')) return;
+
+    try {
+      const response = await fetch('/api/teacher/progress-report', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          reportId,
+          action: 'unpublish'
+        })
+      });
+
+      if (response.ok) {
+        const reportsResponse = await fetch(`/api/teacher/progress-report?studentId=${studentId}`);
+        const reportsData = await reportsResponse.json();
+        if (reportsResponse.ok) setProgressReports(reportsData.reports || []);
+        
+        toast({
+          title: "Report Unpublished",
+          description: "Report saved as draft. Students can no longer see it.",
+          className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+        });
+      } else {
+        const err = await response.json();
+        toast({
+          variant: "destructive",
+          title: "Failed to Unpublish",
+          description: err.error || "Failed to unpublish report",
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Error unpublishing report",
+      });
+    }
+  };
+
+  const handleDeleteReport = async (reportId: number) => {
+    if (!confirm('Delete this report permanently? This action cannot be undone.')) return;
+
+    try {
+      const response = await fetch('/api/teacher/progress-report', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ reportId })
+      });
+
+      if (response.ok) {
+        const reportsResponse = await fetch(`/api/teacher/progress-report?studentId=${studentId}`);
+        const reportsData = await reportsResponse.json();
+        if (reportsResponse.ok) setProgressReports(reportsData.reports || []);
+        
+        toast({
+          title: "Report Deleted",
+          description: "Progress report has been permanently deleted.",
+        });
+      } else {
+        const err = await response.json();
+        toast({
+          variant: "destructive",
+          title: "Failed to Delete",
+          description: err.error || "Failed to delete report",
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Error deleting report",
+      });
+    }
+  };
+
+  const handleEditReport = async (report: any) => {
+    // Populate the form with existing data
+    setNewReport({
+      overallProgress: report.overallProgress || '',
+      milestonesAchieved: typeof report.milestonesAchieved === 'string' 
+        ? report.milestonesAchieved 
+        : JSON.stringify(report.milestonesAchieved || ''),
+      publications: typeof report.publications === 'string'
+        ? report.publications
+        : JSON.stringify(report.publications || ''),
+      nextSteps: typeof report.nextSteps === 'string'
+        ? report.nextSteps
+        : JSON.stringify(report.nextSteps || '')
+    });
+
+    // Store the report ID for updating instead of creating
+    setEditingReportId(report.id);
+    setIsCreatingReport(true);
+
+    // Scroll to form
+    setTimeout(() => {
+      const formElement = document.querySelector('.border-blue-200');
+      if (formElement) {
+        formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
   };
 
   useEffect(() => {
@@ -345,7 +534,14 @@ const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
               <h3 className="font-semibold text-lg">Progress Reports</h3>
               <button
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors"
-                onClick={() => setIsCreatingReport(!isCreatingReport)}
+                onClick={() => {
+                  setIsCreatingReport(!isCreatingReport);
+                  if (!isCreatingReport) {
+                    // Starting new report, clear editing state
+                    setEditingReportId(null);
+                    setNewReport({ overallProgress: "", milestonesAchieved: "", publications: "", nextSteps: "" });
+                  }
+                }}
               >
                 {isCreatingReport ? 'Cancel' : 'Create New Report'}
               </button>
@@ -354,7 +550,9 @@ const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
             {isCreatingReport && (
               <Card className="border-blue-200 bg-blue-50/50">
                 <CardHeader>
-                  <CardTitle className="text-base text-blue-900">New Progress Report</CardTitle>
+                  <CardTitle className="text-base text-blue-900">
+                    {editingReportId ? 'Edit Progress Report' : 'New Progress Report'}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
@@ -397,13 +595,21 @@ const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
                       placeholder="- Start Research Paper (March)&#10;- Submit Draft (April)"
                     />
                   </div>
-                  <div className="flex justify-end">
+                  <div className="flex justify-end gap-2">
                     <button
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 disabled:opacity-50"
-                      onClick={handleCreateReport}
+                      className="bg-gray-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-700 disabled:opacity-50"
+                      onClick={() => handleCreateReport(false)}
                       disabled={submittingReport || !newReport.overallProgress}
                     >
-                      {submittingReport ? 'Issuing...' : 'Issue Report'}
+                      {submittingReport ? 'Saving...' : 'Save as Draft'}
+                    </button>
+                    <button
+                      className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+                      onClick={() => handleCreateReport(true)}
+                      disabled={submittingReport || !newReport.overallProgress}
+                    >
+                      {submittingReport ? 'Publishing...' : 'Publish Report'}
+                      {!submittingReport && <span>✓</span>}
                     </button>
                   </div>
                 </CardContent>
@@ -417,13 +623,58 @@ const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
                 </div>
               ) : (
                 progressReports.map((report) => (
-                  <Card key={report.id} className="hover:shadow-md transition-shadow">
+                  <Card key={report.id} className="hover:shadow-md transition-shadow border-2">
                     <CardHeader className="bg-gray-50/50 pb-2">
                       <div className="flex justify-between items-start">
                         <div>
-                          <CardTitle className="text-base text-gray-900">Progress Report</CardTitle>
+                          <div className="flex items-center gap-2">
+                            <CardTitle className="text-base text-gray-900">Progress Report</CardTitle>
+                            {report.status === 'draft' && (
+                              <span className="px-2 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded-full font-semibold">
+                                ⚠ Draft - Not Visible to Student
+                              </span>
+                            )}
+                            {report.status === 'published' && (
+                              <span className="px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded-full font-semibold">
+                                ✓ Published
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-gray-500">Issued on {new Date(report.reportDate).toLocaleDateString()} by {report.teacher?.name || 'Mentor'}</p>
                         </div>
+                      </div>
+                      {/* Action Buttons - Always visible */}
+                      <div className="flex gap-2 mt-3 pt-3 border-t">
+                        <button
+                          onClick={() => handleEditReport(report)}
+                          className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 transition-colors flex items-center gap-2 font-medium"
+                        >
+                          <FileText className="h-4 w-4" />
+                          Edit Report
+                        </button>
+                        {report.status === 'draft' ? (
+                          <button
+                            onClick={() => handlePublishDraft(report.id)}
+                            className="bg-green-600 text-white px-4 py-2 rounded-md text-sm hover:bg-green-700 transition-colors flex items-center gap-2 font-medium"
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                            Publish Now
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleUnpublishReport(report.id)}
+                            className="bg-yellow-600 text-white px-4 py-2 rounded-md text-sm hover:bg-yellow-700 transition-colors flex items-center gap-2 font-medium"
+                          >
+                            <AlertCircle className="h-4 w-4" />
+                            Unpublish (Draft)
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDeleteReport(report.id)}
+                          className="bg-red-600 text-white px-4 py-2 rounded-md text-sm hover:bg-red-700 transition-colors flex items-center gap-2 font-medium"
+                        >
+                          Delete
+                        </button>
                       </div>
                     </CardHeader>
                     <CardContent className="pt-4 space-y-4">

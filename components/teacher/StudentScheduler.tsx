@@ -36,6 +36,21 @@ interface Student {
   program: string;
 }
 
+interface StudentGroupMember {
+  id: number;
+  name: string;
+  email: string;
+  grade: string;
+  program: string;
+}
+
+interface StudentGroup {
+  id: number;
+  name: string;
+  createdAt: string;
+  members: StudentGroupMember[];
+}
+
 interface ClassEvent {
   id: number;
   title: string;
@@ -74,6 +89,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
 }) => {
   const [events, setEvents] = useState<ClassEvent[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
+  const [studentGroups, setStudentGroups] = useState<StudentGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -83,6 +99,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
 
   // Form state
   const [selectedStudent, setSelectedStudent] = useState<number | null>(selectedStudentId || null);
+  const [selectedGroupId, setSelectedGroupId] = useState<string>("");
   const [eventTitle, setEventTitle] = useState("");
   const [eventDescription, setEventDescription] = useState("");
   const [eventStartDate, setEventStartDate] = useState(""); // This is actually the event date
@@ -100,6 +117,12 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
   // Define fetch functions before useEffect hooks
   const fetchStudents = useCallback(async () => {
     try {
+      if (!teacherEmail) {
+        setStudents([]);
+        setSelectedStudent(null);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       const response = await fetch(`/api/teacher/students?teacherEmail=${encodeURIComponent(teacherEmail)}`, {
         headers: {
@@ -109,11 +132,11 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
         },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch students');
-      }
-
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch students');
+      }
 
       if (data.students && Array.isArray(data.students)) {
         setStudents(data.students);
@@ -134,8 +157,40 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
     }
   }, [teacherEmail, selectedStudentId]);
 
+  const fetchStudentGroups = useCallback(async () => {
+    try {
+      if (!teacherEmail) {
+        setStudentGroups([]);
+        return;
+      }
+      const response = await fetch(`/api/teacher/student-groups?teacherEmail=${encodeURIComponent(teacherEmail)}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch student groups');
+      }
+
+      if (data.groups && Array.isArray(data.groups)) {
+        setStudentGroups(data.groups);
+      }
+    } catch (err: any) {
+      console.error('Error fetching student groups:', err);
+    }
+  }, [teacherEmail]);
+
   const fetchEvents = useCallback(async (studentId: number) => {
     try {
+      if (!teacherEmail) {
+        setEvents([]);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       const response = await fetch(`/api/teacher/schedule?teacherEmail=${encodeURIComponent(teacherEmail)}&studentId=${studentId}`, {
         headers: {
@@ -145,11 +200,11 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
         }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch schedule');
-      }
-
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch schedule');
+      }
 
       if (data.success && data.schedules) {
         // Convert schedule data to match calendar event format
@@ -206,6 +261,10 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
     fetchStudents();
   }, [fetchStudents]);
 
+  useEffect(() => {
+    fetchStudentGroups();
+  }, [fetchStudentGroups]);
+
   // Fetch events when selectedStudent changes
   useEffect(() => {
     if (selectedStudent) {
@@ -216,8 +275,22 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
   }, [selectedStudent, fetchEvents]);
 
   const handleAddEvent = async () => {
-    if (!selectedStudent || !eventTitle || !eventSubject || !eventStartDate || !eventStartTime || !eventEndTime) {
+    if (!eventTitle || !eventSubject || !eventStartDate || !eventStartTime || !eventEndTime) {
       setError('Please fill in all required fields');
+      return;
+    }
+
+    const selectedGroup = selectedGroupId
+      ? studentGroups.find((group) => group.id.toString() === selectedGroupId)
+      : null;
+    const targetStudentIds = selectedGroup
+      ? selectedGroup.members.map((member) => member.id)
+      : selectedStudent
+        ? [selectedStudent]
+        : [];
+
+    if (targetStudentIds.length === 0) {
+      setError('Please select a student or group');
       return;
     }
 
@@ -240,7 +313,6 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
       const eventData = {
         title: eventTitle,
         description: eventDescription,
-        studentId: selectedStudent,
         subject: eventSubject,
         date: dateOnly.toISOString(), // Store just the date for easier querying
         startTime: eventStartTime, // Store just the time string (HH:MM)
@@ -255,26 +327,34 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
         recurrenceEndDate: isRecurring ? recurrenceEndDate : null
       };
 
-      const response = await fetch('/api/teacher/schedule', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
-        },
-        body: JSON.stringify(eventData)
-      });
+      const responses = await Promise.all(
+        targetStudentIds.map((studentId) =>
+          fetch('/api/teacher/schedule', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
+            },
+            body: JSON.stringify({ ...eventData, studentId })
+          })
+        )
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      const failedResponse = responses.find((response) => !response.ok);
+      if (failedResponse) {
+        const errorData = await failedResponse.json();
         throw new Error(errorData.error || 'Failed to save event');
       }
 
       // Refresh events
-      await fetchEvents(selectedStudent);
+      if (selectedStudent) {
+        await fetchEvents(selectedStudent);
+      }
 
       // Reset form
       resetForm();
       setIsAddEventDialogOpen(false);
+      setSelectedGroupId("");
 
     } catch (err: any) {
       console.error('Error saving event:', err);
@@ -337,6 +417,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
     setIsRecurring(false);
     setRecurrencePattern("");
     setRecurrenceEndDate("");
+    setSelectedGroupId("");
     setError(null);
   };
 
@@ -406,7 +487,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
 
           <Button
             onClick={openAddEventDialog}
-            disabled={!selectedStudent}
+            disabled={!selectedStudent && studentGroups.length === 0}
           >
             <PlusIcon className="h-4 w-4 mr-2" /> Add Class
           </Button>
@@ -504,6 +585,28 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
           </DialogHeader>
 
           <div className="space-y-4">
+            <div>
+              <Label htmlFor="event-group" className="text-right">
+                Assign to Group
+              </Label>
+              <Select
+                value={selectedGroupId || "none"}
+                onValueChange={(value) => setSelectedGroupId(value === "none" ? "" : value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a group (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No group (use selected student)</SelectItem>
+                  {studentGroups.map((group) => (
+                    <SelectItem key={group.id} value={group.id.toString()}>
+                      {group.name} ({group.members.length})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div>
               <Label htmlFor="event-title" className="text-right">
                 Title <span className="text-red-500">*</span>

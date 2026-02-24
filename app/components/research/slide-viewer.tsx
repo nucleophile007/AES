@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { ChevronLeft, ChevronRight, Lock, Maximize2, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -70,10 +71,11 @@ export function SlideViewer({ onSlideView, hasAccess, maxFreeSlides }: SlideView
             {/* Main Slide Display */}
             <div className="relative bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden shadow-lg shadow-black/10">
                 <div className="aspect-video relative">
-                    <img
+                    <Image
                         src={slides[currentSlide].image || "/placeholder.svg"}
                         alt={slides[currentSlide].title}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
                     />
 
                     {/* Gradient Overlay */}
@@ -148,10 +150,11 @@ export function SlideViewer({ onSlideView, hasAccess, maxFreeSlides }: SlideView
                             }`}
                     >
                         <div className="aspect-video relative">
-                            <img
+                            <Image
                                 src={slide.image || "/placeholder.svg"}
                                 alt={slide.title}
-                                className={`w-full h-full object-cover transition-all ${isLocked(index) ? "blur-sm grayscale" : ""}`}
+                                fill
+                                className={`object-cover transition-all ${isLocked(index) ? "blur-sm grayscale" : ""}`}
                             />
                             {isLocked(index) && (
                                 <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center">

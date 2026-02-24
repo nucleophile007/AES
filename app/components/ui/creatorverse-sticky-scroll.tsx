@@ -25,7 +25,7 @@ export const CreatorverseStickyScroll: React.FC<CreatorverseStickyScrollProps> =
     const progress = scrollYProgress.get()
     const cardIndex = Math.min(Math.floor(progress * content.length), content.length - 1)
     setActiveCard(cardIndex)
-  })
+  }, [scrollYProgress, content.length])
 
   const linearGradients = [
     "from-yellow-400/10 to-amber-500/10",

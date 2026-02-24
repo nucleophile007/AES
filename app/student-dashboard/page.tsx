@@ -175,10 +175,19 @@ export default function StudentDashboard() {
       setSubmissions(data.submissions);
 
       // Fetch progress reports
-      const reportsResponse = await fetch('/api/student/progress-report');
-      const reportsData = await reportsResponse.json();
-      if (reportsResponse.ok) {
-        setProgressReports(reportsData.reports || []);
+      try {
+        const reportsResponse = await fetch('/api/student/progress-report');
+        const reportsData = await reportsResponse.json();
+        console.log('Progress Reports Response:', reportsResponse.ok, reportsData);
+        if (reportsResponse.ok) {
+          setProgressReports(reportsData.reports || []);
+          console.log('Progress Reports Set:', reportsData.reports?.length || 0, 'reports');
+        } else {
+          console.error('Failed to fetch progress reports:', reportsData);
+        }
+      } catch (reportError) {
+        console.error('Error fetching progress reports:', reportError);
+        // Don't fail the whole dashboard if progress reports fail
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load dashboard data';
@@ -200,6 +209,7 @@ export default function StudentDashboard() {
     if (!authLoading && authUser && studentEmail) {
       fetchData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, authUser, studentEmail]);
 
   // Early return for authentication loading
@@ -217,19 +227,19 @@ export default function StudentDashboard() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
-        return <Badge variant="outline" className="bg-gradient-to-r from-yellow-200 to-orange-200 text-yellow-800 border-2 border-yellow-400 font-bold shadow-md">⏳ Pending</Badge>;
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">Pending</Badge>;
       case "submitted":
-        return <Badge variant="outline" className="bg-gradient-to-r from-blue-200 to-cyan-200 text-blue-800 border-2 border-blue-400 font-bold shadow-md">✅ Submitted</Badge>;
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">Submitted</Badge>;
       case "graded":
-        return <Badge variant="outline" className="bg-gradient-to-r from-green-200 to-emerald-200 text-green-800 border-2 border-green-400 font-bold shadow-md">🎉 Graded</Badge>;
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">Graded</Badge>;
       case "overdue":
-        return <Badge variant="outline" className="bg-gradient-to-r from-red-200 to-pink-200 text-red-800 border-2 border-red-400 font-bold shadow-md">⚠️ Overdue</Badge>;
+        return <Badge variant="destructive">Overdue</Badge>;
       case "active":
-        return <Badge variant="outline" className="bg-gradient-to-r from-purple-200 to-pink-200 text-purple-800 border-2 border-purple-400 font-bold shadow-md">✨ Active</Badge>;
+        return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-300">Active</Badge>;
       case "completed":
-        return <Badge variant="outline" className="bg-gradient-to-r from-green-200 to-teal-200 text-green-800 border-2 border-green-400 font-bold shadow-md">🏆 Completed</Badge>;
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">Completed</Badge>;
       default:
-        return <Badge variant="outline" className="bg-gradient-to-r from-gray-200 to-slate-200 text-gray-800 border-2 border-gray-400 font-bold">{status}</Badge>;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
@@ -507,20 +517,20 @@ export default function StudentDashboard() {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
-        <Sidebar variant="inset" className="border-r-2 border-purple-200 bg-gradient-to-b from-white via-pink-50/30 to-purple-50/30">
-          <SidebarHeader className="border-b-2 border-purple-200 p-4 bg-gradient-to-r from-pink-100 to-purple-100">
+      <div className="flex min-h-screen w-full bg-slate-50">
+        <Sidebar variant="inset" className="border-r bg-white">
+          <SidebarHeader className="border-b p-4">
             <div className="flex items-center gap-3">
-              <Avatar className="h-12 w-12 border-2 border-purple-300 shadow-lg">
-                <AvatarFallback className="bg-gradient-to-br from-pink-400 via-purple-400 to-blue-400 text-white font-bold text-lg">
+              <Avatar className="h-12 w-12 border-2">
+                <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
                   {student.name.split(' ').map(n => n[0]).join('')}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-purple-900 truncate">
+                <p className="text-sm font-semibold truncate">
                   {student.name}
                 </p>
-                <p className="text-xs text-purple-700 truncate font-medium">
+                <p className="text-xs text-muted-foreground truncate">
                   {student.grade} • {student.schoolName}
                 </p>
               </div>
@@ -532,29 +542,21 @@ export default function StudentDashboard() {
               <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {sidebarItems.slice(0, 4).map((item, idx) => {
-                    const colors = [
-                      "from-pink-500 to-purple-500",
-                      "from-purple-500 to-blue-500",
-                      "from-blue-500 to-cyan-500",
-                      "from-green-500 to-teal-500"
-                    ];
+                  {sidebarItems.slice(0, 4).map((item) => {
                     return (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
                           isActive={item.isActive}
                           onClick={item.onClick}
                           className={cn(
-                            "w-full transition-all hover:scale-105",
-                            item.isActive
-                              ? `bg-gradient-to-r ${colors[idx]} text-white shadow-lg font-bold`
-                              : "hover:bg-gradient-to-r hover:from-pink-100 hover:to-purple-100 text-purple-700"
+                            "w-full",
+                            item.isActive && "bg-accent font-medium"
                           )}
                         >
-                          <item.icon className={cn("h-5 w-5", item.isActive ? "text-white" : "text-purple-600")} />
-                          <span className="font-semibold">{item.title}</span>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
                           {item.badge && (
-                            <SidebarMenuBadge className={item.isActive ? "bg-white text-purple-600" : "bg-purple-200 text-purple-800"}>
+                            <SidebarMenuBadge>
                               {item.badge}
                             </SidebarMenuBadge>
                           )}
@@ -572,28 +574,21 @@ export default function StudentDashboard() {
               <SidebarGroupLabel>Academic Tools</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {sidebarItems.slice(4, 7).map((item, idx) => {
-                    const colors = [
-                      "from-orange-500 to-red-500",
-                      "from-teal-500 to-green-500",
-                      "from-indigo-500 to-purple-500"
-                    ];
+                  {sidebarItems.slice(4, 7).map((item) => {
                     return (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
                           isActive={item.isActive}
                           onClick={item.onClick}
                           className={cn(
-                            "w-full transition-all hover:scale-105",
-                            item.isActive
-                              ? `bg-gradient-to-r ${colors[idx]} text-white shadow-lg font-bold`
-                              : "hover:bg-gradient-to-r hover:from-orange-100 hover:to-red-100 text-purple-700"
+                            "w-full",
+                            item.isActive && "bg-accent font-medium"
                           )}
                         >
-                          <item.icon className={cn("h-5 w-5", item.isActive ? "text-white" : "text-orange-600")} />
-                          <span className="font-semibold">{item.title}</span>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
                           {item.badge && (
-                            <SidebarMenuBadge className={item.isActive ? "bg-white text-orange-600" : "bg-orange-200 text-orange-800"}>
+                            <SidebarMenuBadge>
                               {item.badge}
                             </SidebarMenuBadge>
                           )}
@@ -611,27 +606,21 @@ export default function StudentDashboard() {
               <SidebarGroupLabel>Communication</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {sidebarItems.slice(7).map((item, idx) => {
-                    const colors = [
-                      "from-cyan-500 to-blue-500",
-                      "from-pink-500 to-rose-500"
-                    ];
+                  {sidebarItems.slice(7).map((item) => {
                     return (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
                           isActive={item.isActive}
                           onClick={item.onClick}
                           className={cn(
-                            "w-full transition-all hover:scale-105",
-                            item.isActive
-                              ? `bg-gradient-to-r ${colors[idx]} text-white shadow-lg font-bold`
-                              : "hover:bg-gradient-to-r hover:from-cyan-100 hover:to-blue-100 text-purple-700"
+                            "w-full",
+                            item.isActive && "bg-accent font-medium"
                           )}
                         >
-                          <item.icon className={cn("h-5 w-5", item.isActive ? "text-white" : "text-cyan-600")} />
-                          <span className="font-semibold">{item.title}</span>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
                           {item.badge && (
-                            <SidebarMenuBadge className={item.isActive ? "bg-white text-cyan-600" : "bg-cyan-200 text-cyan-800"}>
+                            <SidebarMenuBadge>
                               {item.badge}
                             </SidebarMenuBadge>
                           )}
@@ -644,11 +633,11 @@ export default function StudentDashboard() {
             </SidebarGroup>
           </SidebarContent>
 
-          <SidebarFooter className="border-t-2 border-purple-200 p-4 bg-gradient-to-r from-pink-50/50 to-purple-50/50">
+          <SidebarFooter className="border-t p-4">
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton className="hover:bg-gradient-to-r hover:from-purple-100 hover:to-pink-100 text-purple-700 font-semibold transition-all hover:scale-105">
-                  <Settings className="h-5 w-5 text-purple-600" />
+                <SidebarMenuButton>
+                  <Settings className="h-4 w-4" />
                   <span>Settings</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -666,9 +655,9 @@ export default function StudentDashboard() {
                       window.location.href = '/';
                     }
                   }}
-                  className="text-red-600 hover:text-red-700 hover:bg-gradient-to-r hover:from-red-100 hover:to-pink-100 font-semibold transition-all hover:scale-105"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
                 >
-                  <LogOut className="h-5 w-5" />
+                  <LogOut className="h-4 w-4" />
                   <span>Logout</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -677,16 +666,16 @@ export default function StudentDashboard() {
         </Sidebar>
 
         <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b-2 border-purple-200 bg-gradient-to-r from-pink-100 via-purple-100 to-blue-100 px-4 shadow-sm">
-            <SidebarTrigger className="-ml-1 text-purple-700 hover:text-purple-900" />
-            <Separator orientation="vertical" className="mr-2 h-4 bg-purple-300" />
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
             <div className="flex-1">
-              <h1 className="text-lg font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
-                🎓 Student Dashboard
+              <h1 className="text-lg font-semibold">
+                Student Dashboard
               </h1>
             </div>
-            <Button variant="ghost" size="sm" className="hover:bg-purple-200 rounded-full">
-              <Bell className="h-5 w-5 text-purple-600" />
+            <Button variant="ghost" size="icon">
+              <Bell className="h-5 w-5" />
             </Button>
           </header>
 
@@ -1673,11 +1662,31 @@ export default function StudentDashboard() {
                     </div>
 
                     <div className="mt-8">
-                      <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                        <FileText className="h-5 w-5 text-purple-600" />
-                        Evaluations & Progress Reports/Marksheet
-                      </h3>
-                      <ProgressReportList reports={progressReports} />
+                      <Card className="border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <FileText className="h-6 w-6 text-purple-600" />
+                            Evaluations & Progress Reports
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          {loading ? (
+                            <div className="text-center py-8 text-gray-500">
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-2"></div>
+                              Loading progress reports...
+                            </div>
+                          ) : (
+                            <>
+                              <div className="mb-4 text-sm text-gray-600">
+                                {progressReports.length > 0 
+                                  ? `Showing ${progressReports.length} progress report${progressReports.length !== 1 ? 's' : ''}`
+                                  : 'No progress reports published yet'}
+                              </div>
+                              <ProgressReportList reports={progressReports} />
+                            </>
+                          )}
+                        </CardContent>
+                      </Card>
                     </div>
                   </div>
                 )}

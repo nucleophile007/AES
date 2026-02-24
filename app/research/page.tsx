@@ -1,9 +1,13 @@
+"use client";
+
+import { useState, useMemo, useEffect } from "react";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import Chatbot from "@/components/home/Chatbot";
-import { Calendar, Search } from "lucide-react";
-import Image from "next/image";
+import { Calendar, Clock, User, ArrowRight, Search, Filter } from "lucide-react";
 import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const PAGE_SIZE = 6;
 
@@ -13,113 +17,139 @@ const researchPosts = [
     slug: "cancer-detection-targeted-therapy",
     excerpt:
       "A student-led deep dive into convolutional neural networks for early detection of diseases from medical imaging datasets.",
-    category: "HOW TO",
+    category: "Machine Learning",
     date: "2025-02-10",
     readTime: "6 minute read",
-    image: "/hwa1.png",
-    status: "Featured",
+    author: "Arshia Sompura",
+    authorRole: "Research Mentor",
   },
   {
     title: "Detecting Anomalies in Smart Device Behavior Using ML",
     slug: "detecting-anomalies-in-smart-device-behavior-using-ml",
     excerpt:
       "Modeling strategic behavior with classic game theory frameworks and simulations to understand real-world competitive environments.",
-    category: "HOW TO",
+    category: "Data Science",
     date: "2025-02-10",
     readTime: "8 minute read",
-    image: "/hwa2.png",
-    status: "New",
+    author: "Arshia Sompura",
+    authorRole: "Research Mentor",
   },
   {
     title: "Photodynamic(PDT) & Photothermal(PTT) Therapies with Nanoparticles",
     slug: "photodynamic-pdt-photothermal-ptt-therapies-with-nanoparticles",
     excerpt:
       "Comparing classical statistical forecasting with modern ML approaches for climate-related time series prediction.",
-    category: "HOW TO",
+    category: "Biotechnology",
     date: "2024-08-23",
     readTime: "3 minute read",
-    image: "/hwa3.png",
-    status: "",
+    author: "Arshia Sompura",
+    authorRole: "Research Mentor",
   },
   {
     title: "A Parametric Study of Human Balance with Delays using Delay Differential Equations",
     slug: "a-parametric-study-of-human-balance-with-delays-using-delay-differential-equations",
     excerpt:
       "A practical framework to find a compelling topic, narrow your question, and design a project you can actually finish.",
-    category: "HOW TO",
+    category: "Applied Mathematics",
     date: "2024-07-18",
     readTime: "7 minute read",
-    image: "/hero.png",
-    status: "",
+    author: "Arshia Sompura",
+    authorRole: "Research Mentor",
   },
   {
     title: "Nanotechnology and Smart Drug Delivery From prevention to treatment to regeneration",
     slug: "nanotechnology-and-smart-drug-delivery-from-prevention-to-treatment-to-regeneration",
     excerpt:
       "From choosing a venue to formatting, revisions, and submissions—what the publication process looks like in practice.",
-    category: "HOW TO",
+    category: "Nanotechnology",
     date: "2024-05-02",
     readTime: "5 minute read",
-    image: "/image.png",
-    status: "",
+    author: "Arshia Sompura",
+    authorRole: "Research Mentor",
   },
   {
     title: "Evaluating Predictive Models for Heart Disease: A Comparative Study of Feature Selection and Neural Architectures",
     slug: "evaluating-predictive-models-for-heart-disease-a-comparative-study-of-feature-selection-and-neural-architectures",
     excerpt:
       "A curated set of journals and publishing options with tips to pick the right fit based on your project type.",
-    category: "HOW TO",
+    category: "Healthcare AI",
     date: "2024-04-10",
     readTime: "4 minute read",
-    image: "/learning-journey-cartoon.png",
-    status: "",
+    author: "Arshia Sompura",
+    authorRole: "Research Mentor",
   },
   {
     title: "Development of antibiotics: Fight Against Bacterial Resistance",
     slug: "development-of-antibiotics-fight-against-bacterial-resistance",
-    excerpt: "",
-    category: "HOW TO",
+    excerpt: "Exploring the evolution of antibiotic development and strategies to combat increasing bacterial resistance in modern medicine.",
+    category: "Microbiology",
     date: "2024-03-22",
     readTime: "6 minute read",
-    image: "/program-image/acharyaes-research-hero.jpg",
-    status: "",
+    author: "Arshia Sompura",
+    authorRole: "Research Mentor",
   },
   {
     title: "Early detection of Diabetes Using Logistic Regression: An Analytical Approach",
     slug: "early-detection-of-diabetes-using-logistic-regression-an-analytical-approach",
-    excerpt: "",
-    category: "HOW TO",
+    excerpt: "An analytical exploration of using logistic regression models for early diabetes detection and risk assessment.",
+    category: "Medical AI",
     date: "2024-02-08",
     readTime: "5 minute read",
-    image: "/program-image/acharyaes-academic-hero.jpg",
-    status: "",
+    author: "Arshia Sompura",
+    authorRole: "Research Mentor",
   },
 ];
 
 function formatDate(isoDate: string) {
   try {
-    return new Date(isoDate).toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+    const date = new Date(isoDate);
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const month = months[date.getMonth()];
+    const day = date.getDate();
+    const year = date.getFullYear();
+    return `${month} ${day}, ${year}`;
   } catch {
     return isoDate;
   }
 }
 
-export default async function ResearchShowcasePage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ page?: string }>;
-}) {
-  const params = await searchParams;
-  const rawPage = Number(params?.page ?? "1");
-  const requestedPage = Number.isFinite(rawPage) ? Math.trunc(rawPage) : 1;
-  const totalPages = Math.max(1, Math.ceil(researchPosts.length / PAGE_SIZE));
-  const page = Math.min(Math.max(1, requestedPage), totalPages);
+export default function ResearchShowcasePage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedYear, setSelectedYear] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Extract unique years from posts
+  const availableYears = useMemo(() => {
+    const years = researchPosts.map(post => new Date(post.date).getFullYear());
+    return ["all", ...Array.from(new Set(years)).sort((a, b) => b - a)];
+  }, []);
+
+  // Filter posts based on search and year
+  const filteredPosts = useMemo(() => {
+    return researchPosts.filter(post => {
+      const matchesSearch = searchQuery === "" || 
+        post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        post.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        post.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        post.author.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const postYear = new Date(post.date).getFullYear().toString();
+      const matchesYear = selectedYear === "all" || postYear === selectedYear;
+
+      return matchesSearch && matchesYear;
+    });
+  }, [searchQuery, selectedYear]);
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filteredPosts.length / PAGE_SIZE));
+  const page = Math.min(Math.max(1, currentPage), totalPages);
   const startIndex = (page - 1) * PAGE_SIZE;
-  const visiblePosts = researchPosts.slice(startIndex, startIndex + PAGE_SIZE);
+  const visiblePosts = filteredPosts.slice(startIndex, startIndex + PAGE_SIZE);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedYear]);
 
   return (
     <main className="min-h-screen theme-bg-dark flex flex-col">
@@ -180,9 +210,9 @@ export default async function ResearchShowcasePage({
               </nav>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-yellow-400 tracking-tight leading-tight drop-shadow-sm">
-                How to Conduct and
+                AES EXPLORERS 
                 <br className="hidden sm:block" />
-                Showcase Research
+                Research Showcase
               </h1>
 
               <p className="mt-4 text-lg sm:text-xl theme-text-muted max-w-2xl">
@@ -195,10 +225,7 @@ export default async function ResearchShowcasePage({
               <div className="relative">
                 <div className="absolute -inset-6 rounded-full bg-yellow-400/5 blur-2xl" />
                 <div className="relative">
-                  <Search className="h-48 w-48 sm:h-56 sm:w-56 text-yellow-400" strokeWidth={2.75} />
-                  <div className="absolute top-[46px] left-[70px] sm:top-[54px] sm:left-[86px] h-20 w-20 rounded-full bg-slate-900/70 border-4 border-yellow-400 flex items-center justify-center shadow-2xl">
-                    <div className="h-10 w-10 rounded-full bg-slate-200/80" />
-                  </div>
+                  <Calendar className="h-48 w-48 sm:h-56 sm:w-56 text-yellow-400" strokeWidth={1.5} />
                 </div>
               </div>
             </div>
@@ -206,62 +233,166 @@ export default async function ResearchShowcasePage({
         </div>
       </section>
 
-      {/* Card grid (Polygence-style) */}
+      {/* Search and Filter Section */}
+      <section className="theme-bg-dark py-6">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center">
+            {/* Search Input */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search articles by title, category, author..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-12 text-base bg-slate-800/50 border-slate-700/50 focus:border-yellow-400/40"
+              />
+            </div>
+
+            {/* Year Filters */}
+            <div className="flex gap-2 items-center shrink-0">
+              <Filter className="h-5 w-5 text-gray-400" />
+              <div className="flex gap-2 flex-wrap">
+                {availableYears.map((year) => (
+                  <Button
+                    key={year}
+                    variant={selectedYear === year.toString() ? "default" : "outline"}
+                    onClick={() => setSelectedYear(year.toString())}
+                    className="capitalize"
+                  >
+                    {year === "all" ? "All Years" : year}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Results Count */}
+          <p className="text-sm text-gray-400 mt-4">
+            Showing {filteredPosts.length} {filteredPosts.length === 1 ? "article" : "articles"}
+            {searchQuery && ` matching "${searchQuery}"`}
+            {selectedYear !== "all" && ` from ${selectedYear}`}
+          </p>
+        </div>
+      </section>
+
+      {/* Articles List - Professional Horizontal Layout */}
       <section className="theme-bg-dark py-10 sm:py-12">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="space-y-6">
             {visiblePosts.map((post) => (
               <Link
                 key={post.slug}
                 href={`/research/${post.slug}`}
-                className="group rounded-3xl bg-gradient-to-br from-slate-800 via-slate-800/95 to-slate-900 border-2 border-slate-700/50 shadow-2xl hover:border-yellow-400/30 transition-colors overflow-hidden"
+                className="group block rounded-2xl bg-slate-800/50 border border-slate-700/50 hover:border-yellow-400/40 hover:bg-slate-800/70 transition-all duration-300 overflow-hidden"
               >
-                <div className="p-5">
-                  <div className="rounded-2xl overflow-hidden bg-slate-900/40">
-                    <Image
-                      src={post.image || "/placeholder.svg"}
-                      alt={post.title}
-                      width={1200}
-                      height={800}
-                      className="w-full h-56 object-cover"
-                      priority={false}
-                    />
-                  </div>
-
-                  <div className="mt-5 flex items-center justify-between">
-                    <div className="text-[11px] font-semibold tracking-widest text-yellow-400">
+                <div className="p-6 sm:p-8">
+                  {/* Header: Category and Read Time */}
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-400/10 text-yellow-400 border border-yellow-400/20">
                       {post.category}
+                    </span>
+                    <div className="flex items-center gap-2 text-sm theme-text-muted">
+                      <Clock className="h-4 w-4" />
+                      {post.readTime}
                     </div>
-                    <div className="text-xs theme-text-muted">{post.readTime}</div>
                   </div>
 
-                  <h2 className="mt-3 text-lg font-semibold theme-text-light leading-snug group-hover:underline underline-offset-4">
+                  {/* Title */}
+                  <h2 className="text-xl sm:text-2xl font-bold theme-text-light leading-tight mb-3 group-hover:text-yellow-400 transition-colors">
                     {post.title}
                   </h2>
 
-                  <div className="mt-6 flex items-center gap-2 text-xs theme-text-muted">
-                    <Calendar className="h-4 w-4 text-yellow-400/80" />
-                    {formatDate(post.date)}
+                  {/* Excerpt */}
+                  <p className="theme-text-muted text-base leading-relaxed mb-5">
+                    {post.excerpt}
+                  </p>
+
+                  {/* Footer: Author, Date, and Read Button */}
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-slate-700/50">
+                    <div className="flex items-center gap-4">
+                      {/* Author Info */}
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400/20 to-amber-500/20 border border-yellow-400/30">
+                          <User className="h-5 w-5 text-yellow-400" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-semibold theme-text-light">
+                            {post.author}
+                          </div>
+                          <div className="text-xs theme-text-muted">
+                            {post.authorRole}
+                          </div>
+                        </div>
+                      </div>
+                      {/* Date */}
+                      <div className="hidden sm:flex items-center gap-2 text-sm theme-text-muted">
+                        <Calendar className="h-4 w-4 text-yellow-400/80" />
+                        {formatDate(post.date)}
+                      </div>
+                    </div>
+                    
+                    {/* Read Article Button */}
+                    <div className="flex items-center gap-4">
+                      {/* Date for mobile */}
+                      <div className="flex sm:hidden items-center gap-2 text-sm theme-text-muted">
+                        <Calendar className="h-4 w-4 text-yellow-400/80" />
+                        {formatDate(post.date)}
+                      </div>
+                      {/* Button */}
+                      <span className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-400 border border-yellow-400/30 hover:border-yellow-400/50 font-semibold text-sm transition-all duration-200 group-hover:gap-3">
+                        Read Article
+                        <ArrowRight className="h-4 w-4" />
+                      </span>
+                    </div>
                   </div>
                 </div>
               </Link>
             ))}
+
+            {/* Empty State */}
+            {visiblePosts.length === 0 && (
+              <div className="text-center py-16">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-400/10 mb-4">
+                  <Search className="h-8 w-8 text-yellow-400/60" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-300 mb-2">No articles found</h3>
+                <p className="text-gray-400 mb-6">
+                  Try adjusting your search or filter criteria
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSelectedYear("all");
+                  }}
+                  className="border-yellow-400/30 hover:border-yellow-400/50 text-yellow-400"
+                >
+                  Clear filters
+                </Button>
+              </div>
+            )}
           </div>
 
-          {/* Pagination (for future growth) */}
-          {totalPages > 1 ? (
+          {/* Pagination */}
+          {totalPages > 1 && filteredPosts.length > 0 && (
             <nav aria-label="Pagination" className="mt-12 flex items-center justify-center gap-6">
               {page > 1 ? (
-                <Link
-                  href={`/research?page=${page - 1}`}
-                  className="px-4 py-2 rounded-xl border border-yellow-400/20 bg-slate-900/40 theme-text-light hover:border-yellow-400/40 transition-colors"
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(page - 1)}
+                  className="border-yellow-400/20 hover:border-yellow-400/40"
                 >
                   Previous
-                </Link>
+                </Button>
               ) : (
-                <span className="px-4 py-2 rounded-xl border border-slate-700/50 bg-slate-900/20 theme-text-muted cursor-not-allowed">
+                <Button
+                  variant="outline"
+                  disabled
+                  className="opacity-50 cursor-not-allowed"
+                >
                   Previous
-                </span>
+                </Button>
               )}
 
               <div className="text-sm theme-text-muted">
@@ -270,19 +401,24 @@ export default async function ResearchShowcasePage({
               </div>
 
               {page < totalPages ? (
-                <Link
-                  href={`/research?page=${page + 1}`}
-                  className="px-4 py-2 rounded-xl border border-yellow-400/20 bg-slate-900/40 theme-text-light hover:border-yellow-400/40 transition-colors"
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(page + 1)}
+                  className="border-yellow-400/20 hover:border-yellow-400/40"
                 >
                   Next
-                </Link>
+                </Button>
               ) : (
-                <span className="px-4 py-2 rounded-xl border border-slate-700/50 bg-slate-900/20 theme-text-muted cursor-not-allowed">
+                <Button
+                  variant="outline"
+                  disabled
+                  className="opacity-50 cursor-not-allowed"
+                >
                   Next
-                </span>
+                </Button>
               )}
             </nav>
-          ) : null}
+          )}
         </div>
       </section>
 

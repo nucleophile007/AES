@@ -31,9 +31,10 @@ export async function POST(request: NextRequest) {
 
     if (student) {
       // Check if password exists
+      console.log(student);
       if (!student.password) {
         return NextResponse.json(
-          { success: false, error: 'Account not activated. Please check your email for activation link.' },
+          { success: false, error: 'Accountt not activated. Please check your email for activation link.' },
           { status: 401 }
         );
       }
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
       // Check if password exists
       if (!teacher.password) {
         return NextResponse.json(
-          { success: false, error: 'Account not activated. Please check your email for activation link.' },
+          { success: false, error: 'Accounttt not activated. Please check your email for activation link.' },
           { status: 401 }
         );
       }
