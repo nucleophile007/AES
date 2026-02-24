@@ -41,6 +41,21 @@ interface Student {
   grade: string;
 }
 
+interface StudentGroupMember {
+  id: number;
+  name: string;
+  email: string;
+  grade: string;
+  program: string;
+}
+
+interface StudentGroup {
+  id: number;
+  name: string;
+  createdAt: string;
+  members: StudentGroupMember[];
+}
+
 interface AssignmentFormData {
   title: string;
   description: string;
@@ -50,7 +65,8 @@ interface AssignmentFormData {
   dueDate: string;
   totalPoints: number;
   allowLateSubmission: boolean;
-  studentId: string; // Add student field
+  studentId: string;
+  groupId: string;
 }
 
 interface AssignmentManagerProps {
@@ -84,13 +100,22 @@ const AssignmentForm = ({
   formData, 
   setFormData, 
   students, 
-  availablePrograms 
+  availablePrograms,
+  studentGroups
 }: {
   formData: AssignmentFormData;
   setFormData: (data: AssignmentFormData) => void;
   students: Student[];
   availablePrograms: string[];
+  studentGroups: StudentGroup[];
 }) => {
+  const selectedGroup = formData.groupId
+    ? studentGroups.find((group) => group.id.toString() === formData.groupId)
+    : null;
+  const matchingGroupMembers = selectedGroup
+    ? selectedGroup.members.filter((member) => member.program === formData.program)
+    : [];
+
   return (
     <div className="space-y-4">
       <div>
@@ -129,7 +154,7 @@ const AssignmentForm = ({
         <div>
           <Label htmlFor="program">Program *</Label>
           <Select value={formData.program} onValueChange={(value) => {
-            setFormData({ ...formData, program: value, studentId: "" }); // Reset student when program changes
+            setFormData({ ...formData, program: value, studentId: "", groupId: "" });
           }}>
             <SelectTrigger>
               <SelectValue placeholder="Select program" />
@@ -161,12 +186,35 @@ const AssignmentForm = ({
         </div>
       </div>
 
+      <div>
+        <Label htmlFor="group">Assign to Group</Label>
+        <Select
+          value={formData.groupId}
+          onValueChange={(value) => setFormData({ ...formData, groupId: value, studentId: "" })}
+          disabled={!formData.program}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder={formData.program ? "Select group (optional)" : "Select a program first"} />
+          </SelectTrigger>
+          <SelectContent>
+            {studentGroups.map((group) => (
+              <SelectItem key={group.id} value={group.id.toString()}>
+                {group.name} ({group.members.length})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {formData.groupId && matchingGroupMembers.length === 0 && (
+          <p className="text-sm text-orange-600 mt-1">No group members match the selected program</p>
+        )}
+      </div>
+
       {/* Student Selection */}
       <div>
         <Label htmlFor="student">Assign to Student *</Label>
         <Select 
           value={formData.studentId} 
-          onValueChange={(value) => setFormData({ ...formData, studentId: value })}
+          onValueChange={(value) => setFormData({ ...formData, studentId: value, groupId: "" })}
           disabled={!formData.program}
         >
           <SelectTrigger>
@@ -233,6 +281,7 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
   const [loading, setLoading] = useState(false);
   const [students, setStudents] = useState<Student[]>([]);
   const [availablePrograms, setAvailablePrograms] = useState<string[]>([]);
+  const [studentGroups, setStudentGroups] = useState<StudentGroup[]>([]);
 
   const [formData, setFormData] = useState<AssignmentFormData>({
     title: "",
@@ -243,7 +292,8 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
     dueDate: "",
     totalPoints: 100,
     allowLateSubmission: false,
-    studentId: ""
+    studentId: "",
+    groupId: ""
   });
 
   // Fetch students on component mount
@@ -270,6 +320,24 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
     }
   }, [teacherEmail]);
 
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        const response = await fetch(`/api/teacher/student-groups?teacherEmail=${encodeURIComponent(teacherEmail)}`);
+        const data = await response.json();
+        if (response.ok && data.groups) {
+          setStudentGroups(data.groups);
+        }
+      } catch (error) {
+        console.error('Error fetching student groups:', error);
+      }
+    };
+
+    if (teacherEmail) {
+      fetchGroups();
+    }
+  }, [teacherEmail]);
+
   const resetForm = () => {
     setFormData({
       title: "",
@@ -280,7 +348,8 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
       dueDate: "",
       totalPoints: 100,
       allowLateSubmission: false,
-      studentId: ""
+      studentId: "",
+      groupId: ""
     });
   };
 
@@ -299,17 +368,34 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
       dueDate: assignment.dueDate.split('T')[0], // Format for date input
       totalPoints: assignment.totalPoints,
       allowLateSubmission: assignment.allowLateSubmission,
-      studentId: "" // For now, leave empty as existing assignments may not have student assignment
+      studentId: "",
+      groupId: ""
     });
     setEditingAssignment(assignment);
     setIsEditDialogOpen(true);
   };
 
   const handleSubmit = async () => {
-    if (!formData.title || !formData.description || !formData.program || !formData.subject || !formData.dueDate || !formData.studentId) {
+    if (!formData.title || !formData.description || !formData.program || !formData.subject || !formData.dueDate || (!formData.studentId && !formData.groupId)) {
       toast({
         title: "Missing information",
-        description: "Please fill in all required fields including student selection.",
+        description: "Please fill in all required fields including student or group selection.",
+        className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+      });
+      return;
+    }
+
+    const selectedGroup = formData.groupId
+      ? studentGroups.find((group) => group.id.toString() === formData.groupId)
+      : null;
+    const groupStudentIds = selectedGroup
+      ? selectedGroup.members.filter((member) => member.program === formData.program).map((member) => member.id)
+      : [];
+
+    if (formData.groupId && groupStudentIds.length === 0) {
+      toast({
+        title: "No eligible students",
+        description: "Selected group has no students in this program.",
         className: "border-yellow-500 bg-yellow-50 text-yellow-900",
       });
       return;
@@ -326,7 +412,8 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
       const requestData = {
         ...formData,
         teacherEmail,
-        ...(editingAssignment && { id: editingAssignment.id })
+        ...(editingAssignment && { id: editingAssignment.id }),
+        ...(formData.groupId ? { studentIds: groupStudentIds } : {})
       };
 
       const response = await fetch(url, {
@@ -438,6 +525,7 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
               setFormData={setFormData}
               students={students}
               availablePrograms={availablePrograms}
+              studentGroups={studentGroups}
             />
             <div className="flex justify-end space-x-2 pt-4">
               <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
@@ -553,6 +641,7 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
             setFormData={setFormData}
             students={students}
             availablePrograms={availablePrograms}
+            studentGroups={studentGroups}
           />
           <div className="flex justify-end space-x-2 pt-4">
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>

@@ -98,6 +98,7 @@ export async function POST(request: NextRequest) {
       allowLateSubmission = false,
       teacherEmail,
       studentId, // Add studentId parameter
+      studentIds = [],
       resourceIds = []
     } = data;
 
@@ -108,26 +109,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate studentId if provided
-    if (studentId) {
-      const student = await prisma.student.findUnique({
-        where: { id: parseInt(studentId) }
-      });
+    const normalizedStudentIds = Array.isArray(studentIds)
+      ? Array.from(new Set(studentIds.map((id: any) => Number(id)).filter((id: number) => !Number.isNaN(id))))
+      : [];
+    const singleStudentId = studentId ? parseInt(studentId) : null;
+    const targetStudentIds = normalizedStudentIds.length > 0
+      ? normalizedStudentIds
+      : singleStudentId
+        ? [singleStudentId]
+        : [];
 
-      if (!student) {
-        return NextResponse.json(
-          { success: false, error: 'Student not found' },
-          { status: 404 }
-        );
-      }
-
-      // Verify student is in the selected program
-      if (student.program !== program) {
-        return NextResponse.json(
-          { success: false, error: 'Student is not enrolled in the selected program' },
-          { status: 400 }
-        );
-      }
+    if (targetStudentIds.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Student selection is required' },
+        { status: 400 }
+      );
     }
 
     // Find teacher
@@ -142,49 +138,74 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create assignment
-    const assignment = await prisma.assignment.create({
-      data: {
-        title,
-        description,
-        instructions,
-        program,
-        subject,
-        dueDate: new Date(dueDate),
-        totalPoints: parseInt(totalPoints),
-        allowLateSubmission,
-        teacherId: teacher.id,
-        targetStudentId: studentId ? parseInt(studentId) : null // Add student assignment
-      }
+    const students = await prisma.student.findMany({
+      where: { id: { in: targetStudentIds } }
     });
 
-    // Link resources if provided
-    if (resourceIds.length > 0) {
-      await prisma.assignmentResource.createMany({
-        data: resourceIds.map((resourceId: number) => ({
-          assignmentId: assignment.id,
-          resourceId,
-          isRequired: true
-        }))
-      });
+    if (students.length !== targetStudentIds.length) {
+      return NextResponse.json(
+        { success: false, error: 'Student not found' },
+        { status: 404 }
+      );
     }
 
-    // Get the created assignment with relations
-    const createdAssignment = await prisma.assignment.findUnique({
-      where: { id: assignment.id },
-      include: {
-        resources: {
-          include: {
-            resource: true
-          }
-        }
-      }
+    const invalidProgram = students.find((student) => student.program !== program);
+    if (invalidProgram) {
+      return NextResponse.json(
+        { success: false, error: 'Student is not enrolled in the selected program' },
+        { status: 400 }
+      );
+    }
+
+    const teacherLinks = await prisma.teacherStudent.findMany({
+      where: {
+        teacherId: teacher.id,
+        studentId: { in: targetStudentIds }
+      },
+      select: { studentId: true }
     });
+
+    if (teacherLinks.length !== targetStudentIds.length) {
+      return NextResponse.json(
+        { success: false, error: 'Some selected students are not mapped to this teacher' },
+        { status: 400 }
+      );
+    }
+
+    const createdAssignments = [];
+    for (const targetId of targetStudentIds) {
+      const assignment = await prisma.assignment.create({
+        data: {
+          title,
+          description,
+          instructions,
+          program,
+          subject,
+          dueDate: new Date(dueDate),
+          totalPoints: parseInt(totalPoints),
+          allowLateSubmission,
+          teacherId: teacher.id,
+          targetStudentId: targetId
+        }
+      });
+
+      if (resourceIds.length > 0) {
+        await prisma.assignmentResource.createMany({
+          data: resourceIds.map((resourceId: number) => ({
+            assignmentId: assignment.id,
+            resourceId,
+            isRequired: true
+          }))
+        });
+      }
+
+      createdAssignments.push(assignment);
+    }
 
     return NextResponse.json({
       success: true,
-      assignment: createdAssignment,
-      message: 'Assignment created successfully'
+      assignments: createdAssignments,
+      message: targetStudentIds.length > 1 ? 'Assignments created successfully' : 'Assignment created successfully'
     });
 
   } catch (error) {

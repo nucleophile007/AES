@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { Clock, Calendar, Share2, Bookmark } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -10,9 +11,11 @@ export function AuthorSection() {
                 <div className="relative">
                     <div className="w-14 h-14 rounded-full bg-gradient-to-br from-yellow-400/20 to-yellow-400/5 p-0.5">
                         <div className="w-full h-full rounded-full overflow-hidden bg-slate-800">
-                            <img
+                            <Image
                                 src="/professional-researcher-portrait-avatar.jpg"
                                 alt="Arshia Sompura"
+                                width={56}
+                                height={56}
                                 className="w-full h-full object-cover"
                             />
                         </div>

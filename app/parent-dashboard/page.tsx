@@ -157,14 +157,14 @@ function AdminMeetCalendar({
   return (
     <div className="space-y-6">
       {/* Calendar */}
-      <div className="bg-gradient-to-br from-white to-blue-50/30 rounded-xl border-2 border-blue-100 shadow-lg p-6">
+      <div className="bg-white rounded-lg border p-6">
         {/* Month Navigation */}
-        <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-blue-100">
+        <div className="flex items-center justify-between mb-6 pb-4 border-b">
           <Button
             variant="outline"
             size="sm"
             onClick={() => navigateMonth("prev")}
-            className="h-9 w-9 p-0 border-2 hover:border-brand-blue hover:bg-blue-50 transition-all"
+            className="h-9 w-9 p-0"
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
@@ -207,14 +207,14 @@ function AdminMeetCalendar({
                 onClick={() => available && onDateSelect(formatDate(day))}
                 disabled={!available}
                 className={cn(
-                  "aspect-square rounded-xl text-sm font-semibold transition-all duration-200 relative",
+                  "aspect-square rounded-lg text-sm font-medium transition-all",
                   available
-                    ? "hover:scale-105 hover:shadow-md cursor-pointer transform"
-                    : "text-gray-300 cursor-not-allowed bg-gray-50",
+                    ? "hover:bg-accent cursor-pointer"
+                    : "text-muted-foreground cursor-not-allowed bg-muted",
                   selected
-                    ? "bg-gradient-to-br from-brand-blue to-blue-600 text-white shadow-lg scale-105 ring-4 ring-blue-200"
+                    ? "bg-primary text-primary-foreground"
                     : available
-                      ? "bg-white border-2 border-blue-200 text-gray-700 hover:border-brand-blue hover:bg-blue-50"
+                      ? "bg-white border border-input hover:border-primary"
                       : ""
                 )}
               >
@@ -230,15 +230,15 @@ function AdminMeetCalendar({
 
       {/* Time Slots */}
       {selectedDate && (
-        <div className="bg-gradient-to-br from-white to-teal-50/30 rounded-xl border-2 border-teal-100 shadow-lg p-6">
-          <h4 className="font-bold text-lg mb-4 flex items-center gap-2 text-gray-800 pb-3 border-b-2 border-teal-100">
-            <Clock className="h-5 w-5 text-brand-teal" />
+        <div className="bg-white rounded-lg border p-6">
+          <h4 className="font-semibold text-lg mb-4 flex items-center gap-2 pb-3 border-b">
+            <Clock className="h-5 w-5" />
             Available Times for {selectedDate}
           </h4>
           {availableTimesForSelectedDate.length === 0 ? (
             <div className="text-center py-8">
-              <Clock className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">No times available for this date</p>
+              <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground">No times available for this date</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -247,10 +247,10 @@ function AdminMeetCalendar({
                   key={time}
                   onClick={() => onTimeSelect(time)}
                   className={cn(
-                    "px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 border-2 transform hover:scale-105",
+                    "px-4 py-3 rounded-lg text-sm font-medium transition-all border",
                     selectedTime === time
-                      ? "bg-gradient-to-br from-brand-teal to-teal-600 text-white border-brand-teal shadow-lg ring-4 ring-teal-200"
-                      : "bg-white border-teal-200 text-gray-700 hover:border-brand-teal hover:bg-teal-50 hover:shadow-md"
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-white border-input hover:border-primary hover:bg-accent"
                   )}
                 >
                   <Clock className="h-4 w-4 mx-auto mb-1" />
@@ -837,20 +837,20 @@ export default function ParentDashboard() {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
-        <Sidebar variant="inset" className="border-r">
+      <div className="flex min-h-screen w-full bg-slate-50">
+        <Sidebar variant="inset" className="border-r bg-white">
           <SidebarHeader className="border-b p-4">
             <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10 border-2 border-brand-blue">
-                <AvatarFallback className="bg-gradient-to-br from-brand-blue to-brand-teal text-white font-semibold">
+              <Avatar className="h-10 w-10 border-2">
+                <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
                   {authUser?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'P'}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-sidebar-foreground truncate">
+                <p className="text-sm font-semibold truncate">
                   {authUser?.name || "Parent"}
                 </p>
-                <p className="text-xs text-sidebar-foreground/70 truncate">
+                <p className="text-xs text-muted-foreground truncate">
                   {authUser?.email || ""}
                 </p>
               </div>
@@ -900,11 +900,11 @@ export default function ParentDashboard() {
         </Sidebar>
 
         <SidebarInset className="flex-1">
-          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
+          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
             <div className="flex items-center gap-2 flex-1">
-              <h1 className="text-lg font-semibold bg-gradient-to-r from-brand-blue to-brand-teal bg-clip-text text-transparent">
+              <h1 className="text-lg font-semibold">
                 Parent Dashboard
               </h1>
             </div>
@@ -944,7 +944,7 @@ export default function ParentDashboard() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.1 }}
-                            className="p-6 rounded-xl border-2 bg-gradient-to-br from-white to-blue-50/30 hover:shadow-lg transition-all"
+                            className="p-6 rounded-lg border bg-card hover:shadow-md transition-all"
                           >
                             <div className="flex items-start justify-between mb-4">
                               <div>
@@ -1086,7 +1086,6 @@ export default function ParentDashboard() {
                       <Button
                         onClick={handleSubmitTransaction}
                         disabled={submittingTransaction}
-                        className="bg-gradient-to-r from-brand-blue to-brand-teal hover:from-brand-blue/90 hover:to-brand-teal/90"
                         size="lg"
                       >
                         {submittingTransaction ? (
@@ -1171,10 +1170,10 @@ export default function ParentDashboard() {
                               key={contact.id}
                               onClick={() => setSelectedChatContact(contact)}
                               className={cn(
-                                "w-full text-left p-3 rounded-lg border-2 transition-all",
+                                "w-full text-left p-3 rounded-lg border transition-all",
                                 isActive
-                                  ? "border-brand-blue bg-gradient-to-r from-blue-50 to-teal-50 shadow-md"
-                                  : "border-transparent hover:border-brand-blue/50 hover:bg-accent/50"
+                                  ? "border-primary bg-accent"
+                                  : "border-transparent hover:border-border hover:bg-accent/50"
                               )}
                             >
                               <div className="flex items-center gap-3">
@@ -1242,7 +1241,7 @@ export default function ParentDashboard() {
                       </div>
                     ) : (
                       <>
-                        <ScrollArea ref={chatScrollRef} className="h-[500px] border rounded-lg p-4 mb-4 bg-gradient-to-b from-gray-50/50 to-white">
+                        <ScrollArea ref={chatScrollRef} className="h-[500px] border rounded-lg p-4 mb-4 bg-background">
                           {chatLoading ? (
                             <div className="flex items-center justify-center h-full text-muted-foreground gap-2">
                               <RefreshCw className="h-4 w-4 animate-spin" />
@@ -1268,10 +1267,10 @@ export default function ParentDashboard() {
                                   >
                                     <div
                                       className={cn(
-                                        "max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-md",
+                                        "max-w-[80%] rounded-2xl px-4 py-2 text-sm",
                                         isParent
-                                          ? "bg-gradient-to-r from-brand-blue to-brand-teal text-white rounded-br-none"
-                                          : "bg-white border-2 text-gray-800 rounded-bl-none"
+                                          ? "bg-primary text-primary-foreground rounded-br-none"
+                                          : "bg-muted text-foreground rounded-bl-none"
                                       )}
                                     >
                                       <p>{message.content}</p>
@@ -1311,7 +1310,6 @@ export default function ParentDashboard() {
                           <Button
                             onClick={handleSendChatMessage}
                             disabled={chatSending || !chatMessageInput.trim()}
-                            className="bg-gradient-to-r from-brand-blue to-brand-teal hover:from-brand-blue/90 hover:to-brand-teal/90"
                           >
                             {chatSending ? (
                               <RefreshCw className="h-4 w-4 animate-spin" />
@@ -1371,7 +1369,6 @@ export default function ParentDashboard() {
                             setActiveTab("progress");
                             setTimeout(() => setActiveTab("profile-building"), 100);
                           }}
-                          className="bg-gradient-to-r from-brand-blue to-brand-teal"
                         >
                           Book Another Session
                         </Button>
@@ -1604,7 +1601,6 @@ export default function ParentDashboard() {
                               !profileFormData.selectedTime ||
                               bookingProfileSlot
                             }
-                            className="bg-gradient-to-r from-brand-blue to-brand-teal hover:from-brand-blue/90 hover:to-brand-teal/90"
                           >
                             {bookingProfileSlot ? (
                               <>

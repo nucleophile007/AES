@@ -13,16 +13,51 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized access' }, { status: 403 });
         }
 
-        // Students can only see their own reports
-        const studentId = user.id;
+        const url = new URL(request.url);
+        const reportId = url.searchParams.get('reportId');
 
+        // Find student
+        const student = await prisma.student.findUnique({
+            where: { email: user.email }
+        });
+
+        if (!student) {
+            return NextResponse.json({ error: 'Student profile not found' }, { status: 404 });
+        }
+
+        // Get single report by ID
+        if (reportId) {
+            const report = await prisma.progressReport.findFirst({
+                where: {
+                    id: parseInt(reportId),
+                    studentId: student.id,
+                    isVisible: true,
+                    status: 'published'
+                },
+                include: {
+                    teacher: {
+                        select: { name: true, email: true }
+                    }
+                }
+            });
+
+            if (!report) {
+                return NextResponse.json({ error: 'Report not found' }, { status: 404 });
+            }
+
+            return NextResponse.json({ success: true, report });
+        }
+
+        // Fetch all published and visible reports for this student
         const reports = await prisma.progressReport.findMany({
             where: {
-                studentId: studentId
+                studentId: student.id,
+                isVisible: true,
+                status: 'published'
             },
             include: {
                 teacher: {
-                    select: { name: true }
+                    select: { name: true, email: true }
                 }
             },
             orderBy: {

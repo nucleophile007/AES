@@ -37,6 +37,7 @@ import AssignmentManager from "@/components/teacher/AssignmentManager";
 import SubmissionReviewer from "@/components/teacher/SubmissionReviewer";
 import CustomChatDialog from "../../components/CustomChatDialog";
 import StudentProgressModal from "../../components/teacher/RealStudentProgressModal";
+import ProgressReportManager from "@/components/teacher/ProgressReportManager";
 import {
   User,
   BookOpen,
@@ -60,7 +61,10 @@ import {
   Send,
   Eye,
   Download,
-  ExternalLink
+  ExternalLink,
+  BarChart3,
+  Edit,
+  Trash2
 } from "lucide-react";
 
 type ResourceCategory = "assignment" | "personal" | "general";
@@ -92,6 +96,21 @@ interface Student {
     };
   }>;
   assignedAt: string;
+}
+
+interface StudentGroupMember {
+  id: number;
+  name: string;
+  email: string;
+  grade: string;
+  program: string;
+}
+
+interface StudentGroup {
+  id: number;
+  name: string;
+  createdAt: string;
+  members: StudentGroupMember[];
 }
 
 interface Teacher {
@@ -153,6 +172,12 @@ export default function TeacherDashboard() {
   const [activeTab, setActiveTab] = useState("students");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [progressReports, setProgressReports] = useState<any[]>([]);
+  const [studentGroups, setStudentGroups] = useState<StudentGroup[]>([]);
+  const [groupName, setGroupName] = useState("");
+  const [groupStudentIds, setGroupStudentIds] = useState<number[]>([]);
+  const [groupError, setGroupError] = useState<string | null>(null);
+  const [creatingGroup, setCreatingGroup] = useState(false);
 
   // Resource sending state
   const [newResource, setNewResource] = useState<{
@@ -181,6 +206,7 @@ export default function TeacherDashboard() {
   const [newResourceFile, setNewResourceFile] = useState<File | null>(null);
   const [sendingResource, setSendingResource] = useState(false);
   const [resourceError, setResourceError] = useState<string | null>(null);
+  const [resourceGroupId, setResourceGroupId] = useState<string>("");
 
   // Student submissions state
   const [studentSubmissions, setStudentSubmissions] = useState<any[]>([]);
@@ -236,6 +262,96 @@ export default function TeacherDashboard() {
     }
   };
 
+  const fetchStudentGroups = async () => {
+    if (!teacherEmail) return;
+    try {
+      const response = await fetch(`/api/teacher/student-groups?teacherEmail=${encodeURIComponent(teacherEmail)}`);
+      const data = await response.json();
+
+      if (data.success) {
+        setStudentGroups(data.groups || []);
+      } else {
+        console.error('Failed to fetch student groups:', data.error);
+      }
+    } catch (err) {
+      console.error('Error fetching student groups:', err);
+    }
+  };
+
+  const handleCreateGroup = async () => {
+    setGroupError(null);
+
+    if (!teacherEmail) {
+      const message = "Teacher email not available.";
+      setGroupError(message);
+      toast({
+        variant: "destructive",
+        title: "Cannot create group",
+        description: message,
+      });
+      return;
+    }
+
+    if (!groupName.trim()) {
+      const message = "Group name is required.";
+      setGroupError(message);
+      toast({
+        title: "Missing group name",
+        description: message,
+        className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+      });
+      return;
+    }
+
+    if (groupStudentIds.length === 0) {
+      const message = "Select at least one student.";
+      setGroupError(message);
+      toast({
+        title: "No students selected",
+        description: message,
+        className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+      });
+      return;
+    }
+
+    setCreatingGroup(true);
+    try {
+      const response = await fetch("/api/teacher/student-groups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          teacherEmail,
+          name: groupName.trim(),
+          studentIds: groupStudentIds
+        }),
+      });
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || "Failed to create group");
+      }
+
+      setGroupName("");
+      setGroupStudentIds([]);
+      await fetchStudentGroups();
+      toast({
+        title: "Group created",
+        description: "Students have been grouped successfully.",
+        className: "border-green-500 bg-green-50 text-green-900",
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to create group";
+      setGroupError(message);
+      toast({
+        variant: "destructive",
+        title: "Failed to create group",
+        description: message,
+      });
+    } finally {
+      setCreatingGroup(false);
+    }
+  };
+
   const fetchAssignments = async () => {
     try {
       const response = await fetch(`/api/teacher/assignments?teacherEmail=${encodeURIComponent(teacherEmail)}`);
@@ -266,6 +382,7 @@ export default function TeacherDashboard() {
     });
     setNewResourceFile(null);
     setResourceError(null);
+    setResourceGroupId("");
   };
 
   const handleSendResource = async () => {
@@ -508,6 +625,7 @@ export default function TeacherDashboard() {
     if (teacherEmail) {
       fetchAssignments();
       fetchTeacherData();
+      fetchStudentGroups();
     }
   }, [teacherEmail]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -614,6 +732,11 @@ export default function TeacherDashboard() {
       title: "Resources",
       icon: GraduationCap,
       value: "resources",
+    },
+    {
+      title: "Progress Reports",
+      icon: BarChart3,
+      value: "progress",
     },
     {
       title: "Schedule",
@@ -766,6 +889,134 @@ export default function TeacherDashboard() {
                     <div className="border-t border-gray-200 my-6"></div>
                   </div>
                 )}
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold flex items-center gap-2 text-brand-blue">
+                      <Users className="h-5 w-5" />
+                      Student Groups
+                    </h3>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button size="sm" variant="outline">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Group
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[520px]">
+                        <DialogHeader>
+                          <DialogTitle>Create Student Group</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label>Group Name *</Label>
+                            <Input
+                              value={groupName}
+                              onChange={(e) => setGroupName(e.target.value)}
+                              placeholder="e.g. Algebra MWF"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Select Students *</Label>
+                            <div className="border rounded-lg p-3 max-h-60 overflow-y-auto space-y-2">
+                              {students.map((student) => (
+                                <label key={student.id} className="flex items-center gap-2 text-sm">
+                                  <Checkbox
+                                    checked={groupStudentIds.includes(student.id)}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        setGroupStudentIds([...groupStudentIds, student.id]);
+                                      } else {
+                                        setGroupStudentIds(groupStudentIds.filter((id) => id !== student.id));
+                                      }
+                                    }}
+                                  />
+                                  <span className="flex-1">
+                                    {student.name} <span className="text-gray-500">({student.email})</span>
+                                  </span>
+                                </label>
+                              ))}
+                              {students.length === 0 && (
+                                <p className="text-sm text-gray-500">No students found.</p>
+                              )}
+                            </div>
+                          </div>
+                          {groupError && <p className="text-sm text-red-600">{groupError}</p>}
+                        </div>
+                        <DialogFooter>
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setGroupName("");
+                              setGroupStudentIds([]);
+                              setGroupError(null);
+                            }}
+                          >
+                            Reset
+                          </Button>
+                          <Button onClick={handleCreateGroup} disabled={creatingGroup}>
+                            {creatingGroup ? (
+                              <>
+                                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                Creating...
+                              </>
+                            ) : (
+                              <>
+                                <Plus className="h-4 w-4 mr-2" />
+                                Create Group
+                              </>
+                            )}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+
+                  {studentGroups.length === 0 ? (
+                    <Card className="border-dashed">
+                      <CardContent className="py-10 text-center">
+                        <Users className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+                        <p className="text-sm text-gray-500">Create your first group to manage students together.</p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {studentGroups.map((group) => (
+                        <Card key={group.id} className="border-2 hover:shadow-lg transition-all hover:border-brand-teal">
+                          <CardHeader className="bg-gradient-to-r from-brand-blue/5 to-brand-teal/5">
+                            <CardTitle className="flex items-center justify-between text-brand-blue">
+                              <span className="truncate">{group.name}</span>
+                              <Badge variant="outline" className="bg-white">
+                                {group.members.length} students
+                              </Badge>
+                            </CardTitle>
+                            <div className="text-xs text-gray-500">
+                              {new Date(group.createdAt).toLocaleDateString()}
+                            </div>
+                          </CardHeader>
+                          <CardContent>
+                            {group.members.length === 0 ? (
+                              <p className="text-sm text-gray-500">No students assigned.</p>
+                            ) : (
+                              <div className="flex flex-wrap gap-2">
+                                {group.members.slice(0, 4).map((member) => (
+                                  <Badge key={member.id} variant="secondary" className="bg-gray-100 text-gray-700">
+                                    {member.name}
+                                  </Badge>
+                                ))}
+                                {group.members.length > 4 && (
+                                  <Badge variant="outline" className="text-gray-500">
+                                    +{group.members.length - 4} more
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-brand-blue">
                   <GraduationCap className="h-5 w-5" />
@@ -1031,6 +1282,32 @@ export default function TeacherDashboard() {
                           onChange={(e) => setNewResource({ ...newResource, linkUrl: e.target.value })}
                         />
                       </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Select Group</Label>
+                      <select
+                        value={resourceGroupId}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setResourceGroupId(value);
+                          if (!value) {
+                            setNewResource({ ...newResource, studentIds: [] });
+                            return;
+                          }
+                          const group = studentGroups.find((g) => g.id.toString() === value);
+                          const groupStudentIds = group ? group.members.map((member) => member.id) : [];
+                          setNewResource({ ...newResource, studentIds: groupStudentIds });
+                        }}
+                        className="w-full px-3 py-2 border rounded-md bg-white"
+                      >
+                        <option value="">Select group (optional)</option>
+                        {studentGroups.map((group) => (
+                          <option key={group.id} value={group.id}>
+                            {group.name} ({group.members.length})
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
                     <div className="space-y-2">
@@ -1309,6 +1586,18 @@ export default function TeacherDashboard() {
                     return <StudentScheduler teacherEmail={teacherEmail} />;
                   })()}
                 </div>
+              </motion.div>
+            )}
+
+            {/* Progress Reports Tab */}
+            {activeTab === "progress" && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="space-y-6"
+              >
+                <ProgressReportManager teacherEmail={teacherEmail} />
               </motion.div>
             )}
           </div>

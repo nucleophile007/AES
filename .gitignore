@@ -45,3 +45,4 @@ next-env.d.ts
 .tmp/
 /.tmp.driveupload/
 /.tmp.drivedownload/
+.md
