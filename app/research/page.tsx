@@ -1,6 +1,3 @@
-"use client";
-
-import { useState, useMemo, useEffect } from "react";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import Chatbot from "@/components/home/Chatbot";
@@ -189,21 +186,16 @@ export default async function ResearchShowcasePage({
           {totalPages > 1 && (
             <div className="mt-16 flex items-center justify-center gap-6">
               {page > 1 ? (
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentPage(page - 1)}
-                  className="border-yellow-400/20 hover:border-yellow-400/40"
+                <Link
+                  href={`/research?page=${page - 1}`}
+                  className="px-4 py-2 rounded-xl border border-yellow-400/20 bg-slate-900/40 theme-text-light hover:border-yellow-400/40 transition-colors"
                 >
                   Previous
-                </Button>
+                </Link>
               ) : (
-                <Button
-                  variant="outline"
-                  disabled
-                  className="opacity-50 cursor-not-allowed"
-                >
+                <span className="px-4 py-2 rounded-xl border border-slate-700/50 bg-slate-900/20 theme-text-muted cursor-not-allowed">
                   Previous
-                </Button>
+                </span>
               )}
 
               <div className="text-sm theme-text-muted">
@@ -218,21 +210,16 @@ export default async function ResearchShowcasePage({
               </div>
 
               {page < totalPages ? (
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentPage(page + 1)}
-                  className="border-yellow-400/20 hover:border-yellow-400/40"
+                <Link
+                  href={`/research?page=${page + 1}`}
+                  className="px-4 py-2 rounded-xl border border-yellow-400/20 bg-slate-900/40 theme-text-light hover:border-yellow-400/40 transition-colors"
                 >
                   Next
-                </Button>
+                </Link>
               ) : (
-                <Button
-                  variant="outline"
-                  disabled
-                  className="opacity-50 cursor-not-allowed"
-                >
+                <span className="px-4 py-2 rounded-xl border border-slate-700/50 bg-slate-900/20 theme-text-muted cursor-not-allowed">
                   Next
-                </Button>
+                </span>
               )}
             </div>
           )}
