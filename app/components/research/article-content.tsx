@@ -3,17 +3,32 @@
 import { useEffect, useRef } from "react"
 import { Microscope, Target, Lightbulb, BookOpen, Zap, ArrowRight } from "lucide-react"
 import { SlideViewer } from "./slide-viewer"
-import { PresentationSection } from "./presentation-section"
+import { TechnicalReportSection } from "./technical-report-section"
 import { Button } from "@/components/ui/button"
 
 interface ArticleContentProps {
+    slides: {
+        id: string
+        imagePath: string
+        order: number
+    }[]
     onSectionChange: (section: string) => void
     hasAccess: boolean
     onSlideView: (index: number) => void
+    onViewPDF: () => void
     onRequestAccess: () => void
 }
 
-export function ArticleContent({ onSectionChange, hasAccess, onSlideView, onRequestAccess }: ArticleContentProps) {
+
+export function ArticleContent({
+    slides,
+    onSectionChange,
+    hasAccess,
+    onSlideView,
+    onViewPDF,
+    onRequestAccess,
+}: ArticleContentProps)
+{
     const sectionsRef = useRef<Map<string, HTMLElement>>(new Map())
 
     useEffect(() => {
@@ -187,15 +202,41 @@ export function ArticleContent({ onSectionChange, hasAccess, onSlideView, onRequ
                     Explore the visual presentation of this research. The first 2 slides are freely available—request full access
                     to view the complete presentation.
                 </p>
-                <SlideViewer onSlideView={onSlideView} hasAccess={hasAccess} maxFreeSlides={2} />
+                {/* <SlideViewer onSlideView={onSlideView} hasAccess={hasAccess} maxFreeSlides={2} /> */}
+                <SlideViewer
+                    slides={slides}
+                    onSlideView={onSlideView}
+                    hasAccess={hasAccess}
+                    maxFreeSlides={2}
+                />
+
             </section>
 
             {/* Presentation */}
-            <section id="presentation" ref={setRef("presentation")} className="space-y-6">
+            {/* <section id="presentation" ref={setRef("presentation")} className="space-y-6">
                 <h2 className="text-3xl font-serif font-semibold theme-text-light">Presentation</h2>
                 <p className="theme-text-muted">Download or view the full PowerPoint presentation for this research.</p>
                 <PresentationSection hasAccess={hasAccess} onRequestAccess={onRequestAccess} />
+            </section> */}
+            {/* Technical Report */}
+            <section
+            id="technical-report"
+            ref={setRef("technical-report")}
+            className="space-y-6"
+            >
+            <h2 className="text-3xl font-serif font-semibold theme-text-light">
+                Technical Report
+            </h2>
+
+            <TechnicalReportSection
+                hasAccess={hasAccess}
+                onRequestAccess={onRequestAccess}
+                onViewReport={onViewPDF}
+                onDownloadReport={onViewPDF}
+            />
             </section>
+
+
 
             {/* Future Implications */}
             <section id="future-implications" ref={setRef("future-implications")} className="space-y-6">
@@ -221,7 +262,7 @@ export function ArticleContent({ onSectionChange, hasAccess, onSlideView, onRequ
             </section>
 
             {/* Sources */}
-            <section id="sources" ref={setRef("sources")} className="space-y-6 pt-8 border-t border-slate-700">
+            {/* <section id="sources" ref={setRef("sources")} className="space-y-6 pt-8 border-t border-slate-700">
                 <div className="flex items-center gap-3">
                     <BookOpen className="w-5 h-5 text-yellow-400" />
                     <h2 className="text-xl font-semibold theme-text-light">Sources & References</h2>
@@ -261,7 +302,7 @@ export function ArticleContent({ onSectionChange, hasAccess, onSlideView, onRequ
                         </div>
                     ))}
                 </div>
-            </section>
+            </section> */}
         </div>
     )
 }

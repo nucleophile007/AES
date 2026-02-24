@@ -128,7 +128,8 @@ const getInitials = (name: string) => {
     .slice(0, 2); // Take max 2 initials
 }
 
-const testimonialCards = [
+// Fallback testimonials (static data to show when API fails or no data)
+const fallbackTestimonials = [
   {
     id: 0,
     name: "Pragna",
@@ -299,12 +300,57 @@ const faqs = [
 ];
 
 function TestimonialsSection() {
-  const [selectedTestimonial, setSelectedTestimonial] = useState(testimonialCards[0])
+  const [testimonialCards, setTestimonialCards] = useState(fallbackTestimonials)
+  const [loading, setLoading] = useState(true)
+  const [selectedTestimonial, setSelectedTestimonial] = useState(fallbackTestimonials[0])
   const [isVisible, setIsVisible] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [animatingIndex, setAnimatingIndex] = useState(0)
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Fetch testimonials from API
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        const response = await fetch("/api/testimonials")
+        const data = await response.json()
+        
+        if (data.success && data.testimonials && data.testimonials.length > 0) {
+          // Filter testimonials for "Tutoring" program only
+          const tutoringTestimonials = data.testimonials
+            .filter((t: any) => {
+              // Check if programs array includes "Tutoring" (case-insensitive)
+              return t.programs && Array.isArray(t.programs) && 
+                     t.programs.some((p: string) => p.toLowerCase().includes('tutoring'))
+            })
+            .map((t: any) => ({
+              id: t.id || Math.random(),
+              name: t.studentName || "Student",
+              designation: t.grade || "Student",
+              school: t.school || "School",
+              // Keep all sections separate
+              successStory: t.successStory,
+              content: t.content || t.experienceDescription,
+              rating: t.rating,
+              initials: t.studentName ? t.studentName.split(" ").map((n: string) => n[0]).join("") : "ST"
+            }))
+          
+          if (tutoringTestimonials.length > 0) {
+            setTestimonialCards(tutoringTestimonials)
+            setSelectedTestimonial(tutoringTestimonials[0])
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching testimonials:", error)
+        // Keep fallback testimonials on error
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTestimonials()
+  }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 300)
@@ -325,7 +371,7 @@ function TestimonialsSection() {
         return nextIndex
       })
     }, 5500)
-  }, [])
+  }, [testimonialCards])
 
   useEffect(() => {
     startAutoRotation()
@@ -362,11 +408,41 @@ function TestimonialsSection() {
     startAutoRotation()
   }
 
-  const getTestimonialText = (content: any): string => {
-    if (typeof content === 'string') return content
-    if (content?.props?.children?.props?.children) return content.props.children.props.children
-    if (content?.props?.children) return content.props.children
-    return "Amazing testimonial content"
+  const renderTestimonialContent = (testimonial: any) => {
+    // If it's a fallback testimonial with JSX content
+    if (typeof testimonial.content !== 'string' && testimonial.content?.props) {
+      return testimonial.content
+    }
+    
+    // For API testimonials, show all approved sections
+    return (
+      <div className="space-y-4">
+        {/* Success Story Section */}
+        {testimonial.successStory && (
+          <div>
+            <p className="text-slate-200 text-base italic leading-relaxed">
+              &quot;{testimonial.successStory}&quot;
+            </p>
+          </div>
+        )}
+        
+        {/* Content/Experience Section */}
+        {testimonial.content && (
+          <div>
+            <p className="text-slate-200 text-base leading-relaxed">
+              &quot;{testimonial.content}&quot;
+            </p>
+          </div>
+        )}
+        
+        {/* If neither section exists (shouldn't happen but fallback) */}
+        {!testimonial.successStory && !testimonial.content && (
+          <p className="text-slate-200 text-base leading-relaxed">
+            Great tutoring experience!
+          </p>
+        )}
+      </div>
+    )
   }
 
   return (
@@ -430,14 +506,17 @@ function TestimonialsSection() {
               key={selectedTestimonial.id}
               className="bg-[#1a2236]/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-yellow-400/20 animate-in fade-in-50 slide-in-from-right-5 duration-500"
             >
-              <div className="flex gap-1 mb-4">
-                {[...Array(selectedTestimonial.rating || 5)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                ))}
-              </div>
+              {/* Rating Stars - Only show if rating exists */}
+              {selectedTestimonial.rating && (
+                <div className="flex gap-1 mb-6">
+                  {[...Array(selectedTestimonial.rating)].map((_, i) => (
+                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+              )}
 
-              <blockquote className="theme-text-light text-lg leading-relaxed mb-6 font-medium">
-                {selectedTestimonial.content}
+              <blockquote className="theme-text-light leading-relaxed mb-6 font-medium">
+                {renderTestimonialContent(selectedTestimonial)}
               </blockquote>
 
               <div className="flex items-center gap-4">

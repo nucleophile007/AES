@@ -32,6 +32,7 @@
     "@prisma/client": "^6.12.0",
     "@react-three/drei": "^9.88.0",
     "@react-three/fiber": "^8.15.0",
+    "@supabase/supabase-js": "^2.95.3",
     "@tabler/icons-react": "^3.34.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",
@@ -56,7 +57,7 @@
     "react-dom": "^19.1.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
-    "swr": "^2.3.8",
+    "swr": "^2.4.0",
     "three": "^0.158.0",
     "zod": "^3.23.8"
   },
