@@ -4,13 +4,16 @@ import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, BookOpen, Award, Star, Globe, Clock, Target, TrendingUp, Lightbulb, Briefcase, Heart, Zap, GraduationCap, Microscope, Rocket, Brain, Check, ArrowRight } from "lucide-react";
+import { Users, BookOpen, Award, Star, Globe, Clock, Target, TrendingUp, Lightbulb, Briefcase, Heart, Zap, GraduationCap, Microscope, Rocket, Brain, Check, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import Footer from "@/components/home/Footer";
 import Chatbot from "@/components/home/Chatbot";
 import Header from "@/components/home/Header";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Highlight } from "@/components/ui/highlight";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 const domains = [
   {
@@ -140,6 +143,32 @@ const enrollmentOptions = [
   },
 ];
 
+// Helper function to generate initials from name
+const getInitials = (name: string) => {
+  return name
+    .split(' ')
+    .map(word => word[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+// Fallback testimonials for AES Explorers
+const fallbackTestimonials = [
+  {
+    id: 0,
+    name: "Research Student",
+    designation: "High School Researcher",
+    initials: "RS",
+    rating: 5,
+    content: (
+      <p>
+        The AES EXPLORERS program provided me with <Highlight>invaluable research experience</Highlight> and mentorship from leading faculty. I was able to publish my work and present at a national conference.
+      </p>
+    ),
+  },
+];
+
 const faqs = [
   {
     question: "What is the AES EXPLORERS program?",
@@ -166,6 +195,259 @@ const faqs = [
     answer: "Deliverables vary by tier but include research articles, certificates, competition submissions, letters of recommendation, and opportunities to publish in academic journals.",
   },
 ];
+
+// TestimonialsSection Component
+function TestimonialsSection() {
+  const [testimonialCards, setTestimonialCards] = useState(fallbackTestimonials)
+  const [loading, setLoading] = useState(true)
+  const [selectedTestimonial, setSelectedTestimonial] = useState(fallbackTestimonials[0])
+  const [isVisible, setIsVisible] = useState(false)
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [animatingIndex, setAnimatingIndex] = useState(0)
+
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Fetch testimonials from API
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        const response = await fetch("/api/testimonials")
+        const data = await response.json()
+        
+        if (data.success && data.testimonials && data.testimonials.length > 0) {
+          // Filter testimonials for "AES EXPLORERS Research Program"
+          const researchTestimonials = data.testimonials
+            .filter((t: any) => {
+              // Check if programs array includes "AES EXPLORERS" or "Research" (case-insensitive)
+              return t.programs && Array.isArray(t.programs) && 
+                     t.programs.some((p: string) => 
+                       p.toLowerCase().includes('explorer') || 
+                       p.toLowerCase().includes('research')
+                     )
+            })
+            .map((t: any) => ({
+              id: t.id || Math.random(),
+              name: t.studentName || "Student",
+              designation: t.grade || "Student",
+              school: t.school || "School",
+              // Keep all sections separate
+              successStory: t.successStory,
+              content: t.content || t.experienceDescription,
+              rating: t.rating,
+              initials: t.studentName ? t.studentName.split(" ").map((n: string) => n[0]).join("") : "ST"
+            }))
+          
+          if (researchTestimonials.length > 0) {
+            setTestimonialCards(researchTestimonials)
+            setSelectedTestimonial(researchTestimonials[0])
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching testimonials:", error)
+        // Keep fallback testimonials on error
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTestimonials()
+  }, [])
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), 300)
+    return () => clearTimeout(timer)
+  }, [])
+
+  const startAutoRotation = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+    }
+
+    intervalRef.current = setInterval(() => {
+      setCurrentIndex((prevIndex) => {
+        const nextIndex = (prevIndex + 1) % testimonialCards.length
+        setSelectedTestimonial(testimonialCards[nextIndex])
+        setAnimatingIndex(nextIndex)
+        return nextIndex
+      })
+    }, 5500)
+  }, [testimonialCards])
+
+  useEffect(() => {
+    startAutoRotation()
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
+    }
+  }, [startAutoRotation])
+
+  const handleAvatarClick = (testimonial: typeof testimonialCards[0], index: number) => {
+    setSelectedTestimonial(testimonial)
+    setCurrentIndex(index)
+    setAnimatingIndex(index)
+    startAutoRotation()
+  }
+
+  const goToPrevious = () => {
+    const prevIndex = currentIndex === 0 ? testimonialCards.length - 1 : currentIndex - 1
+    setSelectedTestimonial(testimonialCards[prevIndex])
+    setCurrentIndex(prevIndex)
+    setAnimatingIndex(prevIndex)
+    startAutoRotation()
+  }
+
+  const goToNext = () => {
+    const nextIndex = (currentIndex + 1) % testimonialCards.length
+    setSelectedTestimonial(testimonialCards[nextIndex])
+    setCurrentIndex(nextIndex)
+    setAnimatingIndex(nextIndex)
+    startAutoRotation()
+  }
+
+  const renderTestimonialContent = (testimonial: any) => {
+    // If it's a fallback testimonial with JSX content
+    if (typeof testimonial.content !== 'string' && testimonial.content?.props) {
+      return testimonial.content
+    }
+    
+    // For API testimonials, show all approved sections
+    return (
+      <div className="space-y-4">
+        {/* Success Story Section */}
+        {testimonial.successStory && (
+          <div>
+            <p className="text-slate-200 text-base italic leading-relaxed">
+              &quot;{testimonial.successStory}&quot;
+            </p>
+          </div>
+        )}
+        
+        {/* Content/Experience Section */}
+        {testimonial.content && (
+          <div>
+            <p className="text-slate-200 text-base leading-relaxed">
+              &quot;{testimonial.content}&quot;
+            </p>
+          </div>
+        )}
+        
+        {/* If neither section exists (shouldn't happen but fallback) */}
+        {!testimonial.successStory && !testimonial.content && (
+          <p className="text-slate-200 text-base leading-relaxed">
+            Great research experience!
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="w-full relative z-10">
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="relative flex flex-col lg:flex-row items-center justify-center gap-16">
+          <div className="relative w-[600px] h-[600px] lg:w-[700px] lg:h-[700px]">
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] lg:w-[500px] lg:h-[500px] border-2 border-dashed border-yellow-400/30 rounded-full" />
+            
+            {/* Testimonials positioned around the circle */}
+            {testimonialCards.map((testimonial, index) => {
+              // Calculate angle so that active testimonial is always at rightmost (0 degrees)
+              const angle = (index - currentIndex) * (360 / testimonialCards.length)
+              const radius = 250
+              const x = Math.cos((angle * Math.PI) / 180) * radius
+              const y = Math.sin((angle * Math.PI) / 180) * radius
+
+              const isActive = currentIndex === index
+              const isAnimating = animatingIndex === index
+
+              return (
+                <div
+                  key={testimonial.id}
+                  className="absolute cursor-pointer hover:scale-110 z-10 transition-all duration-300"
+                  style={{
+                    left: "50%",
+                    top: "50%",
+                    transform: `translate(${x - 50}px, ${y - 50}px)`,
+                  }}
+                  onClick={() => handleAvatarClick(testimonial, index)}
+                >
+                  <Avatar
+                    className={`w-20 h-20 lg:w-24 lg:h-24 ring-2 shadow-lg transition-all duration-500 ${
+                      isActive ? "ring-yellow-400 ring-4 scale-110" : "ring-white hover:ring-yellow-300"
+                    } ${isAnimating ? "animate-pulse" : ""}`}
+                  >
+                    <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-[#1a2236] font-semibold">
+                      {testimonial.initials || testimonial.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  {isActive && (
+                    <div className="absolute inset-0 rounded-full border-2 border-yellow-400 animate-ping opacity-75" />
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="flex-1 max-w-lg">
+            <div
+              key={selectedTestimonial.id}
+              className="bg-[#1a2236]/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-yellow-400/20 animate-in fade-in-50 slide-in-from-right-5 duration-500"
+            >
+              {/* Rating Stars - Only show if rating exists */}
+              {selectedTestimonial.rating && (
+                <div className="flex gap-1 mb-6">
+                  {[...Array(selectedTestimonial.rating)].map((_, i) => (
+                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+              )}
+
+              <blockquote className="theme-text-light leading-relaxed mb-6 font-medium">
+                {renderTestimonialContent(selectedTestimonial)}
+              </blockquote>
+
+              <div className="flex items-center gap-4">
+                <Avatar className="w-12 h-12 ring-2 ring-yellow-100">
+                  <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-[#1a2236] font-semibold">
+                    {selectedTestimonial.initials || selectedTestimonial.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="font-semibold theme-text-light">{selectedTestimonial.name}</div>
+                  <div className="text-yellow-400 text-sm font-medium">{selectedTestimonial.designation}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-center gap-8 mt-16">
+          <button
+            onClick={goToPrevious}
+            className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg hover:bg-yellow-500 transition-all duration-200 hover:scale-110 active:scale-95"
+            aria-label="Previous testimonial"
+          >
+            <ChevronLeft className="w-6 h-6 text-[#1a2236]" />
+          </button>
+          <button
+            onClick={goToNext}
+            className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg hover:bg-yellow-500 transition-all duration-200 hover:scale-110 active:scale-95"
+            aria-label="Next testimonial"
+          >
+            <ChevronRight className="w-6 h-6 text-[#1a2236]" />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function AESExplorersPage() {
   return (
@@ -604,6 +886,31 @@ export default function AESExplorersPage() {
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-20 theme-bg-dark">
+        <div className="container mx-auto px-4 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="text-center mb-16"
+          >
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Student Success</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">What Our Researchers Say</h2>
+            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Hear from students who have conducted research through AES EXPLORERS.</p>
+          </motion.div>
+          
+          {/* Rotating Circular Testimonials */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8 }}
+            className="max-w-6xl mx-auto relative"
+          >
+            <TestimonialsSection />
+          </motion.div>
         </div>
       </section>
 
