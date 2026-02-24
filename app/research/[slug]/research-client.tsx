@@ -94,6 +94,46 @@ export default function ResearchClient({ research }: ResearchClientProps) {
     window.open(url, "_blank")
   }
 
+  // ✅ PDF DOWNLOAD HANDLER (force download)
+  const handleDownloadPDF = async () => {
+    const email = localStorage.getItem(
+      `research-access-${research.id}`
+    )
+
+    if (!email) {
+      setShowModal(true)
+      return
+    }
+
+    try {
+      const url = `/api/research/pdf?researchId=${research.id}&email=${encodeURIComponent(
+        email
+      )}`
+      
+      const response = await fetch(url)
+      
+      if (!response.ok) {
+        throw new Error('Failed to download PDF')
+      }
+
+      const blob = await response.blob()
+      const downloadUrl = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = downloadUrl
+      a.download = `${research.title || 'research'}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      
+      window.URL.revokeObjectURL(downloadUrl)
+      document.body.removeChild(a)
+      
+      toast.success('PDF downloaded successfully!')
+    } catch (error) {
+      console.error('Download error:', error)
+      toast.error('Failed to download PDF')
+    }
+  }
+
   return (
     <main className="min-h-screen theme-bg-dark flex flex-col">
       <Header />
@@ -146,6 +186,7 @@ export default function ResearchClient({ research }: ResearchClientProps) {
               onSlideView={handleSlideView}
               onRequestAccess={() => setShowModal(true)}
               onViewPDF={handleViewPDF}
+              onDownloadPDF={handleDownloadPDF}
             />
           </article>
 

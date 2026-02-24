@@ -262,7 +262,7 @@ export function SlideViewer({
      RENDER
   ---------------------------------------------*/
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto">
       {/* ================= MAIN SLIDE ================= */}
       <div className="relative bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
         <div className="aspect-video relative">

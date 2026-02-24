@@ -16,6 +16,7 @@ interface ArticleContentProps {
     hasAccess: boolean
     onSlideView: (index: number) => void
     onViewPDF: () => void
+    onDownloadPDF: () => void
     onRequestAccess: () => void
 }
 
@@ -26,6 +27,7 @@ export function ArticleContent({
     hasAccess,
     onSlideView,
     onViewPDF,
+    onDownloadPDF,
     onRequestAccess,
 }: ArticleContentProps)
 {
@@ -232,7 +234,7 @@ export function ArticleContent({
                 hasAccess={hasAccess}
                 onRequestAccess={onRequestAccess}
                 onViewReport={onViewPDF}
-                onDownloadReport={onViewPDF}
+                onDownloadReport={onDownloadPDF}
             />
             </section>
 
