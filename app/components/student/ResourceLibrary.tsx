@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ShimmerSkeleton } from '@/components/ui/dashboard-loading-skeleton';
 import {
   Download,
   ExternalLink,
@@ -335,8 +336,20 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex justify-center items-center py-12">
-          <div className="text-gray-500">Loading resources...</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 py-2">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Card key={`resource-loading-${index}`}>
+              <CardHeader className="space-y-3">
+                <ShimmerSkeleton className="h-5 w-2/3" />
+                <ShimmerSkeleton className="h-4 w-full" />
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <ShimmerSkeleton className="h-4 w-1/2" />
+                <ShimmerSkeleton className="h-4 w-full" />
+                <ShimmerSkeleton className="h-9 w-full rounded-lg" />
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     );
@@ -804,8 +817,20 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
           
           {/* Submissions List */}
           {submissionsLoading ? (
-            <div className="text-center py-8 text-gray-500">
-              Loading submissions...
+            <div className="space-y-4 py-2">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <Card key={`resource-submissions-loading-${index}`}>
+                  <CardHeader className="space-y-3">
+                    <ShimmerSkeleton className="h-5 w-1/2" />
+                    <ShimmerSkeleton className="h-4 w-1/3" />
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <ShimmerSkeleton className="h-4 w-full" />
+                    <ShimmerSkeleton className="h-4 w-5/6" />
+                    <ShimmerSkeleton className="h-20 w-full rounded-lg" />
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           ) : submissions.length === 0 ? (
             <div className="text-center py-12">

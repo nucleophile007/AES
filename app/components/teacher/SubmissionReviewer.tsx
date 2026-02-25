@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
 import { 
   FileText, 
   User, 
@@ -225,7 +226,23 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
   ).map(id => submissions.find(s => s.assignment.id === id)?.assignment).filter(Boolean);
 
   if (loading) {
-    return <div className="flex justify-center p-8">Loading submissions...</div>;
+    return (
+      <div className="space-y-4 p-2">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <Card key={`submission-reviewer-loading-${index}`}>
+            <CardHeader className="space-y-3">
+              <ShimmerSkeleton className="h-5 w-1/3" />
+              <ShimmerSkeleton className="h-4 w-2/3" />
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <ShimmerSkeleton className="h-4 w-full" />
+              <ShimmerSkeleton className="h-4 w-5/6" />
+              <ShimmerSkeleton className="h-24 w-full rounded-lg" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
   }
 
   return (

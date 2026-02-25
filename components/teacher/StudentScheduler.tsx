@@ -15,6 +15,7 @@ import {
   DialogClose
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
 import {
   Select,
   SelectContent,
@@ -448,10 +449,20 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
 
   if (loading && !events.length && !students.length) {
     return (
-      <div className="flex items-center justify-center p-10">
-        <div className="flex flex-col items-center">
-          <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
-          <p className="mt-4">Loading scheduler...</p>
+      <div className="space-y-4 py-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="space-y-2">
+            <ShimmerSkeleton className="h-7 w-64" />
+            <ShimmerSkeleton className="h-4 w-72" />
+          </div>
+          <div className="flex gap-2">
+            <ShimmerSkeleton className="h-9 w-52 rounded-lg" />
+            <ShimmerSkeleton className="h-9 w-28 rounded-lg" />
+          </div>
+        </div>
+        <div className="rounded-lg border bg-white p-4 space-y-3">
+          <ShimmerSkeleton className="h-6 w-40" />
+          <ShimmerSkeleton className="h-[520px] w-full rounded-lg" />
         </div>
       </div>
     );

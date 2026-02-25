@@ -65,6 +65,7 @@ import { cn } from "@/lib/utils";
 import ResourceLibrary from "@/components/student/ResourceLibrary";
 import MentorMessages from "../../components/student/MentorMessages";
 import ProgressReportList from "@/components/common/ProgressReportList";
+import DashboardLoadingSkeleton, { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
 
 // Mock data - replace with actual API calls
 const mockUpcomingEvents = [
@@ -214,14 +215,7 @@ export default function StudentDashboard() {
 
   // Early return for authentication loading
   if (authLoading || !authUser) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="flex items-center gap-2">
-          <RefreshCw className="h-6 w-6 animate-spin" />
-          <span>Loading...</span>
-        </div>
-      </div>
-    );
+    return <DashboardLoadingSkeleton role="student" />;
   }
 
   const getStatusBadge = (status: string) => {
@@ -472,18 +466,7 @@ export default function StudentDashboard() {
   };
 
   if (loading) {
-    return (
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-gray-50">
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading student dashboard...</p>
-            </div>
-          </div>
-        </div>
-      </SidebarProvider>
-    );
+    return <DashboardLoadingSkeleton role="student" />;
   }
 
   if (error) {
@@ -681,10 +664,16 @@ export default function StudentDashboard() {
 
           <div className="flex-1 overflow-auto p-6">
             {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="flex items-center gap-2">
-                  <RefreshCw className="h-6 w-6 animate-spin" />
-                  <span>Loading dashboard...</span>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <div key={`dashboard-tab-loading-${index}`} className="rounded-xl border bg-white p-4 space-y-3">
+                      <ShimmerSkeleton className="h-5 w-2/3" />
+                      <ShimmerSkeleton className="h-4 w-full" />
+                      <ShimmerSkeleton className="h-4 w-5/6" />
+                      <ShimmerSkeleton className="h-32 w-full rounded-lg" />
+                    </div>
+                  ))}
                 </div>
               </div>
             ) : error ? (
@@ -1671,9 +1660,14 @@ export default function StudentDashboard() {
                         </CardHeader>
                         <CardContent>
                           {loading ? (
-                            <div className="text-center py-8 text-gray-500">
-                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-2"></div>
-                              Loading progress reports...
+                            <div className="space-y-3 py-2">
+                              {Array.from({ length: 3 }).map((_, index) => (
+                                <div key={`progress-loading-${index}`} className="rounded-lg border bg-white p-4 space-y-2">
+                                  <ShimmerSkeleton className="h-4 w-1/2" />
+                                  <ShimmerSkeleton className="h-3 w-full" />
+                                  <ShimmerSkeleton className="h-3 w-5/6" />
+                                </div>
+                              ))}
                             </div>
                           ) : (
                             <>

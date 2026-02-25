@@ -38,6 +38,7 @@ import SubmissionReviewer from "@/components/teacher/SubmissionReviewer";
 import CustomChatDialog from "../../components/CustomChatDialog";
 import StudentProgressModal from "../../components/teacher/RealStudentProgressModal";
 import ProgressReportManager from "@/components/teacher/ProgressReportManager";
+import DashboardLoadingSkeleton, { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
 import {
   User,
   BookOpen,
@@ -643,14 +644,7 @@ export default function TeacherDashboard() {
 
   // Early return for authentication loading (AFTER all hooks)
   if (authLoading || !authUser) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="flex items-center gap-2">
-          <RefreshCw className="h-6 w-6 animate-spin" />
-          <span>Loading...</span>
-        </div>
-      </div>
-    );
+    return <DashboardLoadingSkeleton role="teacher" />;
   }
 
   // Filter students by selected program and search
@@ -668,18 +662,7 @@ export default function TeacherDashboard() {
   );
 
   if (loading) {
-    return (
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <RefreshCw className="h-8 w-8 animate-spin text-brand-blue mx-auto mb-4" />
-              <p className="text-gray-600">Loading teacher dashboard...</p>
-            </div>
-          </div>
-        </div>
-      </SidebarProvider>
-    );
+    return <DashboardLoadingSkeleton role="teacher" />;
   }
 
   if (error) {
@@ -845,7 +828,27 @@ export default function TeacherDashboard() {
                 className="space-y-6"
               >
                 {/* Parent Conversations Section */}
-                {parentConversations.length > 0 && (
+                {loadingParentConversations ? (
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-brand-blue">
+                      <Users className="h-5 w-5" />
+                      Parent Conversations
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                      {Array.from({ length: 3 }).map((_, index) => (
+                        <Card key={`parent-conversation-loading-${index}`}>
+                          <CardContent className="p-4 space-y-3">
+                            <ShimmerSkeleton className="h-4 w-2/3" />
+                            <ShimmerSkeleton className="h-3 w-full" />
+                            <ShimmerSkeleton className="h-3 w-1/2" />
+                            <ShimmerSkeleton className="h-8 w-20" />
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                    <div className="border-t border-gray-200 my-6"></div>
+                  </div>
+                ) : parentConversations.length > 0 && (
                   <div className="mb-6">
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-brand-blue">
                       <Users className="h-5 w-5" />
@@ -1378,9 +1381,20 @@ export default function TeacherDashboard() {
                 </div>
 
                 {submissionsLoading ? (
-                  <div className="text-center py-12">
-                    <RefreshCw className="h-8 w-8 animate-spin mx-auto text-gray-400" />
-                    <p className="mt-4 text-gray-600">Loading submissions...</p>
+                  <div className="grid gap-6 py-2">
+                    {Array.from({ length: 3 }).map((_, index) => (
+                      <Card key={`teacher-submissions-loading-${index}`}>
+                        <CardHeader className="space-y-3">
+                          <ShimmerSkeleton className="h-5 w-1/2" />
+                          <ShimmerSkeleton className="h-4 w-1/3" />
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <ShimmerSkeleton className="h-4 w-full" />
+                          <ShimmerSkeleton className="h-4 w-5/6" />
+                          <ShimmerSkeleton className="h-24 w-full rounded-lg" />
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
                 ) : studentSubmissions.length === 0 ? (
                   <div className="text-center py-12">
