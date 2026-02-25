@@ -86,6 +86,8 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
   }, [teacherEmail]);
 
   const fetchData = async () => {
+    if (!teacherEmail) return;
+
     try {
       setLoading(true);
       
@@ -97,10 +99,17 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
       }
 
       // Fetch students
-      const studentsRes = await fetch('/api/teacher/students');
+      const studentsRes = await fetch(`/api/teacher/students?teacherEmail=${encodeURIComponent(teacherEmail)}`);
       if (studentsRes.ok) {
         const studentsData = await studentsRes.json();
-        setStudents(studentsData.students || []);
+        const normalizedStudents: Student[] = (studentsData.students || []).map((s: any) => ({
+          id: s.id,
+          name: s.name,
+          email: s.email,
+          grade: s.grade,
+          program: (s.mainProgram || s.program || "").trim(),
+        }));
+        setStudents(normalizedStudents);
       }
     } catch (error) {
       console.error('Error fetching data:', error);

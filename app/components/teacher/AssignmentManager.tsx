@@ -112,9 +112,7 @@ const AssignmentForm = ({
   const selectedGroup = formData.groupId
     ? studentGroups.find((group) => group.id.toString() === formData.groupId)
     : null;
-  const matchingGroupMembers = selectedGroup
-    ? selectedGroup.members.filter((member) => member.program === formData.program)
-    : [];
+  const groupMembers = selectedGroup ? selectedGroup.members : [];
 
   return (
     <div className="space-y-4">
@@ -204,8 +202,8 @@ const AssignmentForm = ({
             ))}
           </SelectContent>
         </Select>
-        {formData.groupId && matchingGroupMembers.length === 0 && (
-          <p className="text-sm text-orange-600 mt-1">No group members match the selected program</p>
+        {formData.groupId && groupMembers.length === 0 && (
+          <p className="text-sm text-orange-600 mt-1">Selected group has no students.</p>
         )}
       </div>
 
@@ -302,13 +300,31 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
       try {
         const response = await fetch(`/api/teacher/students?teacherEmail=${encodeURIComponent(teacherEmail)}`);
         const data = await response.json();
-        
+
         if (response.ok && data.students) {
-          setStudents(data.students);
-          
-          // Get unique programs from students
-          const programs = [...new Set(data.students.map((student: Student) => student.program))];
-          setAvailablePrograms(programs as string[]);
+          // Normalize students to use their main program for assignments
+          const normalizedStudents: Student[] = data.students.map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            email: s.email,
+            grade: s.grade,
+            // Prefer mainProgram (from Student model) and fall back to program if needed
+            program: (s.mainProgram || s.program || "").trim()
+          }));
+
+          setStudents(normalizedStudents);
+
+          // Get unique, normalized programs from students (case-insensitive, trimmed)
+          const programs = Array.from(
+            new Map(
+              normalizedStudents
+                .map((student) => student.program)
+                .filter((program) => Boolean(program))
+                .map((program: string) => [program.toLowerCase(), program])
+            ).values()
+          );
+
+          setAvailablePrograms(programs);
         }
       } catch (error) {
         console.error('Error fetching students:', error);
@@ -388,14 +404,16 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
     const selectedGroup = formData.groupId
       ? studentGroups.find((group) => group.id.toString() === formData.groupId)
       : null;
+    // When a group is selected, send the assignment to ALL members of the group,
+    // not just those filtered by program.
     const groupStudentIds = selectedGroup
-      ? selectedGroup.members.filter((member) => member.program === formData.program).map((member) => member.id)
+      ? selectedGroup.members.map((member) => member.id)
       : [];
 
     if (formData.groupId && groupStudentIds.length === 0) {
       toast({
         title: "No eligible students",
-        description: "Selected group has no students in this program.",
+        description: "Selected group has no students.",
         className: "border-yellow-500 bg-yellow-50 text-yellow-900",
       });
       return;
