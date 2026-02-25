@@ -149,28 +149,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const invalidProgram = students.find((student) => student.program !== program);
-    if (invalidProgram) {
-      return NextResponse.json(
-        { success: false, error: 'Student is not enrolled in the selected program' },
-        { status: 400 }
-      );
-    }
-
-    const teacherLinks = await prisma.teacherStudent.findMany({
-      where: {
-        teacherId: teacher.id,
-        studentId: { in: targetStudentIds }
-      },
-      select: { studentId: true }
-    });
-
-    if (teacherLinks.length !== targetStudentIds.length) {
-      return NextResponse.json(
-        { success: false, error: 'Some selected students are not mapped to this teacher' },
-        { status: 400 }
-      );
-    }
+    // We intentionally do NOT enforce that all selected students share the same
+    // program as the assignment here, to allow assigning to full groups even
+    // if they mix programs. Validation of visibility to students happens
+    // separately when fetching assignments for a given student.
 
     const createdAssignments = [];
     for (const targetId of targetStudentIds) {

@@ -43,14 +43,22 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get assignments for the student's programs
-    const studentPrograms = student.teacherLinks.map(tl => tl.program);
+    // Get assignments for the student's teachers/programs
+    const teacherIds = student.teacherLinks.map(tl => tl.teacherId);
+    const normalizedPrograms = Array.from(
+      new Set(
+        student.teacherLinks
+          .map(tl => (tl.program || '').trim().toLowerCase())
+          .filter(Boolean)
+      )
+    );
+
     const assignments = await prisma.assignment.findMany({
       where: {
-        program: {
-          in: studentPrograms
-        },
-        isActive: true
+        isActive: true,
+        teacherId: {
+          in: teacherIds
+        }
       },
       orderBy: {
         dueDate: 'asc'
@@ -58,7 +66,11 @@ export async function GET(request: NextRequest) {
     });
 
     // Transform assignments to include submission status
-    const assignmentsWithStatus = assignments.map(assignment => {
+    const assignmentsWithStatus = assignments
+      .filter(assignment =>
+        normalizedPrograms.includes(assignment.program.trim().toLowerCase())
+      )
+      .map(assignment => {
       const submission = student.submissions.find(s => s.assignmentId === assignment.id);
       return {
         id: assignment.id,
