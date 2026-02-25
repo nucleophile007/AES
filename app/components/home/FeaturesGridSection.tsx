@@ -24,50 +24,53 @@ const fetcher = (url: string) =>
 export default function FeaturesGridSection() {
   /* ---------- Features (24/7 removed) ---------- */
 
-  const allFeatures = [
-    {
-      title: "Personalized Learning",
-      description:
-        "Customized educational approaches tailored to each student's unique learning style and pace.",
-      icon: <IconTerminal2 size={28} stroke={1.5} />,
-    },
-    {
-      title: "Expert Mentoring",
-      description:
-        "One-on-one guidance from experienced educators with proven track records.",
-      icon: <IconEaseInOut size={28} stroke={1.5} />,
-    },
-    {
-      title: "Affordable Excellence",
-      description:
-        "Premium educational services at competitive rates with flexible payment options.",
-      icon: <IconCurrencyDollar size={28} stroke={1.5} />,
-    },
-    {
-      title: "Consistent Progress",
-      description:
-        "Regular assessments and progress tracking to ensure continuous improvement.",
-      icon: <IconCloud size={28} stroke={1.5} />,
-    },
-    {
-      title: "Flexible Scheduling",
-      description:
-        "Online and in-person sessions that adapt to your busy family schedule.",
-      icon: <IconRouteAltLeft size={28} stroke={1.5} />,
-    },
-    {
-      title: "Success Guarantee",
-      description:
-        "We're committed to your child's academic success with measurable results.",
-      icon: <IconAdjustmentsBolt size={28} stroke={1.5} />,
-    },
-    {
-      title: "College Preparation",
-      description:
-        "Comprehensive preparation for standardized tests and college applications.",
-      icon: <IconHeart size={28} stroke={1.5} />,
-    },
-  ];
+  const allFeatures = React.useMemo(
+    () => [
+      {
+        title: "Personalized Learning",
+        description:
+          "Customized educational approaches tailored to each student's unique learning style and pace.",
+        icon: <IconTerminal2 size={28} stroke={1.5} />,
+      },
+      {
+        title: "Expert Mentoring",
+        description:
+          "One-on-one guidance from experienced educators with proven track records.",
+        icon: <IconEaseInOut size={28} stroke={1.5} />,
+      },
+      {
+        title: "Affordable Excellence",
+        description:
+          "Premium educational services at competitive rates with flexible payment options.",
+        icon: <IconCurrencyDollar size={28} stroke={1.5} />,
+      },
+      {
+        title: "Consistent Progress",
+        description:
+          "Regular assessments and progress tracking to ensure continuous improvement.",
+        icon: <IconCloud size={28} stroke={1.5} />,
+      },
+      {
+        title: "Flexible Scheduling",
+        description:
+          "Online and in-person sessions that adapt to your busy family schedule.",
+        icon: <IconRouteAltLeft size={28} stroke={1.5} />,
+      },
+      {
+        title: "Success Guarantee",
+        description:
+          "We're committed to your child's academic success with measurable results.",
+        icon: <IconAdjustmentsBolt size={28} stroke={1.5} />,
+      },
+      {
+        title: "College Preparation",
+        description:
+          "Comprehensive preparation for standardized tests and college applications.",
+        icon: <IconHeart size={28} stroke={1.5} />,
+      },
+    ],
+    []
+  );
 
   /* ---------- Random 4 Features (Hydration Safe) ---------- */
 
@@ -81,7 +84,7 @@ export default function FeaturesGridSection() {
       .slice(0, 4);
 
     setFeatures(shuffled);
-  }, []);
+  }, [allFeatures]);
 
   /* ---------- Fetch Before/After ---------- */
 
