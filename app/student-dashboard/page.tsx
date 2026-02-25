@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { usePathname, useRouter } from "next/navigation";
 import { useRequireAuth } from "../../contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -31,6 +32,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -146,12 +157,21 @@ export default function StudentDashboard() {
   const [submissionText, setSubmissionText] = useState("");
   const [submissionFile, setSubmissionFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submissionInFlightRef = useRef(false);
+  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
+  const [isResubmitDialogOpen, setIsResubmitDialogOpen] = useState(false);
+  const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
+  const [pendingDiscardMode, setPendingDiscardMode] = useState<"submit" | "resubmit" | null>(null);
   const [isResubmitting, setIsResubmitting] = useState(false);
   const [resubmissionId, setResubmissionId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [messageUnreadCount, setMessageUnreadCount] = useState(0);
   const [error, setError] = useState("");
+  const [isUrlStateReady, setIsUrlStateReady] = useState(false);
+  const [authTimedOut, setAuthTimedOut] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
+  const pathname = usePathname();
 
   // Get student email from authenticated user
   const studentEmail = authUser?.email || "";
@@ -159,12 +179,17 @@ export default function StudentDashboard() {
   // Fetch data function
   const fetchData = async () => {
     if (!studentEmail) return;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
       setLoading(true);
+      setError("");
 
       // Fetch student dashboard data
-      const response = await fetch(`/api/student/dashboard?studentEmail=${encodeURIComponent(studentEmail)}`);
+      const response = await fetch(`/api/student/dashboard?studentEmail=${encodeURIComponent(studentEmail)}`, {
+        signal: controller.signal,
+      });
       const data = await response.json();
 
       if (!response.ok) {
@@ -191,7 +216,12 @@ export default function StudentDashboard() {
         // Don't fail the whole dashboard if progress reports fail
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load dashboard data';
+      const message =
+        err instanceof DOMException && err.name === "AbortError"
+          ? "Dashboard load timed out. Please retry."
+          : err instanceof Error
+            ? err.message
+            : 'Failed to load dashboard data';
       setError(message);
       console.error("Error fetching data:", err);
       toast({
@@ -200,6 +230,7 @@ export default function StudentDashboard() {
         description: message,
       });
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   };
@@ -213,9 +244,185 @@ export default function StudentDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, authUser, studentEmail]);
 
+  useEffect(() => {
+    if (!authLoading) {
+      setAuthTimedOut(false);
+      return;
+    }
+    const timeoutId = setTimeout(() => {
+      setAuthTimedOut(true);
+    }, 15000);
+    return () => clearTimeout(timeoutId);
+  }, [authLoading]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (authUser && !studentEmail) {
+      setLoading(false);
+      setError("Unable to load your account email. Please log out and sign in again.");
+    }
+  }, [authLoading, authUser, studentEmail]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    const allowedTabs = new Set(["overview", "assignments", "submissions", "grades", "schedule", "progress", "resources", "messages"]);
+    if (tab && allowedTabs.has(tab)) {
+      setActiveTab(tab);
+    }
+    setIsUrlStateReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isUrlStateReady) return;
+    const params = new URLSearchParams(window.location.search);
+    params.set("tab", activeTab);
+    const query = params.toString();
+    const nextUrl = query ? `${pathname}?${query}` : pathname;
+    const currentUrl = `${pathname}${window.location.search}`;
+    if (nextUrl === currentUrl) return;
+    router.replace(nextUrl, { scroll: false });
+  }, [activeTab, isUrlStateReady, pathname, router]);
+
+  const hasUnsavedAssignmentDraft = Boolean(submissionText.trim() || submissionFile);
+
+  const getAssignmentDraftStorageKey = (mode: "submit" | "resubmit", assignmentId: number | null) =>
+    `aes:student:assignment-submission:draft:${studentEmail}:${mode}:${assignmentId ?? "none"}`;
+
+  const readAssignmentDraft = (mode: "submit" | "resubmit", assignmentId: number | null) => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = localStorage.getItem(getAssignmentDraftStorageKey(mode, assignmentId));
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as { text?: string };
+      return parsed.text || "";
+    } catch {
+      return null;
+    }
+  };
+
+  const clearAssignmentDraftStorage = (mode: "submit" | "resubmit", assignmentId: number | null) => {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem(getAssignmentDraftStorageKey(mode, assignmentId));
+  };
+
+  const resetAssignmentDraft = () => {
+    setSelectedAssignment(null);
+    setSubmissionText("");
+    setSubmissionFile(null);
+    setIsResubmitting(false);
+    setResubmissionId(null);
+  };
+
+  const openAssignmentDialog = (
+    assignment: Assignment,
+    mode: "submit" | "resubmit",
+    options?: { initialText?: string; submissionId?: number | null }
+  ) => {
+    const draftText = readAssignmentDraft(mode, assignment.id);
+    setSelectedAssignment(assignment);
+    setSubmissionText(draftText ?? options?.initialText ?? "");
+    setSubmissionFile(null);
+    setIsResubmitting(mode === "resubmit");
+    setResubmissionId(options?.submissionId ?? null);
+    if (mode === "submit") {
+      setIsSubmitDialogOpen(true);
+      setIsResubmitDialogOpen(false);
+    } else {
+      setIsResubmitDialogOpen(true);
+      setIsSubmitDialogOpen(false);
+    }
+  };
+
+  const discardAssignmentDraftChanges = () => {
+    const modeToDiscard = pendingDiscardMode || (isResubmitting ? "resubmit" : "submit");
+    clearAssignmentDraftStorage(modeToDiscard, selectedAssignment?.id ?? null);
+    setIsDiscardDialogOpen(false);
+    setPendingDiscardMode(null);
+    setIsSubmitDialogOpen(false);
+    setIsResubmitDialogOpen(false);
+    resetAssignmentDraft();
+  };
+
+  const handleAssignmentDialogOpenChange = (nextOpen: boolean, mode: "submit" | "resubmit") => {
+    if (!nextOpen && hasUnsavedAssignmentDraft && !isSubmitting) {
+      setPendingDiscardMode(mode);
+      setIsDiscardDialogOpen(true);
+      return;
+    }
+
+    if (!nextOpen) {
+      clearAssignmentDraftStorage(mode, selectedAssignment?.id ?? null);
+      setIsSubmitDialogOpen(false);
+      setIsResubmitDialogOpen(false);
+      resetAssignmentDraft();
+      return;
+    }
+
+    if (mode === "submit") {
+      setIsSubmitDialogOpen(true);
+      setIsResubmitDialogOpen(false);
+    } else {
+      setIsResubmitDialogOpen(true);
+      setIsSubmitDialogOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!((isSubmitDialogOpen || isResubmitDialogOpen) && hasUnsavedAssignmentDraft && selectedAssignment)) return;
+    if (typeof window === "undefined") return;
+    const mode: "submit" | "resubmit" = isResubmitting ? "resubmit" : "submit";
+    const storageKey = `aes:student:assignment-submission:draft:${studentEmail}:${mode}:${selectedAssignment.id}`;
+    try {
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify({ text: submissionText })
+      );
+    } catch {
+      // Ignore storage errors.
+    }
+  }, [
+    isSubmitDialogOpen,
+    isResubmitDialogOpen,
+    hasUnsavedAssignmentDraft,
+    selectedAssignment,
+    isResubmitting,
+    submissionText,
+    studentEmail,
+  ]);
+
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!((isSubmitDialogOpen || isResubmitDialogOpen) && hasUnsavedAssignmentDraft)) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [isSubmitDialogOpen, isResubmitDialogOpen, hasUnsavedAssignmentDraft]);
+
   // Early return for authentication loading
-  if (authLoading || !authUser) {
-    return <DashboardLoadingSkeleton role="student" />;
+  if (authLoading && !authTimedOut) {
+    return <DashboardLoadingSkeleton role="student" tab={activeTab} />;
+  }
+
+  if (authLoading && authTimedOut) {
+    return (
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full bg-gray-50">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-red-600 text-xl mb-4">Authentication is taking too long.</div>
+              <Button onClick={() => window.location.reload()}>Try Again</Button>
+            </div>
+          </div>
+        </div>
+      </SidebarProvider>
+    );
+  }
+
+  if (!authUser) {
+    return null;
   }
 
   const getStatusBadge = (status: string) => {
@@ -238,8 +445,12 @@ export default function StudentDashboard() {
   };
 
   const handleSubmission = async () => {
+    if (submissionInFlightRef.current || isSubmitting) return;
     if (!selectedAssignment || !student) return;
+    const currentMode: "submit" | "resubmit" = isResubmitting ? "resubmit" : "submit";
+    const currentAssignmentId = selectedAssignment.id;
 
+    submissionInFlightRef.current = true;
     setIsSubmitting(true);
 
     try {
@@ -328,12 +539,11 @@ export default function StudentDashboard() {
           setSubmissions([submissionData.submission, ...submissions]);
         }
 
-        // Reset form
-        setSelectedAssignment(null);
-        setSubmissionText("");
-        setSubmissionFile(null);
-        setIsResubmitting(false);
-        setResubmissionId(null);
+        // Reset form and close dialogs
+        clearAssignmentDraftStorage(currentMode, currentAssignmentId);
+        setIsSubmitDialogOpen(false);
+        setIsResubmitDialogOpen(false);
+        resetAssignmentDraft();
 
         toast({
           title: isResubmitting ? "Submission updated" : "Assignment submitted",
@@ -356,22 +566,8 @@ export default function StudentDashboard() {
       });
     } finally {
       setIsSubmitting(false);
+      submissionInFlightRef.current = false;
     }
-  };
-
-  const handleResubmission = async (submission: Submission) => {
-    if (!student) return;
-
-    // Find the corresponding assignment
-    const assignment = assignments.find(a => a.id === submission.assignmentId);
-    if (!assignment) return;
-
-    // Set up for resubmission
-    setSelectedAssignment(assignment);
-    setSubmissionText(submission.content || "");
-    setSubmissionFile(null); // Reset file, user will need to reupload
-    setIsResubmitting(true);
-    setResubmissionId(submission.id);
   };
 
   const sidebarItems = [
@@ -466,7 +662,7 @@ export default function StudentDashboard() {
   };
 
   if (loading) {
-    return <DashboardLoadingSkeleton role="student" />;
+    return <DashboardLoadingSkeleton role="student" tab={activeTab} />;
   }
 
   if (error) {
@@ -981,13 +1177,14 @@ export default function StudentDashboard() {
                                   <div className="flex flex-col gap-2">
                                     {/* Submit button for new assignments */}
                                     {!existingSubmission && !deadlinePassed && (
-                                      <Dialog>
+                                      <Dialog
+                                        open={isSubmitDialogOpen && selectedAssignment?.id === assignment.id && !isResubmitting}
+                                        onOpenChange={(nextOpen) => handleAssignmentDialogOpenChange(nextOpen, "submit")}
+                                      >
                                         <DialogTrigger asChild>
                                           <Button
                                             onClick={() => {
-                                              setSelectedAssignment(assignment);
-                                              setIsResubmitting(false);
-                                              setResubmissionId(null);
+                                              openAssignmentDialog(assignment, "submit");
                                             }}
                                             className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold shadow-lg hover:scale-105 transition-all"
                                           >
@@ -1047,16 +1244,18 @@ export default function StudentDashboard() {
 
                                     {/* Resubmit button for submitted assignments */}
                                     {canResubmitAssignment && (
-                                      <Dialog>
+                                      <Dialog
+                                        open={isResubmitDialogOpen && selectedAssignment?.id === assignment.id && isResubmitting}
+                                        onOpenChange={(nextOpen) => handleAssignmentDialogOpenChange(nextOpen, "resubmit")}
+                                      >
                                         <DialogTrigger asChild>
                                           <Button
                                             variant="outline"
                                             onClick={() => {
-                                              setSelectedAssignment(assignment);
-                                              setSubmissionText(existingSubmission.content || "");
-                                              setSubmissionFile(null);
-                                              setIsResubmitting(true);
-                                              setResubmissionId(existingSubmission.id);
+                                              openAssignmentDialog(assignment, "resubmit", {
+                                                initialText: existingSubmission.content || "",
+                                                submissionId: existingSubmission.id,
+                                              });
                                             }}
                                             className="border-2 border-orange-400 bg-gradient-to-r from-orange-50 to-yellow-50 hover:from-orange-100 hover:to-yellow-100 text-orange-700 font-bold hover:scale-105 transition-all"
                                           >
@@ -1711,6 +1910,31 @@ export default function StudentDashboard() {
           </div>
         </SidebarInset>
       </div>
+
+      <AlertDialog
+        open={isDiscardDialogOpen}
+        onOpenChange={(nextOpen) => {
+          setIsDiscardDialogOpen(nextOpen);
+          if (!nextOpen) {
+            setPendingDiscardMode(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard submission draft?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved submission changes. Discarding will remove this draft.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Editing</AlertDialogCancel>
+            <AlertDialogAction onClick={discardAssignmentDraftChanges}>
+              Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SidebarProvider>
   );
 }

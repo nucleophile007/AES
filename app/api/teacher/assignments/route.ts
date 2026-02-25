@@ -109,6 +109,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const parsedDueDate = new Date(dueDate);
+    if (Number.isNaN(parsedDueDate.getTime())) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid due date' },
+        { status: 400 }
+      );
+    }
+
+    const parsedTotalPoints = Number.parseInt(String(totalPoints), 10);
+    const normalizedTotalPoints = Number.isNaN(parsedTotalPoints) ? 100 : parsedTotalPoints;
+    const normalizedInstructions = instructions?.trim() || null;
+
     const normalizedStudentIds = Array.isArray(studentIds)
       ? Array.from(new Set(studentIds.map((id: any) => Number(id)).filter((id: number) => !Number.isNaN(id))))
       : [];
@@ -149,6 +161,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Safety net for accidental double-submit:
+    // if an identical assignment was created in the last 2 minutes for the same
+    // teacher + target students, return that instead of creating duplicates.
+    const dedupeWindowStart = new Date(Date.now() - 2 * 60 * 1000);
+    const recentlyCreatedMatches = await prisma.assignment.findMany({
+      where: {
+        teacherId: teacher.id,
+        targetStudentId: { in: targetStudentIds },
+        title,
+        description,
+        instructions: normalizedInstructions,
+        program,
+        subject,
+        dueDate: parsedDueDate,
+        totalPoints: normalizedTotalPoints,
+        allowLateSubmission,
+        isActive: true,
+        createdAt: { gte: dedupeWindowStart },
+      }
+    });
+
+    if (recentlyCreatedMatches.length > 0) {
+      const matchedStudentIds = new Set(
+        recentlyCreatedMatches.map((assignment) => assignment.targetStudentId).filter((id): id is number => id !== null)
+      );
+      const allTargetsAlreadyCreated = targetStudentIds.every((id) => matchedStudentIds.has(id));
+
+      if (allTargetsAlreadyCreated) {
+        return NextResponse.json({
+          success: true,
+          assignments: recentlyCreatedMatches,
+          deduplicated: true,
+          message: 'Assignment already created. Duplicate submit ignored.'
+        });
+      }
+    }
+
     // We intentionally do NOT enforce that all selected students share the same
     // program as the assignment here, to allow assigning to full groups even
     // if they mix programs. Validation of visibility to students happens
@@ -160,11 +209,11 @@ export async function POST(request: NextRequest) {
         data: {
           title,
           description,
-          instructions,
+          instructions: normalizedInstructions,
           program,
           subject,
-          dueDate: new Date(dueDate),
-          totalPoints: parseInt(totalPoints),
+          dueDate: parsedDueDate,
+          totalPoints: normalizedTotalPoints,
           allowLateSubmission,
           teacherId: teacher.id,
           targetStudentId: targetId

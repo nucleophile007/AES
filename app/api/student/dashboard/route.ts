@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '../../../../generated/prisma/index.js';
-
-const prisma = new PrismaClient();
+import { prisma } from '../../../../lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -141,10 +139,15 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching student data:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error:
+          process.env.NODE_ENV === 'development'
+            ? error instanceof Error
+              ? error.message
+              : 'Internal server error'
+            : 'Internal server error',
+      },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

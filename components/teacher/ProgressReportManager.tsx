@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,17 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription as AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ToastAction } from "@/components/ui/toast";
 import { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Eye, Trash2, Send, FileText, Calendar, User, BarChart3, CheckCircle, Clock, XCircle } from "lucide-react";
@@ -60,9 +71,21 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
   const [reports, setReports] = useState<ProgressReport[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [creatingDraft, setCreatingDraft] = useState(false);
+  const [updatingDraft, setUpdatingDraft] = useState(false);
+  const [reportActionById, setReportActionById] = useState<Record<number, "publishing" | "unpublishing" | "deleting">>({});
+  const [optimisticallyRemovedReportIds, setOptimisticallyRemovedReportIds] = useState<Set<number>>(new Set());
+  const createInFlightRef = useRef(false);
+  const updateInFlightRef = useRef(false);
+  const rowActionInFlightRef = useRef<Set<number>>(new Set());
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
+  const [pendingDiscardTarget, setPendingDiscardTarget] = useState<"create" | "edit" | null>(null);
   const [selectedReport, setSelectedReport] = useState<ProgressReport | null>(null);
+  const [initialEditSnapshot, setInitialEditSnapshot] = useState<any | null>(null);
+  const pendingDeleteTimeoutsRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
   const [formData, setFormData] = useState({
     studentId: "",
     reportPeriod: "",
@@ -82,6 +105,50 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
     classParticipation: "",
   });
 
+  const EMPTY_PROGRESS_FORM = {
+    studentId: "",
+    reportPeriod: "",
+    subject: "",
+    overallProgress: "",
+    progressRating: "",
+    attendanceRate: "",
+    homeworkCompletion: "",
+    milestonesAchieved: "",
+    publications: "",
+    skillsImproved: "",
+    strengthsAreas: "",
+    improvementAreas: "",
+    nextSteps: "",
+    recommendations: "",
+    parentNotes: "",
+    classParticipation: "",
+  };
+
+  const getReportDraftStorageKey = (reportId: number | null) =>
+    reportId
+      ? `aes:teacher:progress:draft:${teacherEmail}:edit:${reportId}`
+      : `aes:teacher:progress:draft:${teacherEmail}:create`;
+
+  const readReportDraft = (reportId: number | null) => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = localStorage.getItem(getReportDraftStorageKey(reportId));
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return {
+        ...EMPTY_PROGRESS_FORM,
+        ...parsed,
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  const clearReportDraft = (reportId: number | null) => {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem(getReportDraftStorageKey(reportId));
+  };
+
   useEffect(() => {
     fetchData();
   }, [teacherEmail]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -91,6 +158,7 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
 
     try {
       setLoading(true);
+      setLoadError(null);
       
       // Fetch progress reports
       const reportsRes = await fetch('/api/teacher/progress-report');
@@ -114,6 +182,7 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
       }
     } catch (error) {
       console.error('Error fetching data:', error);
+      setLoadError(error instanceof Error ? error.message : "Failed to load progress reports");
       toast({
         title: "Error",
         description: "Failed to load progress reports",
@@ -125,27 +194,93 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
   };
 
   const resetForm = () => {
-    setFormData({
-      studentId: "",
-      reportPeriod: "",
-      subject: "",
-      overallProgress: "",
-      progressRating: "",
-      attendanceRate: "",
-      homeworkCompletion: "",
-      milestonesAchieved: "",
-      publications: "",
-      skillsImproved: "",
-      strengthsAreas: "",
-      improvementAreas: "",
-      nextSteps: "",
-      recommendations: "",
-      parentNotes: "",
-      classParticipation: "",
-    });
+    setFormData(EMPTY_PROGRESS_FORM);
+  };
+
+  const isCreateDirty = JSON.stringify(formData) !== JSON.stringify(EMPTY_PROGRESS_FORM);
+  const isEditDirty = Boolean(
+    isEditDialogOpen &&
+    initialEditSnapshot &&
+    JSON.stringify(formData) !== JSON.stringify(initialEditSnapshot)
+  );
+
+  const handleCreateDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && isCreateDirty && !creatingDraft) {
+      setPendingDiscardTarget("create");
+      setIsDiscardDialogOpen(true);
+      return;
+    }
+    if (!nextOpen) {
+      clearReportDraft(null);
+      resetForm();
+    }
+    setIsCreateDialogOpen(nextOpen);
+  };
+
+  const handleEditDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && isEditDirty && !updatingDraft) {
+      setPendingDiscardTarget("edit");
+      setIsDiscardDialogOpen(true);
+      return;
+    }
+    if (!nextOpen) {
+      clearReportDraft(selectedReport?.id ?? null);
+      setSelectedReport(null);
+      setInitialEditSnapshot(null);
+      resetForm();
+    }
+    setIsEditDialogOpen(nextOpen);
+  };
+
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!(isCreateDialogOpen && isCreateDirty) && !isEditDirty) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [isCreateDialogOpen, isCreateDirty, isEditDirty]);
+
+  useEffect(() => {
+    const pendingDeleteTimeouts = pendingDeleteTimeoutsRef.current;
+    return () => {
+      pendingDeleteTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
+      pendingDeleteTimeouts.clear();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!(isCreateDialogOpen || isEditDialogOpen)) return;
+    if (typeof window === "undefined") return;
+    const storageKey = selectedReport?.id
+      ? `aes:teacher:progress:draft:${teacherEmail}:edit:${selectedReport.id}`
+      : `aes:teacher:progress:draft:${teacherEmail}:create`;
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(formData));
+    } catch {
+      // Ignore storage errors.
+    }
+  }, [formData, isCreateDialogOpen, isEditDialogOpen, selectedReport?.id, teacherEmail]);
+
+  const discardPendingChanges = () => {
+    if (pendingDiscardTarget === "create") {
+      clearReportDraft(null);
+      resetForm();
+      setIsCreateDialogOpen(false);
+    } else if (pendingDiscardTarget === "edit") {
+      clearReportDraft(selectedReport?.id ?? null);
+      setSelectedReport(null);
+      setInitialEditSnapshot(null);
+      resetForm();
+      setIsEditDialogOpen(false);
+    }
+    setPendingDiscardTarget(null);
+    setIsDiscardDialogOpen(false);
   };
 
   const handleCreateReport = async () => {
+    if (createInFlightRef.current || creatingDraft) return;
     if (!formData.studentId || !formData.overallProgress) {
       toast({
         title: "Validation Error",
@@ -156,6 +291,8 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
     }
 
     try {
+      createInFlightRef.current = true;
+      setCreatingDraft(true);
       const response = await fetch('/api/teacher/progress-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -173,6 +310,7 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
           title: "Success",
           description: "Progress report created successfully",
         });
+        clearReportDraft(null);
         setIsCreateDialogOpen(false);
         resetForm();
         fetchData();
@@ -186,13 +324,19 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
         description: error.message || "Failed to create progress report",
         variant: "destructive",
       });
+    } finally {
+      setCreatingDraft(false);
+      createInFlightRef.current = false;
     }
   };
 
   const handleEditReport = async () => {
+    if (updateInFlightRef.current || updatingDraft) return;
     if (!selectedReport) return;
 
     try {
+      updateInFlightRef.current = true;
+      setUpdatingDraft(true);
       const response = await fetch('/api/teacher/progress-report', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -210,8 +354,10 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
           title: "Success",
           description: "Progress report updated successfully",
         });
+        clearReportDraft(selectedReport.id);
         setIsEditDialogOpen(false);
         setSelectedReport(null);
+        setInitialEditSnapshot(null);
         resetForm();
         fetchData();
       } else {
@@ -224,11 +370,17 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
         description: error.message || "Failed to update progress report",
         variant: "destructive",
       });
+    } finally {
+      setUpdatingDraft(false);
+      updateInFlightRef.current = false;
     }
   };
 
   const handlePublishReport = async (reportId: number) => {
+    if (rowActionInFlightRef.current.has(reportId)) return;
     try {
+      rowActionInFlightRef.current.add(reportId);
+      setReportActionById((prev) => ({ ...prev, [reportId]: "publishing" }));
       const response = await fetch('/api/teacher/progress-report', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -253,11 +405,21 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
         description: "Failed to publish report",
         variant: "destructive",
       });
+    } finally {
+      rowActionInFlightRef.current.delete(reportId);
+      setReportActionById((prev) => {
+        const next = { ...prev };
+        delete next[reportId];
+        return next;
+      });
     }
   };
 
   const handleUnpublishReport = async (reportId: number) => {
+    if (rowActionInFlightRef.current.has(reportId)) return;
     try {
+      rowActionInFlightRef.current.add(reportId);
+      setReportActionById((prev) => ({ ...prev, [reportId]: "unpublishing" }));
       const response = await fetch('/api/teacher/progress-report', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -282,42 +444,106 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
         description: "Failed to unpublish report",
         variant: "destructive",
       });
+    } finally {
+      rowActionInFlightRef.current.delete(reportId);
+      setReportActionById((prev) => {
+        const next = { ...prev };
+        delete next[reportId];
+        return next;
+      });
     }
   };
 
   const handleDeleteReport = async (reportId: number) => {
-    if (!confirm('Are you sure you want to delete this progress report? This action cannot be undone.')) {
-      return;
-    }
+    if (rowActionInFlightRef.current.has(reportId)) return;
 
-    try {
-      const response = await fetch('/api/teacher/progress-report', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reportId }),
-      });
+    rowActionInFlightRef.current.add(reportId);
+    setReportActionById((prev) => ({ ...prev, [reportId]: "deleting" }));
+    setOptimisticallyRemovedReportIds((prev) => {
+      const next = new Set(prev);
+      next.add(reportId);
+      return next;
+    });
 
-      if (response.ok) {
-        toast({
-          title: "Success",
-          description: "Progress report deleted successfully",
+    const finalizeDelete = async () => {
+      try {
+        const response = await fetch('/api/teacher/progress-report', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reportId }),
         });
-        fetchData();
-      } else {
-        throw new Error('Failed to delete report');
+
+        if (response.ok) {
+          toast({
+            title: "Success",
+            description: "Progress report deleted successfully",
+          });
+          fetchData();
+        } else {
+          throw new Error('Failed to delete report');
+        }
+      } catch (error) {
+        setOptimisticallyRemovedReportIds((prev) => {
+          const next = new Set(prev);
+          next.delete(reportId);
+          return next;
+        });
+        toast({
+          title: "Error",
+          description: "Failed to delete report",
+          variant: "destructive",
+        });
+      } finally {
+        rowActionInFlightRef.current.delete(reportId);
+        setReportActionById((prev) => {
+          const next = { ...prev };
+          delete next[reportId];
+          return next;
+        });
+        pendingDeleteTimeoutsRef.current.delete(reportId);
       }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete report",
-        variant: "destructive",
-      });
-    }
+    };
+
+    const timeoutId = setTimeout(finalizeDelete, 5000);
+    pendingDeleteTimeoutsRef.current.set(reportId, timeoutId);
+
+    toast({
+      title: "Progress report scheduled for delete",
+      description: "Undo within 5 seconds to keep it.",
+      action: (
+        <ToastAction
+          altText="Undo delete"
+          onClick={() => {
+            const pendingTimeout = pendingDeleteTimeoutsRef.current.get(reportId);
+            if (pendingTimeout) {
+              clearTimeout(pendingTimeout);
+              pendingDeleteTimeoutsRef.current.delete(reportId);
+              rowActionInFlightRef.current.delete(reportId);
+              setReportActionById((prev) => {
+                const next = { ...prev };
+                delete next[reportId];
+                return next;
+              });
+              setOptimisticallyRemovedReportIds((prev) => {
+                const next = new Set(prev);
+                next.delete(reportId);
+                return next;
+              });
+              toast({
+                title: "Delete cancelled",
+                description: "Progress report restored.",
+              });
+            }
+          }}
+        >
+          Undo
+        </ToastAction>
+      ),
+    });
   };
 
   const openEditDialog = (report: ProgressReport) => {
-    setSelectedReport(report);
-    setFormData({
+    const snapshot = {
       studentId: report.studentId.toString(),
       reportPeriod: report.reportPeriod || "",
       subject: report.subject || "",
@@ -334,7 +560,10 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
       recommendations: report.recommendations || "",
       parentNotes: report.parentNotes || "",
       classParticipation: report.classParticipation || "",
-    });
+    };
+    setSelectedReport(report);
+    setFormData(readReportDraft(report.id) || snapshot);
+    setInitialEditSnapshot(snapshot);
     setIsEditDialogOpen(true);
   };
 
@@ -355,6 +584,8 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
       </Badge>
     );
   };
+
+  const visibleReports = reports.filter((report) => !optimisticallyRemovedReportIds.has(report.id));
 
   if (loading) {
     return (
@@ -378,15 +609,35 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
 
   return (
     <div className="space-y-6">
+      {loadError && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-sm text-red-700">{loadError}</p>
+              <Button variant="outline" size="sm" onClick={fetchData}>
+                Retry
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold text-gray-900">Progress Reports</h2>
           <p className="text-gray-500 mt-1">Create, manage, and publish student progress reports</p>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <Dialog open={isCreateDialogOpen} onOpenChange={handleCreateDialogOpenChange}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => resetForm()}>
+            <Button
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => {
+                const createDraft = readReportDraft(null);
+                setFormData(createDraft || EMPTY_PROGRESS_FORM);
+                setInitialEditSnapshot(null);
+              }}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Create Report
             </Button>
@@ -533,11 +784,11 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              <Button variant="outline" onClick={() => handleCreateDialogOpenChange(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleCreateReport}>
-                Create Draft
+              <Button onClick={handleCreateReport} disabled={creatingDraft}>
+                {creatingDraft ? "Creating..." : "Create Draft"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -545,14 +796,22 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
       </div>
 
       {/* Reports List */}
-      {reports.length === 0 ? (
+      {visibleReports.length === 0 ? (
         <Card>
           <CardContent className="py-12">
             <div className="text-center">
               <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">No Progress Reports Yet</h3>
               <p className="text-gray-500 mb-4">Create your first progress report to track student progress</p>
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Button
+                onClick={() => {
+                  const createDraft = readReportDraft(null);
+                  setFormData(createDraft || EMPTY_PROGRESS_FORM);
+                  setInitialEditSnapshot(null);
+                  setIsCreateDialogOpen(true);
+                }}
+                disabled={creatingDraft}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Create First Report
               </Button>
@@ -561,7 +820,7 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          {reports.map((report) => (
+          {visibleReports.map((report) => (
             <Card key={report.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -599,10 +858,16 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    {Boolean(reportActionById[report.id]) && (
+                      <Badge variant="outline" className="capitalize">
+                        {reportActionById[report.id]}
+                      </Badge>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => openEditDialog(report)}
+                      disabled={Boolean(reportActionById[report.id])}
                     >
                       <Edit className="h-4 w-4 mr-1" />
                       Edit
@@ -612,26 +877,29 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
                         size="sm"
                         className="bg-green-600 hover:bg-green-700"
                         onClick={() => handlePublishReport(report.id)}
+                        disabled={Boolean(reportActionById[report.id])}
                       >
                         <Send className="h-4 w-4 mr-1" />
-                        Publish
+                        {reportActionById[report.id] === "publishing" ? "Publishing..." : "Publish"}
                       </Button>
                     ) : (
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleUnpublishReport(report.id)}
+                        disabled={Boolean(reportActionById[report.id])}
                       >
                         <Clock className="h-4 w-4 mr-1" />
-                        Unpublish
+                        {reportActionById[report.id] === "unpublishing" ? "Unpublishing..." : "Unpublish"}
                       </Button>
                     )}
                     <Button
                       variant="destructive"
                       size="sm"
                       onClick={() => handleDeleteReport(report.id)}
+                      disabled={Boolean(reportActionById[report.id])}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      {reportActionById[report.id] === "deleting" ? "Deleting..." : <Trash2 className="h-4 w-4" />}
                     </Button>
                   </div>
                 </div>
@@ -662,7 +930,7 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
       )}
 
       {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog open={isEditDialogOpen} onOpenChange={handleEditDialogOpenChange}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Progress Report</DialogTitle>
@@ -781,15 +1049,40 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <Button variant="outline" onClick={() => handleEditDialogOpenChange(false)}>
               Cancel
             </Button>
-            <Button onClick={handleEditReport}>
-              Save Changes
+            <Button onClick={handleEditReport} disabled={updatingDraft}>
+              {updatingDraft ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={isDiscardDialogOpen}
+        onOpenChange={(nextOpen) => {
+          setIsDiscardDialogOpen(nextOpen);
+          if (!nextOpen) {
+            setPendingDiscardTarget(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard changes?</AlertDialogTitle>
+            <AlertDialogBody>
+              You have unsaved report changes. Discarding now will remove this draft.
+            </AlertDialogBody>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Editing</AlertDialogCancel>
+            <AlertDialogAction onClick={discardPendingChanges}>
+              Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
