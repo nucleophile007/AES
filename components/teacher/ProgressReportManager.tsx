@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Eye, Trash2, Send, FileText, Calendar, User, BarChart3, CheckCircle, Clock, XCircle } from "lucide-react";
 
@@ -83,7 +84,7 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
 
   useEffect(() => {
     fetchData();
-  }, [teacherEmail]);
+  }, [teacherEmail]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
     if (!teacherEmail) return;
@@ -357,11 +358,20 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-500">Loading progress reports...</p>
-        </div>
+      <div className="space-y-4 py-4">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <Card key={`progress-manager-loading-${index}`}>
+            <CardHeader className="space-y-3">
+              <ShimmerSkeleton className="h-5 w-1/3" />
+              <ShimmerSkeleton className="h-4 w-1/2" />
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <ShimmerSkeleton className="h-4 w-full" />
+              <ShimmerSkeleton className="h-4 w-5/6" />
+              <ShimmerSkeleton className="h-20 w-full rounded-lg" />
+            </CardContent>
+          </Card>
+        ))}
       </div>
     );
   }
