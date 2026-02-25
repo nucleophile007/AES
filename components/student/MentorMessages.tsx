@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -36,6 +36,7 @@ export default function MentorMessages({ studentId, studentEmail, studentName, o
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const sendInFlightRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const scrollAreaRef = React.useRef<HTMLDivElement>(null);
 
@@ -249,8 +250,10 @@ export default function MentorMessages({ studentId, studentEmail, studentName, o
 
   // Send a message
   const sendMessage = async () => {
+    if (sendInFlightRef.current || isSending) return;
     if (!newMessage.trim() || !selectedMentor) return;
     
+    sendInFlightRef.current = true;
     setIsSending(true);
     setError(null);
     
@@ -324,6 +327,7 @@ export default function MentorMessages({ studentId, studentEmail, studentName, o
       }, 5000);
     } finally {
       setIsSending(false);
+      sendInFlightRef.current = false;
     }
   };
 

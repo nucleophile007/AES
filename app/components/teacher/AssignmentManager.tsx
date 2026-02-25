@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,17 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ToastAction } from "@/components/ui/toast";
 import { Plus, Save, X, Calendar, FileText, Users, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -72,9 +83,22 @@ interface AssignmentFormData {
 interface AssignmentManagerProps {
   teacherEmail: string;
   assignments: Assignment[];
-  onAssignmentCreated: () => void;
-  onAssignmentUpdated: () => void;
+  onAssignmentCreated: () => Promise<void> | void;
+  onAssignmentUpdated: () => Promise<void> | void;
 }
+
+const EMPTY_ASSIGNMENT_FORM: AssignmentFormData = {
+  title: "",
+  description: "",
+  instructions: "",
+  program: "",
+  subject: "",
+  dueDate: "",
+  totalPoints: 100,
+  allowLateSubmission: false,
+  studentId: "",
+  groupId: "",
+};
 
 const PROGRAMS = [
   "Academic Tutoring",
@@ -275,24 +299,45 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
   const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
+  const [pendingDiscardTarget, setPendingDiscardTarget] = useState<"create" | "edit" | null>(null);
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
   const [loading, setLoading] = useState(false);
+  const submitInFlightRef = useRef(false);
   const [students, setStudents] = useState<Student[]>([]);
   const [availablePrograms, setAvailablePrograms] = useState<string[]>([]);
   const [studentGroups, setStudentGroups] = useState<StudentGroup[]>([]);
+  const [deletingAssignmentIds, setDeletingAssignmentIds] = useState<Set<number>>(new Set());
+  const [optimisticallyRemovedIds, setOptimisticallyRemovedIds] = useState<Set<number>>(new Set());
+  const [initialEditSnapshot, setInitialEditSnapshot] = useState<AssignmentFormData | null>(null);
+  const pendingDeleteTimeoutsRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
-  const [formData, setFormData] = useState<AssignmentFormData>({
-    title: "",
-    description: "",
-    instructions: "",
-    program: "",
-    subject: "",
-    dueDate: "",
-    totalPoints: 100,
-    allowLateSubmission: false,
-    studentId: "",
-    groupId: ""
-  });
+  const [formData, setFormData] = useState<AssignmentFormData>(EMPTY_ASSIGNMENT_FORM);
+
+  const getAssignmentDraftStorageKey = (assignmentId: number | null) =>
+    assignmentId
+      ? `aes:teacher:assignment:draft:${teacherEmail}:edit:${assignmentId}`
+      : `aes:teacher:assignment:draft:${teacherEmail}:create`;
+
+  const readAssignmentDraft = (assignmentId: number | null): AssignmentFormData | null => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = localStorage.getItem(getAssignmentDraftStorageKey(assignmentId));
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as Partial<AssignmentFormData>;
+      return {
+        ...EMPTY_ASSIGNMENT_FORM,
+        ...parsed,
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  const clearAssignmentDraft = (assignmentId: number | null) => {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem(getAssignmentDraftStorageKey(assignmentId));
+  };
 
   // Fetch students on component mount
   useEffect(() => {
@@ -355,27 +400,19 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
   }, [teacherEmail]);
 
   const resetForm = () => {
-    setFormData({
-      title: "",
-      description: "",
-      instructions: "",
-      program: "",
-      subject: "",
-      dueDate: "",
-      totalPoints: 100,
-      allowLateSubmission: false,
-      studentId: "",
-      groupId: ""
-    });
+    setFormData(EMPTY_ASSIGNMENT_FORM);
   };
 
   const handleCreate = () => {
-    resetForm();
+    setEditingAssignment(null);
+    setInitialEditSnapshot(null);
+    const createDraft = readAssignmentDraft(null);
+    setFormData(createDraft || EMPTY_ASSIGNMENT_FORM);
     setIsCreateDialogOpen(true);
   };
 
   const handleEdit = (assignment: Assignment) => {
-    setFormData({
+    const snapshot: AssignmentFormData = {
       title: assignment.title,
       description: assignment.description,
       instructions: assignment.instructions || "",
@@ -386,12 +423,102 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
       allowLateSubmission: assignment.allowLateSubmission,
       studentId: "",
       groupId: ""
-    });
+    };
+    const editDraft = readAssignmentDraft(assignment.id);
+    setFormData(editDraft || snapshot);
+    setInitialEditSnapshot(snapshot);
     setEditingAssignment(assignment);
     setIsEditDialogOpen(true);
   };
 
+  const isCreateDirty = JSON.stringify(formData) !== JSON.stringify(EMPTY_ASSIGNMENT_FORM);
+  const isEditDirty = Boolean(
+    isEditDialogOpen &&
+    initialEditSnapshot &&
+    JSON.stringify(formData) !== JSON.stringify(initialEditSnapshot)
+  );
+
+  const handleCreateDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && isCreateDirty && !loading) {
+      setPendingDiscardTarget("create");
+      setIsDiscardDialogOpen(true);
+      return;
+    }
+    if (!nextOpen) {
+      clearAssignmentDraft(null);
+      resetForm();
+    }
+    setIsCreateDialogOpen(nextOpen);
+  };
+
+  const handleEditDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && isEditDirty && !loading) {
+      setPendingDiscardTarget("edit");
+      setIsDiscardDialogOpen(true);
+      return;
+    }
+    if (!nextOpen) {
+      clearAssignmentDraft(editingAssignment?.id ?? null);
+      setEditingAssignment(null);
+      setInitialEditSnapshot(null);
+      resetForm();
+    }
+    setIsEditDialogOpen(nextOpen);
+  };
+
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!(isCreateDialogOpen && isCreateDirty) && !isEditDirty) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [isCreateDialogOpen, isCreateDirty, isEditDirty]);
+
+  useEffect(() => {
+    const pendingDeleteTimeouts = pendingDeleteTimeoutsRef.current;
+    return () => {
+      pendingDeleteTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
+      pendingDeleteTimeouts.clear();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!(isCreateDialogOpen || isEditDialogOpen)) return;
+    if (typeof window === "undefined") return;
+    const storageKey = editingAssignment?.id
+      ? `aes:teacher:assignment:draft:${teacherEmail}:edit:${editingAssignment.id}`
+      : `aes:teacher:assignment:draft:${teacherEmail}:create`;
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(formData));
+    } catch {
+      // Ignore storage errors (private mode/quota) and continue.
+    }
+  }, [formData, isCreateDialogOpen, isEditDialogOpen, editingAssignment?.id, teacherEmail]);
+
+  const discardPendingChanges = () => {
+    if (pendingDiscardTarget === "create") {
+      clearAssignmentDraft(null);
+      resetForm();
+      setIsCreateDialogOpen(false);
+    } else if (pendingDiscardTarget === "edit") {
+      clearAssignmentDraft(editingAssignment?.id ?? null);
+      setEditingAssignment(null);
+      setInitialEditSnapshot(null);
+      resetForm();
+      setIsEditDialogOpen(false);
+    }
+    setPendingDiscardTarget(null);
+    setIsDiscardDialogOpen(false);
+  };
+
   const handleSubmit = async () => {
+    // Hard guard against rapid double-clicks before React re-renders disabled state.
+    if (submitInFlightRef.current || loading) {
+      return;
+    }
+
     if (!formData.title || !formData.description || !formData.program || !formData.subject || !formData.dueDate || (!formData.studentId && !formData.groupId)) {
       toast({
         title: "Missing information",
@@ -419,6 +546,7 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
       return;
     }
 
+    submitInFlightRef.current = true;
     setLoading(true);
     try {
       const url = editingAssignment 
@@ -449,6 +577,7 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
       }
 
       // Close dialogs and reset form
+      clearAssignmentDraft(editingAssignment?.id ?? null);
       setIsCreateDialogOpen(false);
       setIsEditDialogOpen(false);
       setEditingAssignment(null);
@@ -456,9 +585,9 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
 
       // Refresh assignments
       if (editingAssignment) {
-        onAssignmentUpdated();
+        await Promise.resolve(onAssignmentUpdated());
       } else {
-        onAssignmentCreated();
+        await Promise.resolve(onAssignmentCreated());
       }
 
       toast({
@@ -476,40 +605,93 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
       });
     } finally {
       setLoading(false);
+      submitInFlightRef.current = false;
     }
   };
 
   const handleDelete = async (assignmentId: number) => {
-    if (!confirm('Are you sure you want to delete this assignment?')) {
+    if (deletingAssignmentIds.has(assignmentId) || pendingDeleteTimeoutsRef.current.has(assignmentId)) {
       return;
     }
 
-    try {
-      const response = await fetch(`/api/teacher/assignments?id=${assignmentId}&teacherEmail=${encodeURIComponent(teacherEmail)}`, {
-        method: 'DELETE',
+    // Instant UI feedback while server processes soft-delete.
+    setOptimisticallyRemovedIds((prev) => {
+      const next = new Set(prev);
+      next.add(assignmentId);
+      return next;
+    });
+    const finalizeDelete = async () => {
+      setDeletingAssignmentIds((prev) => {
+        const next = new Set(prev);
+        next.add(assignmentId);
+        return next;
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete assignment');
+      try {
+        const response = await fetch(`/api/teacher/assignments?id=${assignmentId}&teacherEmail=${encodeURIComponent(teacherEmail)}`, {
+          method: 'DELETE',
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to delete assignment');
+        }
+        await Promise.resolve(onAssignmentUpdated());
+        toast({
+          title: "Assignment deleted",
+          description: "The assignment has been deleted successfully.",
+          className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+        });
+      } catch (error) {
+        setOptimisticallyRemovedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(assignmentId);
+          return next;
+        });
+        console.error('Error deleting assignment:', error);
+        toast({
+          variant: "destructive",
+          title: "Failed to delete assignment",
+          description: error instanceof Error ? error.message : "Please try again.",
+        });
+      } finally {
+        setDeletingAssignmentIds((prev) => {
+          const next = new Set(prev);
+          next.delete(assignmentId);
+          return next;
+        });
+        pendingDeleteTimeoutsRef.current.delete(assignmentId);
       }
+    };
 
-      onAssignmentUpdated();
-      toast({
-        title: "Assignment deleted",
-        description: "The assignment has been deleted successfully.",
-        className: "border-yellow-500 bg-yellow-50 text-yellow-900",
-      });
+    const timeoutId = setTimeout(finalizeDelete, 5000);
+    pendingDeleteTimeoutsRef.current.set(assignmentId, timeoutId);
 
-    } catch (error) {
-      console.error('Error deleting assignment:', error);
-      toast({
-        variant: "destructive",
-        title: "Failed to delete assignment",
-        description: error instanceof Error ? error.message : "Please try again.",
-      });
-    }
+    toast({
+      title: "Assignment scheduled for delete",
+      description: "Undo within 5 seconds to keep it.",
+      action: (
+        <ToastAction
+          altText="Undo delete"
+          onClick={() => {
+            const pendingTimeout = pendingDeleteTimeoutsRef.current.get(assignmentId);
+            if (pendingTimeout) {
+              clearTimeout(pendingTimeout);
+              pendingDeleteTimeoutsRef.current.delete(assignmentId);
+              setOptimisticallyRemovedIds((prev) => {
+                const next = new Set(prev);
+                next.delete(assignmentId);
+                return next;
+              });
+              toast({
+                title: "Delete cancelled",
+                description: "Assignment restored.",
+              });
+            }
+          }}
+        >
+          Undo
+        </ToastAction>
+      ),
+    });
   };
 
   const formatDate = (dateString: string) => {
@@ -520,6 +702,10 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
     return new Date(dueDate) < new Date();
   };
 
+  const visibleAssignments = assignments.filter(
+    (assignment) => !optimisticallyRemovedIds.has(assignment.id)
+  );
+
 
 
   return (
@@ -527,7 +713,7 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
       {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Assignment Management</h2>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <Dialog open={isCreateDialogOpen} onOpenChange={handleCreateDialogOpenChange}>
           <DialogTrigger asChild>
             <Button onClick={handleCreate} className="flex items-center gap-2">
               <Plus className="w-4 h-4" />
@@ -546,7 +732,7 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
               studentGroups={studentGroups}
             />
             <div className="flex justify-end space-x-2 pt-4">
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              <Button variant="outline" onClick={() => handleCreateDialogOpenChange(false)}>
                 Cancel
               </Button>
               <Button onClick={handleSubmit} disabled={loading}>
@@ -559,7 +745,7 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
 
       {/* Assignment List */}
       <div className="grid gap-4">
-        {assignments.length === 0 ? (
+        {visibleAssignments.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
               <FileText className="w-12 h-12 mx-auto mb-4 text-gray-400" />
@@ -572,7 +758,7 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
             </CardContent>
           </Card>
         ) : (
-          assignments.map((assignment) => (
+          visibleAssignments.map((assignment) => (
             <Card key={assignment.id} className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <div className="flex justify-between items-start">
@@ -591,11 +777,16 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(assignment)}>
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(assignment)} disabled={deletingAssignmentIds.has(assignment.id)}>
                       Edit
                     </Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDelete(assignment.id)}>
-                      Delete
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDelete(assignment.id)}
+                      disabled={deletingAssignmentIds.has(assignment.id)}
+                    >
+                      {deletingAssignmentIds.has(assignment.id) ? "Deleting..." : "Delete"}
                     </Button>
                   </div>
                 </div>
@@ -649,7 +840,7 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
       </div>
 
       {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog open={isEditDialogOpen} onOpenChange={handleEditDialogOpenChange}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Assignment</DialogTitle>
@@ -662,7 +853,7 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
             studentGroups={studentGroups}
           />
           <div className="flex justify-end space-x-2 pt-4">
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <Button variant="outline" onClick={() => handleEditDialogOpenChange(false)}>
               Cancel
             </Button>
             <Button onClick={handleSubmit} disabled={loading}>
@@ -671,6 +862,31 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={isDiscardDialogOpen}
+        onOpenChange={(nextOpen) => {
+          setIsDiscardDialogOpen(nextOpen);
+          if (!nextOpen) {
+            setPendingDiscardTarget(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved assignment changes. Discarding now will remove your draft.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Editing</AlertDialogCancel>
+            <AlertDialogAction onClick={discardPendingChanges}>
+              Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

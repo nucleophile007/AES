@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { usePathname, useRouter } from "next/navigation";
 import { useRequireAuth } from "../../contexts/AuthContext";
 import "../components/chat-no-spinner.css";
 import { useToast } from "@/hooks/use-toast";
@@ -179,6 +180,7 @@ export default function TeacherDashboard() {
   const [groupStudentIds, setGroupStudentIds] = useState<number[]>([]);
   const [groupError, setGroupError] = useState<string | null>(null);
   const [creatingGroup, setCreatingGroup] = useState(false);
+  const createGroupInFlightRef = useRef(false);
 
   // Resource sending state
   const [newResource, setNewResource] = useState<{
@@ -206,15 +208,18 @@ export default function TeacherDashboard() {
   });
   const [newResourceFile, setNewResourceFile] = useState<File | null>(null);
   const [sendingResource, setSendingResource] = useState(false);
+  const sendResourceInFlightRef = useRef(false);
   const [resourceError, setResourceError] = useState<string | null>(null);
   const [resourceGroupId, setResourceGroupId] = useState<string>("");
 
   // Student submissions state
   const [studentSubmissions, setStudentSubmissions] = useState<any[]>([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
+  const [submissionsError, setSubmissionsError] = useState<string | null>(null);
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [remarkText, setRemarkText] = useState("");
   const [isAddingRemark, setIsAddingRemark] = useState(false);
+  const addRemarkInFlightRef = useRef(false);
 
   // Chat state
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -228,6 +233,10 @@ export default function TeacherDashboard() {
   // Progress modal state
   const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
   const [selectedProgressStudent, setSelectedProgressStudent] = useState<Student | null>(null);
+  const [isUrlStateReady, setIsUrlStateReady] = useState(false);
+  const [authTimedOut, setAuthTimedOut] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
 
   // Get teacher email from authenticated user
   const teacherEmail = authUser?.email || "";
@@ -244,9 +253,14 @@ export default function TeacherDashboard() {
 
   // Fetch functions
   const fetchTeacherData = async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
     try {
       setLoading(true);
-      const response = await fetch(`/api/teacher/students?teacherEmail=${encodeURIComponent(teacherEmail)}`);
+      setError(null);
+      const response = await fetch(`/api/teacher/students?teacherEmail=${encodeURIComponent(teacherEmail)}`, {
+        signal: controller.signal,
+      });
       const data = await response.json();
 
       if (response.ok && data.teacher) {
@@ -256,9 +270,14 @@ export default function TeacherDashboard() {
         setError(data.error || 'Failed to fetch teacher data');
       }
     } catch (err) {
-      setError('Failed to fetch teacher data');
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setError("Dashboard load timed out. Please retry.");
+      } else {
+        setError('Failed to fetch teacher data');
+      }
       console.error('Error fetching teacher data:', err);
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   };
@@ -280,6 +299,7 @@ export default function TeacherDashboard() {
   };
 
   const handleCreateGroup = async () => {
+    if (createGroupInFlightRef.current || creatingGroup) return;
     setGroupError(null);
 
     if (!teacherEmail) {
@@ -315,6 +335,7 @@ export default function TeacherDashboard() {
       return;
     }
 
+    createGroupInFlightRef.current = true;
     setCreatingGroup(true);
     try {
       const response = await fetch("/api/teacher/student-groups", {
@@ -350,6 +371,7 @@ export default function TeacherDashboard() {
       });
     } finally {
       setCreatingGroup(false);
+      createGroupInFlightRef.current = false;
     }
   };
 
@@ -387,6 +409,7 @@ export default function TeacherDashboard() {
   };
 
   const handleSendResource = async () => {
+    if (sendResourceInFlightRef.current || sendingResource) return;
     setResourceError(null);
 
     if (!teacherEmail) {
@@ -477,6 +500,7 @@ export default function TeacherDashboard() {
       return;
     }
 
+    sendResourceInFlightRef.current = true;
     setSendingResource(true);
     try {
       let fileUrl: string | null = null;
@@ -544,21 +568,25 @@ export default function TeacherDashboard() {
       });
     } finally {
       setSendingResource(false);
+      sendResourceInFlightRef.current = false;
     }
   };
 
   const fetchStudentSubmissions = async () => {
     try {
       setSubmissionsLoading(true);
+      setSubmissionsError(null);
       const response = await fetch(`/api/teacher/submissions/resources?teacherEmail=${encodeURIComponent(teacherEmail)}`);
       const data = await response.json();
 
       if (data.success) {
         setStudentSubmissions(data.submissions);
       } else {
+        setSubmissionsError(data.error || "Failed to fetch student submissions");
         console.error('Failed to fetch student submissions:', data.error);
       }
     } catch (err) {
+      setSubmissionsError(err instanceof Error ? err.message : "Failed to fetch student submissions");
       console.error('Error fetching student submissions:', err);
     } finally {
       setSubmissionsLoading(false);
@@ -588,9 +616,11 @@ export default function TeacherDashboard() {
   };
 
   const handleAddRemark = async (submissionId: number) => {
+    if (addRemarkInFlightRef.current || isAddingRemark) return;
     if (!remarkText.trim()) return;
 
     try {
+      addRemarkInFlightRef.current = true;
       setIsAddingRemark(true);
       const response = await fetch('/api/teacher/submissions/resources', {
         method: 'POST',
@@ -611,13 +641,29 @@ export default function TeacherDashboard() {
         await fetchStudentSubmissions();
         setSelectedSubmission(null);
         setRemarkText("");
+        toast({
+          title: "Feedback sent",
+          description: "Your feedback has been saved for the student.",
+          className: "border-green-500 bg-green-50 text-green-900",
+        });
       } else {
         console.error('Failed to add remark:', data.error);
+        toast({
+          variant: "destructive",
+          title: "Failed to save feedback",
+          description: data.error || "Please try again.",
+        });
       }
     } catch (err) {
       console.error('Error adding remark:', err);
+      toast({
+        variant: "destructive",
+        title: "Failed to save feedback",
+        description: err instanceof Error ? err.message : "Please try again.",
+      });
     } finally {
       setIsAddingRemark(false);
+      addRemarkInFlightRef.current = false;
     }
   };
 
@@ -631,6 +677,25 @@ export default function TeacherDashboard() {
   }, [teacherEmail]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    if (!authLoading) {
+      setAuthTimedOut(false);
+      return;
+    }
+    const timeoutId = setTimeout(() => {
+      setAuthTimedOut(true);
+    }, 15000);
+    return () => clearTimeout(timeoutId);
+  }, [authLoading]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (authUser && !teacherEmail) {
+      setLoading(false);
+      setError("Unable to load your account email. Please log out and sign in again.");
+    }
+  }, [authLoading, authUser, teacherEmail]);
+
+  useEffect(() => {
     if (teacherEmail) {
       fetchStudentSubmissions();
     }
@@ -642,9 +707,62 @@ export default function TeacherDashboard() {
     }
   }, [teacher?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    const q = params.get("q");
+    const program = params.get("program");
+    const allowedTabs = new Set(["students", "assignments", "submissions", "resources", "progress", "schedule"]);
+
+    if (tab && allowedTabs.has(tab)) {
+      setActiveTab(tab);
+    }
+    if (q !== null) {
+      setSearch(q);
+    }
+    if (program) {
+      setSelectedProgram(program);
+    }
+    setIsUrlStateReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isUrlStateReady) return;
+    const params = new URLSearchParams(window.location.search);
+    params.set("tab", activeTab);
+    if (search.trim()) params.set("q", search.trim());
+    else params.delete("q");
+    if (selectedProgram) params.set("program", selectedProgram);
+    else params.delete("program");
+    const query = params.toString();
+    const nextUrl = query ? `${pathname}?${query}` : pathname;
+    const currentUrl = `${pathname}${window.location.search}`;
+    if (nextUrl === currentUrl) return;
+    router.replace(nextUrl, { scroll: false });
+  }, [activeTab, search, selectedProgram, isUrlStateReady, pathname, router]);
+
   // Early return for authentication loading (AFTER all hooks)
-  if (authLoading || !authUser) {
-    return <DashboardLoadingSkeleton role="teacher" />;
+  if (authLoading && !authTimedOut) {
+    return <DashboardLoadingSkeleton role="teacher" tab={activeTab} />;
+  }
+
+  if (authLoading && authTimedOut) {
+    return (
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-red-600 text-xl mb-4">Authentication is taking too long.</div>
+              <Button onClick={() => window.location.reload()}>Try Again</Button>
+            </div>
+          </div>
+        </div>
+      </SidebarProvider>
+    );
+  }
+
+  if (!authUser) {
+    return null;
   }
 
   // Filter students by selected program and search
@@ -662,7 +780,7 @@ export default function TeacherDashboard() {
   );
 
   if (loading) {
-    return <DashboardLoadingSkeleton role="teacher" />;
+    return <DashboardLoadingSkeleton role="teacher" tab={activeTab} />;
   }
 
   if (error) {
@@ -828,27 +946,7 @@ export default function TeacherDashboard() {
                 className="space-y-6"
               >
                 {/* Parent Conversations Section */}
-                {loadingParentConversations ? (
-                  <div className="mb-6">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-brand-blue">
-                      <Users className="h-5 w-5" />
-                      Parent Conversations
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                      {Array.from({ length: 3 }).map((_, index) => (
-                        <Card key={`parent-conversation-loading-${index}`}>
-                          <CardContent className="p-4 space-y-3">
-                            <ShimmerSkeleton className="h-4 w-2/3" />
-                            <ShimmerSkeleton className="h-3 w-full" />
-                            <ShimmerSkeleton className="h-3 w-1/2" />
-                            <ShimmerSkeleton className="h-8 w-20" />
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                    <div className="border-t border-gray-200 my-6"></div>
-                  </div>
-                ) : parentConversations.length > 0 && (
+                {parentConversations.length > 0 && (
                   <div className="mb-6">
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-brand-blue">
                       <Users className="h-5 w-5" />
@@ -1374,11 +1472,24 @@ export default function TeacherDashboard() {
                     <h3 className="text-xl font-semibold">Student Resource Submissions</h3>
                     <p className="text-gray-600">Review and provide feedback on work submitted by students</p>
                   </div>
-                  <Button onClick={fetchStudentSubmissions} variant="outline">
-                    <RefreshCw className="h-4 w-4 mr-2" />
+                  <Button onClick={fetchStudentSubmissions} variant="outline" disabled={submissionsLoading}>
+                    <RefreshCw className={cn("h-4 w-4 mr-2", submissionsLoading && "animate-spin")} />
                     Refresh
                   </Button>
                 </div>
+
+                {submissionsError && (
+                  <Card className="border-red-200 bg-red-50">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm text-red-700">{submissionsError}</p>
+                        <Button variant="outline" size="sm" onClick={fetchStudentSubmissions}>
+                          Retry
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {submissionsLoading ? (
                   <div className="grid gap-6 py-2">
