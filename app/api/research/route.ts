@@ -1,0 +1,147 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+const PAGE_SIZE = 8;
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get("search") || "";
+    const year = searchParams.get("year") || "";
+    const category = searchParams.get("category") || "all";
+    const page = parseInt(searchParams.get("page") || "1");
+
+    // Build dynamic where clause
+    const where: any = {
+      published: true,
+    };
+
+    // Apply search filter (search across multiple fields)
+    if (search.trim()) {
+      where.OR = [
+        { title: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+        { author: { contains: search, mode: "insensitive" } },
+        { abstract: { contains: search, mode: "insensitive" } },
+        { keywords: { hasSome: [search] } }, // Search in keywords array
+      ];
+    }
+
+    // Apply category filter
+    if (category !== "all") {
+      where.category = category;
+    }
+
+    // Fetch all research for year extraction and counting
+    const allResearch = await prisma.research.findMany({
+      where: {
+        published: true,
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        category: true,
+        title: true,
+        description: true,
+        author: true,
+        slug: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    // Extract unique years from research data
+    const years = Array.from(
+      new Set(
+        allResearch.map((r) => new Date(r.createdAt).getFullYear())
+      )
+    ).sort((a, b) => b - a); // Descending order (newest first)
+
+    // Filter by year if specified
+    let filteredResearch = allResearch;
+    if (year && year !== "all") {
+      const yearNum = parseInt(year);
+      filteredResearch = allResearch.filter(
+        (r) => new Date(r.createdAt).getFullYear() === yearNum
+      );
+    }
+
+    // Apply search and category filters for final results
+    let finalResults = filteredResearch;
+    
+    if (search.trim()) {
+      const searchLower = search.toLowerCase();
+      finalResults = finalResults.filter((r) => {
+        return (
+          r.title?.toLowerCase().includes(searchLower) ||
+          r.description?.toLowerCase().includes(searchLower) ||
+          r.author?.toLowerCase().includes(searchLower)
+        );
+      });
+    }
+
+    if (category !== "all") {
+      finalResults = finalResults.filter((r) => r.category === category);
+    }
+
+    // Calculate counts by category for the selected year
+    const categoryCounts = {
+      all: finalResults.length,
+      IGNITE: finalResults.filter((r) => r.category === "IGNITE").length,
+      ELEVATE: finalResults.filter((r) => r.category === "ELEVATE").length,
+      TRANSFORM: finalResults.filter((r) => r.category === "TRANSFORM").length,
+    };
+
+    // Calculate counts by year
+    const yearCounts: Record<string, number> = {};
+    years.forEach((y) => {
+      const yearResearch = allResearch.filter(
+        (r) => new Date(r.createdAt).getFullYear() === y
+      );
+      yearCounts[y.toString()] = yearResearch.length;
+    });
+
+    // Calculate category counts for all years (when year=all)
+    const allYearsCategoryCounts = {
+      all: allResearch.length,
+      IGNITE: allResearch.filter((r) => r.category === "IGNITE").length,
+      ELEVATE: allResearch.filter((r) => r.category === "ELEVATE").length,
+      TRANSFORM: allResearch.filter((r) => r.category === "TRANSFORM").length,
+    };
+
+    // Paginate the final results
+    const totalCount = finalResults.length;
+    const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+    const validPage = Math.min(Math.max(1, page), totalPages);
+    const startIndex = (validPage - 1) * PAGE_SIZE;
+    const paginatedResults = finalResults.slice(startIndex, startIndex + PAGE_SIZE);
+
+    // Fetch full details for paginated results
+    const fullResearch = await prisma.research.findMany({
+      where: {
+        id: {
+          in: paginatedResults.map((r) => r.id),
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return NextResponse.json({
+      success: true,
+      research: fullResearch,
+      totalCount,
+      totalPages,
+      currentPage: validPage,
+      years,
+      counts: {
+        byCategory: (year && year !== "all") ? categoryCounts : allYearsCategoryCounts,
+        byYear: yearCounts,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching research:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to fetch research" },
+      { status: 500 }
+    );
+  }
+}

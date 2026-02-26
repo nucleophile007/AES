@@ -17,7 +17,12 @@ export default async function ResearchPage({
       description: true,
       pdfFilename: true,
       author: true,
+      grade: true,
+      school: true,
       createdAt: true,
+      extractedContent: true,
+      abstract: true,
+      keywords: true,
       slides: {
         select: {
           id: true,

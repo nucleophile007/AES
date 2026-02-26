@@ -19,7 +19,12 @@ interface ResearchClientProps {
     description: string | null
     pdfFilename: string | null
     author: string | null
+    grade: string | null
+    school: string | null
     createdAt: Date
+    extractedContent: any
+    abstract: string | null
+    keywords: string[]
     slides: {
       id: string
       imagePath: string
@@ -28,19 +33,32 @@ interface ResearchClientProps {
   }
 }
 
-const tableOfContentsItems = [
-  { id: "introduction", label: "Introduction" },
-  { id: "nanosensor-detection", label: "Nanosensor Detection" },
-  { id: "car-t-therapy", label: "CAR-T Cell Therapy" },
-  { id: "research-slides", label: "Research Slides" },
-  { id: "technical-report", label: "Technical Report" },
-  { id: "future-implications", label: "Future Implications" },
-]
-
 export default function ResearchClient({ research }: ResearchClientProps) {
   const [showModal, setShowModal] = useState(false)
   const [hasAccess, setHasAccess] = useState(false)
-  const [activeSection, setActiveSection] = useState("introduction")
+  
+  // Generate dynamic Table of Contents from extractedContent
+  const extractedContent = research.extractedContent as {
+    sections?: Array<{
+      id: string
+      order: number
+      title: string
+      summary: string
+      keyPoints: string[]
+    }>
+  } | null
+  
+  const dynamicSections = extractedContent?.sections || []
+  const tableOfContentsItems = [
+    ...dynamicSections.map(section => ({
+      id: section.id,
+      label: section.title
+    })),
+    { id: "research-slides", label: "Research Slides" },
+    { id: "technical-report", label: "Technical Report" },
+  ]
+  
+  const [activeSection, setActiveSection] = useState(tableOfContentsItems[0]?.id || "research-slides")
   
 
   const handleSlideView = (slideIndex: number) => {
@@ -145,7 +163,7 @@ export default function ResearchClient({ research }: ResearchClientProps) {
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-4 pt-20 sm:pt-24">
-            <Breadcrumb />
+            <Breadcrumb title={research.title} />
           </div>
 
           <div className="py-12 lg:py-16">
@@ -169,6 +187,8 @@ export default function ResearchClient({ research }: ResearchClientProps) {
 
             <AuthorSection
               author={research.author}
+              grade={research.grade}
+              school={research.school}
               createdAt={research.createdAt}
             />
           </div>
@@ -187,6 +207,7 @@ export default function ResearchClient({ research }: ResearchClientProps) {
               onRequestAccess={() => setShowModal(true)}
               onViewPDF={handleViewPDF}
               onDownloadPDF={handleDownloadPDF}
+              extractedContent={extractedContent}
             />
           </article>
 
