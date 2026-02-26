@@ -28,6 +28,8 @@ export async function GET() {
       story: {
         studentName: random.studentName,
         beforeAfter: random.beforeAfterExpectations,
+        school: random.school,
+        grade: random.grade,
       },
     });
   } catch (error) {

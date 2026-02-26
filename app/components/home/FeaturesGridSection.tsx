@@ -96,6 +96,57 @@ export default function FeaturesGridSection() {
 
   const story = data?.story;
 
+  // Debug logging
+  React.useEffect(() => {
+    if (story) {
+      console.log("Story data:", story);
+      console.log("School:", story.school);
+      console.log("Grade:", story.grade);
+    }
+  }, [story]);
+
+  /* ---------- Map School to Logo ---------- */
+  const getSchoolLogo = (school: string | null | undefined): string => {
+    if (!school) return "/testimonial-logos/default.png";
+    
+    const schoolLower = school.toLowerCase();
+    
+    // Map school names to logo files
+    if (schoolLower.includes("folsom")) return "/testimonial-logos/folsom.png";
+    if (schoolLower.includes("granite bay")) return "/testimonial-logos/GraniteBayHighSchool.png";
+    if (schoolLower.includes("raleigh") || schoolLower.includes("phoenix")) return "/testimonial-logos/Raleigh_Charter__NC__Phoenix_logo.png.webp";
+    if (schoolLower.includes("rocklin")) return "/testimonial-logos/rocklin.jpg";
+    if (schoolLower.includes("vista") || schoolLower.includes("del lago")) return "/testimonial-logos/VistaDelLagoHS-GraphicsTransparent.png";
+    if (schoolLower.includes("west park")) return "/testimonial-logos/WestParkHighSchool.png";
+    
+    return "/testimonial-logos/default.png";
+  };
+
+  /* ---------- Parse Before/After Text ---------- */
+  const parseBeforeAfter = (text: string) => {
+    if (!text) return { before: "", after: "" };
+
+    // Look for "after" keyword (case insensitive) to split the text
+    const afterMatch = text.match(/\b(after|now)\b/i);
+    
+    if (afterMatch && afterMatch.index !== undefined) {
+      // Split at the "after" or "now" keyword
+      const before = text.substring(0, afterMatch.index).trim();
+      // Include everything from "after"/"now" onwards in the after section
+      const after = text.substring(afterMatch.index).trim();
+      
+      // Only return if both parts have substantial content (more than just the keyword)
+      if (before.length > 10 && after.length > 10) {
+        return { before, after };
+      }
+    }
+
+    // Fallback: return all as before if no clear split found
+    return { before: text, after: "" };
+  };
+
+  const parsedStory = story ? parseBeforeAfter(story.beforeAfter) : { before: "", after: "" };
+
   return (
     <section
       id="features"
@@ -147,87 +198,144 @@ export default function FeaturesGridSection() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="h-full flex items-center"
+            className="h-full flex items-center max-h-500px"
           >
             {isLoading ? (
-              <div className="relative w-full max-w-md mx-auto">
+              <div className="relative w-full max-w-md mx-auto max-h-full">
+                {/* Skeleton Avatar - Fixed Outside */}
+                <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-20">
+                  <div className="w-24 h-24 rounded-full bg-slate-700 border-4 border-slate-600"></div>
+                </div>
+
                 {/* Skeleton Card */}
-                <div className="relative bg-slate-800 border border-slate-700 rounded-3xl pt-20 pb-10 px-8 shadow-xl text-center animate-pulse">
+                <div className="relative bg-slate-800 border border-slate-700 rounded-3xl shadow-xl text-center animate-pulse h-[500px] flex flex-col">
                   
-                  {/* Skeleton Avatar */}
-                  <div className="absolute -top-12 left-1/2 -translate-x-1/2">
-                    <div className="w-24 h-24 rounded-full bg-slate-700 border-4 border-slate-600"></div>
+                  {/* Skeleton Top */}
+                  <div className="pt-20 px-8 pb-4">
+                    <div className="w-8 h-8 bg-slate-700 rounded mx-auto"></div>
                   </div>
 
-                  {/* Skeleton Quote */}
-                  <div className="w-8 h-8 bg-slate-700 rounded mx-auto mb-4"></div>
-
-                  {/* Skeleton Text Lines */}
-                  <div className="space-y-3 mb-8">
-                    <div className="h-4 bg-slate-700 rounded w-full"></div>
-                    <div className="h-4 bg-slate-700 rounded w-5/6 mx-auto"></div>
-                    <div className="h-4 bg-slate-700 rounded w-4/6 mx-auto"></div>
+                  {/* Skeleton Middle (Scrollable area) */}
+                  <div className="flex-1 px-8 overflow-hidden">
+                    <div className="space-y-3">
+                      <div className="h-4 bg-slate-700 rounded w-full"></div>
+                      <div className="h-4 bg-slate-700 rounded w-5/6 mx-auto"></div>
+                      <div className="h-4 bg-slate-700 rounded w-4/6 mx-auto"></div>
+                    </div>
                   </div>
 
-                  {/* Skeleton Divider */}
-                  <div className="w-16 h-[1px] bg-slate-700 mx-auto mb-6"></div>
-
-                  {/* Skeleton Footer */}
-                  <div className="space-y-2">
-                    <div className="h-4 bg-slate-700 rounded w-32 mx-auto"></div>
-                    <div className="h-3 bg-slate-700 rounded w-24 mx-auto"></div>
+                  {/* Skeleton Bottom */}
+                  <div className="px-8 pb-10 pt-4">
+                    <div className="w-16 h-[1px] bg-slate-700 mx-auto mb-6"></div>
+                    <div className="space-y-2">
+                      <div className="h-4 bg-slate-700 rounded w-32 mx-auto"></div>
+                      <div className="h-3 bg-slate-700 rounded w-24 mx-auto"></div>
+                    </div>
                   </div>
                 </div>
               </div>
             ) : story ? (
-              <div className="relative w-full max-w-md mx-auto">
+              <div className="relative w-full max-w-md mx-auto max-h-full">
 
-                {/* Card */}
-                <div className="relative bg-slate-800 border border-slate-700 rounded-3xl pt-20 pb-10 px-8 shadow-xl text-center">
+                {/* Circular Avatar - Fixed Outside Scroll */}
+                <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-20">
+                  <div className="w-24 h-24 rounded-full bg-white border-4 border-yellow-400 flex items-center justify-center shadow-lg overflow-hidden">
+                    <img
+                      src={getSchoolLogo(story.school)}
+                      alt={story.school || "School Logo"}
+                      className="w-full h-full object-contain p-1"
+                      onError={(e) => {
+                        e.currentTarget.src = "/testimonial-logos/default.png";
+                      }}
+                    />
+                  </div>
+                </div>
 
-                  {/* Circular Avatar */}
-                  <div className="absolute -top-12 left-1/2 -translate-x-1/2">
-                    <div className="w-24 h-24 rounded-full bg-slate-700 border-4 border-yellow-400 flex items-center justify-center text-slate-400 shadow-lg">
-                      <svg
-                        className="w-10 h-10 text-yellow-400"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
+                {/* Card - Fixed Height with Scrollable Middle Section */}
+                <div className="relative bg-slate-800 border border-slate-700 rounded-3xl shadow-xl text-center h-[500px] flex flex-col">
+
+                  {/* Top Section - Fixed (Quote) */}
+                  {/* <div className="pt-20 px-8 pb-4">
+                    <div className="text-yellow-400/15 text-6xl font-serif">
+                      "
+                    </div>
+                  </div> */}
+
+                  {/* Middle Section - Scrollable (Before/After Content Only) */}
+                  <div className="pt-20 flex-1 overflow-y-auto px-8 scrollbar-hide">
+                    <div className="space-y-6">
+                    {/* Before Section */}
+                    {parsedStory.before && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-red-500/30"></div>
+                          <span className="text-red-400 text-xs font-semibold uppercase tracking-wider px-3 py-1 bg-red-500/10 rounded-full border border-red-500/20">
+                            Before
+                          </span>
+                          <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-red-500/30"></div>
+                        </div>
+                        <p className="text-slate-300 text-sm leading-relaxed bg-red-500/5 border border-red-500/10 rounded-xl p-4">
+                          {parsedStory.before}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* After Section */}
+                    {parsedStory.after && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-green-500/30"></div>
+                          <span className="text-green-400 text-xs font-semibold uppercase tracking-wider px-3 py-1 bg-green-500/10 rounded-full border border-green-500/20">
+                            After
+                          </span>
+                          <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-green-500/30"></div>
+                        </div>
+                        <p className="text-slate-300 text-sm leading-relaxed bg-green-500/5 border border-green-500/10 rounded-xl p-4">
+                          {parsedStory.after}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Fallback if no sections parsed */}
+                    {!parsedStory.before && !parsedStory.after && (
+                      <p className="text-slate-200 text-base leading-relaxed">
+                        {story.beforeAfter}
+                      </p>
+                    )}
                     </div>
                   </div>
 
-                  {/* Quote mark */}
-                  <div className="text-yellow-400/15 text-6xl font-serif mb-4">
-                    “
-                  </div>
+                  {/* Bottom Section - Fixed (Divider + Footer) */}
+                  <div className="px-8 pb-10 pt-4">
+                    {/* Divider */}
+                    <div className="w-16 h-[1px] bg-slate-600 mx-auto mb-6"></div>
 
-                  {/* Story Text */}
-                  <p className="text-slate-200 text-base leading-relaxed mb-8">
-                    {story.beforeAfter}
-                  </p>
-
-                  {/* Divider */}
-                  <div className="w-16 h-[1px] bg-slate-600 mx-auto mb-6"></div>
-
-                  {/* Footer */}
-                  <div className="space-y-1">
-                    <p className="text-white font-medium text-sm">
-                      {story.studentName || "Student"}
-                    </p>
-                    <p className="text-yellow-400 text-xs uppercase tracking-widest">
-                      Transformation Story
-                    </p>
+                    {/* Footer */}
+                    <div className="space-y-1">
+                      <p className="text-white font-small text-sm">
+                        {story.studentName || "Student"}
+                      </p>
+                      {story.grade && (
+                        <p className="text-yellow-400 text-xs uppercase tracking-widest">
+                          {story.grade}
+                        </p>
+                      )}
+                      {story.school && (
+                        <p className="text-yellow-400 text-xs uppercase tracking-widest">
+                          {story.school}
+                        </p>
+                      )}
+                      {!story.grade && !story.school && (
+                        <p className="text-yellow-400 text-xs uppercase tracking-widest">
+                          Student Story
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="w-full text-center bg-slate-800 border border-slate-700 rounded-3xl p-10">
+              <div className="w-full text-center bg-slate-800 border border-slate-700 rounded-3xl p-10 h-[calc(2*180px+24px)] flex flex-col items-center justify-center">
                 <h3 className="text-lg font-semibold text-white mb-3">
                   Real Transformation
                 </h3>
