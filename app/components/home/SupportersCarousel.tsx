@@ -44,7 +44,7 @@ const supporters = [
 
 export function SupportersCarousel() {
   // Duplicate the array to create seamless infinite scroll
-  const duplicatedSupporters = [...supporters, ...supporters]
+  const duplicatedSupporters = [...supporters, ...supporters, ...supporters, ...supporters]
 
   return (
     <section className="py-12 sm:py-16 lg:py-20 theme-bg-dark relative overflow-hidden">
@@ -64,9 +64,8 @@ export function SupportersCarousel() {
       {/* Gradient Overlay */}
       {/* <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/10 via-transparent to-amber-500/10"></div> */}
 
-      {/* <div className="container mx-auto px-6 relative z-10"> */}
-        {/* Section Header */}
-        <div className="text-center mb-12">
+      {/* Section Header */}
+      <div className="text-center mb-12">
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold theme-text-light leading-tight mb-4">
             Organizations That 
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500">
@@ -80,7 +79,7 @@ export function SupportersCarousel() {
 
         {/* Infinite Carousel */}
         <div className="relative overflow-hidden group py-8">
-          <div className="flex animate-scroll group-hover:pause-animation">
+          <div className="flex animate-scroll-reverse group-hover:pause-animation">
             {duplicatedSupporters.map((supporter, index) => (
               <div
                 key={`${supporter.name}-${index}`}
@@ -100,10 +99,6 @@ export function SupportersCarousel() {
           </div>
         </div>
 
-        {/* Gradient Overlays for seamless effect */}
-        {/* <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-slate-800 to-transparent pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-slate-800 to-transparent pointer-events-none" /> */}
-      {/* </div> */}
     </section>
   )
 }
