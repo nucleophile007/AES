@@ -147,7 +147,7 @@ export default function TestimonialSection({
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto pr-2 space-y-6">
+      <div className="flex-1 overflow-y-auto pr-2 space-y-6 scrollbar-hide">
         {testimonial.content && (
           <div>
             <h3 className="text-yellow-400 font-semibold mb-2">
