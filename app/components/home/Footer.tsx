@@ -78,11 +78,11 @@ export default function Footer() {
             </h4>
             <ul className="space-y-3">
               {[
-                "Mathematics Tutoring",
-                "Physics Coaching", 
-                "Chemistry Lessons",
-                "Biology Tutoring",
-                "SAT Preparation"
+                { name: "Academic Tutoring", href: "/academictutoring" },
+                { name: "College Prep", href: "/collegeprep" },
+                { name: "AES Explorers", href: "/aes-explorers" },
+                { name: "AES Champions", href: "/aes-champions" },
+                { name: "AES Creatorverse", href: "/aes-creatorverse" }
               ].map((program, index) => (
                 <motion.li
                   key={index}
@@ -91,11 +91,11 @@ export default function Footer() {
                   transition={{ duration: 0.4, delay: index * 0.1 }}
                 >
                   <a 
-                    href="#" 
+                    href={program.href} 
                     className="group flex items-center space-x-2 text-base theme-text-muted hover:theme-text-light transition-all duration-300"
                   >
                     <ArrowRight className="h-4 w-4 text-yellow-400 group-hover:translate-x-1 transition-transform duration-300" />
-                    <span>{program}</span>
+                    <span>{program.name}</span>
                   </a>
                 </motion.li>
               ))}
