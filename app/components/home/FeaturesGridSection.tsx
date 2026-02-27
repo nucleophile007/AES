@@ -68,6 +68,12 @@ export default function FeaturesGridSection() {
           "Comprehensive preparation for standardized tests and college applications.",
         icon: <IconHeart size={28} stroke={1.5} />,
       },
+      {
+        title: "Interactive Learning",
+        description:
+          "Engaging hands-on activities and dynamic teaching methods that make learning exciting.",
+        icon: <IconTerminal2 size={28} stroke={1.5} />,
+      },
     ],
     []
   );
@@ -77,14 +83,6 @@ export default function FeaturesGridSection() {
   const [features, setFeatures] = React.useState<
     typeof allFeatures
   >([]);
-
-  React.useEffect(() => {
-    const shuffled = [...allFeatures]
-      .sort(() => 0.5 - Math.random())
-      .slice(0, 4);
-
-    setFeatures(shuffled);
-  }, [allFeatures]);
 
   /* ---------- Fetch Before/After ---------- */
 
@@ -104,6 +102,19 @@ export default function FeaturesGridSection() {
       console.log("Grade:", story.grade);
     }
   }, [story]);
+
+  // Set features based on whether story exists
+  React.useEffect(() => {
+    // If no story, show all 8 features, otherwise show random 4
+    if (!story) {
+      setFeatures(allFeatures);
+    } else {
+      const shuffled = [...allFeatures]
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 4);
+      setFeatures(shuffled);
+    }
+  }, [allFeatures, story]);
 
   /* ---------- Map School to Logo ---------- */
   const getSchoolLogo = (school: string | null | undefined): string => {
@@ -168,9 +179,9 @@ export default function FeaturesGridSection() {
         </div>
 
         {/* Layout */}
-        <div className="grid lg:grid-cols-2 gap-12 items-start">
-          {/* LEFT SIDE - FEATURES */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className={story ? "grid lg:grid-cols-2 gap-12 items-start" : ""}>
+          {/* FEATURES */}
+          <div className={story ? "grid grid-cols-1 sm:grid-cols-2 gap-6" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"}>
             {features.length > 0 &&
               features.map((feature, index) => (
                 <motion.div
@@ -194,13 +205,14 @@ export default function FeaturesGridSection() {
           </div>
 
           {/* RIGHT SIDE - BEFORE / AFTER STORY */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="h-full flex items-center max-h-500px"
-          >
-            {isLoading ? (
+          {story && (
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="h-full flex items-center max-h-500px"
+            >
+              {isLoading ? (
               <div className="relative w-full max-w-md mx-auto max-h-full">
                 {/* Skeleton Avatar - Fixed Outside */}
                 <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-20">
@@ -334,17 +346,9 @@ export default function FeaturesGridSection() {
                   </div>
                 </div>
               </div>
-            ) : (
-              <div className="w-full text-center bg-slate-800 border border-slate-700 rounded-3xl p-10 h-[calc(2*180px+24px)] flex flex-col items-center justify-center">
-                <h3 className="text-lg font-semibold text-white mb-3">
-                  Real Transformation
-                </h3>
-                <p className="text-slate-400 italic text-sm">
-                  No transformation story featured yet.
-                </p>
-              </div>
-            )}
-          </motion.div>
+            ) : null}
+            </motion.div>
+          )}
         </div>
       </div>
     </section>
