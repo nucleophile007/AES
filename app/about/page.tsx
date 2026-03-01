@@ -21,7 +21,6 @@ interface Mentor {
   specialties: string[];
   achievements?: string[];
   workplace?: string;
-  priority?: boolean;
 }
 
 // Fetch mentors data at build time
@@ -46,11 +45,10 @@ async function getMentors(): Promise<Mentor[]> {
       education: mentor.education,
       institution: mentor.institution,
       bio: mentor.bio,
-      experience: mentor.experience,
+      experience: mentor.experience || '',
       specialties: mentor.specialties,
       achievements: mentor.achievements || undefined,
       workplace: mentor.workplace || undefined,
-      priority: mentor.priority || undefined,
     })) as Mentor[];
   } catch (error) {
     console.error("Error fetching mentors:", error);

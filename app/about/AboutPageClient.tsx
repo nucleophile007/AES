@@ -23,7 +23,6 @@ interface Mentor {
   specialties: string[];
   achievements?: string[];
   workplace?: string;
-  priority?: boolean;
 }
 
 interface AboutPageClientProps {
