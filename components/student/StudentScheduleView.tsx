@@ -5,6 +5,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
 import {
   Dialog,
   DialogContent,
@@ -215,8 +216,14 @@ const StudentScheduleView: React.FC<StudentScheduleViewProps> = ({ studentEmail 
           <CardContent>
             <div className="space-y-4">
               {loading ? (
-                <div className="flex justify-center py-8">
-                  <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+                <div className="space-y-3 py-2">
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <div key={`student-upcoming-loading-${index}`} className="rounded-lg border p-3 space-y-2">
+                      <ShimmerSkeleton className="h-4 w-2/3" />
+                      <ShimmerSkeleton className="h-3 w-1/2" />
+                      <ShimmerSkeleton className="h-3 w-2/5" />
+                    </div>
+                  ))}
                 </div>
               ) : upcomingClasses.length > 0 ? (
                 upcomingClasses.map((event) => (
@@ -289,8 +296,9 @@ const StudentScheduleView: React.FC<StudentScheduleViewProps> = ({ studentEmail 
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="flex justify-center py-20">
-                <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+              <div className="space-y-3 py-4">
+                <ShimmerSkeleton className="h-6 w-40" />
+                <ShimmerSkeleton className="h-[500px] w-full rounded-lg" />
               </div>
             ) : (
               <div className="h-[500px]">

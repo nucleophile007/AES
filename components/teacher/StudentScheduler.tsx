@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -14,7 +14,18 @@ import {
   DialogFooter,
   DialogClose
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
 import {
   Select,
   SelectContent,
@@ -23,6 +34,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ToastAction } from "@/components/ui/toast";
+import { useToast } from "@/hooks/use-toast";
 import { CalendarIcon, PlusIcon, Trash2Icon, InfoIcon, RefreshCw, User, Clock, ExternalLink } from "lucide-react";
 
 // Setup the localizer by providing the moment object
@@ -34,6 +47,21 @@ interface Student {
   email: string;
   grade: string;
   program: string;
+}
+
+interface StudentGroupMember {
+  id: number;
+  name: string;
+  email: string;
+  grade: string;
+  program: string;
+}
+
+interface StudentGroup {
+  id: number;
+  name: string;
+  createdAt: string;
+  members: StudentGroupMember[];
 }
 
 interface ClassEvent {
@@ -72,17 +100,21 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
   teacherEmail,
   selectedStudentId
 }) => {
+  const { toast } = useToast();
   const [events, setEvents] = useState<ClassEvent[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
+  const [studentGroups, setStudentGroups] = useState<StudentGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [isAddEventDialogOpen, setIsAddEventDialogOpen] = useState(false);
+  const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<ClassEvent | null>(null);
   const [isViewEventDialogOpen, setIsViewEventDialogOpen] = useState(false);
 
   // Form state
   const [selectedStudent, setSelectedStudent] = useState<number | null>(selectedStudentId || null);
+  const [selectedGroupId, setSelectedGroupId] = useState<string>("");
   const [eventTitle, setEventTitle] = useState("");
   const [eventDescription, setEventDescription] = useState("");
   const [eventStartDate, setEventStartDate] = useState(""); // This is actually the event date
@@ -96,11 +128,23 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
   const [recurrencePattern, setRecurrencePattern] = useState("");
   const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const schedulerActionInFlightRef = useRef(false);
+  const pendingDeleteTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingDeletedEventRef = useRef<ClassEvent | null>(null);
+
+  const schedulerDraftStorageKey = `aes:teacher:schedule:draft:${teacherEmail}:${selectedStudent ?? "none"}`;
 
   // Define fetch functions before useEffect hooks
   const fetchStudents = useCallback(async () => {
     try {
+      if (!teacherEmail) {
+        setStudents([]);
+        setSelectedStudent(null);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
+      setError(null);
       const response = await fetch(`/api/teacher/students?teacherEmail=${encodeURIComponent(teacherEmail)}`, {
         headers: {
           'Content-Type': 'application/json',
@@ -109,11 +153,11 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
         },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch students');
-      }
-
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch students');
+      }
 
       if (data.students && Array.isArray(data.students)) {
         setStudents(data.students);
@@ -134,9 +178,42 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
     }
   }, [teacherEmail, selectedStudentId]);
 
+  const fetchStudentGroups = useCallback(async () => {
+    try {
+      if (!teacherEmail) {
+        setStudentGroups([]);
+        return;
+      }
+      const response = await fetch(`/api/teacher/student-groups?teacherEmail=${encodeURIComponent(teacherEmail)}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch student groups');
+      }
+
+      if (data.groups && Array.isArray(data.groups)) {
+        setStudentGroups(data.groups);
+      }
+    } catch (err: any) {
+      console.error('Error fetching student groups:', err);
+    }
+  }, [teacherEmail]);
+
   const fetchEvents = useCallback(async (studentId: number) => {
     try {
+      if (!teacherEmail) {
+        setEvents([]);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
+      setError(null);
       const response = await fetch(`/api/teacher/schedule?teacherEmail=${encodeURIComponent(teacherEmail)}&studentId=${studentId}`, {
         headers: {
           'Content-Type': 'application/json',
@@ -145,11 +222,11 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
         }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch schedule');
-      }
-
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch schedule');
+      }
 
       if (data.success && data.schedules) {
         // Convert schedule data to match calendar event format
@@ -206,6 +283,10 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
     fetchStudents();
   }, [fetchStudents]);
 
+  useEffect(() => {
+    fetchStudentGroups();
+  }, [fetchStudentGroups]);
+
   // Fetch events when selectedStudent changes
   useEffect(() => {
     if (selectedStudent) {
@@ -216,12 +297,28 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
   }, [selectedStudent, fetchEvents]);
 
   const handleAddEvent = async () => {
-    if (!selectedStudent || !eventTitle || !eventSubject || !eventStartDate || !eventStartTime || !eventEndTime) {
+    if (schedulerActionInFlightRef.current || isSubmitting) return;
+    if (!eventTitle || !eventSubject || !eventStartDate || !eventStartTime || !eventEndTime) {
       setError('Please fill in all required fields');
       return;
     }
 
+    const selectedGroup = selectedGroupId
+      ? studentGroups.find((group) => group.id.toString() === selectedGroupId)
+      : null;
+    const targetStudentIds = selectedGroup
+      ? selectedGroup.members.map((member) => member.id)
+      : selectedStudent
+        ? [selectedStudent]
+        : [];
+
+    if (targetStudentIds.length === 0) {
+      setError('Please select a student or group');
+      return;
+    }
+
     try {
+      schedulerActionInFlightRef.current = true;
       setIsSubmitting(true);
 
       const startDateTime = new Date(`${eventStartDate}T${eventStartTime}`);
@@ -230,6 +327,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
       if (endDateTime <= startDateTime) {
         setError('End time must be after start time');
         setIsSubmitting(false);
+        schedulerActionInFlightRef.current = false;
         return;
       }
 
@@ -240,7 +338,6 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
       const eventData = {
         title: eventTitle,
         description: eventDescription,
-        studentId: selectedStudent,
         subject: eventSubject,
         date: dateOnly.toISOString(), // Store just the date for easier querying
         startTime: eventStartTime, // Store just the time string (HH:MM)
@@ -255,52 +352,23 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
         recurrenceEndDate: isRecurring ? recurrenceEndDate : null
       };
 
-      const response = await fetch('/api/teacher/schedule', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
-        },
-        body: JSON.stringify(eventData)
-      });
+      const responses = await Promise.all(
+        targetStudentIds.map((studentId) =>
+          fetch('/api/teacher/schedule', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
+            },
+            body: JSON.stringify({ ...eventData, studentId })
+          })
+        )
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      const failedResponse = responses.find((response) => !response.ok);
+      if (failedResponse) {
+        const errorData = await failedResponse.json();
         throw new Error(errorData.error || 'Failed to save event');
-      }
-
-      // Refresh events
-      await fetchEvents(selectedStudent);
-
-      // Reset form
-      resetForm();
-      setIsAddEventDialogOpen(false);
-
-    } catch (err: any) {
-      console.error('Error saving event:', err);
-      setError(err.message || 'Failed to save event');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleDeleteEvent = async () => {
-    if (!selectedEvent) return;
-
-    try {
-      setIsSubmitting(true);
-
-      const response = await fetch(`/api/teacher/schedule?id=${selectedEvent.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete event');
       }
 
       // Refresh events
@@ -308,14 +376,103 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
         await fetchEvents(selectedStudent);
       }
 
+      // Reset form
+      clearSchedulerDraft();
+      resetForm();
+      setIsAddEventDialogOpen(false);
+      setSelectedGroupId("");
+
+    } catch (err: any) {
+      console.error('Error saving event:', err);
+      setError(err.message || 'Failed to save event');
+    } finally {
+      setIsSubmitting(false);
+      schedulerActionInFlightRef.current = false;
+    }
+  };
+
+  const handleDeleteEvent = async () => {
+    if (schedulerActionInFlightRef.current || isSubmitting) return;
+    if (!selectedEvent) return;
+    if (pendingDeleteTimeoutRef.current) return;
+    const eventToDelete = selectedEvent;
+
+    try {
+      setEvents((prev) => prev.filter((event) => event.id !== eventToDelete.id));
       setIsViewEventDialogOpen(false);
       setSelectedEvent(null);
+      pendingDeletedEventRef.current = eventToDelete;
+
+      const finalizeDelete = async () => {
+        try {
+          schedulerActionInFlightRef.current = true;
+          setIsSubmitting(true);
+          const response = await fetch(`/api/teacher/schedule?id=${eventToDelete.id}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
+            }
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to delete event');
+          }
+
+          if (selectedStudent) {
+            await fetchEvents(selectedStudent);
+          }
+        } catch (err: any) {
+          setEvents((prev) => {
+            if (prev.some((event) => event.id === eventToDelete.id)) return prev;
+            return [...prev, eventToDelete].sort((a, b) => a.start.getTime() - b.start.getTime());
+          });
+          setError(err.message || 'Failed to delete event');
+        } finally {
+          pendingDeleteTimeoutRef.current = null;
+          pendingDeletedEventRef.current = null;
+          schedulerActionInFlightRef.current = false;
+          setIsSubmitting(false);
+        }
+      };
+
+      pendingDeleteTimeoutRef.current = setTimeout(finalizeDelete, 5000);
+
+      toast({
+        title: "Class scheduled for delete",
+        description: "Undo within 5 seconds to keep it.",
+        action: (
+          <ToastAction
+            altText="Undo delete"
+            onClick={() => {
+              const pendingTimeout = pendingDeleteTimeoutRef.current;
+              const pendingEvent = pendingDeletedEventRef.current;
+              if (!pendingTimeout || !pendingEvent) return;
+
+              clearTimeout(pendingTimeout);
+              pendingDeleteTimeoutRef.current = null;
+              pendingDeletedEventRef.current = null;
+
+              setEvents((prev) => {
+                if (prev.some((event) => event.id === pendingEvent.id)) return prev;
+                return [...prev, pendingEvent].sort((a, b) => a.start.getTime() - b.start.getTime());
+              });
+
+              toast({
+                title: "Delete cancelled",
+                description: "Class restored.",
+              });
+            }}
+          >
+            Undo
+          </ToastAction>
+        ),
+      });
 
     } catch (err: any) {
       console.error('Error deleting event:', err);
       setError(err.message || 'Failed to delete event');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -337,11 +494,161 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
     setIsRecurring(false);
     setRecurrencePattern("");
     setRecurrenceEndDate("");
+    setSelectedGroupId("");
     setError(null);
   };
 
+  const clearSchedulerDraft = () => {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem(schedulerDraftStorageKey);
+  };
+
+  const restoreSchedulerDraft = () => {
+    if (typeof window === "undefined") return false;
+    try {
+      const raw = localStorage.getItem(schedulerDraftStorageKey);
+      if (!raw) return false;
+      const parsed = JSON.parse(raw) as Partial<{
+        selectedGroupId: string;
+        eventTitle: string;
+        eventDescription: string;
+        eventStartDate: string;
+        eventStartTime: string;
+        eventEndTime: string;
+        eventSubject: string;
+        eventProgram: string;
+        eventLocation: string;
+        eventMeetingLink: string;
+        isRecurring: boolean;
+        recurrencePattern: string;
+        recurrenceEndDate: string;
+      }>;
+
+      setSelectedGroupId(parsed.selectedGroupId || "");
+      setEventTitle(parsed.eventTitle || "");
+      setEventDescription(parsed.eventDescription || "");
+      setEventStartDate(parsed.eventStartDate || "");
+      setEventStartTime(parsed.eventStartTime || "");
+      setEventEndTime(parsed.eventEndTime || "");
+      setEventSubject(parsed.eventSubject || "");
+      setEventProgram(parsed.eventProgram || "");
+      setEventLocation(parsed.eventLocation || "");
+      setEventMeetingLink(parsed.eventMeetingLink || "");
+      setIsRecurring(Boolean(parsed.isRecurring));
+      setRecurrencePattern(parsed.recurrencePattern || "");
+      setRecurrenceEndDate(parsed.recurrenceEndDate || "");
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const hasUnsavedAddEventDraft = Boolean(
+    eventTitle.trim() ||
+    eventDescription.trim() ||
+    eventStartDate ||
+    eventStartTime ||
+    eventEndTime ||
+    eventSubject.trim() ||
+    eventProgram.trim() ||
+    eventLocation.trim() ||
+    eventMeetingLink.trim() ||
+    isRecurring ||
+    recurrencePattern ||
+    recurrenceEndDate ||
+    selectedGroupId
+  );
+
+  const handleAddDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && hasUnsavedAddEventDraft && !isSubmitting) {
+      setIsDiscardDialogOpen(true);
+      return;
+    }
+    if (!nextOpen) {
+      clearSchedulerDraft();
+      resetForm();
+    }
+    setIsAddEventDialogOpen(nextOpen);
+  };
+
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!(isAddEventDialogOpen && hasUnsavedAddEventDraft)) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [isAddEventDialogOpen, hasUnsavedAddEventDraft]);
+
+  useEffect(() => {
+    if (!(isAddEventDialogOpen && hasUnsavedAddEventDraft)) return;
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem(
+        schedulerDraftStorageKey,
+        JSON.stringify({
+          selectedGroupId,
+          eventTitle,
+          eventDescription,
+          eventStartDate,
+          eventStartTime,
+          eventEndTime,
+          eventSubject,
+          eventProgram,
+          eventLocation,
+          eventMeetingLink,
+          isRecurring,
+          recurrencePattern,
+          recurrenceEndDate,
+        })
+      );
+    } catch {
+      // Ignore storage errors.
+    }
+  }, [
+    isAddEventDialogOpen,
+    hasUnsavedAddEventDraft,
+    schedulerDraftStorageKey,
+    selectedGroupId,
+    eventTitle,
+    eventDescription,
+    eventStartDate,
+    eventStartTime,
+    eventEndTime,
+    eventSubject,
+    eventProgram,
+    eventLocation,
+    eventMeetingLink,
+    isRecurring,
+    recurrencePattern,
+    recurrenceEndDate,
+  ]);
+
+  const discardAddEventChanges = () => {
+    clearSchedulerDraft();
+    resetForm();
+    setIsAddEventDialogOpen(false);
+    setIsDiscardDialogOpen(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (pendingDeleteTimeoutRef.current) {
+        clearTimeout(pendingDeleteTimeoutRef.current);
+        pendingDeleteTimeoutRef.current = null;
+      }
+      pendingDeletedEventRef.current = null;
+    };
+  }, []);
+
   const openAddEventDialog = () => {
     resetForm();
+
+    if (restoreSchedulerDraft()) {
+      setIsAddEventDialogOpen(true);
+      return;
+    }
 
     // Set default values for today
     const today = new Date();
@@ -367,10 +674,20 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
 
   if (loading && !events.length && !students.length) {
     return (
-      <div className="flex items-center justify-center p-10">
-        <div className="flex flex-col items-center">
-          <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
-          <p className="mt-4">Loading scheduler...</p>
+      <div className="space-y-4 py-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="space-y-2">
+            <ShimmerSkeleton className="h-7 w-64" />
+            <ShimmerSkeleton className="h-4 w-72" />
+          </div>
+          <div className="flex gap-2">
+            <ShimmerSkeleton className="h-9 w-52 rounded-lg" />
+            <ShimmerSkeleton className="h-9 w-28 rounded-lg" />
+          </div>
+        </div>
+        <div className="rounded-lg border bg-white p-4 space-y-3">
+          <ShimmerSkeleton className="h-6 w-40" />
+          <ShimmerSkeleton className="h-[520px] w-full rounded-lg" />
         </div>
       </div>
     );
@@ -406,7 +723,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
 
           <Button
             onClick={openAddEventDialog}
-            disabled={!selectedStudent}
+            disabled={!selectedStudent && studentGroups.length === 0}
           >
             <PlusIcon className="h-4 w-4 mr-2" /> Add Class
           </Button>
@@ -417,31 +734,43 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
               if (selectedStudent) fetchEvents(selectedStudent);
               else fetchStudents();
             }}
+            disabled={loading}
           >
-            <RefreshCw className="h-4 w-4 mr-2" /> Refresh
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} /> Refresh
           </Button>
         </div>
       </div>
 
       {error && (
         <div className="bg-red-50 border-l-4 border-red-400 p-4 my-4">
-          <div className="flex items-start">
+          <div className="flex items-start gap-3">
             <div className="flex-shrink-0">
               <InfoIcon className="h-5 w-5 text-red-400" />
             </div>
-            <div className="ml-3">
+            <div className="flex-1">
               <p className="text-sm text-red-700">{error}</p>
             </div>
-            <div className="ml-auto pl-3">
-              <div className="-mx-1.5 -my-1.5">
-                <button
-                  onClick={() => setError(null)}
-                  className="inline-flex rounded-md p-1.5 text-red-500 hover:bg-red-100 focus:outline-none"
-                >
-                  <span className="sr-only">Dismiss</span>
-                  <span className="h-5 w-5">×</span>
-                </button>
-              </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (selectedStudent) {
+                    fetchEvents(selectedStudent);
+                  } else {
+                    fetchStudents();
+                  }
+                }}
+              >
+                Retry
+              </Button>
+              <button
+                onClick={() => setError(null)}
+                className="inline-flex rounded-md p-1.5 text-red-500 hover:bg-red-100 focus:outline-none"
+              >
+                <span className="sr-only">Dismiss</span>
+                <span className="h-5 w-5">×</span>
+              </button>
             </div>
           </div>
         </div>
@@ -497,13 +826,35 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
       )}
 
       {/* Add Event Dialog */}
-      <Dialog open={isAddEventDialogOpen} onOpenChange={setIsAddEventDialogOpen}>
+      <Dialog open={isAddEventDialogOpen} onOpenChange={handleAddDialogOpenChange}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Add New Class</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
+            <div>
+              <Label htmlFor="event-group" className="text-right">
+                Assign to Group
+              </Label>
+              <Select
+                value={selectedGroupId || "none"}
+                onValueChange={(value) => setSelectedGroupId(value === "none" ? "" : value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a group (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No group (use selected student)</SelectItem>
+                  {studentGroups.map((group) => (
+                    <SelectItem key={group.id} value={group.id.toString()}>
+                      {group.name} ({group.members.length})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div>
               <Label htmlFor="event-title" className="text-right">
                 Title <span className="text-red-500">*</span>
@@ -665,7 +1016,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddEventDialogOpen(false)}>
+            <Button variant="outline" onClick={() => handleAddDialogOpenChange(false)}>
               Cancel
             </Button>
             <Button
@@ -684,6 +1035,23 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={isDiscardDialogOpen} onOpenChange={setIsDiscardDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard schedule draft?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved schedule changes. Discarding will remove this draft.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Editing</AlertDialogCancel>
+            <AlertDialogAction onClick={discardAddEventChanges}>
+              Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* View/Edit Event Dialog */}
       <Dialog open={isViewEventDialogOpen} onOpenChange={setIsViewEventDialogOpen}>

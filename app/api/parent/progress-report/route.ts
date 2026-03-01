@@ -47,16 +47,19 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized: Student does not belong to this parent' }, { status: 403 });
         }
 
+        // Fetch only published and visible reports
         const reports = await prisma.progressReport.findMany({
             where: {
-                studentId: studentId
+                studentId: studentId,
+                isVisible: true,
+                status: 'published'
             },
             include: {
                 teacher: {
-                    select: { name: true }
+                    select: { name: true, email: true }
                 },
                 student: {
-                    select: { name: true }
+                    select: { name: true, email: true, grade: true }
                 }
             },
             orderBy: {

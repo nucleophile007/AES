@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
 import {
   FileText,
   CheckCircle,
@@ -46,24 +47,15 @@ const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
   studentName,
   studentEmail,
 }) => {
+  const { toast } = useToast();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Progress Report State
+  // Progress Report State (view-only)
   const [activeTab, setActiveTab] = useState("overview");
   const [progressReports, setProgressReports] = useState<any[]>([]);
-  const [isCreatingReport, setIsCreatingReport] = useState(false);
-
-  // New Report Form State
-  const [newReport, setNewReport] = useState({
-    overallProgress: "",
-    milestonesAchieved: "",
-    publications: "",
-    nextSteps: "" // We'll keep it simple text for now or JSON string
-  });
-  const [submittingReport, setSubmittingReport] = useState(false);
 
   // Parse JSON helper safely
   const safeParse = (str: string) => {
@@ -100,46 +92,6 @@ const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
       console.error("Error fetching student progress:", err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleCreateReport = async () => {
-    if (!newReport.overallProgress) return;
-
-    try {
-      setSubmittingReport(true);
-      const response = await fetch('/api/teacher/progress-report', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          studentId,
-          overallProgress: newReport.overallProgress,
-          milestonesAchieved: newReport.milestonesAchieved, // Storing as string or parse if needed
-          publications: newReport.publications,
-          nextSteps: newReport.nextSteps,
-          teacherEmail: null // Backend will infer from session or we can pass if context needed
-        })
-      });
-
-      if (response.ok) {
-        // Refresh
-        const reportsResponse = await fetch(`/api/teacher/progress-report?studentId=${studentId}`);
-        const reportsData = await reportsResponse.json();
-        if (reportsResponse.ok) setProgressReports(reportsData.reports || []);
-
-        setIsCreatingReport(false);
-        setNewReport({ overallProgress: "", milestonesAchieved: "", publications: "", nextSteps: "" });
-      } else {
-        const err = await response.json();
-        alert(err.error || "Failed to create report");
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Error creating report");
-    } finally {
-      setSubmittingReport(false);
     }
   };
 
@@ -341,74 +293,7 @@ const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="font-semibold text-lg">Progress Reports</h3>
-              <button
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors"
-                onClick={() => setIsCreatingReport(!isCreatingReport)}
-              >
-                {isCreatingReport ? 'Cancel' : 'Create New Report'}
-              </button>
-            </div>
-
-            {isCreatingReport && (
-              <Card className="border-blue-200 bg-blue-50/50">
-                <CardHeader>
-                  <CardTitle className="text-base text-blue-900">New Progress Report</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Overall Progress / Teacher&apos;s Note</label>
-                    <textarea
-                      className="w-full p-2 border rounded-md"
-                      rows={3}
-                      value={newReport.overallProgress}
-                      onChange={e => setNewReport({ ...newReport, overallProgress: e.target.value })}
-                      placeholder="Summary of student's progress..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Milestones Achieved</label>
-                    <textarea
-                      className="w-full p-2 border rounded-md"
-                      rows={2}
-                      value={newReport.milestonesAchieved}
-                      onChange={e => setNewReport({ ...newReport, milestonesAchieved: e.target.value })}
-                      placeholder="- Completed Module 1&#10;- Scored 90% in test"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Publications / Journals</label>
-                    <textarea
-                      className="w-full p-2 border rounded-md"
-                      rows={2}
-                      value={newReport.publications}
-                      onChange={e => setNewReport({ ...newReport, publications: e.target.value })}
-                      placeholder="List publications or papers..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Next Steps & Timelines</label>
-                    <textarea
-                      className="w-full p-2 border rounded-md"
-                      rows={3}
-                      value={newReport.nextSteps}
-                      onChange={e => setNewReport({ ...newReport, nextSteps: e.target.value })}
-                      placeholder="- Start Research Paper (March)&#10;- Submit Draft (April)"
-                    />
-                  </div>
-                  <div className="flex justify-end">
-                    <button
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 disabled:opacity-50"
-                      onClick={handleCreateReport}
-                      disabled={submittingReport || !newReport.overallProgress}
-                    >
-                      {submittingReport ? 'Issuing...' : 'Issue Report'}
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            <h3 className="font-semibold text-lg">Progress Reports (view only)</h3>
 
             <div className="space-y-4">
               {progressReports.length === 0 ? (
@@ -417,11 +302,23 @@ const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
                 </div>
               ) : (
                 progressReports.map((report) => (
-                  <Card key={report.id} className="hover:shadow-md transition-shadow">
+                  <Card key={report.id} className="hover:shadow-md transition-shadow border-2">
                     <CardHeader className="bg-gray-50/50 pb-2">
                       <div className="flex justify-between items-start">
                         <div>
-                          <CardTitle className="text-base text-gray-900">Progress Report</CardTitle>
+                          <div className="flex items-center gap-2">
+                            <CardTitle className="text-base text-gray-900">Progress Report</CardTitle>
+                            {report.status === 'draft' && (
+                              <span className="px-2 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded-full font-semibold">
+                                ⚠ Draft - Not Visible to Student
+                              </span>
+                            )}
+                            {report.status === 'published' && (
+                              <span className="px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded-full font-semibold">
+                                ✓ Published
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-gray-500">Issued on {new Date(report.reportDate).toLocaleDateString()} by {report.teacher?.name || 'Mentor'}</p>
                         </div>
                       </div>

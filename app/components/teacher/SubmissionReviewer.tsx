@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
 import { 
   FileText, 
   User, 
@@ -59,9 +60,12 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [filteredSubmissions, setFilteredSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [isGradeDialogOpen, setIsGradeDialogOpen] = useState(false);
   const [gradeData, setGradeData] = useState({ grade: '', feedback: '' });
+  const [isSavingGrade, setIsSavingGrade] = useState(false);
+  const gradeSubmitInFlightRef = useRef(false);
   const [filters, setFilters] = useState({
     status: 'all',
     assignment: 'all',
@@ -71,6 +75,7 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
   const fetchSubmissions = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const response = await fetch(`/api/teacher/submissions?teacherEmail=${encodeURIComponent(teacherEmail)}`);
       const data = await response.json();
 
@@ -81,6 +86,7 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
       setSubmissions(data.submissions);
     } catch (error) {
       console.error('Error fetching submissions:', error);
+      setLoadError(error instanceof Error ? error.message : "Failed to load submissions");
       toast({
         variant: "destructive",
         title: "Failed to load submissions",
@@ -142,9 +148,12 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
   };
 
   const submitGrade = async () => {
+    if (gradeSubmitInFlightRef.current || isSavingGrade) return;
     if (!selectedSubmission) return;
 
     try {
+      gradeSubmitInFlightRef.current = true;
+      setIsSavingGrade(true);
       const response = await fetch('/api/teacher/submissions', {
         method: 'PUT',
         headers: {
@@ -186,6 +195,9 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
         title: "Failed to grade submission",
         description: error instanceof Error ? error.message : "Please try again.",
       });
+    } finally {
+      setIsSavingGrade(false);
+      gradeSubmitInFlightRef.current = false;
     }
   };
 
@@ -225,7 +237,23 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
   ).map(id => submissions.find(s => s.assignment.id === id)?.assignment).filter(Boolean);
 
   if (loading) {
-    return <div className="flex justify-center p-8">Loading submissions...</div>;
+    return (
+      <div className="space-y-4 p-2">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <Card key={`submission-reviewer-loading-${index}`}>
+            <CardHeader className="space-y-3">
+              <ShimmerSkeleton className="h-5 w-1/3" />
+              <ShimmerSkeleton className="h-4 w-2/3" />
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <ShimmerSkeleton className="h-4 w-full" />
+              <ShimmerSkeleton className="h-4 w-5/6" />
+              <ShimmerSkeleton className="h-24 w-full rounded-lg" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
   }
 
   return (
@@ -233,10 +261,23 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
       {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Student Submissions</h2>
-        <Button onClick={fetchSubmissions} variant="outline">
+        <Button onClick={fetchSubmissions} variant="outline" disabled={loading || isSavingGrade}>
           Refresh
         </Button>
       </div>
+
+      {loadError && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm text-red-700">{loadError}</p>
+              <Button size="sm" variant="outline" onClick={fetchSubmissions}>
+                Retry
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filters */}
       <Card>
@@ -397,7 +438,7 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
 
                 {/* Actions */}
                 <div className="flex justify-end mt-4">
-                  <Button onClick={() => handleGrade(submission)}>
+                  <Button onClick={() => handleGrade(submission)} disabled={isSavingGrade}>
                     {submission.grade !== null ? 'Update Grade' : 'Grade Submission'}
                   </Button>
                 </div>
@@ -446,11 +487,11 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
-            <Button variant="outline" onClick={() => setIsGradeDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsGradeDialogOpen(false)} disabled={isSavingGrade}>
               Cancel
             </Button>
-            <Button onClick={submitGrade}>
-              Save Grade
+            <Button onClick={submitGrade} disabled={isSavingGrade}>
+              {isSavingGrade ? "Saving..." : "Save Grade"}
             </Button>
           </div>
         </DialogContent>

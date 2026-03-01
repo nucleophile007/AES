@@ -1,15 +1,27 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ShimmerSkeleton } from '@/components/ui/dashboard-loading-skeleton';
+import { useToast } from '@/hooks/use-toast';
 import {
   Download,
   ExternalLink,
@@ -90,8 +102,10 @@ interface ResourceLibraryProps {
 }
 
 export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) {
+  const { toast } = useToast();
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
+  const [resourcesError, setResourcesError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
@@ -100,6 +114,8 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
   const [submissions, setSubmissions] = useState<StudentSubmission[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
+  const [submissionsError, setSubmissionsError] = useState<string | null>(null);
+  const [viewingResourceIds, setViewingResourceIds] = useState<Set<number>>(new Set());
   
   // Submission form state
   const [submissionTitle, setSubmissionTitle] = useState('');
@@ -108,71 +124,188 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
   const [submissionFile, setSubmissionFile] = useState<File | null>(null);
   const [selectedTeachers, setSelectedTeachers] = useState<number[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submissionInFlightRef = useRef(false);
   const [showSubmissionDialog, setShowSubmissionDialog] = useState(false);
+  const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
 
-  // Fetch resources
-  useEffect(() => {
-    const fetchResources = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/student/resources?studentEmail=${encodeURIComponent(studentEmail)}`);
-        const data = await response.json();
-        
-        if (data.success) {
-          setResources(data.resources);
-        } else {
-          console.error('Failed to fetch resources:', data.error);
-        }
-      } catch (error) {
-        console.error('Error fetching resources:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const resetSubmissionForm = () => {
+    setSubmissionTitle('');
+    setSubmissionDescription('');
+    setSubmissionContent('');
+    setSubmissionFile(null);
+    setSelectedTeachers([]);
+  };
 
-    if (studentEmail) {
-      fetchResources();
+  const submissionDraftStorageKey = `aes:student:resource-submission:draft:${studentEmail}`;
+
+  const restoreSubmissionDraft = () => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem(submissionDraftStorageKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as {
+        title?: string;
+        description?: string;
+        content?: string;
+        teacherIds?: number[];
+      };
+      setSubmissionTitle(parsed.title || '');
+      setSubmissionDescription(parsed.description || '');
+      setSubmissionContent(parsed.content || '');
+      setSelectedTeachers(parsed.teacherIds || []);
+      setSubmissionFile(null);
+    } catch {
+      // Ignore malformed draft payloads.
     }
-  }, [studentEmail]);
+  };
 
-  // Fetch teachers and submissions
-  useEffect(() => {
-    const fetchTeachersAndSubmissions = async () => {
-      if (!studentEmail) return;
+  const clearSubmissionDraft = () => {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem(submissionDraftStorageKey);
+  };
+
+  const hasUnsavedSubmissionDraft = Boolean(
+    submissionTitle.trim() ||
+    submissionDescription.trim() ||
+    submissionContent.trim() ||
+    submissionFile ||
+    selectedTeachers.length > 0
+  );
+
+  const openSubmissionDialog = () => {
+    restoreSubmissionDraft();
+    setShowSubmissionDialog(true);
+  };
+
+  const discardSubmissionChanges = () => {
+    clearSubmissionDraft();
+    resetSubmissionForm();
+    setShowSubmissionDialog(false);
+    setIsDiscardDialogOpen(false);
+  };
+
+  const handleSubmissionDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && hasUnsavedSubmissionDraft && !isSubmitting) {
+      setIsDiscardDialogOpen(true);
+      return;
+    }
+    if (!nextOpen) {
+      clearSubmissionDraft();
+      resetSubmissionForm();
+    }
+    setShowSubmissionDialog(nextOpen);
+  };
+
+  const fetchResources = async () => {
+    if (!studentEmail) return;
+    try {
+      setLoading(true);
+      setResourcesError(null);
+      const response = await fetch(`/api/student/resources?studentEmail=${encodeURIComponent(studentEmail)}`);
+      const data = await response.json();
       
-      try {
-        setSubmissionsLoading(true);
-        
-        // Fetch teachers
-        const teachersResponse = await fetch(`/api/student/teachers?studentEmail=${encodeURIComponent(studentEmail)}`);
-        const teachersData = await teachersResponse.json();
-        
-        if (teachersData.success) {
-          setTeachers(teachersData.teachers);
-        }
-        
-        // Fetch submissions
-        const submissionsResponse = await fetch(`/api/student/submissions/resources?studentEmail=${encodeURIComponent(studentEmail)}`);
-        const submissionsData = await submissionsResponse.json();
-        
-        if (submissionsData.success) {
-          setSubmissions(submissionsData.submissions);
-        }
-      } catch (error) {
-        console.error('Error fetching teachers and submissions:', error);
-      } finally {
-        setSubmissionsLoading(false);
+      if (data.success) {
+        setResources(data.resources);
+      } else {
+        throw new Error(data.error || 'Failed to fetch resources');
       }
-    };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to fetch resources';
+      setResourcesError(message);
+      console.error('Error fetching resources:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!(showSubmissionDialog && hasUnsavedSubmissionDraft)) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [showSubmissionDialog, hasUnsavedSubmissionDraft]);
+
+  useEffect(() => {
+    if (!(showSubmissionDialog && hasUnsavedSubmissionDraft)) return;
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem(
+        submissionDraftStorageKey,
+        JSON.stringify({
+          title: submissionTitle,
+          description: submissionDescription,
+          content: submissionContent,
+          teacherIds: selectedTeachers,
+        })
+      );
+    } catch {
+      // Ignore storage errors.
+    }
+  }, [
+    showSubmissionDialog,
+    hasUnsavedSubmissionDraft,
+    submissionTitle,
+    submissionDescription,
+    submissionContent,
+    selectedTeachers,
+    submissionDraftStorageKey,
+  ]);
+
+  const fetchTeachersAndSubmissions = async () => {
+    if (!studentEmail) return;
+    
+    try {
+      setSubmissionsLoading(true);
+      setSubmissionsError(null);
+      
+      // Fetch teachers
+      const teachersResponse = await fetch(`/api/student/teachers?studentEmail=${encodeURIComponent(studentEmail)}`);
+      const teachersData = await teachersResponse.json();
+      
+      if (teachersData.success) {
+        setTeachers(teachersData.teachers);
+      } else {
+        throw new Error(teachersData.error || 'Failed to fetch teachers');
+      }
+      
+      // Fetch submissions
+      const submissionsResponse = await fetch(`/api/student/submissions/resources?studentEmail=${encodeURIComponent(studentEmail)}`);
+      const submissionsData = await submissionsResponse.json();
+      
+      if (submissionsData.success) {
+        setSubmissions(submissionsData.submissions);
+      } else {
+        throw new Error(submissionsData.error || 'Failed to fetch submissions');
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to fetch submissions';
+      setSubmissionsError(message);
+      console.error('Error fetching teachers and submissions:', error);
+    } finally {
+      setSubmissionsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!studentEmail) return;
+    fetchResources();
     fetchTeachersAndSubmissions();
-  }, [studentEmail]);
+  }, [studentEmail]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Mark resource as viewed
   const markAsViewed = async (resourceId: number) => {
     if (resources.find(r => r.id === resourceId)?.viewedAt) return;
+    if (viewingResourceIds.has(resourceId)) return;
     
     try {
+      setViewingResourceIds((prev) => {
+        const next = new Set(prev);
+        next.add(resourceId);
+        return next;
+      });
       await fetch('/api/student/resources/view', {
         method: 'POST',
         headers: {
@@ -192,15 +325,23 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
       ));
     } catch (error) {
       console.error('Error marking resource as viewed:', error);
+    } finally {
+      setViewingResourceIds((prev) => {
+        const next = new Set(prev);
+        next.delete(resourceId);
+        return next;
+      });
     }
   };
 
   // Handle submission creation
   const handleSubmission = async () => {
+    if (submissionInFlightRef.current || isSubmitting) return;
     if (!submissionTitle.trim() || selectedTeachers.length === 0) {
       return;
     }
 
+    submissionInFlightRef.current = true;
     setIsSubmitting(true);
     try {
       let fileUrl = null;
@@ -255,26 +396,35 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
       
       if (submissionData.success) {
         // Reset form
-        setSubmissionTitle('');
-        setSubmissionDescription('');
-        setSubmissionContent('');
-        setSubmissionFile(null);
-        setSelectedTeachers([]);
+        clearSubmissionDraft();
+        resetSubmissionForm();
         setShowSubmissionDialog(false);
         
         // Refresh submissions
-        const submissionsResponse = await fetch(`/api/student/submissions/resources?studentEmail=${encodeURIComponent(studentEmail)}`);
-        const refreshedData = await submissionsResponse.json();
-        if (refreshedData.success) {
-          setSubmissions(refreshedData.submissions);
-        }
+        await fetchTeachersAndSubmissions();
+        toast({
+          title: "Submission sent",
+          description: "Your work was submitted to the selected teachers.",
+          className: "border-green-500 bg-green-50 text-green-900",
+        });
       } else {
         console.error('Submission failed:', submissionData.error);
+        toast({
+          variant: "destructive",
+          title: "Submission failed",
+          description: submissionData.error || "Unable to submit right now. Please try again.",
+        });
       }
     } catch (error) {
       console.error('Error creating submission:', error);
+      toast({
+        variant: "destructive",
+        title: "Submission failed",
+        description: error instanceof Error ? error.message : "Unable to submit right now. Please try again.",
+      });
     } finally {
       setIsSubmitting(false);
+      submissionInFlightRef.current = false;
     }
   };
 
@@ -335,8 +485,20 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex justify-center items-center py-12">
-          <div className="text-gray-500">Loading resources...</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 py-2">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Card key={`resource-loading-${index}`}>
+              <CardHeader className="space-y-3">
+                <ShimmerSkeleton className="h-5 w-2/3" />
+                <ShimmerSkeleton className="h-4 w-full" />
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <ShimmerSkeleton className="h-4 w-1/2" />
+                <ShimmerSkeleton className="h-4 w-full" />
+                <ShimmerSkeleton className="h-9 w-full rounded-lg" />
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     );
@@ -385,6 +547,19 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
           </select>
         </div>
       </div>
+
+      {resourcesError && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm text-red-700">{resourcesError}</p>
+              <Button variant="outline" size="sm" onClick={fetchResources}>
+                Retry
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Resource Categories */}
       <Tabs defaultValue="assignment" className="space-y-6">
@@ -460,6 +635,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                       {resource.fileUrl && (
                         <Button
                           size="sm"
+                          disabled={viewingResourceIds.has(resource.id)}
                           onClick={() => {
                             markAsViewed(resource.id);
                             window.open(resource.fileUrl, '_blank');
@@ -474,6 +650,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                         <Button
                           size="sm"
                           variant="outline"
+                          disabled={viewingResourceIds.has(resource.id)}
                           onClick={() => {
                             markAsViewed(resource.id);
                             window.open(resource.linkUrl, '_blank');
@@ -560,6 +737,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                       {resource.fileUrl && (
                         <Button
                           size="sm"
+                          disabled={viewingResourceIds.has(resource.id)}
                           onClick={() => {
                             markAsViewed(resource.id);
                             window.open(resource.fileUrl, '_blank');
@@ -574,6 +752,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                         <Button
                           size="sm"
                           variant="outline"
+                          disabled={viewingResourceIds.has(resource.id)}
                           onClick={() => {
                             markAsViewed(resource.id);
                             window.open(resource.linkUrl, '_blank');
@@ -655,6 +834,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                       {resource.fileUrl && (
                         <Button
                           size="sm"
+                          disabled={viewingResourceIds.has(resource.id)}
                           onClick={() => {
                             markAsViewed(resource.id);
                             window.open(resource.fileUrl, '_blank');
@@ -669,6 +849,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                         <Button
                           size="sm"
                           variant="outline"
+                          disabled={viewingResourceIds.has(resource.id)}
                           onClick={() => {
                             markAsViewed(resource.id);
                             window.open(resource.linkUrl, '_blank');
@@ -694,10 +875,15 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
               <h3 className="text-lg font-semibold">Submit to Teachers</h3>
               <p className="text-sm text-gray-600">Share your work and get feedback from your teachers</p>
             </div>
-            
-            <Dialog open={showSubmissionDialog} onOpenChange={setShowSubmissionDialog}>
+
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={fetchTeachersAndSubmissions} disabled={submissionsLoading}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${submissionsLoading ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
+            <Dialog open={showSubmissionDialog} onOpenChange={handleSubmissionDialogOpenChange}>
               <DialogTrigger asChild>
-                <Button>
+                <Button onClick={openSubmissionDialog}>
                   <Plus className="h-4 w-4 mr-2" />
                   New Submission
                 </Button>
@@ -800,12 +986,38 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
+
+          {submissionsError && (
+            <Card className="border-red-200 bg-red-50">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm text-red-700">{submissionsError}</p>
+                  <Button variant="outline" size="sm" onClick={fetchTeachersAndSubmissions}>
+                    Retry
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           
           {/* Submissions List */}
           {submissionsLoading ? (
-            <div className="text-center py-8 text-gray-500">
-              Loading submissions...
+            <div className="space-y-4 py-2">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <Card key={`resource-submissions-loading-${index}`}>
+                  <CardHeader className="space-y-3">
+                    <ShimmerSkeleton className="h-5 w-1/2" />
+                    <ShimmerSkeleton className="h-4 w-1/3" />
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <ShimmerSkeleton className="h-4 w-full" />
+                    <ShimmerSkeleton className="h-4 w-5/6" />
+                    <ShimmerSkeleton className="h-20 w-full rounded-lg" />
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           ) : submissions.length === 0 ? (
             <div className="text-center py-12">
@@ -814,7 +1026,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
               <p className="text-gray-600 mb-4">
                 Start sharing your work with teachers to get feedback and guidance.
               </p>
-              <Button onClick={() => setShowSubmissionDialog(true)}>
+              <Button onClick={openSubmissionDialog}>
                 <Plus className="h-4 w-4 mr-2" />
                 Create First Submission
               </Button>
@@ -914,6 +1126,23 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
           )}
         </TabsContent>
       </Tabs>
+
+      <AlertDialog open={isDiscardDialogOpen} onOpenChange={setIsDiscardDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard submission draft?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes in this submission. Discarding will remove your draft.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Editing</AlertDialogCancel>
+            <AlertDialogAction onClick={discardSubmissionChanges}>
+              Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

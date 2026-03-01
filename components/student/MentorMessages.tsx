@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
 import { Send, User, RefreshCw, Wifi, WifiOff, Bell, BellOff, Check, CheckCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRealtimeMessages, Message } from "../../hooks/use-realtime-messages";
@@ -35,6 +36,7 @@ export default function MentorMessages({ studentId, studentEmail, studentName, o
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const sendInFlightRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const scrollAreaRef = React.useRef<HTMLDivElement>(null);
 
@@ -248,8 +250,10 @@ export default function MentorMessages({ studentId, studentEmail, studentName, o
 
   // Send a message
   const sendMessage = async () => {
+    if (sendInFlightRef.current || isSending) return;
     if (!newMessage.trim() || !selectedMentor) return;
     
+    sendInFlightRef.current = true;
     setIsSending(true);
     setError(null);
     
@@ -323,6 +327,7 @@ export default function MentorMessages({ studentId, studentEmail, studentName, o
       }, 5000);
     } finally {
       setIsSending(false);
+      sendInFlightRef.current = false;
     }
   };
 
@@ -342,9 +347,16 @@ export default function MentorMessages({ studentId, studentEmail, studentName, o
         </CardHeader>
         <CardContent>
           {isLoading && mentors.length === 0 ? (
-            <div className="flex items-center justify-center p-8">
-              <RefreshCw className="h-6 w-6 animate-spin mr-2" />
-              <span>Loading mentors...</span>
+            <div className="space-y-3 p-2">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={`mentor-loading-${index}`} className="flex items-center gap-3 p-2">
+                  <ShimmerSkeleton className="h-8 w-8 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <ShimmerSkeleton className="h-4 w-2/3" />
+                    <ShimmerSkeleton className="h-3 w-1/3" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : mentors.length === 0 ? (
             <div className="text-center p-8 text-gray-500">
@@ -454,11 +466,18 @@ export default function MentorMessages({ studentId, studentEmail, studentName, o
 
               <ScrollArea className="h-80 w-full p-4 border rounded-lg mb-4" ref={scrollAreaRef}>
                 {isLoading ? (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <div className="flex items-center gap-2">
-                      <RefreshCw className="h-6 w-6 animate-spin" />
-                      <span>Loading messages...</span>
-                    </div>
+                  <div className="space-y-3 p-2">
+                    {Array.from({ length: 4 }).map((_, index) => (
+                      <div
+                        key={`mentor-messages-loading-${index}`}
+                        className={`flex ${index % 2 === 0 ? 'justify-start' : 'justify-end'}`}
+                      >
+                        <div className="max-w-[75%] space-y-2">
+                          <ShimmerSkeleton className="h-4 w-56" />
+                          <ShimmerSkeleton className="h-4 w-40" />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : messages.length === 0 && !error ? (
                   <div className="flex items-center justify-center h-full text-gray-400">

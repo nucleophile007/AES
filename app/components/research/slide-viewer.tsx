@@ -187,6 +187,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import {
   ChevronLeft,
   ChevronRight,
@@ -262,15 +263,18 @@ export function SlideViewer({
      RENDER
   ---------------------------------------------*/
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto">
       {/* ================= MAIN SLIDE ================= */}
       <div className="relative bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
         <div className="aspect-video relative">
           {currentImage ? (
-            <img
+            <Image
               src={currentImage}
               alt={`Slide ${currentSlide + 1}`}
-              className="w-full h-full object-contain bg-black"
+              fill
+              unoptimized
+              sizes="(max-width: 1024px) 100vw, 1024px"
+              className="object-contain bg-black"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-slate-400">
@@ -349,10 +353,13 @@ export function SlideViewer({
                 }`}
             >
               <div className="aspect-video relative">
-                <img
+                <Image
                   src={slide.imagePath}
                   alt={`Slide ${index + 1}`}
-                  className={`w-full h-full object-cover ${
+                  fill
+                  unoptimized
+                  sizes="128px"
+                  className={`object-cover ${
                     locked ? "blur-sm grayscale" : ""
                   }`}
                 />

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { usePathname, useRouter } from "next/navigation";
 import { useRequireAuth } from "../../contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -31,6 +32,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -65,6 +76,7 @@ import { cn } from "@/lib/utils";
 import ResourceLibrary from "@/components/student/ResourceLibrary";
 import MentorMessages from "../../components/student/MentorMessages";
 import ProgressReportList from "@/components/common/ProgressReportList";
+import DashboardLoadingSkeleton, { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
 
 // Mock data - replace with actual API calls
 const mockUpcomingEvents = [
@@ -145,12 +157,21 @@ export default function StudentDashboard() {
   const [submissionText, setSubmissionText] = useState("");
   const [submissionFile, setSubmissionFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submissionInFlightRef = useRef(false);
+  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
+  const [isResubmitDialogOpen, setIsResubmitDialogOpen] = useState(false);
+  const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
+  const [pendingDiscardMode, setPendingDiscardMode] = useState<"submit" | "resubmit" | null>(null);
   const [isResubmitting, setIsResubmitting] = useState(false);
   const [resubmissionId, setResubmissionId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [messageUnreadCount, setMessageUnreadCount] = useState(0);
   const [error, setError] = useState("");
+  const [isUrlStateReady, setIsUrlStateReady] = useState(false);
+  const [authTimedOut, setAuthTimedOut] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
+  const pathname = usePathname();
 
   // Get student email from authenticated user
   const studentEmail = authUser?.email || "";
@@ -158,12 +179,17 @@ export default function StudentDashboard() {
   // Fetch data function
   const fetchData = async () => {
     if (!studentEmail) return;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
       setLoading(true);
+      setError("");
 
       // Fetch student dashboard data
-      const response = await fetch(`/api/student/dashboard?studentEmail=${encodeURIComponent(studentEmail)}`);
+      const response = await fetch(`/api/student/dashboard?studentEmail=${encodeURIComponent(studentEmail)}`, {
+        signal: controller.signal,
+      });
       const data = await response.json();
 
       if (!response.ok) {
@@ -175,13 +201,27 @@ export default function StudentDashboard() {
       setSubmissions(data.submissions);
 
       // Fetch progress reports
-      const reportsResponse = await fetch('/api/student/progress-report');
-      const reportsData = await reportsResponse.json();
-      if (reportsResponse.ok) {
-        setProgressReports(reportsData.reports || []);
+      try {
+        const reportsResponse = await fetch('/api/student/progress-report');
+        const reportsData = await reportsResponse.json();
+        console.log('Progress Reports Response:', reportsResponse.ok, reportsData);
+        if (reportsResponse.ok) {
+          setProgressReports(reportsData.reports || []);
+          console.log('Progress Reports Set:', reportsData.reports?.length || 0, 'reports');
+        } else {
+          console.error('Failed to fetch progress reports:', reportsData);
+        }
+      } catch (reportError) {
+        console.error('Error fetching progress reports:', reportError);
+        // Don't fail the whole dashboard if progress reports fail
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load dashboard data';
+      const message =
+        err instanceof DOMException && err.name === "AbortError"
+          ? "Dashboard load timed out. Please retry."
+          : err instanceof Error
+            ? err.message
+            : 'Failed to load dashboard data';
       setError(message);
       console.error("Error fetching data:", err);
       toast({
@@ -190,6 +230,7 @@ export default function StudentDashboard() {
         description: message,
       });
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   };
@@ -200,42 +241,216 @@ export default function StudentDashboard() {
     if (!authLoading && authUser && studentEmail) {
       fetchData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, authUser, studentEmail]);
 
+  useEffect(() => {
+    if (!authLoading) {
+      setAuthTimedOut(false);
+      return;
+    }
+    const timeoutId = setTimeout(() => {
+      setAuthTimedOut(true);
+    }, 15000);
+    return () => clearTimeout(timeoutId);
+  }, [authLoading]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (authUser && !studentEmail) {
+      setLoading(false);
+      setError("Unable to load your account email. Please log out and sign in again.");
+    }
+  }, [authLoading, authUser, studentEmail]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    const allowedTabs = new Set(["overview", "assignments", "submissions", "grades", "schedule", "progress", "resources", "messages"]);
+    if (tab && allowedTabs.has(tab)) {
+      setActiveTab(tab);
+    }
+    setIsUrlStateReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isUrlStateReady) return;
+    const params = new URLSearchParams(window.location.search);
+    params.set("tab", activeTab);
+    const query = params.toString();
+    const nextUrl = query ? `${pathname}?${query}` : pathname;
+    const currentUrl = `${pathname}${window.location.search}`;
+    if (nextUrl === currentUrl) return;
+    router.replace(nextUrl, { scroll: false });
+  }, [activeTab, isUrlStateReady, pathname, router]);
+
+  const hasUnsavedAssignmentDraft = Boolean(submissionText.trim() || submissionFile);
+
+  const getAssignmentDraftStorageKey = (mode: "submit" | "resubmit", assignmentId: number | null) =>
+    `aes:student:assignment-submission:draft:${studentEmail}:${mode}:${assignmentId ?? "none"}`;
+
+  const readAssignmentDraft = (mode: "submit" | "resubmit", assignmentId: number | null) => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = localStorage.getItem(getAssignmentDraftStorageKey(mode, assignmentId));
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as { text?: string };
+      return parsed.text || "";
+    } catch {
+      return null;
+    }
+  };
+
+  const clearAssignmentDraftStorage = (mode: "submit" | "resubmit", assignmentId: number | null) => {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem(getAssignmentDraftStorageKey(mode, assignmentId));
+  };
+
+  const resetAssignmentDraft = () => {
+    setSelectedAssignment(null);
+    setSubmissionText("");
+    setSubmissionFile(null);
+    setIsResubmitting(false);
+    setResubmissionId(null);
+  };
+
+  const openAssignmentDialog = (
+    assignment: Assignment,
+    mode: "submit" | "resubmit",
+    options?: { initialText?: string; submissionId?: number | null }
+  ) => {
+    const draftText = readAssignmentDraft(mode, assignment.id);
+    setSelectedAssignment(assignment);
+    setSubmissionText(draftText ?? options?.initialText ?? "");
+    setSubmissionFile(null);
+    setIsResubmitting(mode === "resubmit");
+    setResubmissionId(options?.submissionId ?? null);
+    if (mode === "submit") {
+      setIsSubmitDialogOpen(true);
+      setIsResubmitDialogOpen(false);
+    } else {
+      setIsResubmitDialogOpen(true);
+      setIsSubmitDialogOpen(false);
+    }
+  };
+
+  const discardAssignmentDraftChanges = () => {
+    const modeToDiscard = pendingDiscardMode || (isResubmitting ? "resubmit" : "submit");
+    clearAssignmentDraftStorage(modeToDiscard, selectedAssignment?.id ?? null);
+    setIsDiscardDialogOpen(false);
+    setPendingDiscardMode(null);
+    setIsSubmitDialogOpen(false);
+    setIsResubmitDialogOpen(false);
+    resetAssignmentDraft();
+  };
+
+  const handleAssignmentDialogOpenChange = (nextOpen: boolean, mode: "submit" | "resubmit") => {
+    if (!nextOpen && hasUnsavedAssignmentDraft && !isSubmitting) {
+      setPendingDiscardMode(mode);
+      setIsDiscardDialogOpen(true);
+      return;
+    }
+
+    if (!nextOpen) {
+      clearAssignmentDraftStorage(mode, selectedAssignment?.id ?? null);
+      setIsSubmitDialogOpen(false);
+      setIsResubmitDialogOpen(false);
+      resetAssignmentDraft();
+      return;
+    }
+
+    if (mode === "submit") {
+      setIsSubmitDialogOpen(true);
+      setIsResubmitDialogOpen(false);
+    } else {
+      setIsResubmitDialogOpen(true);
+      setIsSubmitDialogOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!((isSubmitDialogOpen || isResubmitDialogOpen) && hasUnsavedAssignmentDraft && selectedAssignment)) return;
+    if (typeof window === "undefined") return;
+    const mode: "submit" | "resubmit" = isResubmitting ? "resubmit" : "submit";
+    const storageKey = `aes:student:assignment-submission:draft:${studentEmail}:${mode}:${selectedAssignment.id}`;
+    try {
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify({ text: submissionText })
+      );
+    } catch {
+      // Ignore storage errors.
+    }
+  }, [
+    isSubmitDialogOpen,
+    isResubmitDialogOpen,
+    hasUnsavedAssignmentDraft,
+    selectedAssignment,
+    isResubmitting,
+    submissionText,
+    studentEmail,
+  ]);
+
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!((isSubmitDialogOpen || isResubmitDialogOpen) && hasUnsavedAssignmentDraft)) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [isSubmitDialogOpen, isResubmitDialogOpen, hasUnsavedAssignmentDraft]);
+
   // Early return for authentication loading
-  if (authLoading || !authUser) {
+  if (authLoading && !authTimedOut) {
+    return <DashboardLoadingSkeleton role="student" tab={activeTab} />;
+  }
+
+  if (authLoading && authTimedOut) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="flex items-center gap-2">
-          <RefreshCw className="h-6 w-6 animate-spin" />
-          <span>Loading...</span>
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full bg-gray-50">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-red-600 text-xl mb-4">Authentication is taking too long.</div>
+              <Button onClick={() => window.location.reload()}>Try Again</Button>
+            </div>
+          </div>
         </div>
-      </div>
+      </SidebarProvider>
     );
+  }
+
+  if (!authUser) {
+    return null;
   }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
-        return <Badge variant="outline" className="bg-gradient-to-r from-yellow-200 to-orange-200 text-yellow-800 border-2 border-yellow-400 font-bold shadow-md">⏳ Pending</Badge>;
+        return <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-300">Pending</Badge>;
       case "submitted":
-        return <Badge variant="outline" className="bg-gradient-to-r from-blue-200 to-cyan-200 text-blue-800 border-2 border-blue-400 font-bold shadow-md">✅ Submitted</Badge>;
+        return <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-300">Submitted</Badge>;
       case "graded":
-        return <Badge variant="outline" className="bg-gradient-to-r from-green-200 to-emerald-200 text-green-800 border-2 border-green-400 font-bold shadow-md">🎉 Graded</Badge>;
+        return <Badge variant="outline" className="bg-slate-900 text-white border-slate-900">Graded</Badge>;
       case "overdue":
-        return <Badge variant="outline" className="bg-gradient-to-r from-red-200 to-pink-200 text-red-800 border-2 border-red-400 font-bold shadow-md">⚠️ Overdue</Badge>;
+        return <Badge variant="destructive">Overdue</Badge>;
       case "active":
-        return <Badge variant="outline" className="bg-gradient-to-r from-purple-200 to-pink-200 text-purple-800 border-2 border-purple-400 font-bold shadow-md">✨ Active</Badge>;
+        return <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-300">Active</Badge>;
       case "completed":
-        return <Badge variant="outline" className="bg-gradient-to-r from-green-200 to-teal-200 text-green-800 border-2 border-green-400 font-bold shadow-md">🏆 Completed</Badge>;
+        return <Badge variant="outline" className="bg-slate-900 text-white border-slate-900">Completed</Badge>;
       default:
-        return <Badge variant="outline" className="bg-gradient-to-r from-gray-200 to-slate-200 text-gray-800 border-2 border-gray-400 font-bold">{status}</Badge>;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
   const handleSubmission = async () => {
+    if (submissionInFlightRef.current || isSubmitting) return;
     if (!selectedAssignment || !student) return;
+    const currentMode: "submit" | "resubmit" = isResubmitting ? "resubmit" : "submit";
+    const currentAssignmentId = selectedAssignment.id;
 
+    submissionInFlightRef.current = true;
     setIsSubmitting(true);
 
     try {
@@ -324,19 +539,18 @@ export default function StudentDashboard() {
           setSubmissions([submissionData.submission, ...submissions]);
         }
 
-        // Reset form
-        setSelectedAssignment(null);
-        setSubmissionText("");
-        setSubmissionFile(null);
-        setIsResubmitting(false);
-        setResubmissionId(null);
+        // Reset form and close dialogs
+        clearAssignmentDraftStorage(currentMode, currentAssignmentId);
+        setIsSubmitDialogOpen(false);
+        setIsResubmitDialogOpen(false);
+        resetAssignmentDraft();
 
         toast({
           title: isResubmitting ? "Submission updated" : "Assignment submitted",
           description: isResubmitting
             ? "Your updated work has been sent to your mentor."
             : "Your assignment has been submitted successfully.",
-          className: "border-green-500 bg-green-50 text-green-900",
+          className: "border-slate-300 bg-slate-100 text-slate-800",
         });
       } else {
         throw new Error(submissionData.error || 'Submission failed');
@@ -352,22 +566,8 @@ export default function StudentDashboard() {
       });
     } finally {
       setIsSubmitting(false);
+      submissionInFlightRef.current = false;
     }
-  };
-
-  const handleResubmission = async (submission: Submission) => {
-    if (!student) return;
-
-    // Find the corresponding assignment
-    const assignment = assignments.find(a => a.id === submission.assignmentId);
-    if (!assignment) return;
-
-    // Set up for resubmission
-    setSelectedAssignment(assignment);
-    setSubmissionText(submission.content || "");
-    setSubmissionFile(null); // Reset file, user will need to reupload
-    setIsResubmitting(true);
-    setResubmissionId(submission.id);
   };
 
   const sidebarItems = [
@@ -455,25 +655,65 @@ export default function StudentDashboard() {
   };
 
   const getGradeColor = (percentage: number) => {
-    if (percentage >= 90) return "text-green-600";
-    if (percentage >= 80) return "text-blue-600";
-    if (percentage >= 70) return "text-yellow-600";
-    return "text-red-600";
+    if (percentage >= 80) return "text-slate-900";
+    if (percentage >= 60) return "text-slate-700";
+    return "text-slate-500";
   };
 
+  const tabMeta: Record<string, { title: string; description: string; icon: React.ComponentType<{ className?: string }> }> = {
+    overview: {
+      title: "Overview",
+      description: "Snapshot of your assignments, grades, and upcoming work.",
+      icon: Home,
+    },
+    assignments: {
+      title: "Assignments",
+      description: "Track deadlines and submit coursework with clarity.",
+      icon: FileText,
+    },
+    submissions: {
+      title: "Submissions",
+      description: "Review your delivered work and teacher feedback.",
+      icon: Upload,
+    },
+    grades: {
+      title: "Grades",
+      description: "Monitor academic performance across all subjects.",
+      icon: Trophy,
+    },
+    schedule: {
+      title: "Schedule",
+      description: "Manage upcoming sessions and key academic events.",
+      icon: Calendar,
+    },
+    progress: {
+      title: "Progress",
+      description: "Follow your completion trends and progress reports.",
+      icon: BarChart3,
+    },
+    resources: {
+      title: "Resources",
+      description: "Access materials shared by your teachers.",
+      icon: BookOpen,
+    },
+    messages: {
+      title: "Messages",
+      description: "Stay connected with mentors and instructors.",
+      icon: MessageCircle,
+    },
+  };
+
+  const currentTabMeta = tabMeta[activeTab] || tabMeta.overview;
+  const gradedSubmissions = submissions.filter((submission) => submission.grade !== null && submission.grade !== undefined).length;
+  const quickMetrics = [
+    { label: "Active Assignments", value: assignments.filter((assignment) => assignment.status === "active").length, icon: FileText },
+    { label: "Pending", value: student?.stats?.pendingAssignments ?? 0, icon: Clock },
+    { label: "Graded", value: gradedSubmissions, icon: Trophy },
+    { label: "Unread Messages", value: messageUnreadCount, icon: MessageCircle },
+  ];
+
   if (loading) {
-    return (
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-gray-50">
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading student dashboard...</p>
-            </div>
-          </div>
-        </div>
-      </SidebarProvider>
-    );
+    return <DashboardLoadingSkeleton role="student" tab={activeTab} />;
   }
 
   if (error) {
@@ -507,20 +747,20 @@ export default function StudentDashboard() {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
-        <Sidebar variant="inset" className="border-r-2 border-purple-200 bg-gradient-to-b from-white via-pink-50/30 to-purple-50/30">
-          <SidebarHeader className="border-b-2 border-purple-200 p-4 bg-gradient-to-r from-pink-100 to-purple-100">
+      <div className="flex min-h-screen w-full bg-slate-100">
+        <Sidebar variant="inset" className="border-r border-slate-200/80 bg-white/90 backdrop-blur-sm">
+          <SidebarHeader className="border-b border-slate-200/80 bg-white p-4">
             <div className="flex items-center gap-3">
-              <Avatar className="h-12 w-12 border-2 border-purple-300 shadow-lg">
-                <AvatarFallback className="bg-gradient-to-br from-pink-400 via-purple-400 to-blue-400 text-white font-bold text-lg">
+              <Avatar className="h-12 w-12 border-2 border-slate-300">
+                <AvatarFallback className="bg-slate-900 text-white font-semibold">
                   {student.name.split(' ').map(n => n[0]).join('')}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-purple-900 truncate">
+                <p className="text-sm font-semibold text-slate-900 truncate">
                   {student.name}
                 </p>
-                <p className="text-xs text-purple-700 truncate font-medium">
+                <p className="text-xs text-slate-600 truncate">
                   {student.grade} • {student.schoolName}
                 </p>
               </div>
@@ -532,29 +772,21 @@ export default function StudentDashboard() {
               <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {sidebarItems.slice(0, 4).map((item, idx) => {
-                    const colors = [
-                      "from-pink-500 to-purple-500",
-                      "from-purple-500 to-blue-500",
-                      "from-blue-500 to-cyan-500",
-                      "from-green-500 to-teal-500"
-                    ];
+                  {sidebarItems.slice(0, 4).map((item) => {
                     return (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
                           isActive={item.isActive}
                           onClick={item.onClick}
                           className={cn(
-                            "w-full transition-all hover:scale-105",
-                            item.isActive
-                              ? `bg-gradient-to-r ${colors[idx]} text-white shadow-lg font-bold`
-                              : "hover:bg-gradient-to-r hover:from-pink-100 hover:to-purple-100 text-purple-700"
+                            "w-full rounded-md transition-colors hover:bg-slate-100",
+                            item.isActive && "bg-slate-900 text-white font-medium"
                           )}
                         >
-                          <item.icon className={cn("h-5 w-5", item.isActive ? "text-white" : "text-purple-600")} />
-                          <span className="font-semibold">{item.title}</span>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
                           {item.badge && (
-                            <SidebarMenuBadge className={item.isActive ? "bg-white text-purple-600" : "bg-purple-200 text-purple-800"}>
+                            <SidebarMenuBadge>
                               {item.badge}
                             </SidebarMenuBadge>
                           )}
@@ -572,28 +804,21 @@ export default function StudentDashboard() {
               <SidebarGroupLabel>Academic Tools</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {sidebarItems.slice(4, 7).map((item, idx) => {
-                    const colors = [
-                      "from-orange-500 to-red-500",
-                      "from-teal-500 to-green-500",
-                      "from-indigo-500 to-purple-500"
-                    ];
+                  {sidebarItems.slice(4, 7).map((item) => {
                     return (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
                           isActive={item.isActive}
                           onClick={item.onClick}
                           className={cn(
-                            "w-full transition-all hover:scale-105",
-                            item.isActive
-                              ? `bg-gradient-to-r ${colors[idx]} text-white shadow-lg font-bold`
-                              : "hover:bg-gradient-to-r hover:from-orange-100 hover:to-red-100 text-purple-700"
+                            "w-full rounded-md transition-colors hover:bg-slate-100",
+                            item.isActive && "bg-slate-900 text-white font-medium"
                           )}
                         >
-                          <item.icon className={cn("h-5 w-5", item.isActive ? "text-white" : "text-orange-600")} />
-                          <span className="font-semibold">{item.title}</span>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
                           {item.badge && (
-                            <SidebarMenuBadge className={item.isActive ? "bg-white text-orange-600" : "bg-orange-200 text-orange-800"}>
+                            <SidebarMenuBadge>
                               {item.badge}
                             </SidebarMenuBadge>
                           )}
@@ -611,27 +836,21 @@ export default function StudentDashboard() {
               <SidebarGroupLabel>Communication</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {sidebarItems.slice(7).map((item, idx) => {
-                    const colors = [
-                      "from-cyan-500 to-blue-500",
-                      "from-pink-500 to-rose-500"
-                    ];
+                  {sidebarItems.slice(7).map((item) => {
                     return (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
                           isActive={item.isActive}
                           onClick={item.onClick}
                           className={cn(
-                            "w-full transition-all hover:scale-105",
-                            item.isActive
-                              ? `bg-gradient-to-r ${colors[idx]} text-white shadow-lg font-bold`
-                              : "hover:bg-gradient-to-r hover:from-cyan-100 hover:to-blue-100 text-purple-700"
+                            "w-full rounded-md transition-colors hover:bg-slate-100",
+                            item.isActive && "bg-slate-900 text-white font-medium"
                           )}
                         >
-                          <item.icon className={cn("h-5 w-5", item.isActive ? "text-white" : "text-cyan-600")} />
-                          <span className="font-semibold">{item.title}</span>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
                           {item.badge && (
-                            <SidebarMenuBadge className={item.isActive ? "bg-white text-cyan-600" : "bg-cyan-200 text-cyan-800"}>
+                            <SidebarMenuBadge>
                               {item.badge}
                             </SidebarMenuBadge>
                           )}
@@ -644,11 +863,11 @@ export default function StudentDashboard() {
             </SidebarGroup>
           </SidebarContent>
 
-          <SidebarFooter className="border-t-2 border-purple-200 p-4 bg-gradient-to-r from-pink-50/50 to-purple-50/50">
+          <SidebarFooter className="border-t p-4">
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton className="hover:bg-gradient-to-r hover:from-purple-100 hover:to-pink-100 text-purple-700 font-semibold transition-all hover:scale-105">
-                  <Settings className="h-5 w-5 text-purple-600" />
+                <SidebarMenuButton>
+                  <Settings className="h-4 w-4" />
                   <span>Settings</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -666,9 +885,9 @@ export default function StudentDashboard() {
                       window.location.href = '/';
                     }
                   }}
-                  className="text-red-600 hover:text-red-700 hover:bg-gradient-to-r hover:from-red-100 hover:to-pink-100 font-semibold transition-all hover:scale-105"
+                  className="rounded-md text-destructive hover:text-destructive hover:bg-destructive/10"
                 >
-                  <LogOut className="h-5 w-5" />
+                  <LogOut className="h-4 w-4" />
                   <span>Logout</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -677,25 +896,39 @@ export default function StudentDashboard() {
         </Sidebar>
 
         <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b-2 border-purple-200 bg-gradient-to-r from-pink-100 via-purple-100 to-blue-100 px-4 shadow-sm">
-            <SidebarTrigger className="-ml-1 text-purple-700 hover:text-purple-900" />
-            <Separator orientation="vertical" className="mr-2 h-4 bg-purple-300" />
-            <div className="flex-1">
-              <h1 className="text-lg font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
-                🎓 Student Dashboard
-              </h1>
+          <header className="sticky top-0 z-10 border-b border-slate-200/70 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+            <div className="flex min-h-16 items-center gap-2 px-4 md:px-6">
+              <SidebarTrigger className="-ml-1" />
+              <Separator orientation="vertical" className="mr-2 h-4" />
+              <div className="flex-1">
+                <h1 className="text-lg font-semibold text-slate-900">
+                  Student Dashboard
+                </h1>
+              </div>
+              <Badge variant="outline" className="hidden md:inline-flex border-slate-300 bg-slate-100 text-slate-700">
+                {currentTabMeta.title}
+              </Badge>
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-5 w-5" />
+                {messageUnreadCount > 0 && (
+                  <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500" />
+                )}
+              </Button>
             </div>
-            <Button variant="ghost" size="sm" className="hover:bg-purple-200 rounded-full">
-              <Bell className="h-5 w-5 text-purple-600" />
-            </Button>
           </header>
 
-          <div className="flex-1 overflow-auto p-6">
+          <div className="flex-1 overflow-auto p-4 md:p-6">
             {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="flex items-center gap-2">
-                  <RefreshCw className="h-6 w-6 animate-spin" />
-                  <span>Loading dashboard...</span>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <div key={`dashboard-tab-loading-${index}`} className="rounded-xl border bg-white p-4 space-y-3">
+                      <ShimmerSkeleton className="h-5 w-2/3" />
+                      <ShimmerSkeleton className="h-4 w-full" />
+                      <ShimmerSkeleton className="h-4 w-5/6" />
+                      <ShimmerSkeleton className="h-32 w-full rounded-lg" />
+                    </div>
+                  ))}
                 </div>
               </div>
             ) : error ? (
@@ -714,189 +947,166 @@ export default function StudentDashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
+                className="space-y-6"
               >
+                <Card className="border border-slate-200/80 bg-white shadow-sm">
+                  <CardHeader className="pb-4">
+                    <div className="space-y-1">
+                      <CardTitle className="flex items-center gap-2 text-xl text-slate-900">
+                        <currentTabMeta.icon className="h-5 w-5 text-slate-700" />
+                        {currentTabMeta.title}
+                      </CardTitle>
+                      <CardDescription className="text-sm text-slate-600">
+                        {currentTabMeta.description}
+                      </CardDescription>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                      {quickMetrics.map((metric) => (
+                        <div key={metric.label} className="rounded-xl border border-slate-200/70 bg-white p-4 shadow-sm">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{metric.label}</p>
+                            <metric.icon className="h-4 w-4 text-slate-600" />
+                          </div>
+                          <p className="mt-2 text-2xl font-semibold text-slate-900">{metric.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
                 {activeTab === "overview" && (
                   <div className="space-y-6">
-                    {/* Welcome Banner */}
                     <motion.div
-                      initial={{ opacity: 0, y: -20 }}
+                      initial={{ opacity: 0, y: -14 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 p-6 text-white shadow-xl"
+                      className="relative overflow-hidden rounded-2xl border border-slate-300 bg-slate-900 p-6 text-white shadow-sm"
                     >
-                      <div className="absolute top-0 right-0 text-6xl opacity-20">🎉</div>
-                      <div className="relative z-10">
-                        <h2 className="text-2xl font-bold mb-2">Hey {student.name.split(' ')[0]}! 👋</h2>
-                        <p className="text-pink-100">Ready to learn something awesome today?</p>
+                      <div className="absolute -right-12 -top-12 h-36 w-36 rounded-full bg-white/10" />
+                      <div className="absolute -bottom-10 right-20 h-24 w-24 rounded-full bg-white/5" />
+                      <div className="relative z-10 flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                          <h2 className="text-2xl font-semibold">Welcome back, {student.name.split(" ")[0]}</h2>
+                          <p className="mt-1 text-sm text-white/85">
+                            Keep momentum today. Review priorities, complete pending work, and track your progress.
+                          </p>
+                        </div>
+                        <Button
+                          variant="secondary"
+                          className="border border-white/30 bg-white/10 text-white hover:bg-white/20"
+                          onClick={() => setActiveTab("assignments")}
+                        >
+                          <ChevronRight className="mr-2 h-4 w-4" />
+                          Go to Assignments
+                        </Button>
                       </div>
                     </motion.div>
 
-                    {/* Quick Stats */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.1 }}
-                        whileHover={{ scale: 1.05, rotate: 2 }}
-                      >
-                        <Card className="border-2 border-blue-300 bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-xl transition-all">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+                      {[
+                        {
+                          label: "Open Assignments",
+                          value: assignments.filter((assignment) => assignment.status === "active").length,
+                          helper: "Needs submission",
+                          icon: FileText,
+                        },
+                        {
+                          label: "Completed",
+                          value: submissions.filter((submission) => submission.grade !== null && submission.grade !== undefined).length,
+                          helper: "Already graded",
+                          icon: CheckCircle,
+                        },
+                        {
+                          label: "Average Grade",
+                          value: submissions.filter((submission) => submission.grade !== null && submission.grade !== undefined).length > 0
+                            ? `${Math.round(submissions
+                              .filter((submission) => submission.grade !== null && submission.grade !== undefined)
+                              .reduce((acc, submission) => acc + (submission.grade || 0), 0) /
+                              submissions.filter((submission) => submission.grade !== null && submission.grade !== undefined).length)}%`
+                            : "N/A",
+                          helper: "Across graded work",
+                          icon: TrendingUp,
+                        },
+                        {
+                          label: "Pending Review",
+                          value: submissions.filter((submission) => submission.grade === null || submission.grade === undefined).length,
+                          helper: "Awaiting teacher feedback",
+                          icon: Clock,
+                        },
+                      ].map((item) => (
+                        <Card key={item.label} className="border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
                           <CardContent className="p-5">
-                            <div className="flex items-center gap-3">
-                              <div className="p-3 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl shadow-lg">
-                                <FileText className="h-6 w-6 text-white" />
-                              </div>
+                            <div className="flex items-start justify-between">
                               <div>
-                                <p className="text-sm font-semibold text-blue-700">Active Assignments</p>
-                                <p className="text-3xl font-bold text-blue-900">{assignments.filter(a => a.status === "active").length}</p>
+                                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{item.label}</p>
+                                <p className="mt-2 text-3xl font-semibold text-slate-900">{item.value}</p>
+                                <p className="mt-1 text-xs text-slate-500">{item.helper}</p>
+                              </div>
+                              <div className="rounded-xl border border-slate-300 bg-slate-100 p-2.5">
+                                <item.icon className="h-5 w-5 text-slate-700" />
                               </div>
                             </div>
                           </CardContent>
                         </Card>
-                      </motion.div>
-
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.2 }}
-                        whileHover={{ scale: 1.05, rotate: -2 }}
-                      >
-                        <Card className="border-2 border-green-300 bg-gradient-to-br from-green-50 to-green-100 hover:shadow-xl transition-all">
-                          <CardContent className="p-5">
-                            <div className="flex items-center gap-3">
-                              <div className="p-3 bg-gradient-to-br from-green-400 to-green-600 rounded-xl shadow-lg">
-                                <Trophy className="h-6 w-6 text-white" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-semibold text-green-700">Completed 🎉</p>
-                                <p className="text-3xl font-bold text-green-900">{submissions.filter(s => s.grade !== null && s.grade !== undefined).length}</p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.3 }}
-                        whileHover={{ scale: 1.05, rotate: 2 }}
-                      >
-                        <Card className="border-2 border-purple-300 bg-gradient-to-br from-purple-50 to-purple-100 hover:shadow-xl transition-all">
-                          <CardContent className="p-5">
-                            <div className="flex items-center gap-3">
-                              <div className="p-3 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl shadow-lg">
-                                <Star className="h-6 w-6 text-white" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-semibold text-purple-700">Average Grade</p>
-                                <p className="text-3xl font-bold text-purple-900">
-                                  {submissions.filter(s => s.grade !== null && s.grade !== undefined).length > 0
-                                    ? Math.round(submissions.filter(s => s.grade !== null && s.grade !== undefined)
-                                      .reduce((acc, s) => acc + (s.grade || 0), 0) /
-                                      submissions.filter(s => s.grade !== null && s.grade !== undefined).length) + '%'
-                                    : 'N/A'}
-                                </p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.4 }}
-                        whileHover={{ scale: 1.05, rotate: -2 }}
-                      >
-                        <Card className="border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-orange-100 hover:shadow-xl transition-all">
-                          <CardContent className="p-5">
-                            <div className="flex items-center gap-3">
-                              <div className="p-3 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl shadow-lg">
-                                <Award className="h-6 w-6 text-white" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-semibold text-orange-700">Achievements</p>
-                                <p className="text-3xl font-bold text-orange-900">⭐</p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
+                      ))}
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      {/* Recent Assignments */}
-                      <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.5 }}
-                      >
-                        <Card className="border-2 border-pink-200 bg-gradient-to-br from-pink-50 to-white hover:shadow-xl transition-all">
-                          <CardHeader className="bg-gradient-to-r from-pink-100 to-purple-100 rounded-t-lg">
-                            <CardTitle className="flex items-center gap-2 text-purple-800">
-                              <FileText className="h-6 w-6 text-pink-600" />
-                              📝 Recent Assignments
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="p-4">
-                            <div className="space-y-3">
-                              {assignments.slice(0, 3).map((assignment, idx) => (
-                                <motion.div
-                                  key={assignment.id}
-                                  initial={{ opacity: 0, y: 10 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  transition={{ delay: 0.6 + idx * 0.1 }}
-                                  whileHover={{ scale: 1.02, x: 5 }}
-                                  className="flex items-center justify-between p-4 border-2 border-pink-200 rounded-xl bg-white hover:bg-gradient-to-r hover:from-pink-50 hover:to-purple-50 transition-all cursor-pointer"
-                                >
-                                  <div className="flex-1">
-                                    <p className="font-bold text-sm text-gray-800">{assignment.title}</p>
-                                    <p className="text-xs text-gray-600 mt-1">{assignment.subject} • Due {assignment.dueDate}</p>
-                                  </div>
-                                  {getStatusBadge(assignment.status)}
-                                </motion.div>
-                              ))}
+                    <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
+                      <Card className="xl:col-span-3 border border-slate-200 bg-white shadow-sm">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-lg text-slate-900">Recent Assignments</CardTitle>
+                          <CardDescription>Track latest coursework and due dates.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          {assignments.length === 0 ? (
+                            <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-500">
+                              No assignments available yet.
                             </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
+                          ) : (
+                            assignments.slice(0, 5).map((assignment) => (
+                              <div key={assignment.id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3">
+                                <div className="min-w-0">
+                                  <p className="truncate text-sm font-semibold text-slate-900">{assignment.title}</p>
+                                  <p className="text-xs text-slate-500">{assignment.subject} • Due {assignment.dueDate}</p>
+                                </div>
+                                {getStatusBadge(assignment.status)}
+                              </div>
+                            ))
+                          )}
+                        </CardContent>
+                      </Card>
 
-                      {/* Upcoming Events */}
-                      <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.5 }}
-                      >
-                        <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white hover:shadow-xl transition-all">
-                          <CardHeader className="bg-gradient-to-r from-blue-100 to-cyan-100 rounded-t-lg">
-                            <CardTitle className="flex items-center gap-2 text-blue-800">
-                              <Calendar className="h-6 w-6 text-blue-600" />
-                              📅 Upcoming Events
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="p-4">
-                            <div className="space-y-3">
-                              {assignments.slice(0, 3).map((assignment, idx) => (
-                                <motion.div
-                                  key={assignment.id}
-                                  initial={{ opacity: 0, y: 10 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  transition={{ delay: 0.6 + idx * 0.1 }}
-                                  whileHover={{ scale: 1.02, x: 5 }}
-                                  className="flex items-center gap-3 p-4 border-2 border-blue-200 rounded-xl bg-white hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 transition-all cursor-pointer"
-                                >
-                                  <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                                    <Calendar className="h-7 w-7 text-white" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className="font-bold text-sm text-gray-800">{assignment.title}</p>
-                                    <p className="text-xs text-gray-600 mt-1">Due {assignment.dueDate}</p>
-                                  </div>
-                                </motion.div>
-                              ))}
+                      <Card className="xl:col-span-2 border border-slate-200 bg-white shadow-sm">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-lg text-slate-900">Upcoming Timeline</CardTitle>
+                          <CardDescription>What is coming next in your schedule.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          {mockUpcomingEvents.map((event) => (
+                            <div key={event.id} className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <p className="text-sm font-semibold text-slate-900">{event.title}</p>
+                                  <p className="mt-1 text-xs text-slate-500">
+                                    {new Date(event.date).toLocaleDateString()} at {event.time}
+                                  </p>
+                                </div>
+                                <Badge variant="outline" className="border-slate-300 bg-slate-100 text-slate-700">
+                                  {event.type}
+                                </Badge>
+                              </div>
                             </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
+                          ))}
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => setActiveTab("schedule")}
+                          >
+                            View Full Schedule
+                          </Button>
+                        </CardContent>
+                      </Card>
                     </div>
                   </div>
                 )}
@@ -904,8 +1114,8 @@ export default function StudentDashboard() {
                 {activeTab === "assignments" && (
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
-                      <h2 className="text-3xl font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
-                        📚 Assignments
+                      <h2 className="text-2xl font-semibold text-slate-900">
+                        Assignment Workspace
                       </h2>
                       <div className="flex gap-2">
                         <Button
@@ -934,9 +1144,9 @@ export default function StudentDashboard() {
                             key={assignment.id}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            whileHover={{ scale: 1.02 }}
+                            whileHover={{ y: -2 }}
                           >
-                            <Card className="border-2 border-purple-200 bg-gradient-to-br from-white via-pink-50/30 to-purple-50/30 hover:shadow-xl transition-all">
+                            <Card className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
                               <CardContent className="p-6">
                                 <div className="flex items-start justify-between">
                                   <div className="flex-1">
@@ -949,8 +1159,8 @@ export default function StudentDashboard() {
                                     {/* Resource indicator */}
                                     {assignment.resources && assignment.resources.length > 0 && (
                                       <div className="flex items-center gap-2 mb-3">
-                                        <BookOpen className="h-4 w-4 text-blue-500" />
-                                        <span className="text-sm text-blue-600">
+                                        <BookOpen className="h-4 w-4 text-slate-500" />
+                                        <span className="text-sm text-slate-600">
                                           {assignment.resources.length} resource{assignment.resources.length !== 1 ? 's' : ''} available
                                         </span>
                                         <Button
@@ -986,7 +1196,7 @@ export default function StudentDashboard() {
                                           Deadline passed
                                         </span>
                                       ) : (
-                                        <span className="flex items-center gap-1 text-green-600">
+                                        <span className="flex items-center gap-1 text-slate-700">
                                           <CheckCircle className="h-4 w-4" />
                                           Still accepting submissions
                                         </span>
@@ -1003,18 +1213,19 @@ export default function StudentDashboard() {
                                   <div className="flex flex-col gap-2">
                                     {/* Submit button for new assignments */}
                                     {!existingSubmission && !deadlinePassed && (
-                                      <Dialog>
+                                      <Dialog
+                                        open={isSubmitDialogOpen && selectedAssignment?.id === assignment.id && !isResubmitting}
+                                        onOpenChange={(nextOpen) => handleAssignmentDialogOpenChange(nextOpen, "submit")}
+                                      >
                                         <DialogTrigger asChild>
                                           <Button
                                             onClick={() => {
-                                              setSelectedAssignment(assignment);
-                                              setIsResubmitting(false);
-                                              setResubmissionId(null);
+                                              openAssignmentDialog(assignment, "submit");
                                             }}
-                                            className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold shadow-lg hover:scale-105 transition-all"
+                                            className="bg-brand-blue text-white hover:bg-brand-blue/90"
                                           >
                                             <Send className="h-4 w-4 mr-2" />
-                                            Submit Assignment 🚀
+                                            Submit Assignment
                                           </Button>
                                         </DialogTrigger>
                                         <DialogContent className="max-w-2xl">
@@ -1069,28 +1280,30 @@ export default function StudentDashboard() {
 
                                     {/* Resubmit button for submitted assignments */}
                                     {canResubmitAssignment && (
-                                      <Dialog>
+                                      <Dialog
+                                        open={isResubmitDialogOpen && selectedAssignment?.id === assignment.id && isResubmitting}
+                                        onOpenChange={(nextOpen) => handleAssignmentDialogOpenChange(nextOpen, "resubmit")}
+                                      >
                                         <DialogTrigger asChild>
                                           <Button
                                             variant="outline"
                                             onClick={() => {
-                                              setSelectedAssignment(assignment);
-                                              setSubmissionText(existingSubmission.content || "");
-                                              setSubmissionFile(null);
-                                              setIsResubmitting(true);
-                                              setResubmissionId(existingSubmission.id);
+                                              openAssignmentDialog(assignment, "resubmit", {
+                                                initialText: existingSubmission.content || "",
+                                                submissionId: existingSubmission.id,
+                                              });
                                             }}
-                                            className="border-2 border-orange-400 bg-gradient-to-r from-orange-50 to-yellow-50 hover:from-orange-100 hover:to-yellow-100 text-orange-700 font-bold hover:scale-105 transition-all"
+                                            className="border-slate-300 text-slate-700 hover:bg-slate-50"
                                           >
                                             <RefreshCw className="h-4 w-4 mr-2" />
-                                            Resubmit 🔄
+                                            Resubmit
                                           </Button>
                                         </DialogTrigger>
                                         <DialogContent className="max-w-2xl">
                                           <DialogHeader>
                                             <DialogTitle>Resubmit Assignment: {selectedAssignment?.title}</DialogTitle>
-                                            <p className="text-sm text-orange-600 bg-orange-50 p-3 rounded-lg mt-2">
-                                              ⚠️ Your previous submission will be replaced with this new one.
+                                            <p className="text-sm text-slate-600 bg-slate-100 p-3 rounded-lg mt-2">
+                                              Your previous submission will be replaced with this new one.
                                             </p>
                                           </DialogHeader>
                                           <div className="space-y-4">
@@ -1142,7 +1355,7 @@ export default function StudentDashboard() {
                                     {/* Status indicators for completed/graded submissions */}
                                     {existingSubmission && existingSubmission.grade !== undefined && (
                                       <div className="text-center">
-                                        <Badge variant="secondary" className="bg-green-100 text-green-800">
+                                        <Badge variant="secondary" className="bg-slate-200 text-slate-800">
                                           <Trophy className="h-3 w-3 mr-1" />
                                           Graded: {existingSubmission.grade}/{assignment.totalPoints}
                                         </Badge>
@@ -1171,8 +1384,8 @@ export default function StudentDashboard() {
                 {activeTab === "submissions" && (
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
-                      <h2 className="text-3xl font-bold bg-gradient-to-r from-green-600 via-teal-600 to-blue-600 bg-clip-text text-transparent">
-                        ✨ My Submissions
+                      <h2 className="text-2xl font-semibold text-slate-900">
+                        Submission History
                       </h2>
                     </div>
 
@@ -1186,9 +1399,9 @@ export default function StudentDashboard() {
                             key={submission.id}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            whileHover={{ scale: 1.01 }}
+                            whileHover={{ y: -2 }}
                           >
-                            <Card className="border-2 border-green-200 bg-gradient-to-br from-white via-green-50/30 to-teal-50/30 hover:shadow-xl transition-all">
+                            <Card className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
                               <CardContent className="p-6">
                                 <div className="flex items-start justify-between mb-4">
                                   <div className="flex-1">
@@ -1210,7 +1423,7 @@ export default function StudentDashboard() {
                                           day: 'numeric'
                                         })}
                                         {deadlinePassed && <span className="text-red-500 ml-2">(Submitted after deadline)</span>}
-                                        {!deadlinePassed && <span className="text-green-500 ml-2">(Submitted on time)</span>}
+                                        {!deadlinePassed && <span className="text-slate-500 ml-2">(Submitted on time)</span>}
                                       </p>
                                     )}
                                     {assignment && (
@@ -1249,16 +1462,16 @@ export default function StudentDashboard() {
                                 {submission.fileUrl && submission.fileName && (
                                   <div className="mb-4">
                                     <h4 className="text-sm font-medium text-gray-700 mb-2">File Attachment:</h4>
-                                    <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                                    <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
                                       <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                          <div className="p-2 bg-blue-100 rounded-lg">
-                                            <FileText className="h-5 w-5 text-blue-600" />
+                                          <div className="p-2 bg-slate-200 rounded-lg">
+                                            <FileText className="h-5 w-5 text-slate-700" />
                                           </div>
                                           <div>
-                                            <p className="text-sm font-medium text-blue-900">{submission.fileName}</p>
+                                            <p className="text-sm font-medium text-slate-900">{submission.fileName}</p>
                                             {submission.fileSize && (
-                                              <p className="text-xs text-blue-700">
+                                              <p className="text-xs text-slate-600">
                                                 {(submission.fileSize / 1024 / 1024).toFixed(2)} MB
                                               </p>
                                             )}
@@ -1312,9 +1525,9 @@ export default function StudentDashboard() {
 
                                 {/* Teacher Feedback */}
                                 {submission.feedback && (
-                                  <div className="bg-blue-50 p-4 rounded-lg">
-                                    <p className="text-sm font-medium text-blue-900 mb-1">Teacher Feedback:</p>
-                                    <p className="text-sm text-blue-800 whitespace-pre-wrap">{submission.feedback}</p>
+                                  <div className="bg-slate-100 p-4 rounded-lg">
+                                    <p className="text-sm font-medium text-slate-900 mb-1">Teacher Feedback:</p>
+                                    <p className="text-sm text-slate-700 whitespace-pre-wrap">{submission.feedback}</p>
                                   </div>
                                 )}
 
@@ -1338,15 +1551,15 @@ export default function StudentDashboard() {
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
                         >
-                          <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
+                          <Card className="border border-slate-200 bg-white shadow-sm">
                             <CardContent className="p-12 text-center">
-                              <div className="text-6xl mb-4">📝</div>
-                              <h3 className="text-2xl font-bold text-purple-800 mb-2">No Submissions Yet</h3>
-                              <p className="text-purple-600 mb-6 text-lg">
-                                You haven&apos;t submitted any assignments yet. Let&apos;s get started! 🚀
+                              <FileText className="mx-auto mb-4 h-10 w-10 text-slate-400" />
+                              <h3 className="text-2xl font-bold text-slate-900 mb-2">No Submissions Yet</h3>
+                              <p className="text-slate-600 mb-6 text-lg">
+                                Start by submitting an assignment. Your completed work will appear here.
                               </p>
                               <Button
-                                className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold shadow-lg hover:scale-105 transition-all"
+                                className="bg-brand-blue text-white hover:bg-brand-blue/90"
                                 onClick={() => setActiveTab("assignments")}
                                 size="lg"
                               >
@@ -1364,8 +1577,8 @@ export default function StudentDashboard() {
                 {activeTab === "grades" && (
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
-                      <h2 className="text-3xl font-bold bg-gradient-to-r from-yellow-600 via-orange-600 to-red-600 bg-clip-text text-transparent">
-                        🏆 Grades & Performance
+                      <h2 className="text-2xl font-semibold text-slate-900">
+                        Grades & Performance
                       </h2>
                     </div>
 
@@ -1373,18 +1586,18 @@ export default function StudentDashboard() {
                       <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        whileHover={{ scale: 1.05 }}
+                        whileHover={{ y: -2 }}
                       >
-                        <Card className="border-2 border-yellow-300 bg-gradient-to-br from-yellow-50 to-orange-50 hover:shadow-xl transition-all">
-                          <CardHeader className="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-t-lg">
-                            <CardTitle className="flex items-center gap-2 text-orange-800">
-                              <Trophy className="h-6 w-6 text-yellow-600" />
+                        <Card className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="flex items-center gap-2 text-slate-900 text-lg">
+                              <Trophy className="h-5 w-5 text-slate-700" />
                               Overall Performance
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
                             <div className="text-center space-y-2">
-                              <div className="text-3xl font-bold text-green-600">
+                              <div className="text-3xl font-bold text-slate-900">
                                 {student?.stats?.averageGrade
                                   ? student.stats.averageGrade >= 90 ? 'A'
                                     : student.stats.averageGrade >= 80 ? 'B'
@@ -1407,18 +1620,18 @@ export default function StudentDashboard() {
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.1 }}
-                        whileHover={{ scale: 1.05 }}
+                        whileHover={{ y: -2 }}
                       >
-                        <Card className="border-2 border-blue-300 bg-gradient-to-br from-blue-50 to-cyan-50 hover:shadow-xl transition-all">
-                          <CardHeader className="bg-gradient-to-r from-blue-100 to-cyan-100 rounded-t-lg">
-                            <CardTitle className="flex items-center gap-2 text-blue-800">
-                              <Target className="h-6 w-6 text-blue-600" />
+                        <Card className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="flex items-center gap-2 text-slate-900 text-lg">
+                              <Target className="h-5 w-5 text-slate-700" />
                               Assignments Completed
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
                             <div className="text-center space-y-2">
-                              <div className="text-3xl font-bold text-blue-600">
+                              <div className="text-3xl font-bold text-slate-900">
                                 {student?.stats?.gradedSubmissions || 0}/{student?.stats?.totalSubmissions || 0}
                               </div>
                               <div className="text-sm text-gray-600">Graded Assignments</div>
@@ -1443,28 +1656,28 @@ export default function StudentDashboard() {
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.2 }}
-                        whileHover={{ scale: 1.05 }}
+                        whileHover={{ y: -2 }}
                       >
-                        <Card className="border-2 border-purple-300 bg-gradient-to-br from-purple-50 to-pink-50 hover:shadow-xl transition-all">
-                          <CardHeader className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-t-lg">
-                            <CardTitle className="flex items-center gap-2 text-purple-800">
-                              <TrendingUp className="h-6 w-6 text-purple-600" />
+                        <Card className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="flex items-center gap-2 text-slate-900 text-lg">
+                              <TrendingUp className="h-5 w-5 text-slate-700" />
                               Pending Assignments
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
                             <div className="text-center space-y-2">
-                              <div className="text-3xl font-bold text-purple-600">
+                              <div className="text-3xl font-bold text-slate-900">
                                 {student?.stats?.pendingAssignments || 0}
                               </div>
                               <div className="text-sm text-gray-600">Due Soon</div>
                               <div className={cn(
                                 "text-xs font-medium",
-                                (student?.stats?.pendingAssignments || 0) > 0 ? "text-orange-600" : "text-green-600"
+                                (student?.stats?.pendingAssignments || 0) > 0 ? "text-slate-700" : "text-slate-600"
                               )}>
                                 {(student?.stats?.pendingAssignments || 0) > 0
-                                  ? '⚠ Action Required'
-                                  : '✓ All Caught Up'}
+                                  ? 'Action Required'
+                                  : 'All Caught Up'}
                               </div>
                             </div>
                           </CardContent>
@@ -1477,7 +1690,7 @@ export default function StudentDashboard() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.3 }}
                     >
-                      <Card className="border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-white hover:shadow-xl transition-all">
+                      <Card className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
                         <CardHeader>
                           <CardTitle>Grade Breakdown by Subject</CardTitle>
                         </CardHeader>
@@ -1542,8 +1755,8 @@ export default function StudentDashboard() {
                 {activeTab === "schedule" && (
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
-                      <h2 className="text-2xl font-bold">Schedule & Events</h2>
-                      <Button>
+                      <h2 className="text-2xl font-semibold text-slate-900">Schedule & Events</h2>
+                      <Button className="bg-slate-900 text-white hover:bg-slate-800">
                         <Calendar className="h-4 w-4 mr-2" />
                         Book Session
                       </Button>
@@ -1559,10 +1772,10 @@ export default function StudentDashboard() {
 
                 {activeTab === "progress" && (
                   <div className="space-y-6">
-                    <h2 className="text-2xl font-bold">Academic Progress</h2>
+                    <h2 className="text-2xl font-semibold text-slate-900">Academic Progress</h2>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <Card>
+                      <Card className="border border-slate-200 bg-white shadow-sm">
                         <CardHeader>
                           <CardTitle>Assignment Completion</CardTitle>
                         </CardHeader>
@@ -1607,7 +1820,7 @@ export default function StudentDashboard() {
                         </CardContent>
                       </Card>
 
-                      <Card>
+                      <Card className="border border-slate-200 bg-white shadow-sm">
                         <CardHeader>
                           <CardTitle>Assignment Statistics</CardTitle>
                         </CardHeader>
@@ -1615,24 +1828,24 @@ export default function StudentDashboard() {
                           <div className="space-y-6">
                             {/* Assignment counts */}
                             <div className="grid grid-cols-2 gap-4">
-                              <div className="bg-blue-50 p-4 rounded-lg text-center">
-                                <div className="text-3xl font-bold text-blue-600">
+                              <div className="bg-slate-100 p-4 rounded-xl text-center">
+                                <div className="text-3xl font-bold text-slate-900">
                                   {submissions.length}
                                 </div>
                                 <div className="text-sm text-gray-600">
                                   Submissions
                                 </div>
                               </div>
-                              <div className="bg-green-50 p-4 rounded-lg text-center">
-                                <div className="text-3xl font-bold text-green-600">
+                              <div className="bg-slate-100 p-4 rounded-xl text-center">
+                                <div className="text-3xl font-bold text-slate-900">
                                   {submissions.filter(s => s.status === "graded").length}
                                 </div>
                                 <div className="text-sm text-gray-600">
                                   Completed
                                 </div>
                               </div>
-                              <div className="bg-yellow-50 p-4 rounded-lg text-center">
-                                <div className="text-3xl font-bold text-yellow-600">
+                              <div className="bg-slate-100 p-4 rounded-xl text-center">
+                                <div className="text-3xl font-bold text-slate-900">
                                   {assignments.filter(a =>
                                     !submissions.some(s => s.assignmentId === a.id)
                                   ).length}
@@ -1641,8 +1854,8 @@ export default function StudentDashboard() {
                                   Pending
                                 </div>
                               </div>
-                              <div className="bg-purple-50 p-4 rounded-lg text-center">
-                                <div className="text-3xl font-bold text-purple-600">
+                              <div className="bg-slate-100 p-4 rounded-xl text-center">
+                                <div className="text-3xl font-bold text-slate-900">
                                   {assignments.length}
                                 </div>
                                 <div className="text-sm text-gray-600">
@@ -1673,33 +1886,74 @@ export default function StudentDashboard() {
                     </div>
 
                     <div className="mt-8">
-                      <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                        <FileText className="h-5 w-5 text-purple-600" />
-                        Evaluations & Progress Reports/Marksheet
-                      </h3>
-                      <ProgressReportList reports={progressReports} />
+                      <Card className="border border-slate-200 bg-white shadow-sm">
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <FileText className="h-6 w-6 text-slate-700" />
+                            Evaluations & Progress Reports
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          {loading ? (
+                            <div className="space-y-3 py-2">
+                              {Array.from({ length: 3 }).map((_, index) => (
+                                <div key={`progress-loading-${index}`} className="rounded-lg border bg-white p-4 space-y-2">
+                                  <ShimmerSkeleton className="h-4 w-1/2" />
+                                  <ShimmerSkeleton className="h-3 w-full" />
+                                  <ShimmerSkeleton className="h-3 w-5/6" />
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <>
+                              <div className="mb-4 text-sm text-gray-600">
+                                {progressReports.length > 0 
+                                  ? `Showing ${progressReports.length} progress report${progressReports.length !== 1 ? 's' : ''}`
+                                  : 'No progress reports published yet'}
+                              </div>
+                              <ProgressReportList reports={progressReports} />
+                            </>
+                          )}
+                        </CardContent>
+                      </Card>
                     </div>
                   </div>
                 )}
 
                 {activeTab === "resources" && (
-                  <ResourceLibrary studentEmail={studentEmail} />
+                  <Card className="border border-slate-200 bg-white shadow-sm">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg text-slate-900">Learning Resources</CardTitle>
+                      <CardDescription>Browse teacher-shared materials for your coursework.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ResourceLibrary studentEmail={studentEmail} />
+                    </CardContent>
+                  </Card>
                 )}
 
                 {activeTab === "messages" && (
                   <div className="space-y-6">
                     <div className="flex justify-between items-center mb-4">
-                      <h2 className="text-2xl font-bold">Messages</h2>
+                      <h2 className="text-2xl font-semibold text-slate-900">Messages</h2>
                     </div>
 
                     {/* Import and use our MentorMessages component */}
                     {student && (
-                      <MentorMessages
-                        studentId={student.id}
-                        studentEmail={student.email}
-                        studentName={student.name}
-                        onUnreadCountChange={setMessageUnreadCount}
-                      />
+                      <Card className="border border-slate-200 bg-white shadow-sm">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-lg text-slate-900">Mentor Inbox</CardTitle>
+                          <CardDescription>Receive guidance and reply to your instructors.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <MentorMessages
+                            studentId={student.id}
+                            studentEmail={student.email}
+                            studentName={student.name}
+                            onUnreadCountChange={setMessageUnreadCount}
+                          />
+                        </CardContent>
+                      </Card>
                     )}
                   </div>
                 )}
@@ -1708,6 +1962,31 @@ export default function StudentDashboard() {
           </div>
         </SidebarInset>
       </div>
+
+      <AlertDialog
+        open={isDiscardDialogOpen}
+        onOpenChange={(nextOpen) => {
+          setIsDiscardDialogOpen(nextOpen);
+          if (!nextOpen) {
+            setPendingDiscardMode(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard submission draft?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved submission changes. Discarding will remove this draft.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Editing</AlertDialogCancel>
+            <AlertDialogAction onClick={discardAssignmentDraftChanges}>
+              Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SidebarProvider>
   );
 }

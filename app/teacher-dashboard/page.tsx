@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { usePathname, useRouter } from "next/navigation";
 import { useRequireAuth } from "../../contexts/AuthContext";
 import "../components/chat-no-spinner.css";
 import { useToast } from "@/hooks/use-toast";
@@ -37,6 +38,8 @@ import AssignmentManager from "@/components/teacher/AssignmentManager";
 import SubmissionReviewer from "@/components/teacher/SubmissionReviewer";
 import CustomChatDialog from "../../components/CustomChatDialog";
 import StudentProgressModal from "../../components/teacher/RealStudentProgressModal";
+import ProgressReportManager from "@/components/teacher/ProgressReportManager";
+import DashboardLoadingSkeleton, { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
 import {
   User,
   BookOpen,
@@ -60,7 +63,10 @@ import {
   Send,
   Eye,
   Download,
-  ExternalLink
+  ExternalLink,
+  BarChart3,
+  Edit,
+  Trash2
 } from "lucide-react";
 
 type ResourceCategory = "assignment" | "personal" | "general";
@@ -92,6 +98,21 @@ interface Student {
     };
   }>;
   assignedAt: string;
+}
+
+interface StudentGroupMember {
+  id: number;
+  name: string;
+  email: string;
+  grade: string;
+  program: string;
+}
+
+interface StudentGroup {
+  id: number;
+  name: string;
+  createdAt: string;
+  members: StudentGroupMember[];
 }
 
 interface Teacher {
@@ -153,6 +174,13 @@ export default function TeacherDashboard() {
   const [activeTab, setActiveTab] = useState("students");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [progressReports, setProgressReports] = useState<any[]>([]);
+  const [studentGroups, setStudentGroups] = useState<StudentGroup[]>([]);
+  const [groupName, setGroupName] = useState("");
+  const [groupStudentIds, setGroupStudentIds] = useState<number[]>([]);
+  const [groupError, setGroupError] = useState<string | null>(null);
+  const [creatingGroup, setCreatingGroup] = useState(false);
+  const createGroupInFlightRef = useRef(false);
 
   // Resource sending state
   const [newResource, setNewResource] = useState<{
@@ -180,14 +208,18 @@ export default function TeacherDashboard() {
   });
   const [newResourceFile, setNewResourceFile] = useState<File | null>(null);
   const [sendingResource, setSendingResource] = useState(false);
+  const sendResourceInFlightRef = useRef(false);
   const [resourceError, setResourceError] = useState<string | null>(null);
+  const [resourceGroupId, setResourceGroupId] = useState<string>("");
 
   // Student submissions state
   const [studentSubmissions, setStudentSubmissions] = useState<any[]>([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
+  const [submissionsError, setSubmissionsError] = useState<string | null>(null);
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [remarkText, setRemarkText] = useState("");
   const [isAddingRemark, setIsAddingRemark] = useState(false);
+  const addRemarkInFlightRef = useRef(false);
 
   // Chat state
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -201,6 +233,10 @@ export default function TeacherDashboard() {
   // Progress modal state
   const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
   const [selectedProgressStudent, setSelectedProgressStudent] = useState<Student | null>(null);
+  const [isUrlStateReady, setIsUrlStateReady] = useState(false);
+  const [authTimedOut, setAuthTimedOut] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
 
   // Get teacher email from authenticated user
   const teacherEmail = authUser?.email || "";
@@ -217,9 +253,14 @@ export default function TeacherDashboard() {
 
   // Fetch functions
   const fetchTeacherData = async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
     try {
       setLoading(true);
-      const response = await fetch(`/api/teacher/students?teacherEmail=${encodeURIComponent(teacherEmail)}`);
+      setError(null);
+      const response = await fetch(`/api/teacher/students?teacherEmail=${encodeURIComponent(teacherEmail)}`, {
+        signal: controller.signal,
+      });
       const data = await response.json();
 
       if (response.ok && data.teacher) {
@@ -229,10 +270,108 @@ export default function TeacherDashboard() {
         setError(data.error || 'Failed to fetch teacher data');
       }
     } catch (err) {
-      setError('Failed to fetch teacher data');
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setError("Dashboard load timed out. Please retry.");
+      } else {
+        setError('Failed to fetch teacher data');
+      }
       console.error('Error fetching teacher data:', err);
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
+    }
+  };
+
+  const fetchStudentGroups = async () => {
+    if (!teacherEmail) return;
+    try {
+      const response = await fetch(`/api/teacher/student-groups?teacherEmail=${encodeURIComponent(teacherEmail)}`);
+      const data = await response.json();
+
+      if (data.success) {
+        setStudentGroups(data.groups || []);
+      } else {
+        console.error('Failed to fetch student groups:', data.error);
+      }
+    } catch (err) {
+      console.error('Error fetching student groups:', err);
+    }
+  };
+
+  const handleCreateGroup = async () => {
+    if (createGroupInFlightRef.current || creatingGroup) return;
+    setGroupError(null);
+
+    if (!teacherEmail) {
+      const message = "Teacher email not available.";
+      setGroupError(message);
+      toast({
+        variant: "destructive",
+        title: "Cannot create group",
+        description: message,
+      });
+      return;
+    }
+
+    if (!groupName.trim()) {
+      const message = "Group name is required.";
+      setGroupError(message);
+      toast({
+        title: "Missing group name",
+        description: message,
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+      return;
+    }
+
+    if (groupStudentIds.length === 0) {
+      const message = "Select at least one student.";
+      setGroupError(message);
+      toast({
+        title: "No students selected",
+        description: message,
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+      return;
+    }
+
+    createGroupInFlightRef.current = true;
+    setCreatingGroup(true);
+    try {
+      const response = await fetch("/api/teacher/student-groups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          teacherEmail,
+          name: groupName.trim(),
+          studentIds: groupStudentIds
+        }),
+      });
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || "Failed to create group");
+      }
+
+      setGroupName("");
+      setGroupStudentIds([]);
+      await fetchStudentGroups();
+      toast({
+        title: "Group created",
+        description: "Students have been grouped successfully.",
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to create group";
+      setGroupError(message);
+      toast({
+        variant: "destructive",
+        title: "Failed to create group",
+        description: message,
+      });
+    } finally {
+      setCreatingGroup(false);
+      createGroupInFlightRef.current = false;
     }
   };
 
@@ -266,9 +405,11 @@ export default function TeacherDashboard() {
     });
     setNewResourceFile(null);
     setResourceError(null);
+    setResourceGroupId("");
   };
 
   const handleSendResource = async () => {
+    if (sendResourceInFlightRef.current || sendingResource) return;
     setResourceError(null);
 
     if (!teacherEmail) {
@@ -288,7 +429,7 @@ export default function TeacherDashboard() {
       toast({
         title: "Missing title",
         description: message,
-        className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+        className: "border-slate-300 bg-slate-100 text-slate-800",
       });
       return;
     }
@@ -299,7 +440,7 @@ export default function TeacherDashboard() {
       toast({
         title: "Missing type",
         description: message,
-        className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+        className: "border-slate-300 bg-slate-100 text-slate-800",
       });
       return;
     }
@@ -310,7 +451,7 @@ export default function TeacherDashboard() {
       toast({
         title: "Missing details",
         description: message,
-        className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+        className: "border-slate-300 bg-slate-100 text-slate-800",
       });
       return;
     }
@@ -321,7 +462,7 @@ export default function TeacherDashboard() {
       toast({
         title: "No students selected",
         description: message,
-        className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+        className: "border-slate-300 bg-slate-100 text-slate-800",
       });
       return;
     }
@@ -332,7 +473,7 @@ export default function TeacherDashboard() {
       toast({
         title: "Assignment required",
         description: message,
-        className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+        className: "border-slate-300 bg-slate-100 text-slate-800",
       });
       return;
     }
@@ -343,7 +484,7 @@ export default function TeacherDashboard() {
       toast({
         title: "Link URL required",
         description: message,
-        className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+        className: "border-slate-300 bg-slate-100 text-slate-800",
       });
       return;
     }
@@ -354,11 +495,12 @@ export default function TeacherDashboard() {
       toast({
         title: "File or link required",
         description: message,
-        className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+        className: "border-slate-300 bg-slate-100 text-slate-800",
       });
       return;
     }
 
+    sendResourceInFlightRef.current = true;
     setSendingResource(true);
     try {
       let fileUrl: string | null = null;
@@ -413,7 +555,7 @@ export default function TeacherDashboard() {
       toast({
         title: "Resource sent",
         description: "Your resource has been shared with the selected students.",
-        className: "border-green-500 bg-green-50 text-green-900",
+        className: "border-slate-300 bg-slate-100 text-slate-800",
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to send resource";
@@ -426,21 +568,25 @@ export default function TeacherDashboard() {
       });
     } finally {
       setSendingResource(false);
+      sendResourceInFlightRef.current = false;
     }
   };
 
   const fetchStudentSubmissions = async () => {
     try {
       setSubmissionsLoading(true);
+      setSubmissionsError(null);
       const response = await fetch(`/api/teacher/submissions/resources?teacherEmail=${encodeURIComponent(teacherEmail)}`);
       const data = await response.json();
 
       if (data.success) {
         setStudentSubmissions(data.submissions);
       } else {
+        setSubmissionsError(data.error || "Failed to fetch student submissions");
         console.error('Failed to fetch student submissions:', data.error);
       }
     } catch (err) {
+      setSubmissionsError(err instanceof Error ? err.message : "Failed to fetch student submissions");
       console.error('Error fetching student submissions:', err);
     } finally {
       setSubmissionsLoading(false);
@@ -470,9 +616,11 @@ export default function TeacherDashboard() {
   };
 
   const handleAddRemark = async (submissionId: number) => {
+    if (addRemarkInFlightRef.current || isAddingRemark) return;
     if (!remarkText.trim()) return;
 
     try {
+      addRemarkInFlightRef.current = true;
       setIsAddingRemark(true);
       const response = await fetch('/api/teacher/submissions/resources', {
         method: 'POST',
@@ -493,13 +641,29 @@ export default function TeacherDashboard() {
         await fetchStudentSubmissions();
         setSelectedSubmission(null);
         setRemarkText("");
+        toast({
+          title: "Feedback sent",
+          description: "Your feedback has been saved for the student.",
+          className: "border-slate-300 bg-slate-100 text-slate-800",
+        });
       } else {
         console.error('Failed to add remark:', data.error);
+        toast({
+          variant: "destructive",
+          title: "Failed to save feedback",
+          description: data.error || "Please try again.",
+        });
       }
     } catch (err) {
       console.error('Error adding remark:', err);
+      toast({
+        variant: "destructive",
+        title: "Failed to save feedback",
+        description: err instanceof Error ? err.message : "Please try again.",
+      });
     } finally {
       setIsAddingRemark(false);
+      addRemarkInFlightRef.current = false;
     }
   };
 
@@ -508,8 +672,28 @@ export default function TeacherDashboard() {
     if (teacherEmail) {
       fetchAssignments();
       fetchTeacherData();
+      fetchStudentGroups();
     }
   }, [teacherEmail]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!authLoading) {
+      setAuthTimedOut(false);
+      return;
+    }
+    const timeoutId = setTimeout(() => {
+      setAuthTimedOut(true);
+    }, 15000);
+    return () => clearTimeout(timeoutId);
+  }, [authLoading]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (authUser && !teacherEmail) {
+      setLoading(false);
+      setError("Unable to load your account email. Please log out and sign in again.");
+    }
+  }, [authLoading, authUser, teacherEmail]);
 
   useEffect(() => {
     if (teacherEmail) {
@@ -523,16 +707,62 @@ export default function TeacherDashboard() {
     }
   }, [teacher?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    const q = params.get("q");
+    const program = params.get("program");
+    const allowedTabs = new Set(["students", "assignments", "submissions", "resources", "progress", "schedule"]);
+
+    if (tab && allowedTabs.has(tab)) {
+      setActiveTab(tab);
+    }
+    if (q !== null) {
+      setSearch(q);
+    }
+    if (program) {
+      setSelectedProgram(program);
+    }
+    setIsUrlStateReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isUrlStateReady) return;
+    const params = new URLSearchParams(window.location.search);
+    params.set("tab", activeTab);
+    if (search.trim()) params.set("q", search.trim());
+    else params.delete("q");
+    if (selectedProgram) params.set("program", selectedProgram);
+    else params.delete("program");
+    const query = params.toString();
+    const nextUrl = query ? `${pathname}?${query}` : pathname;
+    const currentUrl = `${pathname}${window.location.search}`;
+    if (nextUrl === currentUrl) return;
+    router.replace(nextUrl, { scroll: false });
+  }, [activeTab, search, selectedProgram, isUrlStateReady, pathname, router]);
+
   // Early return for authentication loading (AFTER all hooks)
-  if (authLoading || !authUser) {
+  if (authLoading && !authTimedOut) {
+    return <DashboardLoadingSkeleton role="teacher" tab={activeTab} />;
+  }
+
+  if (authLoading && authTimedOut) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="flex items-center gap-2">
-          <RefreshCw className="h-6 w-6 animate-spin" />
-          <span>Loading...</span>
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full bg-slate-100">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-red-600 text-xl mb-4">Authentication is taking too long.</div>
+              <Button onClick={() => window.location.reload()}>Try Again</Button>
+            </div>
+          </div>
         </div>
-      </div>
+      </SidebarProvider>
     );
+  }
+
+  if (!authUser) {
+    return null;
   }
 
   // Filter students by selected program and search
@@ -550,24 +780,13 @@ export default function TeacherDashboard() {
   );
 
   if (loading) {
-    return (
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <RefreshCw className="h-8 w-8 animate-spin text-brand-blue mx-auto mb-4" />
-              <p className="text-gray-600">Loading teacher dashboard...</p>
-            </div>
-          </div>
-        </div>
-      </SidebarProvider>
-    );
+    return <DashboardLoadingSkeleton role="teacher" tab={activeTab} />;
   }
 
   if (error) {
     return (
       <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
+        <div className="flex min-h-screen w-full bg-slate-100">
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
               <div className="text-red-600 text-xl mb-4">Error: {error}</div>
@@ -582,7 +801,7 @@ export default function TeacherDashboard() {
   if (!teacher) {
     return (
       <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
+        <div className="flex min-h-screen w-full bg-slate-100">
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
               <div className="text-gray-600 text-xl">Teacher not found</div>
@@ -616,28 +835,75 @@ export default function TeacherDashboard() {
       value: "resources",
     },
     {
+      title: "Progress Reports",
+      icon: BarChart3,
+      value: "progress",
+    },
+    {
       title: "Schedule",
       icon: Calendar,
       value: "schedule",
     },
   ];
 
+  const tabMeta: Record<string, { title: string; description: string; icon: React.ComponentType<{ className?: string }> }> = {
+    students: {
+      title: "Students",
+      description: "Track learners, groups, and direct communication with families.",
+      icon: Users,
+    },
+    assignments: {
+      title: "Assignments",
+      description: "Create, edit, and publish work with clear due dates and expectations.",
+      icon: BookOpen,
+    },
+    submissions: {
+      title: "Submissions",
+      description: "Review student work and provide structured feedback.",
+      icon: FileText,
+    },
+    resources: {
+      title: "Resources",
+      description: "Share learning resources by assignment, group, or individual student.",
+      icon: GraduationCap,
+    },
+    progress: {
+      title: "Progress Reports",
+      description: "Monitor growth trends and publish progress snapshots.",
+      icon: BarChart3,
+    },
+    schedule: {
+      title: "Schedule",
+      description: "Plan upcoming sessions and coordinate teaching availability.",
+      icon: Calendar,
+    },
+  };
+
+  const currentTabMeta = tabMeta[activeTab] || tabMeta.students;
+  const reviewPendingCount = studentSubmissions.filter((submission) => !submission.hasMyRemark).length;
+  const dashboardStats = [
+    { label: "Students", value: filteredStudents.length, icon: Users },
+    { label: "Groups", value: studentGroups.length, icon: GraduationCap },
+    { label: "Assignments", value: filteredAssignments.length, icon: BookOpen },
+    { label: "Needs Review", value: reviewPendingCount, icon: AlertCircle },
+  ];
+
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
-        <Sidebar variant="inset" className="border-r">
-          <SidebarHeader className="border-b p-4">
+      <div className="flex min-h-screen w-full bg-slate-100">
+        <Sidebar variant="inset" className="border-r border-slate-200/80 bg-white/85 backdrop-blur-sm">
+          <SidebarHeader className="border-b border-slate-200/80 bg-white p-4">
             <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10 border-2 border-brand-blue">
-                <AvatarFallback className="bg-gradient-to-br from-brand-blue to-brand-teal text-white font-semibold">
+              <Avatar className="h-10 w-10 border-2 border-slate-300">
+                <AvatarFallback className="bg-slate-900 text-white font-semibold">
                   {teacher?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'T'}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-sidebar-foreground truncate">
+                <p className="text-sm font-semibold text-slate-900 truncate">
                   {teacher?.name || "Teacher"}
                 </p>
-                <p className="text-xs text-sidebar-foreground/70 truncate">
+                <p className="text-xs text-slate-600 truncate">
                   {teacher?.email || ""}
                 </p>
               </div>
@@ -654,7 +920,10 @@ export default function TeacherDashboard() {
                       <SidebarMenuButton
                         isActive={activeTab === item.value}
                         onClick={() => setActiveTab(item.value)}
-                        className="w-full"
+                        className={cn(
+                          "w-full rounded-md transition-colors hover:bg-slate-100",
+                          activeTab === item.value && "bg-slate-900 text-white"
+                        )}
                       >
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
@@ -682,7 +951,7 @@ export default function TeacherDashboard() {
                       window.location.href = '/';
                     }
                   }}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md"
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Logout</span>
@@ -693,25 +962,76 @@ export default function TeacherDashboard() {
         </Sidebar>
 
         <SidebarInset className="flex-1">
-          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
-            <div className="flex items-center gap-2 flex-1">
-              <h1 className="text-lg font-semibold bg-gradient-to-r from-brand-blue to-brand-teal bg-clip-text text-transparent">
-                Teacher Dashboard
-              </h1>
-            </div>
-            <div className="flex gap-2 items-center">
-              <Input
-                placeholder="Search students..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-64"
-              />
+          <header className="sticky top-0 z-10 border-b border-slate-200/70 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+            <div className="flex min-h-16 items-center gap-2 px-4 md:px-6">
+              <SidebarTrigger className="-ml-1" />
+              <Separator orientation="vertical" className="mr-2 h-4" />
+              <div className="flex items-center gap-2 flex-1">
+                <h1 className="text-lg font-semibold text-slate-900">
+                  Teacher Dashboard
+                </h1>
+                <Badge variant="outline" className="hidden md:inline-flex border-slate-300 bg-slate-100 text-slate-700">
+                  {currentTabMeta.title}
+                </Badge>
+              </div>
+              <div className="hidden lg:flex items-center gap-2">
+                <select
+                  value={selectedProgram ?? ""}
+                  onChange={(event) => setSelectedProgram(event.target.value || null)}
+                  className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                >
+                  <option value="">All Programs</option>
+                  {teacher.programs.map((program) => (
+                    <option key={program} value={program}>
+                      {program}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Input
+                  placeholder="Search students..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-64 pl-9"
+                />
+              </div>
             </div>
           </header>
 
-          <div className="flex flex-1 flex-col gap-4 p-4 md:p-6 teacher-chat-no-spinner">
+          <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 teacher-chat-no-spinner">
+            <Card className="border border-slate-200/80 bg-white shadow-sm">
+              <CardHeader className="pb-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <CardTitle className="flex items-center gap-2 text-xl text-slate-900">
+                      <currentTabMeta.icon className="h-5 w-5 text-slate-700" />
+                      {currentTabMeta.title}
+                    </CardTitle>
+                    <CardDescription className="text-sm text-slate-600">
+                      {currentTabMeta.description}
+                    </CardDescription>
+                  </div>
+                  <Badge className="bg-slate-100 text-slate-700 border border-slate-300">
+                    {teacher.programs.length} Program{teacher.programs.length === 1 ? "" : "s"}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  {dashboardStats.map((stat) => (
+                    <div key={stat.label} className="rounded-xl border border-slate-200/70 bg-white p-4 shadow-sm">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{stat.label}</p>
+                        <stat.icon className="h-4 w-4 text-slate-600" />
+                      </div>
+                      <p className="mt-2 text-2xl font-semibold text-slate-900">{stat.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Students Tab */}
             {activeTab === "students" && (
@@ -724,13 +1044,13 @@ export default function TeacherDashboard() {
                 {/* Parent Conversations Section */}
                 {parentConversations.length > 0 && (
                   <div className="mb-6">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-brand-blue">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-slate-900">
                       <Users className="h-5 w-5" />
                       Parent Conversations
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                       {parentConversations.map((parent) => (
-                        <Card key={parent.recipientId} className="border-2 hover:shadow-xl transition-all hover:border-brand-teal">
+                        <Card key={parent.recipientId} className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
                           <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                               <div className="flex-1">
@@ -740,7 +1060,7 @@ export default function TeacherDashboard() {
                                   {new Date(parent.lastMessageTime).toLocaleDateString()}
                                 </p>
                                 {parent.unreadCount > 0 && (
-                                  <Badge className="mt-2 bg-purple-500 text-white">
+                                  <Badge className="mt-2 bg-slate-900 text-white">
                                     {parent.unreadCount} unread
                                   </Badge>
                                 )}
@@ -748,7 +1068,7 @@ export default function TeacherDashboard() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="ml-3 text-purple-600 hover:bg-purple-50 border-purple-200"
+                                className="ml-3 border-slate-300 text-slate-700 hover:bg-slate-50"
                                 onClick={() => {
                                   setSelectedChatParent({ id: parent.recipientId, name: parent.recipientName });
                                   setSelectedChatStudent(null); // Clear student selection
@@ -763,11 +1083,139 @@ export default function TeacherDashboard() {
                         </Card>
                       ))}
                     </div>
-                    <div className="border-t border-gray-200 my-6"></div>
+                    <div className="border-t border-slate-200 my-6"></div>
                   </div>
                 )}
 
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-brand-blue">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold flex items-center gap-2 text-slate-900">
+                      <Users className="h-5 w-5" />
+                      Student Groups
+                    </h3>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button size="sm" className="bg-slate-900 text-white hover:bg-slate-800">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Group
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[520px]">
+                        <DialogHeader>
+                          <DialogTitle>Create Student Group</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label>Group Name *</Label>
+                            <Input
+                              value={groupName}
+                              onChange={(e) => setGroupName(e.target.value)}
+                              placeholder="e.g. Algebra MWF"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Select Students *</Label>
+                            <div className="border rounded-lg p-3 max-h-60 overflow-y-auto space-y-2">
+                              {students.map((student) => (
+                                <label key={student.id} className="flex items-center gap-2 text-sm">
+                                  <Checkbox
+                                    checked={groupStudentIds.includes(student.id)}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        setGroupStudentIds([...groupStudentIds, student.id]);
+                                      } else {
+                                        setGroupStudentIds(groupStudentIds.filter((id) => id !== student.id));
+                                      }
+                                    }}
+                                  />
+                                  <span className="flex-1">
+                                    {student.name} <span className="text-gray-500">({student.email})</span>
+                                  </span>
+                                </label>
+                              ))}
+                              {students.length === 0 && (
+                                <p className="text-sm text-gray-500">No students found.</p>
+                              )}
+                            </div>
+                          </div>
+                          {groupError && <p className="text-sm text-red-600">{groupError}</p>}
+                        </div>
+                        <DialogFooter>
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setGroupName("");
+                              setGroupStudentIds([]);
+                              setGroupError(null);
+                            }}
+                          >
+                            Reset
+                          </Button>
+                          <Button onClick={handleCreateGroup} disabled={creatingGroup}>
+                            {creatingGroup ? (
+                              <>
+                                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                Creating...
+                              </>
+                            ) : (
+                              <>
+                                <Plus className="h-4 w-4 mr-2" />
+                                Create Group
+                              </>
+                            )}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+
+                  {studentGroups.length === 0 ? (
+                    <Card className="border border-dashed border-slate-300 bg-slate-50/60">
+                      <CardContent className="py-10 text-center">
+                        <Users className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+                        <p className="text-sm text-gray-500">Create your first group to manage students together.</p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {studentGroups.map((group) => (
+                        <Card key={group.id} className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="flex items-center justify-between text-slate-900 text-lg">
+                              <span className="truncate">{group.name}</span>
+                              <Badge variant="outline" className="bg-slate-50">
+                                {group.members.length} students
+                              </Badge>
+                            </CardTitle>
+                            <div className="text-xs text-gray-500">
+                              {new Date(group.createdAt).toLocaleDateString()}
+                            </div>
+                          </CardHeader>
+                          <CardContent>
+                            {group.members.length === 0 ? (
+                              <p className="text-sm text-gray-500">No students assigned.</p>
+                            ) : (
+                              <div className="flex flex-wrap gap-2">
+                                {group.members.slice(0, 4).map((member) => (
+                                  <Badge key={member.id} variant="secondary" className="bg-gray-100 text-gray-700">
+                                    {member.name}
+                                  </Badge>
+                                ))}
+                                {group.members.length > 4 && (
+                                  <Badge variant="outline" className="text-gray-500">
+                                    +{group.members.length - 4} more
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-slate-900">
                   <GraduationCap className="h-5 w-5" />
                   Students
                 </h3>
@@ -778,9 +1226,9 @@ export default function TeacherDashboard() {
                     </div>
                   )}
                   {filteredStudents.map((student) => (
-                    <Card key={student.id} className="border-2 hover:shadow-xl transition-all hover:border-brand-blue">
-                      <CardHeader className="bg-gradient-to-r from-brand-blue/5 to-brand-teal/5">
-                        <CardTitle className="flex items-center gap-2 text-brand-blue">
+                    <Card key={student.id} className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center gap-2 text-slate-900 text-lg">
                           <User className="h-5 w-5" />
                           {student.name}
                         </CardTitle>
@@ -790,10 +1238,10 @@ export default function TeacherDashboard() {
                         <div className="space-y-3">
                           {/* Program Badges */}
                           <div className="flex flex-wrap gap-2">
-                            <Badge variant="outline" className="bg-brand-blue/10 text-brand-blue border-brand-blue/30">
+                            <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-300">
                               {student.program}
                             </Badge>
-                            <Badge variant="outline" className="bg-brand-teal/10 text-brand-teal border-brand-teal/30">
+                            <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-300">
                               {student.grade}
                             </Badge>
                           </div>
@@ -827,7 +1275,7 @@ export default function TeacherDashboard() {
                               {student.recentSubmissions.slice(0, 2).map((submission, idx) => (
                                 <div key={idx} className="text-gray-500 flex justify-between">
                                   <span>{submission.assignment.title}</span>
-                                  <span className={submission.grade ? 'text-green-600' : 'text-orange-600'}>
+                                  <span className={submission.grade ? 'text-slate-700' : 'text-slate-500'}>
                                     {submission.grade ? `${submission.grade}%` : 'Pending'}
                                   </span>
                                 </div>
@@ -839,7 +1287,7 @@ export default function TeacherDashboard() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="flex-1"
+                              className="flex-1 border-slate-300 hover:bg-slate-50"
                               onClick={() => {
                                 setSelectedProgressStudent(student);
                                 setIsProgressModalOpen(true);
@@ -850,7 +1298,7 @@ export default function TeacherDashboard() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="text-brand-blue hover:bg-brand-blue/10"
+                              className="border-slate-300 text-slate-700 hover:bg-slate-50"
                               onClick={() => {
                                 setSelectedChatStudent(student);
                                 setSelectedChatParent(null); // Clear parent selection
@@ -875,12 +1323,20 @@ export default function TeacherDashboard() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <AssignmentManager
-                  teacherEmail={teacherEmail}
-                  assignments={assignments}
-                  onAssignmentCreated={fetchAssignments}
-                  onAssignmentUpdated={fetchAssignments}
-                />
+                <Card className="border border-slate-200 bg-white shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg text-slate-900">Assignment Manager</CardTitle>
+                    <CardDescription>Create, edit, and maintain assignment workflows.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <AssignmentManager
+                      teacherEmail={teacherEmail}
+                      assignments={assignments}
+                      onAssignmentCreated={fetchAssignments}
+                      onAssignmentUpdated={fetchAssignments}
+                    />
+                  </CardContent>
+                </Card>
               </motion.div>
             )}
 
@@ -891,7 +1347,15 @@ export default function TeacherDashboard() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <SubmissionReviewer teacherEmail={teacherEmail} />
+                <Card className="border border-slate-200 bg-white shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg text-slate-900">Submission Review</CardTitle>
+                    <CardDescription>Grade work, annotate feedback, and track follow-ups.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <SubmissionReviewer teacherEmail={teacherEmail} />
+                  </CardContent>
+                </Card>
               </motion.div>
             )}
 
@@ -904,9 +1368,9 @@ export default function TeacherDashboard() {
                 className="space-y-6"
               >
                 {/* Send resource to students */}
-                <Card className="border-2 border-brand-blue/30 bg-gradient-to-br from-white to-brand-blue/5 hover:shadow-xl transition-all">
-                  <CardHeader className="pb-3 bg-gradient-to-r from-brand-blue/10 to-brand-teal/10">
-                    <CardTitle className="text-lg flex items-center gap-2 text-brand-blue">
+                <Card className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2 text-slate-900">
                       <Send className="h-5 w-5" />
                       Send Resource to Students
                     </CardTitle>
@@ -1034,6 +1498,32 @@ export default function TeacherDashboard() {
                     </div>
 
                     <div className="space-y-2">
+                      <Label>Select Group</Label>
+                      <select
+                        value={resourceGroupId}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setResourceGroupId(value);
+                          if (!value) {
+                            setNewResource({ ...newResource, studentIds: [] });
+                            return;
+                          }
+                          const group = studentGroups.find((g) => g.id.toString() === value);
+                          const groupStudentIds = group ? group.members.map((member) => member.id) : [];
+                          setNewResource({ ...newResource, studentIds: groupStudentIds });
+                        }}
+                        className="w-full px-3 py-2 border rounded-md bg-white"
+                      >
+                        <option value="">Select group (optional)</option>
+                        {studentGroups.map((group) => (
+                          <option key={group.id} value={group.id}>
+                            {group.name} ({group.members.length})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
                       <Label>Select Students *</Label>
                       <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
                         {students.map((student) => (
@@ -1091,32 +1581,58 @@ export default function TeacherDashboard() {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-xl font-semibold">Student Resource Submissions</h3>
-                    <p className="text-gray-600">Review and provide feedback on work submitted by students</p>
+                    <h3 className="text-xl font-semibold text-slate-900">Student Resource Submissions</h3>
+                    <p className="text-slate-600">Review and provide feedback on work submitted by students.</p>
                   </div>
-                  <Button onClick={fetchStudentSubmissions} variant="outline">
-                    <RefreshCw className="h-4 w-4 mr-2" />
+                  <Button onClick={fetchStudentSubmissions} variant="outline" disabled={submissionsLoading}>
+                    <RefreshCw className={cn("h-4 w-4 mr-2", submissionsLoading && "animate-spin")} />
                     Refresh
                   </Button>
                 </div>
 
+                {submissionsError && (
+                  <Card className="border-red-200 bg-red-50">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm text-red-700">{submissionsError}</p>
+                        <Button variant="outline" size="sm" onClick={fetchStudentSubmissions}>
+                          Retry
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {submissionsLoading ? (
-                  <div className="text-center py-12">
-                    <RefreshCw className="h-8 w-8 animate-spin mx-auto text-gray-400" />
-                    <p className="mt-4 text-gray-600">Loading submissions...</p>
+                  <div className="grid gap-6 py-2">
+                    {Array.from({ length: 3 }).map((_, index) => (
+                      <Card key={`teacher-submissions-loading-${index}`}>
+                        <CardHeader className="space-y-3">
+                          <ShimmerSkeleton className="h-5 w-1/2" />
+                          <ShimmerSkeleton className="h-4 w-1/3" />
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <ShimmerSkeleton className="h-4 w-full" />
+                          <ShimmerSkeleton className="h-4 w-5/6" />
+                          <ShimmerSkeleton className="h-24 w-full rounded-lg" />
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
                 ) : studentSubmissions.length === 0 ? (
-                  <div className="text-center py-12">
-                    <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Student Submissions</h3>
-                    <p className="text-gray-600">
+                  <Card className="border border-slate-200 bg-white shadow-sm">
+                    <CardContent className="py-12 text-center">
+                      <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No Student Submissions</h3>
+                      <p className="text-gray-600">
                       Students haven&apos;t submitted any resources for review yet.
-                    </p>
-                  </div>
+                      </p>
+                    </CardContent>
+                  </Card>
                 ) : (
                   <div className="grid gap-6">
                     {studentSubmissions.map((submission) => (
-                      <Card key={submission.id} className="hover:shadow-lg transition-shadow">
+                      <Card key={submission.id} className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
                         <CardHeader>
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
@@ -1160,12 +1676,12 @@ export default function TeacherDashboard() {
 
                           {/* File Attachment */}
                           {submission.fileUrl && submission.fileName && (
-                            <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
-                              <FileText className="h-6 w-6 text-blue-600" />
+                            <div className="flex items-center gap-3 p-4 bg-slate-100 rounded-lg">
+                              <FileText className="h-6 w-6 text-slate-700" />
                               <div className="flex-1">
-                                <p className="text-sm font-medium text-blue-900">{submission.fileName}</p>
+                                <p className="text-sm font-medium text-slate-900">{submission.fileName}</p>
                                 {submission.fileSize && (
-                                  <p className="text-xs text-blue-700">
+                                  <p className="text-xs text-slate-600">
                                     {(submission.fileSize / 1024 / 1024).toFixed(2)} MB
                                   </p>
                                 )}
@@ -1204,7 +1720,7 @@ export default function TeacherDashboard() {
                                 <Badge
                                   key={teacher.id}
                                   variant="outline"
-                                  className={teacher.email === teacherEmail ? 'bg-blue-50 border-blue-200' : ''}
+                                  className={teacher.email === teacherEmail ? 'bg-slate-100 border-slate-300' : ''}
                                 >
                                   {teacher.name} {teacher.email === teacherEmail && '(You)'}
                                 </Badge>
@@ -1217,14 +1733,14 @@ export default function TeacherDashboard() {
                             <div className="space-y-2">
                               <p className="text-sm font-medium text-gray-700">Your previous feedback:</p>
                               {submission.teacherRemarks.map((remark: any) => (
-                                <div key={remark.id} className="bg-green-50 p-3 rounded-lg border-l-4 border-green-200">
+                                <div key={remark.id} className="bg-slate-100 p-3 rounded-lg border-l-4 border-slate-300">
                                   <div className="flex items-start justify-between mb-1">
-                                    <p className="text-sm font-medium text-green-900">Your Feedback</p>
-                                    <p className="text-xs text-green-600">
+                                    <p className="text-sm font-medium text-slate-900">Your Feedback</p>
+                                    <p className="text-xs text-slate-600">
                                       {new Date(remark.updatedAt).toLocaleDateString()}
                                     </p>
                                   </div>
-                                  <p className="text-sm text-green-800">{remark.remark}</p>
+                                  <p className="text-sm text-slate-700">{remark.remark}</p>
                                 </div>
                               ))}
                             </div>
@@ -1302,13 +1818,38 @@ export default function TeacherDashboard() {
                 transition={{ duration: 0.5 }}
                 className="space-y-6"
               >
-                {/* Import StudentScheduler */}
-                <div className="w-full">
+                <Card className="border border-slate-200 bg-white shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg text-slate-900">Teaching Schedule</CardTitle>
+                    <CardDescription>Manage upcoming sessions and time slots.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
                   {(() => {
                     const StudentScheduler = require("../../components/teacher/StudentScheduler").default;
                     return <StudentScheduler teacherEmail={teacherEmail} />;
                   })()}
-                </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Progress Reports Tab */}
+            {activeTab === "progress" && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="space-y-6"
+              >
+                <Card className="border border-slate-200 bg-white shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg text-slate-900">Progress Reports</CardTitle>
+                    <CardDescription>Review student performance trends and publish updates.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ProgressReportManager teacherEmail={teacherEmail} />
+                  </CardContent>
+                </Card>
               </motion.div>
             )}
           </div>

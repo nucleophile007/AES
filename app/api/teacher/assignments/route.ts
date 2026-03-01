@@ -98,6 +98,7 @@ export async function POST(request: NextRequest) {
       allowLateSubmission = false,
       teacherEmail,
       studentId, // Add studentId parameter
+      studentIds = [],
       resourceIds = []
     } = data;
 
@@ -108,26 +109,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate studentId if provided
-    if (studentId) {
-      const student = await prisma.student.findUnique({
-        where: { id: parseInt(studentId) }
-      });
+    const parsedDueDate = new Date(dueDate);
+    if (Number.isNaN(parsedDueDate.getTime())) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid due date' },
+        { status: 400 }
+      );
+    }
 
-      if (!student) {
-        return NextResponse.json(
-          { success: false, error: 'Student not found' },
-          { status: 404 }
-        );
-      }
+    const parsedTotalPoints = Number.parseInt(String(totalPoints), 10);
+    const normalizedTotalPoints = Number.isNaN(parsedTotalPoints) ? 100 : parsedTotalPoints;
+    const normalizedInstructions = instructions?.trim() || null;
 
-      // Verify student is in the selected program
-      if (student.program !== program) {
-        return NextResponse.json(
-          { success: false, error: 'Student is not enrolled in the selected program' },
-          { status: 400 }
-        );
-      }
+    const normalizedStudentIds = Array.isArray(studentIds)
+      ? Array.from(new Set(studentIds.map((id: any) => Number(id)).filter((id: number) => !Number.isNaN(id))))
+      : [];
+    const singleStudentId = studentId ? parseInt(studentId) : null;
+    const targetStudentIds = normalizedStudentIds.length > 0
+      ? normalizedStudentIds
+      : singleStudentId
+        ? [singleStudentId]
+        : [];
+
+    if (targetStudentIds.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Student selection is required' },
+        { status: 400 }
+      );
     }
 
     // Find teacher
@@ -142,49 +150,93 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create assignment
-    const assignment = await prisma.assignment.create({
-      data: {
-        title,
-        description,
-        instructions,
-        program,
-        subject,
-        dueDate: new Date(dueDate),
-        totalPoints: parseInt(totalPoints),
-        allowLateSubmission,
-        teacherId: teacher.id,
-        targetStudentId: studentId ? parseInt(studentId) : null // Add student assignment
-      }
+    const students = await prisma.student.findMany({
+      where: { id: { in: targetStudentIds } }
     });
 
-    // Link resources if provided
-    if (resourceIds.length > 0) {
-      await prisma.assignmentResource.createMany({
-        data: resourceIds.map((resourceId: number) => ({
-          assignmentId: assignment.id,
-          resourceId,
-          isRequired: true
-        }))
-      });
+    if (students.length !== targetStudentIds.length) {
+      return NextResponse.json(
+        { success: false, error: 'Student not found' },
+        { status: 404 }
+      );
     }
 
-    // Get the created assignment with relations
-    const createdAssignment = await prisma.assignment.findUnique({
-      where: { id: assignment.id },
-      include: {
-        resources: {
-          include: {
-            resource: true
-          }
-        }
+    // Safety net for accidental double-submit:
+    // if an identical assignment was created in the last 2 minutes for the same
+    // teacher + target students, return that instead of creating duplicates.
+    const dedupeWindowStart = new Date(Date.now() - 2 * 60 * 1000);
+    const recentlyCreatedMatches = await prisma.assignment.findMany({
+      where: {
+        teacherId: teacher.id,
+        targetStudentId: { in: targetStudentIds },
+        title,
+        description,
+        instructions: normalizedInstructions,
+        program,
+        subject,
+        dueDate: parsedDueDate,
+        totalPoints: normalizedTotalPoints,
+        allowLateSubmission,
+        isActive: true,
+        createdAt: { gte: dedupeWindowStart },
       }
     });
+
+    if (recentlyCreatedMatches.length > 0) {
+      const matchedStudentIds = new Set(
+        recentlyCreatedMatches.map((assignment) => assignment.targetStudentId).filter((id): id is number => id !== null)
+      );
+      const allTargetsAlreadyCreated = targetStudentIds.every((id) => matchedStudentIds.has(id));
+
+      if (allTargetsAlreadyCreated) {
+        return NextResponse.json({
+          success: true,
+          assignments: recentlyCreatedMatches,
+          deduplicated: true,
+          message: 'Assignment already created. Duplicate submit ignored.'
+        });
+      }
+    }
+
+    // We intentionally do NOT enforce that all selected students share the same
+    // program as the assignment here, to allow assigning to full groups even
+    // if they mix programs. Validation of visibility to students happens
+    // separately when fetching assignments for a given student.
+
+    const createdAssignments = [];
+    for (const targetId of targetStudentIds) {
+      const assignment = await prisma.assignment.create({
+        data: {
+          title,
+          description,
+          instructions: normalizedInstructions,
+          program,
+          subject,
+          dueDate: parsedDueDate,
+          totalPoints: normalizedTotalPoints,
+          allowLateSubmission,
+          teacherId: teacher.id,
+          targetStudentId: targetId
+        }
+      });
+
+      if (resourceIds.length > 0) {
+        await prisma.assignmentResource.createMany({
+          data: resourceIds.map((resourceId: number) => ({
+            assignmentId: assignment.id,
+            resourceId,
+            isRequired: true
+          }))
+        });
+      }
+
+      createdAssignments.push(assignment);
+    }
 
     return NextResponse.json({
       success: true,
-      assignment: createdAssignment,
-      message: 'Assignment created successfully'
+      assignments: createdAssignments,
+      message: targetStudentIds.length > 1 ? 'Assignments created successfully' : 'Assignment created successfully'
     });
 
   } catch (error) {

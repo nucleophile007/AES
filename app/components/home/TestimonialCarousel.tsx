@@ -88,7 +88,7 @@ export default function ParentTestimonialCarousel() {
 
   const duplicatedTestimonials =
     testimonials.length > 0
-      ? [...testimonials, ...testimonials]
+      ? [...testimonials, ...testimonials, ...testimonials, ...testimonials]
       : []
 
   /* ---------------- Empty State ---------------- */
@@ -127,15 +127,15 @@ export default function ParentTestimonialCarousel() {
       </div>
 
       {/* Carousel */}
-      <div className="relative overflow-hidden py-16">
+      <div className="relative overflow-hidden group pt-24 pb-8">
         {isLoading ? (
-          <div className="flex animate-scroll-reverse">
-            {[...Array(6)].map((_, i) => (
+          <div className="flex animate-scroll group-hover:pause-animation">
+            {[...Array(12)].map((_, i) => (
               <TestimonialSkeleton key={i} />
             ))}
           </div>
         ) : (
-          <div className="flex animate-scroll-reverse">
+          <div className="flex animate-scroll group-hover:pause-animation">
             {duplicatedTestimonials.map((t, i) => (
               <div key={`${t.id}-${i}`} className="flex-shrink-0 mx-6">
                 <motion.div

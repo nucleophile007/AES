@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '../../../../generated/prisma/index.js';
-
-const prisma = new PrismaClient();
+import { prisma } from '../../../../lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -43,14 +41,22 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get assignments for the student's programs
-    const studentPrograms = student.teacherLinks.map(tl => tl.program);
+    // Get assignments for the student's teachers/programs
+    const teacherIds = student.teacherLinks.map(tl => tl.teacherId);
+    const normalizedPrograms = Array.from(
+      new Set(
+        student.teacherLinks
+          .map(tl => (tl.program || '').trim().toLowerCase())
+          .filter(Boolean)
+      )
+    );
+
     const assignments = await prisma.assignment.findMany({
       where: {
-        program: {
-          in: studentPrograms
-        },
-        isActive: true
+        isActive: true,
+        teacherId: {
+          in: teacherIds
+        }
       },
       orderBy: {
         dueDate: 'asc'
@@ -58,7 +64,11 @@ export async function GET(request: NextRequest) {
     });
 
     // Transform assignments to include submission status
-    const assignmentsWithStatus = assignments.map(assignment => {
+    const assignmentsWithStatus = assignments
+      .filter(assignment =>
+        normalizedPrograms.includes(assignment.program.trim().toLowerCase())
+      )
+      .map(assignment => {
       const submission = student.submissions.find(s => s.assignmentId === assignment.id);
       return {
         id: assignment.id,
@@ -129,10 +139,15 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching student data:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error:
+          process.env.NODE_ENV === 'development'
+            ? error instanceof Error
+              ? error.message
+              : 'Internal server error'
+            : 'Internal server error',
+      },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

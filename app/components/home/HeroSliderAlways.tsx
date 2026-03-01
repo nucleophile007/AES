@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -12,6 +13,7 @@ type Slide = {
   imageSrc: string;
   imageAlt: string;
   cta?: { label: string; href: string };
+  isEvent?: boolean; // Flag to identify event slides
 };
 
 type HeroSliderAlwaysProps = {
@@ -86,42 +88,103 @@ export function HeroSliderAlways({
                 isActive ? "opacity-100" : "opacity-0"
               )}
             >
-              <img
+              <Image
                 src={slide.imageSrc || "/placeholder.svg?height=1080&width=1920&query=professional%20education%20hero"}
-                alt={slide.imageAlt || ""}
-                className="absolute inset-0 w-full h-full object-cover blur-[2px]"
+                alt={slide.imageAlt || "Hero image"}
+                fill
+                className={`object-cover ${slide.isEvent ? '' : 'blur-[2px]'}`}
+                priority={i === 0}
               />
 
-              <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
+              <div className={`absolute inset-0 ${slide.isEvent ? 'bg-gradient-to-r from-black/80 via-black/50 to-black/30' : 'bg-gradient-to-r from-black/60 via-black/30 to-transparent'}`} />
 
               <div className="absolute inset-0 flex flex-col justify-center px-6 md:px-10 lg:px-16 py-12 md:py-16 lg:py-20 z-10">
-                <div className="max-w-2xl ml-8 md:ml-16 mt-8 md:mt-16">
-                  {slide.subtitle && <div className="hero-badge mb-4 md:mb-6 bg-gradient-to-r from-yellow-400/20 to-amber-500/20 border-yellow-400/30 text-yellow-200">{slide.subtitle}</div>}
-                  <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-7xl font-bold bg-gradient-to-r from-yellow-400 via-amber-300 to-orange-400 bg-clip-text text-transparent text-balance leading-tight drop-shadow-2xl">
+                <div className={`${slide.isEvent ? 'max-w-3xl' : 'max-w-2xl'} ml-8 md:ml-16 mt-8 md:mt-16`}>
+                  {slide.isEvent && (
+                    <div className="inline-flex items-center gap-2 mb-3 md:mb-4 px-4 py-2 bg-gradient-to-r from-red-500 via-red-600 to-orange-600 text-white font-bold text-sm rounded-full shadow-2xl animate-pulse">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm2 0v8h12V6H4zm2 2h8v2H6V8z"/>
+                      </svg>
+                      Latest Event
+                    </div>
+                  )}
+                  {slide.subtitle && (
+                    <div className={`hero-badge mb-4 md:mb-6 ${
+                      slide.isEvent 
+                        ? 'bg-slate-900/90 backdrop-blur-md border-2 border-yellow-400/60 text-yellow-300 font-semibold text-sm md:text-base px-4 py-2 shadow-lg' 
+                        : 'bg-gradient-to-r from-yellow-400/20 to-amber-500/20 border-yellow-400/30 text-yellow-200'
+                    }`}>
+                      {slide.subtitle}
+                    </div>
+                  )}
+                  <h1 className={`font-bold bg-gradient-to-r ${
+                    slide.isEvent
+                      ? 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl from-yellow-200 via-yellow-400 to-amber-500 drop-shadow-[0_6px_30px_rgba(251,191,36,0.6)]'
+                      : 'text-5xl sm:text-6xl md:text-7xl lg:text-7xl from-yellow-400 via-amber-300 to-orange-400 drop-shadow-2xl'
+                  } bg-clip-text text-transparent text-balance leading-tight`}>
                     {slide.title}
                   </h1>
                   {slide.description ? (
-                    <p className="mt-6 md:mt-8 text-lg md:text-xl lg:text-xl text-slate-200 leading-relaxed max-w-xl drop-shadow-lg">
+                    <p className={`mt-6 md:mt-8 leading-relaxed ${
+                      slide.isEvent
+                        ? 'text-lg md:text-xl lg:text-xl text-white font-medium drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] max-w-2xl'
+                        : 'text-lg md:text-xl lg:text-xl text-slate-200 drop-shadow-lg max-w-xl'
+                    }`}>
                       {slide.description}
                     </p>
                   ) : null}
                   {slide.cta ? (
                     <div className="mt-10 md:mt-12 flex flex-col sm:flex-row gap-4">
-                      <Button
-                        asChild
-                        size="lg"
-                        className="font-semibold bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-slate-900 rounded-lg shadow-lg hover:shadow-yellow-400/25"
-                      >
-                        <Link href={slide.cta.href}>Learn More</Link>
-                      </Button>
-                      <Button
-                        asChild
-                        variant="outline"
-                        size="lg"
-                        className="font-semibold bg-white/10 hover:bg-white/20 text-white border-white/30 rounded-lg backdrop-blur-sm"
-                      >
-                        <Link href="/book-session">{slide.cta.label}</Link>
-                      </Button>
+                      {slide.isEvent ? (
+                        // Event slide - show prominent "Register Now" button with enhanced styling
+                        <div className="flex flex-col sm:flex-row gap-4 items-start">
+                          <Button
+                            asChild
+                            size="lg"
+                            className="text-base md:text-lg px-8 py-6 font-bold bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-slate-900 rounded-xl shadow-[0_10px_40px_rgba(251,191,36,0.4)] hover:shadow-[0_15px_50px_rgba(251,191,36,0.6)] transform hover:scale-105 transition-all duration-300 border-2 border-yellow-300"
+                          >
+                            <Link href={slide.cta.href}>
+                              <span className="flex items-center gap-2">
+                                {slide.cta.label}
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                              </span>
+                            </Link>
+                          </Button>
+                          <Button
+                            asChild
+                            size="lg"
+                            variant="outline"
+                            className="text-sm md:text-base px-6 py-6 font-semibold bg-white/10 hover:bg-white/20 text-white border-2 border-white/60 hover:border-white rounded-xl backdrop-blur-md shadow-xl"
+                          >
+                            <Link href="/events">
+                              <span className="flex items-center gap-2">
+                                View All Events
+                              </span>
+                            </Link>
+                          </Button>
+                        </div>
+                      ) : (
+                        // Regular program slides
+                        <>
+                          <Button
+                            asChild
+                            size="lg"
+                            className="font-semibold bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-slate-900 rounded-lg shadow-lg hover:shadow-yellow-400/25"
+                          >
+                            <Link href={slide.cta.href}>Learn More</Link>
+                          </Button>
+                          <Button
+                            asChild
+                            variant="outline"
+                            size="lg"
+                            className="font-semibold bg-white/10 hover:bg-white/20 text-white border-white/30 rounded-lg backdrop-blur-sm"
+                          >
+                            <Link href="/book-session">{slide.cta.label}</Link>
+                          </Button>
+                        </>
+                      )}
                     </div>
                   ) : null}
                 </div>
