@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import useSWR from "swr";
@@ -252,9 +253,11 @@ export default function FeaturesGridSection() {
                 {/* Circular Avatar - Fixed Outside Scroll */}
                 <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-20">
                   <div className="w-24 h-24 rounded-full bg-white border-4 border-yellow-400 flex items-center justify-center shadow-lg overflow-hidden">
-                    <img
+                    <Image
                       src={getSchoolLogo(story.school)}
                       alt={story.school || "School Logo"}
+                      width={96}
+                      height={96}
                       className="w-full h-full object-contain p-1"
                       onError={(e) => {
                         e.currentTarget.src = "/testimonial-logos/default.png";
