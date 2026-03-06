@@ -8,6 +8,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
     const year = searchParams.get("year") || "";
+    const domainsParam = searchParams.get("domains") || "";
+    const domains = domainsParam ? domainsParam.split(",").filter(Boolean) : [];
     const category = searchParams.get("category") || "all";
     const page = parseInt(searchParams.get("page") || "1");
 
@@ -41,6 +43,7 @@ export async function GET(request: NextRequest) {
         id: true,
         createdAt: true,
         category: true,
+        domain: true,
         title: true,
         description: true,
         author: true,
@@ -62,6 +65,26 @@ export async function GET(request: NextRequest) {
       const yearNum = parseInt(year);
       filteredResearch = allResearch.filter(
         (r) => new Date(r.createdAt).getFullYear() === yearNum
+      );
+    }
+
+    // Calculate domain counts based on year filter (cascading)
+    const domainCounts: Record<string, number> = {
+      "AI/ML": 0,
+      "Pre-Med/BIO/CHEM": 0,
+      "Engg": 0,
+      "Law & Political Sciences": 0,
+    };
+    filteredResearch.forEach((r) => {
+      if (r.domain && domainCounts.hasOwnProperty(r.domain)) {
+        domainCounts[r.domain]++;
+      }
+    });
+
+    // Filter by domains if specified (cascading from year)
+    if (domains.length > 0) {
+      filteredResearch = filteredResearch.filter(
+        (r) => r.domain && domains.includes(r.domain)
       );
     }
 
@@ -135,6 +158,7 @@ export async function GET(request: NextRequest) {
       counts: {
         byCategory: (year && year !== "all") ? categoryCounts : allYearsCategoryCounts,
         byYear: yearCounts,
+        byDomain: domainCounts,
       },
     });
   } catch (error) {

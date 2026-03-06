@@ -6,6 +6,12 @@ export async function GET() {
     const rows = await prisma.testimonial.findMany({
       where: {
         beforeAfterApproved: true,
+        beforeExpectations: {
+          not: null,
+        },
+        afterChanges: {
+          not: null,
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -27,7 +33,8 @@ export async function GET() {
       success: true,
       story: {
         studentName: random.studentName,
-        beforeAfter: random.beforeAfterExpectations,
+        before: random.beforeExpectations,
+        after: random.afterChanges,
         school: random.school,
         grade: random.grade,
       },
