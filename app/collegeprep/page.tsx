@@ -566,23 +566,29 @@ const TestimonialsSection = () => {
       return testimonial.content
     }
     
-    // For API testimonials, show all approved sections
+    // For API testimonials, show all approved sections with headings
     return (
-      <div className="space-y-4">
-        {/* Success Story Section */}
-        {testimonial.successStory && (
+      <div className="space-y-6">
+        {/* Content/Experience Section */}
+        {testimonial.content && (
           <div>
-            <p className="text-slate-200 text-base italic leading-relaxed">
-              &quot;{testimonial.successStory}&quot;
+            <h3 className="text-yellow-400 font-semibold mb-2 text-base">
+              Experience With Us
+            </h3>
+            <p className="text-slate-200 text-base leading-relaxed">
+              &quot;{testimonial.content}&quot;
             </p>
           </div>
         )}
         
-        {/* Content/Experience Section */}
-        {testimonial.content && (
+        {/* Success Story Section */}
+        {testimonial.successStory && (
           <div>
+            <h3 className="text-emerald-400 font-semibold mb-2 text-base">
+              Success Story
+            </h3>
             <p className="text-slate-200 text-base leading-relaxed">
-              &quot;{testimonial.content}&quot;
+              &quot;{testimonial.successStory}&quot;
             </p>
           </div>
         )}
@@ -650,13 +656,13 @@ const TestimonialsSection = () => {
           <div className="flex-1 max-w-lg">
             <div
               key={selectedTestimonial.id}
-              className="bg-gradient-to-br from-[#1a2236]/95 to-[#2a3246]/90 backdrop-blur-xl rounded-2xl p-8 shadow-2xl border border-yellow-400/30 animate-in fade-in-50 slide-in-from-right-5 duration-500 relative overflow-hidden"
+              className="bg-gradient-to-br from-[#1a2236]/95 to-[#2a3246]/90 backdrop-blur-xl rounded-2xl p-8 shadow-2xl border border-yellow-400/30 animate-in fade-in-50 slide-in-from-right-5 duration-500 relative overflow-hidden flex flex-col h-[550px]"
             >
               {/* Content Background Glow */}
               <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 via-transparent to-blue-400/5 rounded-2xl"></div>
               <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-400/10 rounded-full blur-3xl"></div>
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-400/10 rounded-full blur-3xl"></div>
-              <div className="relative z-10">
+              <div className="relative z-10 flex flex-col h-full">
               {/* Rating Stars - Only show if rating exists */}
               {selectedTestimonial.rating && (
                 <div className="flex gap-1 mb-6">
@@ -666,11 +672,13 @@ const TestimonialsSection = () => {
                 </div>
               )}
 
-              <blockquote className="theme-text-light leading-relaxed mb-6 font-medium">
-                {renderTestimonialContent(selectedTestimonial)}
-              </blockquote>
+              <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide">
+                <blockquote className="theme-text-light leading-relaxed font-medium">
+                  {renderTestimonialContent(selectedTestimonial)}
+                </blockquote>
+              </div>
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 mt-6">
                 <Avatar className="w-12 h-12 ring-2 ring-yellow-100">
                   <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-[#1a2236] font-semibold">
                     {selectedTestimonial.initials || selectedTestimonial.name
