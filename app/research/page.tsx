@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import Chatbot from "@/components/home/Chatbot";
-import { Search, Calendar, X } from "lucide-react";
+import { Search, Calendar, X, Layers } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,6 +28,7 @@ interface Research {
   category: string | null;
   grade: string | null;
   school: string | null;
+  domain: string | null;
 }
 
 interface APIResponse {
@@ -45,6 +46,7 @@ interface APIResponse {
       TRANSFORM: number;
     };
     byYear: Record<string, number>;
+    byDomain: Record<string, number>;
   };
 }
 
@@ -82,6 +84,9 @@ function ResearchShowcaseContent() {
   const [searchInput, setSearchInput] = useState(searchParams.get("search") || "");
   const [debouncedSearch, setDebouncedSearch] = useState(searchInput);
   const [selectedYear, setSelectedYear] = useState(searchParams.get("year") || "");
+  const [selectedDomains, setSelectedDomains] = useState<string[]>(
+    searchParams.get("domains") ? searchParams.get("domains")!.split(",") : []
+  );
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get("category") || "all");
   const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get("page") || "1"));
   const [totalPages, setTotalPages] = useState(1);
@@ -90,6 +95,7 @@ function ResearchShowcaseContent() {
   const [counts, setCounts] = useState({
     byCategory: { all: 0, IGNITE: 0, ELEVATE: 0, TRANSFORM: 0 },
     byYear: {} as Record<string, number>,
+    byDomain: {} as Record<string, number>,
   });
 
   // Debounce search input
@@ -107,6 +113,7 @@ function ResearchShowcaseContent() {
       const params = new URLSearchParams();
       if (debouncedSearch) params.set("search", debouncedSearch);
       if (selectedYear) params.set("year", selectedYear);
+      if (selectedDomains.length > 0) params.set("domains", selectedDomains.join(","));
       if (selectedCategory !== "all") params.set("category", selectedCategory);
       params.set("page", currentPage.toString());
 
@@ -125,7 +132,7 @@ function ResearchShowcaseContent() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, selectedYear, selectedCategory, currentPage]);
+  }, [debouncedSearch, selectedYear, selectedDomains, selectedCategory, currentPage]);
 
   // Fetch data when filters change
   useEffect(() => {
@@ -137,12 +144,13 @@ function ResearchShowcaseContent() {
     const params = new URLSearchParams();
     if (debouncedSearch) params.set("search", debouncedSearch);
     if (selectedYear) params.set("year", selectedYear);
+    if (selectedDomains.length > 0) params.set("domains", selectedDomains.join(","));
     if (selectedCategory !== "all") params.set("category", selectedCategory);
     if (currentPage > 1) params.set("page", currentPage.toString());
 
     const newUrl = params.toString() ? `/research?${params.toString()}` : "/research";
     router.replace(newUrl, { scroll: false });
-  }, [debouncedSearch, selectedYear, selectedCategory, currentPage, router]);
+  }, [debouncedSearch, selectedYear, selectedDomains, selectedCategory, currentPage, router]);
 
   // Handler functions
   const handleSearchChange = (value: string) => {
@@ -152,6 +160,22 @@ function ResearchShowcaseContent() {
 
   const handleYearChange = (year: string) => {
     setSelectedYear(year === "all" ? "" : year);
+    setCurrentPage(1);
+  };
+
+  const handleDomainToggle = (domain: string) => {
+    setSelectedDomains((prev) => {
+      if (prev.includes(domain)) {
+        return prev.filter((d) => d !== domain);
+      } else {
+        return [...prev, domain];
+      }
+    });
+    setCurrentPage(1);
+  };
+
+  const handleClearAllDomains = () => {
+    setSelectedDomains([]);
     setCurrentPage(1);
   };
 
@@ -171,6 +195,14 @@ function ResearchShowcaseContent() {
     { id: "IGNITE", label: "IGNITE", count: counts.byCategory.IGNITE, color: "from-orange-500 to-orange-600" },
     { id: "ELEVATE", label: "ELEVATE", count: counts.byCategory.ELEVATE, color: "from-blue-500 to-blue-600" },
     { id: "TRANSFORM", label: "TRANSFORM", count: counts.byCategory.TRANSFORM, color: "from-purple-500 to-purple-600" },
+  ];
+
+  // Domain configurations
+  const domains = [
+    { id: "AI/ML", label: "AI/ML", count: counts.byDomain["AI/ML"] || 0, color: "from-cyan-500 to-blue-500" },
+    { id: "Pre-Med/BIO/CHEM", label: "Pre-Med/BIO/CHEM", count: counts.byDomain["Pre-Med/BIO/CHEM"] || 0, color: "from-green-500 to-emerald-500" },
+    { id: "Engg", label: "Engg", count: counts.byDomain["Engg"] || 0, color: "from-indigo-500 to-purple-500" },
+    { id: "Law & Political Sciences", label: "Law & Political Sciences", count: counts.byDomain["Law & Political Sciences"] || 0, color: "from-amber-500 to-orange-500" },
   ];
 
   return (
@@ -278,10 +310,11 @@ function ResearchShowcaseContent() {
       {/* Filters Section */}
       <section className="py-6 theme-bg-dark">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Year Dropdown */}
-          <div className="flex flex-col items-center mb-6">
-            <div className="w-full max-w-xs">
-              <label className="block text-sm font-medium text-slate-300 mb-2 text-center">
+          {/* Dropdowns Row - Year and Domain */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
+            {/* Year Dropdown */}
+            <div className="w-full sm:w-auto sm:min-w-[200px]">
+              <label className="block text-sm font-medium text-slate-300 mb-2 text-center sm:text-left">
                 Filter by Year
               </label>
               <Select
@@ -289,7 +322,7 @@ function ResearchShowcaseContent() {
                 onValueChange={handleYearChange}
                 disabled={loading}
               >
-                <SelectTrigger className="w-full bg-slate-800/60 border-slate-700/50 text-slate-200 focus:border-yellow-400/40 focus:ring-yellow-400/20 rounded-xl py-6">
+                <SelectTrigger className="w-full bg-slate-800/60 border-slate-700/50 text-slate-200 focus:border-yellow-400/40 focus:ring-yellow-400/20 rounded-xl py-3">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-yellow-400" />
                     <SelectValue placeholder="All Years" />
@@ -314,31 +347,119 @@ function ResearchShowcaseContent() {
                 </SelectContent>
               </Select>
             </div>
-            
-            {/* Selected Year Badge */}
-            {selectedYear && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="mt-3 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-400/30 rounded-lg"
-              >
-                <Calendar className="h-3.5 w-3.5 text-yellow-400" />
-                <span className="text-sm font-semibold text-yellow-400">{selectedYear}</span>
-                <button
-                  onClick={() => handleYearChange("all")}
-                  className="ml-1 p-0.5 hover:bg-yellow-400/20 rounded-full transition-colors"
-                  aria-label="Clear year filter"
+
+            {/* Domain Multi-Select Dropdown */}
+            <div className="w-full sm:w-auto sm:min-w-[280px]">
+              <label className="block text-sm font-medium text-slate-300 mb-2 text-center sm:text-left">
+                Filter by Domain
+              </label>
+              <div className="relative">
+                <Select
+                  value={selectedDomains.length === 0 ? "all" : selectedDomains.join(",")}
+                  onValueChange={(value) => {
+                    if (value === "all") {
+                      setSelectedDomains([]);
+                    } else {
+                      handleDomainToggle(value);
+                    }
+                    setCurrentPage(1);
+                  }}
+                  disabled={loading}
                 >
-                  <X className="h-4 w-4 text-yellow-400" />
-                </button>
-              </motion.div>
-            )}
+                  <SelectTrigger className="w-full bg-slate-800/60 border-slate-700/50 text-slate-200 focus:border-yellow-400/40 focus:ring-yellow-400/20 rounded-xl py-3">
+                    <div className="flex items-center gap-2">
+                      <Layers className="h-4 w-4 text-yellow-400" />
+                      <SelectValue placeholder="All Domains">
+                        {selectedDomains.length === 0
+                          ? "All Domains"
+                          : selectedDomains.length === 1
+                          ? selectedDomains[0]
+                          : `${selectedDomains.length} domains selected`}
+                      </SelectValue>
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-700 rounded-xl">
+                    <SelectItem
+                      value="all"
+                      className="text-slate-200 focus:bg-slate-700 focus:text-yellow-400 cursor-pointer"
+                    >
+                      <span className="font-semibold">All Domains</span>
+                    </SelectItem>
+                    {domains.map((domain) => (
+                      <SelectItem
+                        key={domain.id}
+                        value={domain.id}
+                        disabled={domain.count === 0}
+                        className="text-slate-200 focus:bg-slate-700 focus:text-yellow-400 cursor-pointer disabled:opacity-40"
+                      >
+                        <div className="flex items-center justify-between gap-2 w-full">
+                          <span className="font-semibold">
+                            {selectedDomains.includes(domain.id) && "✓ "}
+                            {domain.label}
+                          </span>
+                          <span className="text-xs opacity-70">({domain.count})</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {/* Clear domains button */}
+                {selectedDomains.length > 0 && (
+                  <button
+                    onClick={handleClearAllDomains}
+                    className="absolute right-10 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-700 rounded-full transition-colors z-10"
+                    title="Clear all domains"
+                  >
+                    <X className="h-4 w-4 text-slate-400 hover:text-yellow-400" />
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
+          {/* Selected Filter Badges */}
+          {(selectedYear || selectedDomains.length > 0) && (
+            <div className="flex flex-wrap justify-center gap-2 mb-6">
+              {selectedYear && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-400/30 rounded-lg"
+                >
+                  <Calendar className="h-3.5 w-3.5 text-yellow-400" />
+                  <span className="text-sm font-semibold text-yellow-400">{selectedYear}</span>
+                  <button
+                    onClick={() => handleYearChange("all")}
+                    className="ml-1 p-0.5 hover:bg-yellow-400/20 rounded-full transition-colors"
+                    aria-label="Clear year filter"
+                  >
+                    <X className="h-3.5 w-3.5 text-yellow-400" />
+                  </button>
+                </motion.div>
+              )}
+              {selectedDomains.map((domain) => (
+                <motion.div
+                  key={domain}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-400/30 rounded-lg"
+                >
+                  <span className="text-sm font-semibold text-cyan-300">{domain}</span>
+                  <button
+                    onClick={() => handleDomainToggle(domain)}
+                    className="ml-1 p-0.5 hover:bg-cyan-400/20 rounded-full transition-colors"
+                    aria-label={`Remove ${domain} filter`}
+                  >
+                    <X className="h-3.5 w-3.5 text-cyan-300" />
+                  </button>
+                </motion.div>
+              ))}
+            </div>
+          )}
+
           {/* Category Filters */}
-          <div className="flex flex-wrap justify-center gap-3">
-            {categories.map((cat) => {
+          <div className="flex flex-wrap justify-center gap-3">{categories.map((cat) => {
               const isDisabled = loading || (cat.count === 0 && cat.id !== "all");
               return (
                 <motion.button
@@ -426,6 +547,7 @@ function ResearchShowcaseContent() {
               onClick={() => {
                 setSearchInput("");
                 setSelectedYear("");
+                setSelectedDomains([]);
                 setSelectedCategory("all");
                 setCurrentPage(1);
               }}
@@ -500,6 +622,15 @@ function ResearchShowcaseContent() {
                     By{" "}
                     <span className="text-yellow-400 font-medium">
                       {item.author}
+                    </span>
+                  </div>
+                )}
+
+                {item.domain && (
+                  <div className="flex items-center gap-1.5">
+                    <Layers className="h-3.5 w-3.5 text-cyan-400" />
+                    <span className="text-cyan-400 font-medium">
+                      {item.domain}
                     </span>
                   </div>
                 )}

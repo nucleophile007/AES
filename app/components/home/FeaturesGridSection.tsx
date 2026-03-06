@@ -134,30 +134,7 @@ export default function FeaturesGridSection() {
     return "/testimonial-logos/default.png";
   };
 
-  /* ---------- Parse Before/After Text ---------- */
-  const parseBeforeAfter = (text: string) => {
-    if (!text) return { before: "", after: "" };
-
-    // Look for "after" keyword (case insensitive) to split the text
-    const afterMatch = text.match(/\b(after|now)\b/i);
-    
-    if (afterMatch && afterMatch.index !== undefined) {
-      // Split at the "after" or "now" keyword
-      const before = text.substring(0, afterMatch.index).trim();
-      // Include everything from "after"/"now" onwards in the after section
-      const after = text.substring(afterMatch.index).trim();
-      
-      // Only return if both parts have substantial content (more than just the keyword)
-      if (before.length > 10 && after.length > 10) {
-        return { before, after };
-      }
-    }
-
-    // Fallback: return all as before if no clear split found
-    return { before: text, after: "" };
-  };
-
-  const parsedStory = story ? parseBeforeAfter(story.beforeAfter) : { before: "", after: "" };
+  /* ---------- Story has separate before/after fields ---------- */
 
   return (
     <section
@@ -223,22 +200,22 @@ export default function FeaturesGridSection() {
                 {/* Skeleton Card */}
                 <div className="relative bg-slate-800 border border-slate-700 rounded-3xl shadow-xl text-center animate-pulse h-[500px] flex flex-col">
                   
-                  {/* Skeleton Top */}
-                  <div className="pt-20 px-8 pb-4">
-                    <div className="w-8 h-8 bg-slate-700 rounded mx-auto"></div>
+                  {/* Skeleton Top - Fixed */}
+                  <div className="pt-20 px-8 pb-2 flex-shrink-0">
+                    {/* Space for avatar */}
                   </div>
 
                   {/* Skeleton Middle (Scrollable area) */}
                   <div className="flex-1 px-8 overflow-hidden">
-                    <div className="space-y-3">
+                    <div className="space-y-3 py-4">
                       <div className="h-4 bg-slate-700 rounded w-full"></div>
                       <div className="h-4 bg-slate-700 rounded w-5/6 mx-auto"></div>
                       <div className="h-4 bg-slate-700 rounded w-4/6 mx-auto"></div>
                     </div>
                   </div>
 
-                  {/* Skeleton Bottom */}
-                  <div className="px-8 pb-10 pt-4">
+                  {/* Skeleton Bottom - Fixed */}
+                  <div className="px-8 pb-10 pt-4 flex-shrink-0">
                     <div className="w-16 h-[1px] bg-slate-700 mx-auto mb-6"></div>
                     <div className="space-y-2">
                       <div className="h-4 bg-slate-700 rounded w-32 mx-auto"></div>
@@ -269,18 +246,16 @@ export default function FeaturesGridSection() {
                 {/* Card - Fixed Height with Scrollable Middle Section */}
                 <div className="relative bg-slate-800 border border-slate-700 rounded-3xl shadow-xl text-center h-[500px] flex flex-col">
 
-                  {/* Top Section - Fixed (Quote) */}
-                  {/* <div className="pt-20 px-8 pb-4">
-                    <div className="text-yellow-400/15 text-6xl font-serif">
-                      "
-                    </div>
-                  </div> */}
+                  {/* Top Section - Fixed (Space for Avatar) */}
+                  <div className="pt-20 px-8 pb-2 flex-shrink-0">
+                    {/* This space is reserved for the avatar */}
+                  </div>
 
                   {/* Middle Section - Scrollable (Before/After Content Only) */}
-                  <div className="pt-20 flex-1 overflow-y-auto px-8 scrollbar-hide">
-                    <div className="space-y-6">
+                  <div className="flex-1 overflow-y-auto px-8 scrollbar-hide">
+                    <div className="space-y-6 py-4">
                     {/* Before Section */}
-                    {parsedStory.before && (
+                    {story.before && (
                       <div className="space-y-2">
                         <div className="flex items-center justify-center gap-2">
                           <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-red-500/30"></div>
@@ -290,13 +265,13 @@ export default function FeaturesGridSection() {
                           <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-red-500/30"></div>
                         </div>
                         <p className="text-slate-300 text-sm leading-relaxed bg-red-500/5 border border-red-500/10 rounded-xl p-4">
-                          {parsedStory.before}
+                          {story.before}
                         </p>
                       </div>
                     )}
 
                     {/* After Section */}
-                    {parsedStory.after && (
+                    {story.after && (
                       <div className="space-y-2">
                         <div className="flex items-center justify-center gap-2">
                           <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-green-500/30"></div>
@@ -306,22 +281,15 @@ export default function FeaturesGridSection() {
                           <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-green-500/30"></div>
                         </div>
                         <p className="text-slate-300 text-sm leading-relaxed bg-green-500/5 border border-green-500/10 rounded-xl p-4">
-                          {parsedStory.after}
+                          {story.after}
                         </p>
                       </div>
-                    )}
-
-                    {/* Fallback if no sections parsed */}
-                    {!parsedStory.before && !parsedStory.after && (
-                      <p className="text-slate-200 text-base leading-relaxed">
-                        {story.beforeAfter}
-                      </p>
                     )}
                     </div>
                   </div>
 
                   {/* Bottom Section - Fixed (Divider + Footer) */}
-                  <div className="px-8 pb-10 pt-4">
+                  <div className="px-8 pb-10 pt-4 flex-shrink-0">
                     {/* Divider */}
                     <div className="w-16 h-[1px] bg-slate-600 mx-auto mb-6"></div>
 
