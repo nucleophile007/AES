@@ -114,19 +114,12 @@ export default function Page() {
 
       {/* Always Render Sections */}
       <div className="container mx-auto px-4 py-20 space-y-24">
-        <TestimonialSection
-          title="Tutoring Program"
-          description="Academic excellence through personalized guidance"
-          testimonials={sections.tutoring}
-          color="from-blue-600 to-blue-400"
-          loading={loading}
-        />
 
         <TestimonialSection
-          title="SAT Coaching"
-          description="Score improvement strategies that deliver results"
-          testimonials={sections.satCoaching}
-          color="from-emerald-600 to-emerald-400"
+          title="Research Program"
+          description="Discover your passion for academic research"
+          testimonials={sections.researchProgram}
+          color="from-orange-600 to-orange-400"
           loading={loading}
         />
 
@@ -139,20 +132,30 @@ export default function Page() {
         />
 
         <TestimonialSection
-          title="Research Program"
-          description="Discover your passion for academic research"
-          testimonials={sections.researchProgram}
-          color="from-orange-600 to-orange-400"
-          loading={loading}
-        />
-
-        <TestimonialSection
           title="Math Competition"
           description="Master advanced problem-solving techniques"
           testimonials={sections.mathCompetition}
           color="from-pink-600 to-pink-400"
           loading={loading}
         />
+
+
+        <TestimonialSection
+          title="Tutoring Program"
+          description="Academic excellence through personalized guidance"
+          testimonials={sections.tutoring}
+          color="from-blue-600 to-blue-400"
+          loading={loading}
+        />
+
+        {/* <TestimonialSection
+          title="SAT Coaching"
+          description="Score improvement strategies that deliver results"
+          testimonials={sections.satCoaching}
+          color="from-emerald-600 to-emerald-400"
+          loading={loading}
+        /> */}
+
       </div>
 
       <Footer />
