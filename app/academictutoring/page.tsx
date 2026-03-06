@@ -414,23 +414,29 @@ function TestimonialsSection() {
       return testimonial.content
     }
     
-    // For API testimonials, show all approved sections
+    // For API testimonials, show all approved sections with headings
     return (
-      <div className="space-y-4">
-        {/* Success Story Section */}
-        {testimonial.successStory && (
+      <div className="space-y-6">
+        {/* Content/Experience Section */}
+        {testimonial.content && (
           <div>
-            <p className="text-slate-200 text-base italic leading-relaxed">
-              &quot;{testimonial.successStory}&quot;
+            <h3 className="text-yellow-400 font-semibold mb-2 text-base">
+              Experience With Us
+            </h3>
+            <p className="text-slate-200 text-base leading-relaxed">
+              &quot;{testimonial.content}&quot;
             </p>
           </div>
         )}
         
-        {/* Content/Experience Section */}
-        {testimonial.content && (
+        {/* Success Story Section */}
+        {testimonial.successStory && (
           <div>
+            <h3 className="text-emerald-400 font-semibold mb-2 text-base">
+              Success Story
+            </h3>
             <p className="text-slate-200 text-base leading-relaxed">
-              &quot;{testimonial.content}&quot;
+              &quot;{testimonial.successStory}&quot;
             </p>
           </div>
         )}
@@ -504,7 +510,7 @@ function TestimonialsSection() {
           <div className="flex-1 max-w-lg">
             <div
               key={selectedTestimonial.id}
-              className="bg-[#1a2236]/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-yellow-400/20 animate-in fade-in-50 slide-in-from-right-5 duration-500"
+              className="bg-[#1a2236]/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-yellow-400/20 animate-in fade-in-50 slide-in-from-right-5 duration-500 flex flex-col h-[550px]"
             >
               {/* Rating Stars - Only show if rating exists */}
               {selectedTestimonial.rating && (
@@ -515,11 +521,13 @@ function TestimonialsSection() {
                 </div>
               )}
 
-              <blockquote className="theme-text-light leading-relaxed mb-6 font-medium">
-                {renderTestimonialContent(selectedTestimonial)}
-              </blockquote>
+              <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide">
+                <blockquote className="theme-text-light leading-relaxed font-medium">
+                  {renderTestimonialContent(selectedTestimonial)}
+                </blockquote>
+              </div>
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 mt-6">
                 <Avatar className="w-12 h-12 ring-2 ring-yellow-100">
                   <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-[#1a2236] font-semibold">
                     {selectedTestimonial.initials || selectedTestimonial.name
