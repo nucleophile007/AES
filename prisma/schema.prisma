@@ -72,6 +72,7 @@ model Student {
   isActivated         Boolean              @default(false)
   parentAccountId     Int?
   assignedAssignments Assignment[]         @relation("AssignedAssignments")
+  Blog                Blog[]
   classSchedules      ClassSchedule[]
   enrollments         Enrollment[]
   Payment             Payment[]
@@ -663,4 +664,25 @@ model Slide {
   order         Int
   imageFilename String
   research      Research @relation(fields: [researchId], references: [id])
+}
+
+model Blog {
+  id               Int       @id @default(autoincrement())
+  title            String
+  abstract         String
+  externalUrl      String
+  studentId        Int?
+  studentPhoto     String?
+  publicationYear  Int
+  publicationMonth Int
+  isApproved       Boolean   @default(false)
+  published        Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime
+  approvedAt       DateTime?
+  Student          Student?  @relation(fields: [studentId], references: [id])
+
+  @@index([publicationYear, publicationMonth])
+  @@index([published])
+  @@index([studentId])
 }
