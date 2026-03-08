@@ -127,6 +127,14 @@ export default function AESBlogPage() {
                 );
               }
 
+              if (id === "education-admissions") {
+                return (
+                  <Link key={index} href="/blog/aes-blogs" className="block h-full">
+                    {card}
+                  </Link>
+                );
+              }
+
               return card;
             })}
           </div>
