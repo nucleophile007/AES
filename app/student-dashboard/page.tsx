@@ -77,6 +77,7 @@ import ResourceLibrary from "@/components/student/ResourceLibrary";
 import MentorMessages from "../../components/student/MentorMessages";
 import ProgressReportList from "@/components/common/ProgressReportList";
 import DashboardLoadingSkeleton, { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
+import { getUserTimezone, formatDateTime, formatDate } from "@/lib/timezone";
 
 // Mock data - replace with actual API calls
 const mockUpcomingEvents = [
@@ -1068,7 +1069,7 @@ export default function StudentDashboard() {
                               <div key={assignment.id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3">
                                 <div className="min-w-0">
                                   <p className="truncate text-sm font-semibold text-slate-900">{assignment.title}</p>
-                                  <p className="text-xs text-slate-500">{assignment.subject} • Due {assignment.dueDate}</p>
+                                  <p className="text-xs text-slate-500">{assignment.subject} • Due {formatDate(new Date(assignment.dueDate), getUserTimezone())}</p>
                                 </div>
                                 {getStatusBadge(assignment.status)}
                               </div>
@@ -1180,7 +1181,7 @@ export default function StudentDashboard() {
                                       </span>
                                       <span className="flex items-center gap-1">
                                         <Calendar className="h-4 w-4" />
-                                        Due: {assignment.dueDate}
+                                        Due: {formatDate(new Date(assignment.dueDate), getUserTimezone())}
                                       </span>
                                       <span className="flex items-center gap-1">
                                         <Star className="h-4 w-4" />
@@ -1407,21 +1408,11 @@ export default function StudentDashboard() {
                                   <div className="flex-1">
                                     <h3 className="text-lg font-semibold">{submission.assignmentTitle}</h3>
                                     <p className="text-sm text-gray-600">
-                                      Submitted on {new Date(submission.submittedAt).toLocaleDateString('en-US', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                      })}
+                                      Submitted on {formatDateTime(new Date(submission.submittedAt), getUserTimezone())}
                                     </p>
                                     {assignment && (
                                       <p className="text-sm text-gray-500 mt-1">
-                                        Due: {new Date(assignment.dueDate).toLocaleDateString('en-US', {
-                                          year: 'numeric',
-                                          month: 'long',
-                                          day: 'numeric'
-                                        })}
+                                        Due: {formatDate(new Date(assignment.dueDate), getUserTimezone())}
                                         {deadlinePassed && <span className="text-red-500 ml-2">(Submitted after deadline)</span>}
                                         {!deadlinePassed && <span className="text-slate-500 ml-2">(Submitted on time)</span>}
                                       </p>
