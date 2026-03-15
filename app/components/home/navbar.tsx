@@ -72,7 +72,7 @@ function Navbar({ className }: { className?: string }) {
         </MenuItem>
         <MenuItem setActive={setActive} active={null} item="Events" href="/events" className="text-yellow-400/90 hover:text-yellow-300 transition-colors font-medium">
         </MenuItem>
-        <MenuItem setActive={setActive} active={null} item="Contact" href="/#cta" className="text-yellow-400/90 hover:text-yellow-300 transition-colors font-medium">
+        <MenuItem setActive={setActive} active={null} item="Contact" href="/contact" className="text-yellow-400/90 hover:text-yellow-300 transition-colors font-medium">
         </MenuItem>
       </Menu>
     </div>

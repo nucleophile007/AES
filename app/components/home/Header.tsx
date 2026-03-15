@@ -149,7 +149,7 @@ export default function Header() {
               <Link href="/#animatedtestimonials" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Testimonials</Link>
               <Link href="/blog" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Blog</Link>
               <Link href="/events" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Events</Link>
-              <Link href="/#cta" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Contact</Link>
+              <Link href="/contact" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Contact</Link>
             </nav>
             <div className="pt-4 border-t border-yellow-400/10 space-y-3">
               <LoginModal>

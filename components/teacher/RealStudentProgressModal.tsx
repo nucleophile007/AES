@@ -14,8 +14,13 @@ import {
   RefreshCw,
   AlertCircle,
   LayoutDashboard,
-  FileSpreadsheet
+  FileSpreadsheet,
+  NotebookText,
+  Calendar,
+  Clock,
+  Users
 } from "lucide-react";
+import { getUserTimezone, formatDate, formatTime } from "@/lib/timezone";
 
 interface StudentProgressModalProps {
   isOpen: boolean;
@@ -40,6 +45,25 @@ interface Submission {
   status: string;
 }
 
+interface MeetingNote {
+  id: number;
+  title: string;
+  subject: string;
+  description: string | null;
+  meetingMinutes: string | null;
+  meetingLink: string | null;
+  location: string | null;
+  status: string;
+  startTime: string | null;
+  endTime: string | null;
+  date: string;
+  startDateTime: string | null;
+  endDateTime: string | null;
+  groupName: string | null;
+  teacherName: string | null;
+  teacherEmail: string | null;
+}
+
 const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
   isOpen,
   onClose,
@@ -56,6 +80,7 @@ const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
   // Progress Report State (view-only)
   const [activeTab, setActiveTab] = useState("overview");
   const [progressReports, setProgressReports] = useState<any[]>([]);
+  const [meetingNotes, setMeetingNotes] = useState<MeetingNote[]>([]);
 
   // Parse JSON helper safely
   const safeParse = (str: string) => {
@@ -87,6 +112,20 @@ const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
         setProgressReports(reportsData.reports || []);
       }
 
+      // Fetch Meeting Notes
+      const meetingsResponse = await fetch(`/api/teacher/meeting-notes?studentId=${studentId}`);
+      const meetingsData = await meetingsResponse.json();
+
+      if (meetingsResponse.ok) {
+        setMeetingNotes(meetingsData.meetings || []);
+      } else {
+        console.error(
+          "Failed to fetch meeting notes:",
+          meetingsData?.error,
+          meetingsData?.details ? `(${meetingsData.details})` : ""
+        );
+      }
+
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
       console.error("Error fetching student progress:", err);
@@ -99,7 +138,7 @@ const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
     if (isOpen && studentEmail) {
       fetchStudentProgress();
     }
-  }, [isOpen, studentEmail]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isOpen, studentEmail, studentId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -122,6 +161,13 @@ const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
             >
               <FileSpreadsheet className="h-4 w-4" />
               Progress Reports
+            </button>
+            <button
+              className={`px-4 py-2 text-sm font-medium flex items-center gap-2 ${activeTab === 'meetings' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              onClick={() => setActiveTab('meetings')}
+            >
+              <NotebookText className="h-4 w-4" />
+              Meeting Notes
             </button>
           </div>
         </DialogHeader>
@@ -263,7 +309,7 @@ const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
                       <div key={assignment.id} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="flex-1">
                           <p className="font-medium text-sm">{assignment.title}</p>
-                          <p className="text-xs text-gray-600">{assignment.subject} • Due {new Date(assignment.dueDate).toLocaleDateString()}</p>
+                          <p className="text-xs text-gray-600">{assignment.subject} • Due {formatDate(new Date(assignment.dueDate), getUserTimezone())}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           {submission ? (
@@ -291,7 +337,7 @@ const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
               </CardContent>
             </Card>
           </div>
-        ) : (
+        ) : activeTab === 'reports' ? (
           <div className="space-y-6">
             <h3 className="font-semibold text-lg">Progress Reports (view only)</h3>
 
@@ -361,6 +407,113 @@ const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
                     </CardContent>
                   </Card>
                 ))
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <h3 className="font-semibold text-lg">Meeting Notes (view only)</h3>
+
+            <div className="space-y-4">
+              {meetingNotes.length === 0 ? (
+                <div className="text-center py-10 text-gray-500 bg-gray-50 rounded-lg border border-dashed">
+                  No past meetings recorded yet.
+                </div>
+              ) : (
+                meetingNotes.map((meeting) => {
+                  const timezone = getUserTimezone();
+                  const startStamp = meeting.startDateTime ?? meeting.date;
+                  const dateLabel = formatDate(new Date(startStamp), timezone);
+                  const timeLabel = meeting.startDateTime
+                    ? formatTime(new Date(meeting.startDateTime), timezone)
+                    : meeting.startTime
+                      ? meeting.startTime
+                      : "Time not set";
+                  const endLabel = meeting.endDateTime
+                    ? formatTime(new Date(meeting.endDateTime), timezone)
+                    : meeting.endTime || "";
+
+                  return (
+                    <Card key={meeting.id} className="hover:shadow-md transition-shadow border-2">
+                      <CardHeader className="bg-gray-50/50 pb-2">
+                        <div className="flex justify-between items-start gap-4">
+                          <div>
+                            <CardTitle className="text-base text-gray-900">{meeting.title || "Meeting"}</CardTitle>
+                            <div className="mt-1 text-xs text-gray-500 flex flex-wrap items-center gap-3">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3.5 w-3.5" />
+                                {dateLabel}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3.5 w-3.5" />
+                                {timeLabel}{endLabel ? ` - ${endLabel}` : ""}
+                              </span>
+                              {meeting.groupName ? (
+                                <span className="flex items-center gap-1">
+                                  <Users className="h-3.5 w-3.5" />
+                                  Group: {meeting.groupName}
+                                </span>
+                              ) : (
+                                <span className="text-gray-500">1:1 Session</span>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {meeting.subject} • {meeting.teacherName || "Mentor"}
+                            </p>
+                          </div>
+                          <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full font-semibold capitalize">
+                            {meeting.status || "completed"}
+                          </span>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-4 space-y-4">
+                        {meeting.description && (
+                          <div>
+                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Description</h4>
+                            <p className="text-sm text-gray-800 bg-white p-3 border rounded-md">{meeting.description}</p>
+                          </div>
+                        )}
+
+                        <div>
+                          <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Meeting Notes</h4>
+                          {meeting.meetingMinutes ? (
+                            <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded border border-gray-100 whitespace-pre-wrap">
+                              {meeting.meetingMinutes}
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded border border-gray-100">
+                              No notes were added for this meeting.
+                            </div>
+                          )}
+                        </div>
+
+                        {(meeting.meetingLink || meeting.location) && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-600">
+                            {meeting.location && (
+                              <div className="bg-white border rounded-md p-3">
+                                <div className="text-xs font-semibold text-gray-500 uppercase">Location</div>
+                                <div className="mt-1">{meeting.location}</div>
+                              </div>
+                            )}
+                            {meeting.meetingLink && (
+                              <div className="bg-white border rounded-md p-3">
+                                <div className="text-xs font-semibold text-gray-500 uppercase">Meeting Link</div>
+                                <a
+                                  href={meeting.meetingLink}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="mt-1 text-blue-600 hover:text-blue-700 underline break-all"
+                                >
+                                  {meeting.meetingLink}
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })
               )}
             </div>
           </div>

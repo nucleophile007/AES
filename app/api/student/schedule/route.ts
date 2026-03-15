@@ -68,11 +68,16 @@ export async function GET(request: NextRequest) {
     });
     
     // Format dates for JSON response
+    // Include startDateTime/endDateTime for proper timezone conversion on client
     const formattedSchedules = schedules.map(schedule => {
       // Create a new object to avoid type issues
       return {
         ...schedule,
         date: schedule.date ? new Date(schedule.date).toISOString() : null,
+        // Include UTC DateTime fields for client-side timezone conversion
+        startDateTime: schedule.startDateTime ? new Date(schedule.startDateTime).toISOString() : null,
+        endDateTime: schedule.endDateTime ? new Date(schedule.endDateTime).toISOString() : null,
+        timezone: schedule.timezone || null,
         createdAt: schedule.createdAt ? new Date(schedule.createdAt).toISOString() : new Date().toISOString(),
         updatedAt: schedule.updatedAt ? new Date(schedule.updatedAt).toISOString() : new Date().toISOString()
       };
