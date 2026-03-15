@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import Chatbot from "@/components/home/Chatbot";
-import { Search, Calendar, X, Layers } from "lucide-react";
+import { Search, Calendar, X, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import {
@@ -50,6 +50,11 @@ interface APIResponse {
   };
 }
 
+const DOMAIN_PAGE_SIZE = 4;
+const DOMAIN_ORDER = ["AI/ML", "Pre-Med/BIO/CHEM", "Engg", "Law & Political Sciences"] as const;
+type DomainPageMap = Record<string, number>;
+type DomainCollapseMap = Record<string, boolean>;
+
 export default function ResearchShowcasePage() {
   return (
     <Suspense fallback={<ResearchPageSkeleton />}>
@@ -84,14 +89,13 @@ function ResearchShowcaseContent() {
   const [searchInput, setSearchInput] = useState(searchParams.get("search") || "");
   const [debouncedSearch, setDebouncedSearch] = useState(searchInput);
   const [selectedYear, setSelectedYear] = useState(searchParams.get("year") || "");
-  const [selectedDomains, setSelectedDomains] = useState<string[]>(
-    searchParams.get("domains") ? searchParams.get("domains")!.split(",") : []
-  );
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get("category") || "all");
-  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get("page") || "1"));
-  const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [years, setYears] = useState<number[]>([]);
+  const [domainPages, setDomainPages] = useState<DomainPageMap>(() =>
+    Object.fromEntries(DOMAIN_ORDER.map((domain) => [domain, 1]))
+  );
+  const [collapsedDomains, setCollapsedDomains] = useState<DomainCollapseMap>({});
   const [counts, setCounts] = useState({
     byCategory: { all: 0, IGNITE: 0, ELEVATE: 0, TRANSFORM: 0 },
     byYear: {} as Record<string, number>,
@@ -113,16 +117,14 @@ function ResearchShowcaseContent() {
       const params = new URLSearchParams();
       if (debouncedSearch) params.set("search", debouncedSearch);
       if (selectedYear) params.set("year", selectedYear);
-      if (selectedDomains.length > 0) params.set("domains", selectedDomains.join(","));
       if (selectedCategory !== "all") params.set("category", selectedCategory);
-      params.set("page", currentPage.toString());
+      params.set("showAll", "true");
 
       const response = await fetch(`/api/research?${params.toString()}`);
       const data: APIResponse = await response.json();
 
       if (data.success) {
         setResearch(data.research);
-        setTotalPages(data.totalPages);
         setTotalCount(data.totalCount);
         setYears(data.years);
         setCounts(data.counts);
@@ -132,7 +134,7 @@ function ResearchShowcaseContent() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, selectedYear, selectedDomains, selectedCategory, currentPage]);
+  }, [debouncedSearch, selectedYear, selectedCategory]);
 
   // Fetch data when filters change
   useEffect(() => {
@@ -144,49 +146,44 @@ function ResearchShowcaseContent() {
     const params = new URLSearchParams();
     if (debouncedSearch) params.set("search", debouncedSearch);
     if (selectedYear) params.set("year", selectedYear);
-    if (selectedDomains.length > 0) params.set("domains", selectedDomains.join(","));
     if (selectedCategory !== "all") params.set("category", selectedCategory);
-    if (currentPage > 1) params.set("page", currentPage.toString());
 
     const newUrl = params.toString() ? `/research?${params.toString()}` : "/research";
     router.replace(newUrl, { scroll: false });
-  }, [debouncedSearch, selectedYear, selectedDomains, selectedCategory, currentPage, router]);
+  }, [debouncedSearch, selectedYear, selectedCategory, router]);
+
+  useEffect(() => {
+    setDomainPages(Object.fromEntries(DOMAIN_ORDER.map((domain) => [domain, 1])));
+  }, [debouncedSearch, selectedYear, selectedCategory]);
 
   // Handler functions
   const handleSearchChange = (value: string) => {
     setSearchInput(value);
-    setCurrentPage(1);
   };
 
   const handleYearChange = (year: string) => {
     setSelectedYear(year === "all" ? "" : year);
-    setCurrentPage(1);
-  };
-
-  const handleDomainToggle = (domain: string) => {
-    setSelectedDomains((prev) => {
-      if (prev.includes(domain)) {
-        return prev.filter((d) => d !== domain);
-      } else {
-        return [...prev, domain];
-      }
-    });
-    setCurrentPage(1);
-  };
-
-  const handleClearAllDomains = () => {
-    setSelectedDomains([]);
-    setCurrentPage(1);
   };
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
-    setCurrentPage(1);
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const handleDomainPageChange = (domain: string, page: number) => {
+    setDomainPages((prev) => ({
+      ...prev,
+      [domain]: page,
+    }));
+
+    const section = document.getElementById(getDomainSectionId(domain));
+    section?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const toggleDomainCollapse = (domain: string) => {
+    setCollapsedDomains((prev) => ({
+      ...prev,
+      [domain]: !prev[domain],
+    }));
   };
 
   // Category configurations
@@ -197,13 +194,42 @@ function ResearchShowcaseContent() {
     { id: "TRANSFORM", label: "TRANSFORM", count: counts.byCategory.TRANSFORM, color: "from-purple-500 to-purple-600" },
   ];
 
-  // Domain configurations
-  const domains = [
-    { id: "AI/ML", label: "AI/ML", count: counts.byDomain["AI/ML"] || 0, color: "from-cyan-500 to-blue-500" },
-    { id: "Pre-Med/BIO/CHEM", label: "Pre-Med/BIO/CHEM", count: counts.byDomain["Pre-Med/BIO/CHEM"] || 0, color: "from-green-500 to-emerald-500" },
-    { id: "Engg", label: "Engg", count: counts.byDomain["Engg"] || 0, color: "from-indigo-500 to-purple-500" },
-    { id: "Law & Political Sciences", label: "Law & Political Sciences", count: counts.byDomain["Law & Political Sciences"] || 0, color: "from-amber-500 to-orange-500" },
-  ];
+  const groupedResearch = useMemo(() => {
+    const grouped = new Map<string, Research[]>();
+    research.forEach((item) => {
+      const domain = item.domain?.trim() || "Other";
+      const list = grouped.get(domain) || [];
+      list.push(item);
+      grouped.set(domain, list);
+    });
+
+    const preferredOrder = [...DOMAIN_ORDER, "Other"];
+    const orderedDomains = [
+      ...preferredOrder.filter((domain) => grouped.has(domain) || DOMAIN_ORDER.includes(domain as typeof DOMAIN_ORDER[number])),
+      ...Array.from(grouped.keys())
+        .filter((domain) => !preferredOrder.includes(domain))
+        .sort((a, b) => a.localeCompare(b)),
+    ];
+
+    return orderedDomains.map((domain) => ({
+      domain,
+      items: grouped.get(domain) || [],
+    }));
+  }, [research]);
+
+  useEffect(() => {
+    setCollapsedDomains((prev) => {
+      const next = { ...prev };
+      groupedResearch.forEach((group) => {
+        if (!(group.domain in next)) {
+          next[group.domain] = false;
+        }
+      });
+      return next;
+    });
+  }, [groupedResearch]);
+
+  const getDomainSectionId = (domain: string) => `domain-${domain.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
 
   return (
     <main className="min-h-screen theme-bg-dark flex flex-col">
@@ -310,156 +336,61 @@ function ResearchShowcaseContent() {
       {/* Filters Section */}
       <section className="py-6 theme-bg-dark">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Dropdowns Row - Year and Domain */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
-            {/* Year Dropdown */}
-            <div className="w-full sm:w-auto sm:min-w-[200px]">
-              <label className="block text-sm font-medium text-slate-300 mb-2 text-center sm:text-left">
-                Filter by Year
-              </label>
-              <Select
-                value={selectedYear || "all"}
-                onValueChange={handleYearChange}
-                disabled={loading}
-              >
-                <SelectTrigger className="w-full bg-slate-800/60 border-slate-700/50 text-slate-200 focus:border-yellow-400/40 focus:ring-yellow-400/20 rounded-xl py-3">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-yellow-400" />
-                    <SelectValue placeholder="All Years" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700 rounded-xl">
+          <div className="w-full sm:w-auto sm:min-w-[200px] mb-6">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Filter by Year
+            </label>
+            <Select
+              value={selectedYear || "all"}
+              onValueChange={handleYearChange}
+              disabled={loading}
+            >
+              <SelectTrigger className="w-full bg-slate-800/60 border-slate-700/50 text-slate-200 focus:border-yellow-400/40 focus:ring-yellow-400/20 rounded-xl py-3">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-yellow-400" />
+                  <SelectValue placeholder="All Years" />
+                </div>
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-slate-700 rounded-xl">
+                <SelectItem
+                  value="all"
+                  className="text-slate-200 focus:bg-slate-700 focus:text-yellow-400 cursor-pointer"
+                >
+                  <span className="font-semibold">All Years</span>
+                </SelectItem>
+                {years.map((year) => (
                   <SelectItem
-                    value="all"
+                    key={year}
+                    value={year.toString()}
                     className="text-slate-200 focus:bg-slate-700 focus:text-yellow-400 cursor-pointer"
                   >
-                    <span className="font-semibold">All Years</span>
+                    <span className="font-semibold">{year}</span>
                   </SelectItem>
-                  {years.map((year) => (
-                    <SelectItem
-                      key={year}
-                      value={year.toString()}
-                      className="text-slate-200 focus:bg-slate-700 focus:text-yellow-400 cursor-pointer"
-                    >
-                      <span className="font-semibold">{year}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Domain Multi-Select Dropdown */}
-            <div className="w-full sm:w-auto sm:min-w-[280px]">
-              <label className="block text-sm font-medium text-slate-300 mb-2 text-center sm:text-left">
-                Filter by Domain
-              </label>
-              <div className="relative">
-                <Select
-                  value={selectedDomains.length === 0 ? "all" : selectedDomains.join(",")}
-                  onValueChange={(value) => {
-                    if (value === "all") {
-                      setSelectedDomains([]);
-                    } else {
-                      handleDomainToggle(value);
-                    }
-                    setCurrentPage(1);
-                  }}
-                  disabled={loading}
-                >
-                  <SelectTrigger className="w-full bg-slate-800/60 border-slate-700/50 text-slate-200 focus:border-yellow-400/40 focus:ring-yellow-400/20 rounded-xl py-3">
-                    <div className="flex items-center gap-2">
-                      <Layers className="h-4 w-4 text-yellow-400" />
-                      <SelectValue placeholder="All Domains">
-                        {selectedDomains.length === 0
-                          ? "All Domains"
-                          : selectedDomains.length === 1
-                          ? selectedDomains[0]
-                          : `${selectedDomains.length} domains selected`}
-                      </SelectValue>
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700 rounded-xl">
-                    <SelectItem
-                      value="all"
-                      className="text-slate-200 focus:bg-slate-700 focus:text-yellow-400 cursor-pointer"
-                    >
-                      <span className="font-semibold">All Domains</span>
-                    </SelectItem>
-                    {domains.map((domain) => (
-                      <SelectItem
-                        key={domain.id}
-                        value={domain.id}
-                        disabled={domain.count === 0}
-                        className="text-slate-200 focus:bg-slate-700 focus:text-yellow-400 cursor-pointer disabled:opacity-40"
-                      >
-                        <div className="flex items-center justify-between gap-2 w-full">
-                          <span className="font-semibold">
-                            {selectedDomains.includes(domain.id) && "✓ "}
-                            {domain.label}
-                          </span>
-                          <span className="text-xs opacity-70">({domain.count})</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                
-                {/* Clear domains button */}
-                {selectedDomains.length > 0 && (
-                  <button
-                    onClick={handleClearAllDomains}
-                    className="absolute right-10 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-700 rounded-full transition-colors z-10"
-                    title="Clear all domains"
-                  >
-                    <X className="h-4 w-4 text-slate-400 hover:text-yellow-400" />
-                  </button>
-                )}
-              </div>
-            </div>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Selected Filter Badges */}
-          {(selectedYear || selectedDomains.length > 0) && (
-            <div className="flex flex-wrap justify-center gap-2 mb-6">
-              {selectedYear && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-400/30 rounded-lg"
-                >
-                  <Calendar className="h-3.5 w-3.5 text-yellow-400" />
-                  <span className="text-sm font-semibold text-yellow-400">{selectedYear}</span>
-                  <button
-                    onClick={() => handleYearChange("all")}
-                    className="ml-1 p-0.5 hover:bg-yellow-400/20 rounded-full transition-colors"
-                    aria-label="Clear year filter"
-                  >
-                    <X className="h-3.5 w-3.5 text-yellow-400" />
-                  </button>
-                </motion.div>
-              )}
-              {selectedDomains.map((domain) => (
-                <motion.div
-                  key={domain}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-400/30 rounded-lg"
-                >
-                  <span className="text-sm font-semibold text-cyan-300">{domain}</span>
-                  <button
-                    onClick={() => handleDomainToggle(domain)}
-                    className="ml-1 p-0.5 hover:bg-cyan-400/20 rounded-full transition-colors"
-                    aria-label={`Remove ${domain} filter`}
-                  >
-                    <X className="h-3.5 w-3.5 text-cyan-300" />
-                  </button>
-                </motion.div>
-              ))}
-            </div>
+          {selectedYear && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="inline-flex items-center gap-2 px-3 py-1.5 mb-6 bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-400/30 rounded-lg"
+            >
+              <Calendar className="h-3.5 w-3.5 text-yellow-400" />
+              <span className="text-sm font-semibold text-yellow-400">{selectedYear}</span>
+              <button
+                onClick={() => handleYearChange("all")}
+                className="ml-1 p-0.5 hover:bg-yellow-400/20 rounded-full transition-colors"
+                aria-label="Clear year filter"
+              >
+                <X className="h-3.5 w-3.5 text-yellow-400" />
+              </button>
+            </motion.div>
           )}
 
           {/* Category Filters */}
-          <div className="flex flex-wrap justify-center gap-3">{categories.map((cat) => {
+          <div className="flex flex-wrap gap-3">{categories.map((cat) => {
               const isDisabled = loading || (cat.count === 0 && cat.id !== "all");
               return (
                 <motion.button
@@ -547,9 +478,7 @@ function ResearchShowcaseContent() {
               onClick={() => {
                 setSearchInput("");
                 setSelectedYear("");
-                setSelectedDomains([]);
                 setSelectedCategory("all");
-                setCurrentPage(1);
               }}
               className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-400/10 hover:bg-yellow-400/20 border border-yellow-400/30 rounded-lg text-yellow-400 text-sm font-medium transition-colors"
             >
@@ -559,140 +488,168 @@ function ResearchShowcaseContent() {
         )}
       </div>
     ) : (
-      <motion.ul
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="space-y-14 relative"
+        className="space-y-14"
       >
-        {/* Vertical timeline line */}
-        <div className="absolute left-[10px] top-2 bottom-2 w-px bg-gradient-to-b from-transparent via-slate-700/40 to-transparent" />
-
-        {research.map((item, index) => (
-          <motion.li
-            key={item.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.06 }}
-            className="group relative pl-10"
+        {groupedResearch.map((group) => (
+          <section
+            key={group.domain}
+            id={getDomainSectionId(group.domain)}
+            className="rounded-3xl border border-slate-700/40 bg-slate-900/25 p-5 sm:p-6"
           >
-            {/* Elegant Bullet */}
-            <span className="absolute left-0 top-2 flex items-center justify-center">
-              <span className="h-4 w-4 rounded-full bg-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.6)] group-hover:scale-110 transition-transform duration-300" />
-            </span>
-
-            <Link href={`/research/${item.slug}`} className="block">
-
-              {/* Category Badge */}
-              {item.category && (
-                <div className="mb-2">
-                  <span
-                    className={`inline-block px-3 py-1 rounded-full text-[11px] tracking-wide font-semibold backdrop-blur-sm border ${
-                      item.category === "IGNITE"
-                        ? "bg-orange-500/10 text-orange-400 border-orange-400/20"
-                        : item.category === "ELEVATE"
-                        ? "bg-blue-500/10 text-blue-400 border-blue-400/20"
-                        : item.category === "TRANSFORM"
-                        ? "bg-purple-500/10 text-purple-400 border-purple-400/20"
-                        : "bg-slate-500/10 text-slate-400 border-slate-400/20"
-                    }`}
-                  >
-                    {item.category}
-                  </span>
-                </div>
-              )}
-
-              {/* Title */}
-              <h2 className="text-xl sm:text-2xl font-semibold theme-text-light leading-snug group-hover:text-yellow-400 transition-colors duration-300">
-                {item.title}
-              </h2>
-
-              {/* Description */}
-              {item.description && (
-                <p className="mt-3 theme-text-muted max-w-3xl leading-relaxed text-[15px]">
-                  {item.description}
+            <div className="mb-6 flex flex-col gap-4 border-b border-yellow-400/20 pb-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="text-2xl sm:text-3xl font-bold text-yellow-400">
+                  {group.domain}
+                </h3>
+                <p className="mt-1 text-sm font-medium text-slate-400">
+                  {group.items.length} research{group.items.length === 1 ? "" : "es"}
                 </p>
-              )}
-
-              {/* Meta Info */}
-              <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm theme-text-muted">
-
-                {item.author && (
-                  <div>
-                    By{" "}
-                    <span className="text-yellow-400 font-medium">
-                      {item.author}
-                    </span>
-                  </div>
-                )}
-
-                {item.domain && (
-                  <div className="flex items-center gap-1.5">
-                    <Layers className="h-3.5 w-3.5 text-cyan-400" />
-                    <span className="text-cyan-400 font-medium">
-                      {item.domain}
-                    </span>
-                  </div>
-                )}
-
-                {item.grade && (
-                  <div>
-                    Grade{" "}
-                    <span className="text-yellow-400 font-medium">
-                      {item.grade}
-                    </span>
-                  </div>
-                )}
-
-                {item.school && (
-                  <div className="text-xs opacity-80">
-                    {item.school}
-                  </div>
-                )}
               </div>
-            </Link>
+              <button
+                onClick={() => toggleDomainCollapse(group.domain)}
+                className="inline-flex items-center gap-2 self-start rounded-full border border-slate-600/60 px-3 py-2 text-sm font-medium text-slate-200 hover:border-yellow-400/40 hover:text-yellow-300 transition-colors"
+                aria-expanded={!collapsedDomains[group.domain]}
+                aria-controls={`${getDomainSectionId(group.domain)}-content`}
+              >
+                {collapsedDomains[group.domain] ? (
+                  <>
+                    <ChevronDown className="h-4 w-4" />
+                    Expand section
+                  </>
+                ) : (
+                  <>
+                    <ChevronUp className="h-4 w-4" />
+                    Collapse section
+                  </>
+                )}
+              </button>
+            </div>
 
-            {/* Divider */}
-            {index !== research.length - 1 && (
-              <div className="mt-10 border-t border-slate-700/40" />
+            {collapsedDomains[group.domain] ? (
+              <div className="rounded-2xl border border-slate-700/40 bg-slate-950/30 px-5 py-4 text-sm text-slate-400">
+                Section collapsed. Expand to browse research in {group.domain}.
+              </div>
+            ) : group.items.length === 0 ? (
+              <div className="rounded-2xl border border-slate-700/40 bg-slate-900/30 px-6 py-8 text-slate-400 text-sm">
+                No research available in this domain for the current filters.
+              </div>
+            ) : (
+              <>
+                <ul id={`${getDomainSectionId(group.domain)}-content`} className="space-y-12 relative">
+                  <div className="absolute left-[10px] top-2 bottom-2 w-px bg-gradient-to-b from-transparent via-slate-700/40 to-transparent" />
+
+                  {group.items
+                    .slice(
+                      ((domainPages[group.domain] || 1) - 1) * DOMAIN_PAGE_SIZE,
+                      ((domainPages[group.domain] || 1) - 1) * DOMAIN_PAGE_SIZE + DOMAIN_PAGE_SIZE
+                    )
+                    .map((item, index, pageItems) => (
+                      <motion.li
+                        key={item.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.06 }}
+                        className="group relative pl-10"
+                      >
+                        <span className="absolute left-0 top-2 flex items-center justify-center">
+                          <span className="h-4 w-4 rounded-full bg-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.6)] group-hover:scale-110 transition-transform duration-300" />
+                        </span>
+
+                        <Link href={`/research/${item.slug}`} className="block">
+                          {item.category && (
+                            <div className="mb-2">
+                              <span
+                                className={`inline-block px-3 py-1 rounded-full text-[11px] tracking-wide font-semibold backdrop-blur-sm border ${
+                                  item.category === "IGNITE"
+                                    ? "bg-orange-500/10 text-orange-400 border-orange-400/20"
+                                    : item.category === "ELEVATE"
+                                    ? "bg-blue-500/10 text-blue-400 border-blue-400/20"
+                                    : item.category === "TRANSFORM"
+                                    ? "bg-purple-500/10 text-purple-400 border-purple-400/20"
+                                    : "bg-slate-500/10 text-slate-400 border-slate-400/20"
+                                }`}
+                              >
+                                {item.category}
+                              </span>
+                            </div>
+                          )}
+
+                          <h2 className="text-xl sm:text-2xl font-semibold theme-text-light leading-snug group-hover:text-yellow-400 transition-colors duration-300">
+                            {item.title}
+                          </h2>
+
+                          {item.description && (
+                            <p className="mt-3 theme-text-muted max-w-3xl leading-relaxed text-[15px]">
+                              {item.description}
+                            </p>
+                          )}
+
+                          <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm theme-text-muted">
+                            {item.author && (
+                              <div>
+                                By{" "}
+                                <span className="text-yellow-400 font-medium">
+                                  {item.author}
+                                </span>
+                              </div>
+                            )}
+
+                            {item.grade && (
+                              <div>
+                                Grade{" "}
+                                <span className="text-yellow-400 font-medium">
+                                  {item.grade}
+                                </span>
+                              </div>
+                            )}
+
+                            {item.school && (
+                              <div className="text-xs opacity-80">
+                                {item.school}
+                              </div>
+                            )}
+                          </div>
+                        </Link>
+
+                        {index !== pageItems.length - 1 && (
+                          <div className="mt-10 border-t border-slate-700/40" />
+                        )}
+                      </motion.li>
+                    ))}
+                </ul>
+
+                {group.items.length > DOMAIN_PAGE_SIZE && (
+                  <div className="mt-8 flex items-center justify-center gap-6">
+                    <button
+                      disabled={(domainPages[group.domain] || 1) === 1}
+                      onClick={() => handleDomainPageChange(group.domain, (domainPages[group.domain] || 1) - 1)}
+                      className="px-4 py-2 rounded-full border border-yellow-400/20 bg-slate-900/40 theme-text-light hover:border-yellow-400/50 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+
+                    <div className="text-sm theme-text-muted tracking-wide">
+                      Page <span className="text-yellow-400 font-semibold">{domainPages[group.domain] || 1}</span> of <span className="text-yellow-400 font-semibold">{Math.max(1, Math.ceil(group.items.length / DOMAIN_PAGE_SIZE))}</span>
+                    </div>
+
+                    <button
+                      disabled={(domainPages[group.domain] || 1) >= Math.max(1, Math.ceil(group.items.length / DOMAIN_PAGE_SIZE))}
+                      onClick={() => handleDomainPageChange(group.domain, (domainPages[group.domain] || 1) + 1)}
+                      className="px-4 py-2 rounded-full border border-yellow-400/20 bg-slate-900/40 theme-text-light hover:border-yellow-400/50 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </>
             )}
-          </motion.li>
+          </section>
         ))}
-      </motion.ul>
-    )}
-
-    {/* Pagination */}
-    {!loading && totalPages > 1 && (
-      <div className="mt-20 flex items-center justify-center gap-8">
-
-        <button
-          disabled={currentPage === 1}
-          onClick={() => handlePageChange(currentPage - 1)}
-          className="px-5 py-2 rounded-full border border-yellow-400/20 bg-slate-900/40 theme-text-light hover:border-yellow-400/50 transition disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          Previous
-        </button>
-
-        <div className="text-sm theme-text-muted tracking-wide">
-          Page{" "}
-          <span className="text-yellow-400 font-semibold">
-            {currentPage}
-          </span>{" "}
-          of{" "}
-          <span className="text-yellow-400 font-semibold">
-            {totalPages}
-          </span>
-        </div>
-
-        <button
-          disabled={currentPage === totalPages}
-          onClick={() => handlePageChange(currentPage + 1)}
-          className="px-5 py-2 rounded-full border border-yellow-400/20 bg-slate-900/40 theme-text-light hover:border-yellow-400/50 transition disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          Next
-        </button>
-
-      </div>
+      </motion.div>
     )}
 
   </div>

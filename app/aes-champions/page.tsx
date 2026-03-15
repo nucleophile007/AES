@@ -542,9 +542,9 @@ export default function AESChampionsPage() {
              </div>
              
                            <h2 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black theme-text-light mb-8 leading-tight">
-                <span className="bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 bg-clip-text text-transparent">Competition</span>
+                <span className="theme-text-light leading-tight text-blue-400">Competition</span>
                 <br />
-                <span className="text-white">Tracks</span>
+                <span className="theme-text-light leading-tight text-blue-400">Tracks</span>
               </h2>
              
              <p className="text-xl lg:text-2xl theme-text-muted leading-relaxed mb-6 max-w-4xl mx-auto">
@@ -1506,13 +1506,10 @@ export default function AESChampionsPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-yellow-400 to-amber-500 text-[#1a2236] text-xs font-semibold rounded-full mb-4 shadow-lg">
-              <div className="w-1.5 h-1.5 bg-[#1a2236] rounded-full animate-pulse"></div>
-              Competition Programs
-            </div>
+              <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Competition Programs</Badge>
             <h2 className="text-3xl lg:text-5xl font-bold theme-text-light mb-4 leading-tight">
               Choose Your 
-              <span className="bg-gradient-to-r from-yellow-400 to-amber-500 bg-clip-text text-transparent"> Competition Track</span>
+              <span className="theme-text-light leading-tight text-blue-400"> Competition Track</span>
             </h2>
             <p className="text-lg theme-text-muted max-w-3xl mx-auto font-medium">
               Specialized programs for different grade levels and competition types.
