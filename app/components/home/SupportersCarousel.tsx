@@ -68,7 +68,7 @@ export function SupportersCarousel() {
       <div className="text-center mb-12">
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold theme-text-light leading-tight mb-4">
             Organizations That 
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500">
+            <span className="theme-text-light leading-tight text-blue-400">
               {" "}Support Us
             </span>
           </h2>
