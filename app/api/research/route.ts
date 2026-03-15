@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
     const domains = domainsParam ? domainsParam.split(",").filter(Boolean) : [];
     const category = searchParams.get("category") || "all";
     const page = parseInt(searchParams.get("page") || "1");
+    const showAll = searchParams.get("showAll") === "true";
 
     // Build dynamic where clause
     const where: any = {
@@ -131,18 +132,19 @@ export async function GET(request: NextRequest) {
       TRANSFORM: allResearch.filter((r) => r.category === "TRANSFORM").length,
     };
 
-    // Paginate the final results
+    // Paginate the final results unless the client requests all filtered rows
     const totalCount = finalResults.length;
-    const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-    const validPage = Math.min(Math.max(1, page), totalPages);
-    const startIndex = (validPage - 1) * PAGE_SIZE;
-    const paginatedResults = finalResults.slice(startIndex, startIndex + PAGE_SIZE);
+    const totalPages = showAll ? 1 : Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+    const validPage = showAll ? 1 : Math.min(Math.max(1, page), totalPages);
+    const resultSet = showAll
+      ? finalResults
+      : finalResults.slice((validPage - 1) * PAGE_SIZE, (validPage - 1) * PAGE_SIZE + PAGE_SIZE);
 
-    // Fetch full details for paginated results
+    // Fetch full details for selected results
     const fullResearch = await prisma.research.findMany({
       where: {
         id: {
-          in: paginatedResults.map((r) => r.id),
+          in: resultSet.map((r) => r.id),
         },
       },
       orderBy: { createdAt: "desc" },
