@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import useSWR from "swr";
@@ -117,23 +116,6 @@ export default function FeaturesGridSection() {
     }
   }, [allFeatures, story]);
 
-  /* ---------- Map School to Logo ---------- */
-  const getSchoolLogo = (school: string | null | undefined): string => {
-    if (!school) return "/testimonial-logos/default.png";
-    
-    const schoolLower = school.toLowerCase();
-    
-    // Map school names to logo files
-    if (schoolLower.includes("folsom")) return "/testimonial-logos/folsom.png";
-    if (schoolLower.includes("granite bay")) return "/testimonial-logos/GraniteBayHighSchool.png";
-    if (schoolLower.includes("raleigh") || schoolLower.includes("phoenix")) return "/testimonial-logos/Raleigh_Charter__NC__Phoenix_logo.png.webp";
-    if (schoolLower.includes("rocklin")) return "/testimonial-logos/rocklin.jpg";
-    if (schoolLower.includes("vista") || schoolLower.includes("del lago")) return "/testimonial-logos/VistaDelLagoHS-GraphicsTransparent.png";
-    if (schoolLower.includes("west park")) return "/testimonial-logos/WestParkHighSchool.png";
-    
-    return "/testimonial-logos/default.png";
-  };
-
   /* ---------- Story has separate before/after fields ---------- */
 
   return (
@@ -192,17 +174,10 @@ export default function FeaturesGridSection() {
             >
               {isLoading ? (
               <div className="relative w-full max-w-md mx-auto max-h-full">
-                {/* Skeleton Avatar - Fixed Outside */}
-                <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-20">
-                  <div className="w-24 h-24 rounded-full bg-slate-700 border-4 border-slate-600"></div>
-                </div>
-
                 {/* Skeleton Card */}
                 <div className="relative bg-slate-800 border border-slate-700 rounded-3xl shadow-xl text-center animate-pulse h-[500px] flex flex-col">
-                  
                   {/* Skeleton Top - Fixed */}
-                  <div className="pt-20 px-8 pb-2 flex-shrink-0">
-                    {/* Space for avatar */}
+                  <div className="pt-4 px-8 pb-1 flex-shrink-0">
                   </div>
 
                   {/* Skeleton Middle (Scrollable area) */}
@@ -226,29 +201,11 @@ export default function FeaturesGridSection() {
               </div>
             ) : story ? (
               <div className="relative w-full max-w-md mx-auto max-h-full">
-
-                {/* Circular Avatar - Fixed Outside Scroll */}
-                <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-20">
-                  <div className="w-24 h-24 rounded-full bg-white border-4 border-yellow-400 flex items-center justify-center shadow-lg overflow-hidden">
-                    <Image
-                      src={getSchoolLogo(story.school)}
-                      alt={story.school || "School Logo"}
-                      width={96}
-                      height={96}
-                      className="w-full h-full object-contain p-1"
-                      onError={(e) => {
-                        e.currentTarget.src = "/testimonial-logos/default.png";
-                      }}
-                    />
-                  </div>
-                </div>
-
                 {/* Card - Fixed Height with Scrollable Middle Section */}
                 <div className="relative bg-slate-800 border border-slate-700 rounded-3xl shadow-xl text-center h-[500px] flex flex-col">
 
-                  {/* Top Section - Fixed (Space for Avatar) */}
-                  <div className="pt-20 px-8 pb-2 flex-shrink-0">
-                    {/* This space is reserved for the avatar */}
+                  {/* Top Section - Fixed */}
+                  <div className="pt-4 px-8 pb-1 flex-shrink-0">
                   </div>
 
                   {/* Middle Section - Scrollable (Before/After Content Only) */}
@@ -259,7 +216,7 @@ export default function FeaturesGridSection() {
                       <div className="space-y-2">
                         <div className="flex items-center justify-center gap-2">
                           <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-red-500/30"></div>
-                          <span className="text-red-400 text-xs font-semibold uppercase tracking-wider px-3 py-1 bg-red-500/10 rounded-full border border-red-500/20">
+                          <span className="text-red-400 text-base sm:text-lg font-extrabold uppercase tracking-[0.22em] px-4 py-1.5 bg-red-500/10 rounded-full border border-red-500/20">
                             Before
                           </span>
                           <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-red-500/30"></div>
@@ -275,7 +232,7 @@ export default function FeaturesGridSection() {
                       <div className="space-y-2">
                         <div className="flex items-center justify-center gap-2">
                           <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-green-500/30"></div>
-                          <span className="text-green-400 text-xs font-semibold uppercase tracking-wider px-3 py-1 bg-green-500/10 rounded-full border border-green-500/20">
+                          <span className="text-green-400 text-base sm:text-lg font-extrabold uppercase tracking-[0.22em] px-4 py-1.5 bg-green-500/10 rounded-full border border-green-500/20">
                             After
                           </span>
                           <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-green-500/30"></div>

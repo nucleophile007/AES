@@ -98,7 +98,7 @@ export default function ParentTestimonialCarousel() {
       <section className="py-16 theme-bg-dark text-center">
         <h2 className="text-3xl md:text-5xl font-bold theme-text-light mb-4">
           What Parents{" "}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
+          <span className="theme-text-light leading-tight text-blue-400">
             Say About Us
           </span>
         </h2>
@@ -117,7 +117,7 @@ export default function ParentTestimonialCarousel() {
       <div className="text-center mb-12">
         <h2 className="text-3xl md:text-5xl font-bold theme-text-light mb-4">
           What Parents{" "}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
+          <span className="theme-text-light leading-tight text-blue-400">
             Say About Us
           </span>
         </h2>

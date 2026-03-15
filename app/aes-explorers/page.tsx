@@ -86,7 +86,7 @@ const programTiers = [
   },
   {
     name: "ELEVATE",
-    timeline: "16 Weeks (Sept - Dec / Jan - Apr / Feb-May)",
+    timeline: "20 Weeks (Sept - Dec / Jan - Apr / Feb-May)",
     mentorSessions: "12",
     techWriterSessions: "2",
     directorSessions: "2",
@@ -104,7 +104,7 @@ const programTiers = [
   },
   {
     name: "TRANSFORM",
-    timeline: "36 Weeks (Sept - Apr)",
+    timeline: "40 Weeks (Sept - Apr)",
     mentorSessions: "30",
     techWriterSessions: "3",
     directorSessions: "3",
@@ -614,8 +614,8 @@ export default function AESExplorersPage() {
                 </Badge>
                 <h2 className="text-5xl lg:text-6xl font-black theme-text-light mb-8 leading-tight">
                   Choose Your
-                  <span className="block bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent">
-                    Research Path
+                  <span className="theme-text-light leading-tight text-blue-400">
+                    {" "}Research Path
                   </span>
                 </h2>
                 <p className="text-xl lg:text-2xl theme-text-muted max-w-4xl mx-auto leading-relaxed">
@@ -761,7 +761,7 @@ export default function AESExplorersPage() {
             <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Program Tiers</Badge>
                          <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-4 leading-tight">
                Three Levels of 
-               <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500"> Research Excellence</span>
+               <span className="theme-text-light leading-tight text-blue-400"> Research Excellence</span>
              </h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">
               Choose the tier that best fits your research goals and timeline.

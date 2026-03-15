@@ -32,7 +32,7 @@ export default function CTASection() {
           
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold theme-text-light leading-tight">
             Ready to Transform Your Child&apos;s 
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500">
+            <span className="theme-text-light leading-tight text-blue-400">
               {" "}Academic Journey?
             </span>
           </h2>
