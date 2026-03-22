@@ -22,6 +22,7 @@ import {
 import { ToastAction } from "@/components/ui/toast";
 import { Plus, Save, X, Calendar, FileText, Users, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getUserTimezone } from "@/lib/timezone";
 
 interface Assignment {
   id: number;
@@ -558,6 +559,7 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
       const requestData = {
         ...formData,
         teacherEmail,
+        timezone: getUserTimezone(), // Include timezone for proper UTC conversion
         ...(editingAssignment && { id: editingAssignment.id }),
         ...(formData.groupId ? { studentIds: groupStudentIds } : {})
       };

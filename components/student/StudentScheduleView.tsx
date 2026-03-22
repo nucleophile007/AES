@@ -24,6 +24,7 @@ import {
   ExternalLink,
   AlertCircle
 } from "lucide-react";
+import { getUserTimezone, formatDateTime, formatDate, formatTime } from "@/lib/timezone";
 
 // Setup the localizer by providing the moment object
 const localizer = momentLocalizer(moment);
@@ -83,46 +84,59 @@ const StudentScheduleView: React.FC<StudentScheduleViewProps> = ({ studentEmail 
       }
       
       if (data.success && Array.isArray(data.schedules)) {
+        // Get user's timezone for display
+        const userTimezone = getUserTimezone();
+        
         // Convert schedule data to match calendar event format
         const formattedEvents = data.schedules.map((schedule: any) => {
           // Get the date from the schedule
           const eventDate = schedule.date ? new Date(schedule.date) : new Date();
           const datePart = eventDate.toISOString().split('T')[0];
           
-          // Parse time strings and create Date objects for calendar
-          // Handle different time formats (both "HH:MM" string and ISO datetime string)
-          let startHours = 0, startMinutes = 0, endHours = 0, endMinutes = 0;
+          // Use startDateTime/endDateTime (UTC) if available for proper timezone conversion
+          // Otherwise fall back to legacy startTime/endTime string fields
+          let startDateTime: Date;
+          let endDateTime: Date;
           
-          if (typeof schedule.startTime === 'string') {
-            if (schedule.startTime.includes('T')) {
-              // It's an ISO date string
-              const startDate = new Date(schedule.startTime);
-              startHours = startDate.getHours();
-              startMinutes = startDate.getMinutes();
-            } else {
-              // It's a time string like "14:30"
-              [startHours, startMinutes] = schedule.startTime.split(':').map(Number);
+          if (schedule.startDateTime && schedule.endDateTime) {
+            // Use UTC DateTime fields - browser will automatically convert to local time
+            startDateTime = new Date(schedule.startDateTime);
+            endDateTime = new Date(schedule.endDateTime);
+          } else {
+            // Fall back to legacy time string parsing
+            let startHours = 0, startMinutes = 0, endHours = 0, endMinutes = 0;
+            
+            if (typeof schedule.startTime === 'string') {
+              if (schedule.startTime.includes('T')) {
+                const startDate = new Date(schedule.startTime);
+                startHours = startDate.getHours();
+                startMinutes = startDate.getMinutes();
+              } else {
+                [startHours, startMinutes] = schedule.startTime.split(':').map(Number);
+              }
             }
+            
+            if (typeof schedule.endTime === 'string') {
+              if (schedule.endTime.includes('T')) {
+                const endDate = new Date(schedule.endTime);
+                endHours = endDate.getHours();
+                endMinutes = endDate.getMinutes();
+              } else {
+                [endHours, endMinutes] = schedule.endTime.split(':').map(Number);
+              }
+            }
+            
+            // Create Date objects for the calendar view
+            startDateTime = new Date(datePart);
+            startDateTime.setHours(startHours, startMinutes);
+            
+            endDateTime = new Date(datePart);
+            endDateTime.setHours(endHours, endMinutes);
           }
           
-          if (typeof schedule.endTime === 'string') {
-            if (schedule.endTime.includes('T')) {
-              // It's an ISO date string
-              const endDate = new Date(schedule.endTime);
-              endHours = endDate.getHours();
-              endMinutes = endDate.getMinutes();
-            } else {
-              // It's a time string like "15:30"
-              [endHours, endMinutes] = schedule.endTime.split(':').map(Number);
-            }
-          }
-          
-          // Create Date objects for the calendar view
-          const startDateTime = new Date(datePart);
-          startDateTime.setHours(startHours, startMinutes);
-          
-          const endDateTime = new Date(datePart);
-          endDateTime.setHours(endHours, endMinutes);
+          // Format display time in user's timezone
+          const displayStartTime = formatTime(startDateTime, userTimezone);
+          const displayEndTime = formatTime(endDateTime, userTimezone);
           
           return {
             id: schedule.id,
@@ -131,8 +145,8 @@ const StudentScheduleView: React.FC<StudentScheduleViewProps> = ({ studentEmail 
             start: startDateTime,
             end: endDateTime,
             date: eventDate,
-            startTime: schedule.startTime,
-            endTime: schedule.endTime,
+            startTime: displayStartTime,
+            endTime: displayEndTime,
             teacherId: schedule.teacherId,
             subject: schedule.subject,
             location: schedule.location || '',

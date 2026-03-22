@@ -23,6 +23,7 @@ import {
   ExternalLink
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getUserTimezone, formatDate as formatDateTz, formatDateTime } from "@/lib/timezone";
 
 interface Submission {
   id: number;
@@ -202,11 +203,11 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+    return formatDateTz(new Date(dateString), getUserTimezone());
   };
 
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString();
+    return formatDateTime(new Date(dateString), getUserTimezone());
   };
 
   const isLate = (submittedAt: string, dueDate: string) => {

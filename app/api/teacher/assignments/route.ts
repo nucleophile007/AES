@@ -94,6 +94,7 @@ export async function POST(request: NextRequest) {
       program,
       subject,
       dueDate,
+      timezone, // Client's timezone for proper UTC storage
       totalPoints = 100,
       allowLateSubmission = false,
       teacherEmail,
@@ -101,6 +102,9 @@ export async function POST(request: NextRequest) {
       studentIds = [],
       resourceIds = []
     } = data;
+    
+    // Default to America/Los_Angeles if no timezone provided (for backward compatibility)
+    const dueDateTimezone = timezone || 'America/Los_Angeles';
 
     if (!title || !description || !program || !subject || !dueDate || !teacherEmail) {
       return NextResponse.json(
@@ -213,6 +217,7 @@ export async function POST(request: NextRequest) {
           program,
           subject,
           dueDate: parsedDueDate,
+          dueDateTimezone, // Store the timezone used when creating the assignment
           totalPoints: normalizedTotalPoints,
           allowLateSubmission,
           teacherId: teacher.id,
