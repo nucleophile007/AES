@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -36,7 +36,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { ToastAction } from "@/components/ui/toast";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarIcon, PlusIcon, Trash2Icon, InfoIcon, RefreshCw, User, Clock, ExternalLink } from "lucide-react";
+import { CalendarIcon, PlusIcon, Trash2Icon, InfoIcon, RefreshCw, User, Clock, ExternalLink, Link2, Link2Off } from "lucide-react";
+import { getUserTimezone } from "@/lib/timezone";
 
 // Setup the localizer by providing the moment object
 const localizer = momentLocalizer(moment);
@@ -68,6 +69,7 @@ interface ClassEvent {
   id: number;
   title: string;
   description?: string | null;
+  meetingMinutes?: string | null;
   date?: Date | null;
   start: Date;  // Required for calendar display (from startTime)
   end: Date;    // Required for calendar display (from endTime)
@@ -80,6 +82,11 @@ interface ClassEvent {
   meetingLink?: string | null;
   studentId: number;
   teacherId: number;
+  groupId?: number | null;  // Group ID if scheduled via a group
+  group?: {
+    id: number;
+    name: string;
+  } | null;
   createdAt?: string;
   updatedAt?: string;
   student: {
@@ -96,6 +103,58 @@ interface StudentSchedulerProps {
   selectedStudentId?: number;
 }
 
+type CalendarViewMode = 'month' | 'week' | 'day' | 'agenda';
+
+const toLocalDateInput = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const toLocalTimeInput = (date: Date) => {
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+};
+
+const addMinutesToTime = (time: string, minutesToAdd: number) => {
+  const [hours, minutes] = time.split(':').map(Number);
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return time;
+
+  const totalMinutes = hours * 60 + minutes + minutesToAdd;
+  const clamped = Math.min(Math.max(totalMinutes, 0), 23 * 60 + 59);
+  const nextHours = String(Math.floor(clamped / 60)).padStart(2, '0');
+  const nextMinutes = String(clamped % 60).padStart(2, '0');
+  return `${nextHours}:${nextMinutes}`;
+};
+
+// Color palette for students (used in "all" view mode)
+const STUDENT_COLORS = [
+  { bg: 'bg-blue-200', border: 'border-blue-500', text: 'text-blue-800', hex: '#93C5FD' },
+  { bg: 'bg-green-200', border: 'border-green-500', text: 'text-green-800', hex: '#86EFAC' },
+  { bg: 'bg-purple-200', border: 'border-purple-500', text: 'text-purple-800', hex: '#C4B5FD' },
+  { bg: 'bg-orange-200', border: 'border-orange-500', text: 'text-orange-800', hex: '#FED7AA' },
+  { bg: 'bg-pink-200', border: 'border-pink-500', text: 'text-pink-800', hex: '#FBCFE8' },
+  { bg: 'bg-teal-200', border: 'border-teal-500', text: 'text-teal-800', hex: '#99F6E4' },
+  { bg: 'bg-yellow-200', border: 'border-yellow-500', text: 'text-yellow-800', hex: '#FEF08A' },
+  { bg: 'bg-red-200', border: 'border-red-500', text: 'text-red-800', hex: '#FECACA' },
+  { bg: 'bg-indigo-200', border: 'border-indigo-500', text: 'text-indigo-800', hex: '#A5B4FC' },
+  { bg: 'bg-cyan-200', border: 'border-cyan-500', text: 'text-cyan-800', hex: '#A5F3FC' },
+];
+
+// Color palette for groups (distinct from student colors)
+const GROUP_COLORS = [
+  { bg: 'bg-emerald-300', border: 'border-emerald-700', text: 'text-emerald-950', hex: '#34D399' },
+  { bg: 'bg-amber-300', border: 'border-amber-700', text: 'text-amber-950', hex: '#F59E0B' },
+  { bg: 'bg-rose-300', border: 'border-rose-700', text: 'text-rose-950', hex: '#FB7185' },
+  { bg: 'bg-lime-300', border: 'border-lime-700', text: 'text-lime-950', hex: '#84CC16' },
+  { bg: 'bg-fuchsia-300', border: 'border-fuchsia-700', text: 'text-fuchsia-950', hex: '#E879F9' },
+  { bg: 'bg-slate-300', border: 'border-slate-700', text: 'text-slate-950', hex: '#94A3B8' },
+  { bg: 'bg-orange-300', border: 'border-orange-700', text: 'text-orange-950', hex: '#FB923C' },
+  { bg: 'bg-teal-300', border: 'border-teal-700', text: 'text-teal-950', hex: '#2DD4BF' },
+];
+
 const StudentScheduler: React.FC<StudentSchedulerProps> = ({
   teacherEmail,
   selectedStudentId
@@ -106,11 +165,17 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
   const [studentGroups, setStudentGroups] = useState<StudentGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  
+  // View mode: 'selected' shows only selected student, 'all' shows all students
+  const [viewMode, setViewMode] = useState<'selected' | 'all'>('all');
+  
   const [isAddEventDialogOpen, setIsAddEventDialogOpen] = useState(false);
   const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<ClassEvent | null>(null);
   const [isViewEventDialogOpen, setIsViewEventDialogOpen] = useState(false);
+  const [isEditingEvent, setIsEditingEvent] = useState(false);
+  const [calendarView, setCalendarView] = useState<CalendarViewMode>('month');
+  const [calendarDate, setCalendarDate] = useState<Date>(new Date());
 
   // Form state
   const [selectedStudent, setSelectedStudent] = useState<number | null>(selectedStudentId || null);
@@ -128,11 +193,45 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
   const [recurrencePattern, setRecurrencePattern] = useState("");
   const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentNow, setCurrentNow] = useState<Date>(new Date());
+  
+  // Google Calendar state
+  const [googleCalendarConnected, setGoogleCalendarConnected] = useState(false);
+  const [googleCalendarLoading, setGoogleCalendarLoading] = useState(false);
+  const [isSyncingToGoogle, setIsSyncingToGoogle] = useState(false);
+  const [editEventDate, setEditEventDate] = useState("");
+  const [editEventStartTime, setEditEventStartTime] = useState("");
+  const [editEventEndTime, setEditEventEndTime] = useState("");
+  const [editEventSubject, setEditEventSubject] = useState("");
+  const [editEventDescription, setEditEventDescription] = useState("");
+  const [editEventMeetingLink, setEditEventMeetingLink] = useState("");
+  const [editEventMeetingMinutes, setEditEventMeetingMinutes] = useState("");
   const schedulerActionInFlightRef = useRef(false);
   const pendingDeleteTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingDeletedEventRef = useRef<ClassEvent | null>(null);
 
   const schedulerDraftStorageKey = `aes:teacher:schedule:draft:${teacherEmail}:${selectedStudent ?? "none"}`;
+  const todayLocalDate = toLocalDateInput(currentNow);
+  const minStartTimeForToday = toLocalTimeInput(new Date(currentNow.getTime() + 60 * 1000));
+  const minStartTime = eventStartDate === todayLocalDate ? minStartTimeForToday : undefined;
+
+  const groupNameById = useMemo(() => {
+    const map = new Map<number, string>();
+    studentGroups.forEach((group) => map.set(group.id, group.name));
+    return map;
+  }, [studentGroups]);
+  
+  // Get deterministic color for a student by ID
+  const getStudentColor = useCallback((studentId: number) => {
+    const paletteIndex = Math.abs(studentId) % STUDENT_COLORS.length;
+    return STUDENT_COLORS[paletteIndex];
+  }, []);
+
+  // Get deterministic color for a group by ID
+  const getGroupColor = useCallback((groupId: number) => {
+    const paletteIndex = Math.abs(groupId) % GROUP_COLORS.length;
+    return GROUP_COLORS[paletteIndex];
+  }, []);
 
   // Define fetch functions before useEffect hooks
   const fetchStudents = useCallback(async () => {
@@ -205,7 +304,154 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
     }
   }, [teacherEmail]);
 
-  const fetchEvents = useCallback(async (studentId: number) => {
+  // Google Calendar functions
+  const checkGoogleCalendarStatus = useCallback(async () => {
+    if (!teacherEmail) return;
+    try {
+      const response = await fetch(`/api/teacher/calendar/status?email=${encodeURIComponent(teacherEmail)}`);
+      const data = await response.json();
+      setGoogleCalendarConnected(data.connected || false);
+      if (data.needsReconnect) {
+        toast({
+          title: "Google Calendar needs reconnection",
+          description: "Your Google Calendar connection has expired. Please reconnect.",
+          variant: "destructive",
+        });
+      }
+    } catch (err) {
+      console.error('Error checking Google Calendar status:', err);
+    }
+  }, [teacherEmail, toast]);
+
+  const connectGoogleCalendar = async () => {
+    try {
+      setGoogleCalendarLoading(true);
+      const response = await fetch(`/api/auth/google-calendar?email=${encodeURIComponent(teacherEmail)}`);
+      const data = await response.json();
+      if (data.authUrl) {
+        window.location.href = data.authUrl;
+      } else {
+        throw new Error('Failed to get authorization URL');
+      }
+    } catch (err) {
+      console.error('Error connecting Google Calendar:', err);
+      toast({
+        title: "Error",
+        description: "Failed to connect Google Calendar. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setGoogleCalendarLoading(false);
+    }
+  };
+
+  const disconnectGoogleCalendar = async () => {
+    try {
+      setGoogleCalendarLoading(true);
+      const response = await fetch(`/api/teacher/calendar/status?email=${encodeURIComponent(teacherEmail)}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        setGoogleCalendarConnected(false);
+        toast({
+          title: "Disconnected",
+          description: "Google Calendar has been disconnected.",
+        });
+      }
+    } catch (err) {
+      console.error('Error disconnecting Google Calendar:', err);
+      toast({
+        title: "Error",
+        description: "Failed to disconnect Google Calendar.",
+        variant: "destructive",
+      });
+    } finally {
+      setGoogleCalendarLoading(false);
+    }
+  };
+
+  const syncEventToGoogleCalendar = async (
+    action: 'create' | 'update' | 'delete',
+    scheduleId: number,
+    eventData?: {
+      title: string;
+      description?: string;
+      date: string;
+      startTime: string;
+      endTime: string;
+      location?: string;
+      meetingLink?: string;
+      studentName?: string;
+      subject?: string;
+    }
+  ) => {
+    if (!googleCalendarConnected) return;
+    
+    try {
+      const userTimezone = getUserTimezone();
+      const response = await fetch('/api/teacher/calendar/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          teacherEmail,
+          action,
+          scheduleId,
+          eventData,
+          timezone: userTimezone,
+        }),
+      });
+      
+      const data = await response.json();
+      if (!response.ok) {
+        if (data.needsReconnect) {
+          setGoogleCalendarConnected(false);
+          toast({
+            title: "Google Calendar disconnected",
+            description: "Please reconnect your Google Calendar.",
+            variant: "destructive",
+          });
+        }
+        console.error('Failed to sync with Google Calendar:', data.error);
+      }
+    } catch (err) {
+      console.error('Error syncing to Google Calendar:', err);
+    }
+  };
+
+  const bulkSyncToGoogleCalendar = async () => {
+    if (!googleCalendarConnected) return;
+    
+    try {
+      setIsSyncingToGoogle(true);
+      const userTimezone = getUserTimezone();
+      const response = await fetch('/api/teacher/calendar/sync', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teacherEmail, timezone: userTimezone }),
+      });
+      
+      const data = await response.json();
+      if (response.ok) {
+        toast({
+          title: "Sync complete",
+          description: `Synced ${data.synced} events to Google Calendar.${data.failed > 0 ? ` ${data.failed} failed.` : ''}`,
+        });
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err) {
+      console.error('Error bulk syncing:', err);
+      toast({
+        title: "Sync failed",
+        description: "Failed to sync events to Google Calendar.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSyncingToGoogle(false);
+    }
+  };
+
+  const fetchEvents = useCallback(async (studentId?: number | null) => {
     try {
       if (!teacherEmail) {
         setEvents([]);
@@ -214,7 +460,14 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
       }
       setLoading(true);
       setError(null);
-      const response = await fetch(`/api/teacher/schedule?teacherEmail=${encodeURIComponent(teacherEmail)}&studentId=${studentId}`, {
+      
+      // Build URL - if studentId is provided, filter by it; otherwise fetch all
+      let url = `/api/teacher/schedule?teacherEmail=${encodeURIComponent(teacherEmail)}`;
+      if (studentId) {
+        url += `&studentId=${studentId}`;
+      }
+      
+      const response = await fetch(url, {
         headers: {
           'Content-Type': 'application/json',
           // Add auth headers
@@ -230,7 +483,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
 
       if (data.success && data.schedules) {
         // Convert schedule data to match calendar event format
-        const formattedEvents = data.schedules.map((schedule: any) => {
+        const mappedEvents = data.schedules.map((schedule: any) => {
           // Get the date from the schedule
           const eventDate = schedule.date ? new Date(schedule.date) : new Date();
           const datePart = eventDate.toISOString().split('T')[0];
@@ -257,15 +510,38 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
             endTime: schedule.endTime,
             studentId: schedule.studentId,
             teacherId: schedule.teacherId,
+            groupId: schedule.groupId ?? null,
+            group: schedule.group ? { id: schedule.group.id, name: schedule.group.name } : null,
             subject: schedule.subject,
             location: schedule.location || '',
             meetingLink: schedule.meetingLink || '',
+            meetingMinutes: schedule.meetingMinutes || '',
             status: schedule.status || 'scheduled',
             color: schedule.color || '',
             student: schedule.student,
             createdAt: schedule.createdAt,
             updatedAt: schedule.updatedAt
           };
+        });
+
+        // Collapse legacy duplicated group rows (same group + same slot + same title)
+        const seenGroupSignatures = new Set<string>();
+        const formattedEvents = mappedEvents.filter((event: ClassEvent) => {
+          if (!event.groupId) return true;
+          const signature = [
+            event.groupId,
+            event.title,
+            moment(event.start).format('YYYY-MM-DD'),
+            event.startTime,
+            event.endTime,
+          ].join('|');
+
+          if (seenGroupSignatures.has(signature)) {
+            return false;
+          }
+
+          seenGroupSignatures.add(signature);
+          return true;
         });
 
         setEvents(formattedEvents);
@@ -287,14 +563,55 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
     fetchStudentGroups();
   }, [fetchStudentGroups]);
 
-  // Fetch events when selectedStudent changes
+  // Check Google Calendar connection status
   useEffect(() => {
-    if (selectedStudent) {
+    checkGoogleCalendarStatus();
+    
+    // Check URL params for Google Calendar connection result
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const calendarConnected = urlParams.get('calendar_connected');
+      const calendarError = urlParams.get('calendar_error');
+      
+      if (calendarConnected === 'true') {
+        setGoogleCalendarConnected(true);
+        toast({
+          title: "Google Calendar Connected",
+          description: "Your schedule will now sync to Google Calendar.",
+        });
+        // Clean up URL
+        window.history.replaceState({}, '', window.location.pathname);
+      } else if (calendarError) {
+        const errorMessages: Record<string, string> = {
+          access_denied: "You denied access to Google Calendar.",
+          missing_params: "Missing authorization parameters.",
+          invalid_state: "Invalid authorization state.",
+          token_exchange_failed: "Failed to authenticate with Google.",
+          server_error: "Server error occurred.",
+        };
+        toast({
+          title: "Connection Failed",
+          description: errorMessages[calendarError] || "Failed to connect Google Calendar.",
+          variant: "destructive",
+        });
+        // Clean up URL
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+  }, [checkGoogleCalendarStatus, toast]);
+
+  // Fetch events when selectedStudent or viewMode changes
+  useEffect(() => {
+    if (viewMode === 'all') {
+      // Fetch all events for all students
+      fetchEvents(null);
+    } else if (selectedStudent) {
+      // Fetch events for selected student only
       fetchEvents(selectedStudent);
     } else {
       setEvents([]);
     }
-  }, [selectedStudent, fetchEvents]);
+  }, [selectedStudent, viewMode, fetchEvents]);
 
   const handleAddEvent = async () => {
     if (schedulerActionInFlightRef.current || isSubmitting) return;
@@ -306,13 +623,11 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
     const selectedGroup = selectedGroupId
       ? studentGroups.find((group) => group.id.toString() === selectedGroupId)
       : null;
-    const targetStudentIds = selectedGroup
-      ? selectedGroup.members.map((member) => member.id)
-      : selectedStudent
-        ? [selectedStudent]
-        : [];
+    const targetStudentId = selectedGroup
+      ? selectedGroup.members[0]?.id
+      : selectedStudent || null;
 
-    if (targetStudentIds.length === 0) {
+    if (!targetStudentId) {
       setError('Please select a student or group');
       return;
     }
@@ -324,6 +639,13 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
       const startDateTime = new Date(`${eventStartDate}T${eventStartTime}`);
       const endDateTime = new Date(`${eventStartDate}T${eventEndTime}`);
 
+      if (startDateTime <= new Date()) {
+        setError('Start time must be in the future');
+        setIsSubmitting(false);
+        schedulerActionInFlightRef.current = false;
+        return;
+      }
+
       if (endDateTime <= startDateTime) {
         setError('End time must be after start time');
         setIsSubmitting(false);
@@ -331,48 +653,85 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
         return;
       }
 
-      // Create event data matching ClassSchedule database schema
-      // Get just the date part, without time
-      const dateOnly = new Date(eventStartDate);
-
       const eventData = {
         title: eventTitle,
         description: eventDescription,
         subject: eventSubject,
-        date: dateOnly.toISOString(), // Store just the date for easier querying
+        date: eventStartDate,
         startTime: eventStartTime, // Store just the time string (HH:MM)
         endTime: eventEndTime, // Store just the time string (HH:MM)
+        timezone: getUserTimezone(), // Client's timezone for UTC conversion
         location: eventLocation || null,
         meetingLink: eventMeetingLink || null,
         status: "scheduled",
         color: null, // Will be auto-generated on the server based on subject
+        // Group ID for group-based scheduling
+        groupId: selectedGroup ? selectedGroup.id : null,
         // Recurrence fields
         isRecurring,
         recurrencePattern: isRecurring ? recurrencePattern : null,
         recurrenceEndDate: isRecurring ? recurrenceEndDate : null
       };
 
-      const responses = await Promise.all(
-        targetStudentIds.map((studentId) =>
-          fetch('/api/teacher/schedule', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
-            },
-            body: JSON.stringify({ ...eventData, studentId })
-          })
-        )
-      );
+      const response = await fetch('/api/teacher/schedule', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
+        },
+        body: JSON.stringify({ ...eventData, studentId: targetStudentId })
+      });
 
-      const failedResponse = responses.find((response) => !response.ok);
-      if (failedResponse) {
-        const errorData = await failedResponse.json();
-        throw new Error(errorData.error || 'Failed to save event');
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Failed to save event');
       }
 
-      // Refresh events
-      if (selectedStudent) {
+      // Sync to Google Calendar if connected
+      if (googleCalendarConnected) {
+        const student = students.find(s => s.id === targetStudentId);
+        
+        if (responseData.schedule?.id) {
+          await syncEventToGoogleCalendar('create', responseData.schedule.id, {
+            title: eventTitle,
+            description: eventDescription,
+            date: eventStartDate,
+            startTime: eventStartTime,
+            endTime: eventEndTime,
+            location: eventLocation || undefined,
+            meetingLink: eventMeetingLink || undefined,
+            studentName: selectedGroup ? `${selectedGroup.name} (${selectedGroup.members.length} students)` : student?.name,
+            subject: eventSubject,
+          });
+        }
+      }
+
+      if (responseData.invitationStatus) {
+        const { attempted, sent, failed } = responseData.invitationStatus as {
+          attempted: number;
+          sent: number;
+          failed: number;
+        };
+
+        if (attempted > 0 && failed > 0) {
+          toast({
+            title: "Class created with invite warning",
+            description: `${sent}/${attempted} invitation emails sent successfully. ${failed} failed.`,
+            variant: "destructive",
+          });
+        } else if (attempted > 0 && failed === 0) {
+          toast({
+            title: "Class created",
+            description: `All ${sent} invitation email${sent === 1 ? '' : 's'} sent successfully.`,
+          });
+        }
+      }
+
+      // Refresh events based on view mode
+      if (viewMode === 'all') {
+        await fetchEvents(null);
+      } else if (selectedStudent) {
         await fetchEvents(selectedStudent);
       }
 
@@ -407,6 +766,12 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
         try {
           schedulerActionInFlightRef.current = true;
           setIsSubmitting(true);
+          
+          // Sync deletion to Google Calendar first (before deleting from DB)
+          if (googleCalendarConnected) {
+            await syncEventToGoogleCalendar('delete', eventToDelete.id);
+          }
+          
           const response = await fetch(`/api/teacher/schedule?id=${eventToDelete.id}`, {
             method: 'DELETE',
             headers: {
@@ -420,7 +785,10 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
             throw new Error(errorData.error || 'Failed to delete event');
           }
 
-          if (selectedStudent) {
+          // Refresh events based on view mode
+          if (viewMode === 'all') {
+            await fetchEvents(null);
+          } else if (selectedStudent) {
             await fetchEvents(selectedStudent);
           }
         } catch (err: any) {
@@ -477,8 +845,255 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
   };
 
   const handleEventSelect = (event: ClassEvent) => {
+    setEditEventDate(event.date ? toLocalDateInput(new Date(event.date)) : toLocalDateInput(new Date(event.start)));
+    setEditEventStartTime(event.startTime);
+    setEditEventEndTime(event.endTime);
+    setEditEventSubject(event.subject || '');
+    setEditEventDescription(event.description || '');
+    setEditEventMeetingLink(event.meetingLink || '');
+    setEditEventMeetingMinutes(event.meetingMinutes || '');
+    setIsEditingEvent(false);
     setSelectedEvent(event);
     setIsViewEventDialogOpen(true);
+  };
+
+  const resetSelectedEventEditFields = () => {
+    if (!selectedEvent) return;
+    setEditEventDate(selectedEvent.date ? toLocalDateInput(new Date(selectedEvent.date)) : toLocalDateInput(new Date(selectedEvent.start)));
+    setEditEventStartTime(selectedEvent.startTime);
+    setEditEventEndTime(selectedEvent.endTime);
+    setEditEventSubject(selectedEvent.subject || '');
+    setEditEventDescription(selectedEvent.description || '');
+    setEditEventMeetingLink(selectedEvent.meetingLink || '');
+    setEditEventMeetingMinutes(selectedEvent.meetingMinutes || '');
+  };
+
+  const handleUpdateEvent = async () => {
+    if (schedulerActionInFlightRef.current || isSubmitting) return;
+    if (!selectedEvent) return;
+
+    const isPastEvent = selectedEvent.end.getTime() <= Date.now();
+
+    if (!isPastEvent) {
+      if (!editEventDate || !editEventStartTime || !editEventEndTime || !editEventSubject.trim()) {
+        setError('Please fill in required fields: subject, date, start time and end time');
+        return;
+      }
+
+      if (editEventEndTime <= editEventStartTime) {
+        setError('End time must be after start time');
+        return;
+      }
+    }
+
+    try {
+      schedulerActionInFlightRef.current = true;
+      setIsSubmitting(true);
+
+      const payload = isPastEvent
+        ? {
+            id: selectedEvent.id,
+            studentId: selectedEvent.studentId,
+            title: selectedEvent.title,
+            subject: selectedEvent.subject,
+            description: selectedEvent.description || null,
+            meetingMinutes: editEventMeetingMinutes || null,
+            date: selectedEvent.date ? toLocalDateInput(new Date(selectedEvent.date)) : toLocalDateInput(new Date(selectedEvent.start)),
+            startTime: selectedEvent.startTime,
+            endTime: selectedEvent.endTime,
+            location: selectedEvent.location || null,
+            meetingLink: selectedEvent.meetingLink || null,
+            status: selectedEvent.status || 'scheduled',
+            timezone: getUserTimezone(),
+          }
+        : {
+            id: selectedEvent.id,
+            studentId: selectedEvent.studentId,
+            title: selectedEvent.title,
+            subject: editEventSubject,
+            description: editEventDescription || null,
+            meetingMinutes: editEventMeetingMinutes || null,
+            date: editEventDate,
+            startTime: editEventStartTime,
+            endTime: editEventEndTime,
+            location: selectedEvent.location || null,
+            meetingLink: editEventMeetingLink || null,
+            status: selectedEvent.status || 'scheduled',
+            timezone: getUserTimezone(),
+          };
+
+      const response = await fetch('/api/teacher/schedule', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const responseData = await response.json();
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Failed to update class');
+      }
+
+      if (googleCalendarConnected && !isPastEvent) {
+        await syncEventToGoogleCalendar('update', selectedEvent.id, {
+          title: selectedEvent.title,
+          description: editEventDescription,
+          date: editEventDate,
+          startTime: editEventStartTime,
+          endTime: editEventEndTime,
+          location: selectedEvent.location || undefined,
+          meetingLink: editEventMeetingLink || undefined,
+          studentName: selectedEvent.groupId
+            ? `${selectedEvent.group?.name || 'Group'}`
+            : selectedEvent.student.name,
+          subject: editEventSubject,
+        });
+      }
+
+      if (viewMode === 'all') {
+        await fetchEvents(null);
+      } else if (selectedStudent) {
+        await fetchEvents(selectedStudent);
+      }
+
+      setIsEditingEvent(false);
+      setIsViewEventDialogOpen(false);
+      setSelectedEvent(null);
+
+      toast({
+        title: isPastEvent ? 'Meeting minutes updated' : 'Class updated',
+        description: isPastEvent
+          ? 'Custom minutes notification email sent to student(s).'
+          : 'Students have been notified by email.',
+      });
+    } catch (err: any) {
+      console.error('Error updating event:', err);
+      setError(err.message || 'Failed to update class');
+    } finally {
+      setIsSubmitting(false);
+      schedulerActionInFlightRef.current = false;
+    }
+  };
+
+  const calendarHeight = useMemo(() => {
+    if (calendarView === 'week') return 860;
+    if (calendarView === 'day') return 900;
+    return 600;
+  }, [calendarView]);
+
+  const getSubjectColorHex = useCallback((subject: string) => {
+    const colors = ['#93C5FD', '#86EFAC', '#C4B5FD', '#FECACA', '#FEF08A', '#FBCFE8'];
+    let hash = 0;
+    for (let i = 0; i < subject.length; i++) {
+      hash = ((hash << 5) - hash) + subject.charCodeAt(i);
+      hash |= 0;
+    }
+    return colors[Math.abs(hash) % colors.length];
+  }, []);
+
+  const getEventVisualStyle = useCallback((event: ClassEvent) => {
+    const isGroupEvent = Boolean(event.groupId);
+
+    if (viewMode === 'all') {
+      if (isGroupEvent && event.groupId) {
+        const groupColor = getGroupColor(event.groupId);
+        return {
+          backgroundColor: groupColor.hex,
+          borderLeft: '4px solid #0f172a',
+          border: '1px dashed #0f172a',
+          color: '#0f172a',
+          borderRadius: '0.375rem',
+          paddingLeft: '0.5rem',
+          paddingRight: '0.5rem',
+        } as const;
+      }
+
+      const color = getStudentColor(event.studentId);
+      return {
+        backgroundColor: color.hex,
+        borderLeft: '4px solid #0f172a',
+        border: '1px solid #0f172a',
+        color: '#0f172a',
+        borderRadius: '0.375rem',
+        paddingLeft: '0.5rem',
+        paddingRight: '0.5rem',
+      } as const;
+    }
+
+    const colorHex = getSubjectColorHex(event.subject);
+    return {
+      backgroundColor: colorHex,
+      borderLeft: '4px solid #0f172a',
+      border: isGroupEvent ? '1px dashed #0f172a' : '1px solid #0f172a',
+      color: '#0f172a',
+      borderRadius: '0.375rem',
+      paddingLeft: '0.5rem',
+      paddingRight: '0.5rem',
+    } as const;
+  }, [viewMode, getGroupColor, getStudentColor, getSubjectColorHex]);
+
+  const isSelectedEventPast = Boolean(selectedEvent && selectedEvent.end.getTime() <= Date.now());
+  const canEditFullSelectedEvent = isEditingEvent && !isSelectedEventPast;
+
+  const monthGridDates = useMemo(() => {
+    const start = moment(calendarDate).startOf('month').startOf('week');
+    const end = moment(calendarDate).endOf('month').endOf('week');
+    const dates: Date[] = [];
+
+    const cursor = start.clone();
+    while (cursor.isSameOrBefore(end, 'day')) {
+      dates.push(cursor.toDate());
+      cursor.add(1, 'day');
+    }
+
+    return dates;
+  }, [calendarDate]);
+
+  const monthEventsByDate = useMemo(() => {
+    const map = new Map<string, ClassEvent[]>();
+
+    events.forEach((event) => {
+      const key = moment(event.start).format('YYYY-MM-DD');
+      const list = map.get(key) || [];
+      list.push(event);
+      map.set(key, list);
+    });
+
+    map.forEach((list) => list.sort((first, second) => first.start.getTime() - second.start.getTime()));
+    return map;
+  }, [events]);
+
+  const calendarTitle = useMemo(() => {
+    if (calendarView === 'month') return moment(calendarDate).format('MMMM YYYY');
+    if (calendarView === 'week') {
+      const start = moment(calendarDate).startOf('week');
+      const end = moment(calendarDate).endOf('week');
+      return `${start.format('MMM D')} - ${end.format('MMM D, YYYY')}`;
+    }
+    if (calendarView === 'day') return moment(calendarDate).format('dddd, MMM D, YYYY');
+    return moment(calendarDate).format('MMMM YYYY');
+  }, [calendarDate, calendarView]);
+
+  const navigateCalendar = (action: 'today' | 'prev' | 'next') => {
+    if (action === 'today') {
+      setCalendarDate(new Date());
+      return;
+    }
+
+    const base = moment(calendarDate);
+    if (calendarView === 'month' || calendarView === 'agenda') {
+      setCalendarDate(base.add(action === 'next' ? 1 : -1, 'month').toDate());
+      return;
+    }
+
+    if (calendarView === 'week') {
+      setCalendarDate(base.add(action === 'next' ? 1 : -1, 'week').toDate());
+      return;
+    }
+
+    setCalendarDate(base.add(action === 'next' ? 1 : -1, 'day').toDate());
   };
 
   const resetForm = () => {
@@ -642,6 +1257,30 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
     };
   }, []);
 
+  useEffect(() => {
+    if (!isAddEventDialogOpen) return;
+    const timer = setInterval(() => setCurrentNow(new Date()), 30000);
+    return () => clearInterval(timer);
+  }, [isAddEventDialogOpen]);
+
+  useEffect(() => {
+    if (!isAddEventDialogOpen) return;
+    if (eventStartDate !== todayLocalDate) return;
+
+    if (eventStartTime && minStartTime && eventStartTime < minStartTime) {
+      const nextStart = minStartTime;
+      setEventStartTime(nextStart);
+      if (!eventEndTime || eventEndTime <= nextStart) {
+        setEventEndTime(addMinutesToTime(nextStart, 60));
+      }
+      return;
+    }
+
+    if (eventEndTime && eventStartTime && eventEndTime <= eventStartTime) {
+      setEventEndTime(addMinutesToTime(eventStartTime, 60));
+    }
+  }, [isAddEventDialogOpen, eventStartDate, eventStartTime, eventEndTime, minStartTime, todayLocalDate]);
+
   const openAddEventDialog = () => {
     resetForm();
 
@@ -650,12 +1289,11 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
       return;
     }
 
-    // Set default values for today
-    const today = new Date();
-    const formattedDate = today.toISOString().split('T')[0];
-    const roundedHour = Math.ceil(today.getHours() / 1) * 1;
-    const defaultStartTime = `${roundedHour.toString().padStart(2, '0')}:00`;
-    const defaultEndTime = `${(roundedHour + 1).toString().padStart(2, '0')}:00`;
+    // Set default values for today in local timezone
+    const now = new Date();
+    const formattedDate = toLocalDateInput(now);
+    const defaultStartTime = toLocalTimeInput(new Date(now.getTime() + 60 * 1000));
+    const defaultEndTime = addMinutesToTime(defaultStartTime, 60);
 
     setEventStartDate(formattedDate);
     setEventStartTime(defaultStartTime);
@@ -670,6 +1308,42 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
     }
 
     setIsAddEventDialogOpen(true);
+  };
+
+  const handleEventDateChange = (nextDate: string) => {
+    const safeDate = nextDate < todayLocalDate ? todayLocalDate : nextDate;
+    setEventStartDate(safeDate);
+
+    if (safeDate === todayLocalDate) {
+      const nextMinStart = toLocalTimeInput(new Date(Date.now() + 60 * 1000));
+      if (!eventStartTime || eventStartTime < nextMinStart) {
+        setEventStartTime(nextMinStart);
+      }
+      if (!eventEndTime || eventEndTime <= (eventStartTime || nextMinStart)) {
+        setEventEndTime(addMinutesToTime(eventStartTime || nextMinStart, 60));
+      }
+    }
+  };
+
+  const handleEventStartTimeChange = (nextStartTime: string) => {
+    let safeStartTime = nextStartTime;
+    if (eventStartDate === todayLocalDate && minStartTime && safeStartTime < minStartTime) {
+      safeStartTime = minStartTime;
+    }
+
+    setEventStartTime(safeStartTime);
+
+    if (!eventEndTime || eventEndTime <= safeStartTime) {
+      setEventEndTime(addMinutesToTime(safeStartTime, 60));
+    }
+  };
+
+  const handleEventEndTimeChange = (nextEndTime: string) => {
+    if (eventStartTime && nextEndTime <= eventStartTime) {
+      setEventEndTime(addMinutesToTime(eventStartTime, 60));
+      return;
+    }
+    setEventEndTime(nextEndTime);
   };
 
   if (loading && !events.length && !students.length) {
@@ -705,6 +1379,30 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* View Mode Toggle */}
+          <div className="flex items-center border rounded-lg overflow-hidden">
+            <button
+              onClick={() => setViewMode('all')}
+              className={`px-3 py-2 text-sm font-medium transition-colors ${
+                viewMode === 'all' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-white text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              All Students
+            </button>
+            <button
+              onClick={() => setViewMode('selected')}
+              className={`px-3 py-2 text-sm font-medium transition-colors ${
+                viewMode === 'selected' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-white text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              Selected Only
+            </button>
+          </div>
+          
           <Select
             value={selectedStudent?.toString() || ""}
             onValueChange={(value) => setSelectedStudent(parseInt(value))}
@@ -731,13 +1429,57 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
           <Button
             variant="outline"
             onClick={() => {
-              if (selectedStudent) fetchEvents(selectedStudent);
-              else fetchStudents();
+              if (viewMode === 'all') {
+                fetchEvents(null);
+              } else if (selectedStudent) {
+                fetchEvents(selectedStudent);
+              } else {
+                fetchStudents();
+              }
             }}
             disabled={loading}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} /> Refresh
           </Button>
+
+          {/* Google Calendar Integration */}
+          {googleCalendarConnected ? (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={bulkSyncToGoogleCalendar}
+                disabled={isSyncingToGoogle}
+                className="text-green-600 border-green-200 hover:bg-green-50"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isSyncingToGoogle ? "animate-spin" : ""}`} />
+                Sync All
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={disconnectGoogleCalendar}
+                disabled={googleCalendarLoading}
+                className="text-gray-500 hover:text-red-600"
+                title="Disconnect Google Calendar"
+              >
+                <Link2Off className="h-4 w-4" />
+              </Button>
+              <span className="text-xs text-green-600 flex items-center gap-1">
+                <Link2 className="h-3 w-3" /> Google Calendar
+              </span>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              onClick={connectGoogleCalendar}
+              disabled={googleCalendarLoading}
+              className="text-blue-600 border-blue-200 hover:bg-blue-50"
+            >
+              <Link2 className={`h-4 w-4 mr-2 ${googleCalendarLoading ? "animate-pulse" : ""}`} />
+              Connect Google Calendar
+            </Button>
+          )}
         </div>
       </div>
 
@@ -755,7 +1497,9 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  if (selectedStudent) {
+                  if (viewMode === 'all') {
+                    fetchEvents(null);
+                  } else if (selectedStudent) {
                     fetchEvents(selectedStudent);
                   } else {
                     fetchStudents();
@@ -776,44 +1520,154 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
         </div>
       )}
 
-      {selectedStudent ? (
+      {/* Student Color Legend - shown in 'all' view mode */}
+      {viewMode === 'all' && students.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-4">
+          <h4 className="text-sm font-semibold text-gray-700 mb-3">Student Legend</h4>
+          <div className="flex flex-wrap gap-3">
+            {students.map((student) => {
+              const color = getStudentColor(student.id);
+              return (
+                <div key={student.id} className="flex items-center gap-2">
+                  <div 
+                    className={`w-4 h-4 rounded ${color.bg} ${color.border} border-2`}
+                  />
+                  <span className="text-sm text-gray-600">{student.name}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Group Color Legend - shown in 'all' view mode when groups exist */}
+      {viewMode === 'all' && studentGroups.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-4">
+          <h4 className="text-sm font-semibold text-gray-700 mb-3">Group Legend</h4>
+          <div className="flex flex-wrap gap-3">
+            {studentGroups.map((group) => {
+              const color = getGroupColor(group.id);
+              return (
+                <div key={group.id} className="flex items-center gap-2">
+                  <div 
+                    className={`w-4 h-4 rounded ${color.bg} ${color.border} border-2`}
+                  />
+                  <span className="text-sm text-gray-600">{group.name}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white rounded-lg shadow p-4">
+        <h4 className="text-sm font-semibold text-gray-700 mb-3">Schedule Type</h4>
+        <div className="flex flex-wrap gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-slate-200 border-2 border-slate-500" />
+            <span className="text-sm text-gray-600">Individual schedule</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-slate-200 border-2 border-dashed border-slate-700" />
+            <span className="text-sm text-gray-600">Group schedule</span>
+          </div>
+        </div>
+      </div>
+
+      {(viewMode === 'all' || selectedStudent) ? (
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <Calendar
-            localizer={localizer}
-            events={events}
-            startAccessor="start"
-            endAccessor="end"
-            style={{ height: 600 }}
-            onSelectEvent={handleEventSelect}
-            eventPropGetter={(event: ClassEvent) => {
-              // Generate consistent colors based on subject
-              const subjectToColor = (subject: string) => {
-                const colors = [
-                  'bg-blue-200 border-blue-400 text-blue-800',
-                  'bg-green-200 border-green-400 text-green-800',
-                  'bg-purple-200 border-purple-400 text-purple-800',
-                  'bg-red-200 border-red-400 text-red-800',
-                  'bg-yellow-200 border-yellow-400 text-yellow-800',
-                  'bg-pink-200 border-pink-400 text-pink-800'
-                ];
+          <div className="border-b px-3 py-2 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => navigateCalendar('today')}>Today</Button>
+              <Button variant="outline" size="sm" onClick={() => navigateCalendar('prev')}>Back</Button>
+              <Button variant="outline" size="sm" onClick={() => navigateCalendar('next')}>Next</Button>
+            </div>
+            <div className="text-base font-semibold text-slate-800">{calendarTitle}</div>
+            <div className="flex items-center gap-1 border rounded-md p-1">
+              {(['month', 'week', 'day', 'agenda'] as CalendarViewMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setCalendarView(mode)}
+                  className={`px-3 py-1 text-sm rounded ${calendarView === mode ? 'bg-slate-200 text-slate-900' : 'text-slate-700 hover:bg-slate-100'}`}
+                >
+                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
 
-                // Simple hash function to consistently map subject to color
-                let hash = 0;
-                for (let i = 0; i < subject.length; i++) {
-                  hash = ((hash << 5) - hash) + subject.charCodeAt(i);
-                  hash |= 0; // Convert to 32bit integer
-                }
+          {calendarView === 'month' ? (
+            <div>
+              <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                  <div key={day} className="py-2 text-center text-sm font-semibold text-slate-700 border-r last:border-r-0 border-slate-200">
+                    {day}
+                  </div>
+                ))}
+              </div>
 
-                return colors[Math.abs(hash) % colors.length];
-              };
+              <div className="grid grid-cols-7 auto-rows-[140px]">
+                {monthGridDates.map((dayDate) => {
+                  const dayKey = moment(dayDate).format('YYYY-MM-DD');
+                  const dayEvents = monthEventsByDate.get(dayKey) || [];
+                  const total = dayEvents.length;
+                  const isCurrentMonth = moment(dayDate).month() === moment(calendarDate).month();
 
-              const colorClass = subjectToColor(event.subject);
-
-              return {
-                className: `${colorClass} border-l-4 rounded px-2`
-              };
-            }}
-          />
+                  return (
+                    <div key={dayKey} className={`border-r border-b border-slate-200 p-1 flex flex-col ${isCurrentMonth ? 'bg-white' : 'bg-slate-100/60 text-slate-500'}`}>
+                      <div className="text-right text-sm font-medium">{moment(dayDate).format('DD')}</div>
+                      <div className="mt-1 flex-1 flex flex-col gap-1">
+                        {dayEvents.map((event) => {
+                          const prefix = event.groupId ? '👥' : '👤';
+                          return (
+                            <button
+                              key={event.id}
+                              type="button"
+                              onClick={() => handleEventSelect(event)}
+                              className="w-full text-left text-xs font-medium truncate"
+                              style={{
+                                ...getEventVisualStyle(event),
+                                flex: '1 1 0%',
+                                minHeight: 0,
+                              }}
+                              title={`${event.title} (${moment(event.start).format('h:mm A')} - ${moment(event.end).format('h:mm A')})`}
+                            >
+                              {prefix} {event.title}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <Calendar
+              localizer={localizer}
+              events={events}
+              views={['week', 'day', 'agenda']}
+              view={calendarView as 'week' | 'day' | 'agenda'}
+              toolbar={false}
+              date={calendarDate}
+              onNavigate={(nextDate: Date) => setCalendarDate(nextDate)}
+              startAccessor="start"
+              endAccessor="end"
+              titleAccessor={(event: ClassEvent) => {
+                const prefix = event.groupId ? '👥' : '👤';
+                return `${prefix} ${event.title}`;
+              }}
+              style={{ height: calendarHeight }}
+              step={60}
+              timeslots={1}
+              showMultiDayTimes
+              dayLayoutAlgorithm="no-overlap"
+              allDayMaxRows={8}
+              popup={true}
+              onSelectEvent={handleEventSelect}
+              eventPropGetter={(event: ClassEvent) => ({ style: getEventVisualStyle(event) })}
+            />
+          )}
         </div>
       ) : (
         <div className="bg-gray-50 rounded-lg border border-gray-200 p-12 text-center">
@@ -917,7 +1771,8 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
                 id="event-date"
                 type="date"
                 value={eventStartDate}
-                onChange={(e) => setEventStartDate(e.target.value)}
+                onChange={(e) => handleEventDateChange(e.target.value)}
+                min={todayLocalDate}
                 className="mt-1"
               />
             </div>
@@ -931,7 +1786,9 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
                   id="event-start-time"
                   type="time"
                   value={eventStartTime}
-                  onChange={(e) => setEventStartTime(e.target.value)}
+                  onChange={(e) => handleEventStartTimeChange(e.target.value)}
+                  min={minStartTime}
+                  step={60}
                   className="mt-1"
                 />
               </div>
@@ -944,7 +1801,9 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
                   id="event-end-time"
                   type="time"
                   value={eventEndTime}
-                  onChange={(e) => setEventEndTime(e.target.value)}
+                  onChange={(e) => handleEventEndTimeChange(e.target.value)}
+                  min={eventStartTime || minStartTime}
+                  step={60}
                   className="mt-1"
                 />
               </div>
@@ -1065,28 +1924,90 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
               <div className="grid grid-cols-[20px_1fr] items-center gap-2">
                 <User className="h-5 w-5 text-blue-600" />
                 <p>
-                  <span className="font-medium">Student:</span>{' '}
-                  {selectedEvent.student.name}
+                  <span className="font-medium">{selectedEvent.groupId ? 'Group:' : 'Student:'}</span>{' '}
+                  {selectedEvent.groupId
+                    ? (selectedEvent.group?.name || groupNameById.get(selectedEvent.groupId) || `Group #${selectedEvent.groupId}`)
+                    : selectedEvent.student.name}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-[20px_1fr] items-center gap-2">
+                <InfoIcon className="h-5 w-5 text-blue-600" />
+                <p>
+                  <span className="font-medium">Schedule Type:</span>{' '}
+                  {selectedEvent.groupId ? 'Group' : 'Individual'}
+                  {selectedEvent.groupId && (
+                    <>
+                      {' '}
+                      ({selectedEvent.group?.name || groupNameById.get(selectedEvent.groupId) || `Group #${selectedEvent.groupId}`})
+                    </>
+                  )}
                 </p>
               </div>
 
               <div className="grid grid-cols-[20px_1fr] items-center gap-2">
                 <Clock className="h-5 w-5 text-blue-600" />
-                <div>
-                  <p>
-                    <span className="font-medium">Start:</span>{' '}
-                    {moment(selectedEvent.start).format('MMM D, YYYY h:mm A')}
-                  </p>
-                  <p>
-                    <span className="font-medium">End:</span>{' '}
-                    {moment(selectedEvent.end).format('MMM D, YYYY h:mm A')}
-                  </p>
-                </div>
+                {canEditFullSelectedEvent ? (
+                  <div className="grid grid-cols-1 gap-2 w-full">
+                    <div>
+                      <Label htmlFor="edit-event-date">Date</Label>
+                      <Input
+                        id="edit-event-date"
+                        type="date"
+                        value={editEventDate}
+                        onChange={(e) => setEditEventDate(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label htmlFor="edit-event-start-time">Start Time</Label>
+                        <Input
+                          id="edit-event-start-time"
+                          type="time"
+                          value={editEventStartTime}
+                          onChange={(e) => setEditEventStartTime(e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="edit-event-end-time">End Time</Label>
+                        <Input
+                          id="edit-event-end-time"
+                          type="time"
+                          value={editEventEndTime}
+                          onChange={(e) => setEditEventEndTime(e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <p>
+                      <span className="font-medium">Start:</span>{' '}
+                      {moment(selectedEvent.start).format('MMM D, YYYY h:mm A')}
+                    </p>
+                    <p>
+                      <span className="font-medium">End:</span>{' '}
+                      {moment(selectedEvent.end).format('MMM D, YYYY h:mm A')}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div>
                 <p className="font-medium">Subject:</p>
-                <p>{selectedEvent.subject}</p>
+                {canEditFullSelectedEvent ? (
+                  <Input
+                    value={editEventSubject}
+                    onChange={(e) => setEditEventSubject(e.target.value)}
+                    placeholder="Subject"
+                    className="mt-1"
+                  />
+                ) : (
+                  <p>{selectedEvent.subject}</p>
+                )}
               </div>
 
               {selectedEvent.location && (
@@ -1099,22 +2020,86 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
               {selectedEvent.meetingLink && (
                 <div>
                   <p className="font-medium">Meeting Link:</p>
-                  <a
-                    href={selectedEvent.meetingLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline flex items-center gap-1"
-                  >
-                    <span>{selectedEvent.meetingLink}</span>
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
+                  {canEditFullSelectedEvent ? (
+                    <Input
+                      value={editEventMeetingLink}
+                      onChange={(e) => setEditEventMeetingLink(e.target.value)}
+                      placeholder="https://..."
+                      className="mt-1"
+                    />
+                  ) : (
+                    <a
+                      href={selectedEvent.meetingLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline flex items-center gap-1"
+                    >
+                      <span>{selectedEvent.meetingLink}</span>
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </div>
+              )}
+
+              {canEditFullSelectedEvent && !selectedEvent.meetingLink && (
+                <div>
+                  <p className="font-medium">Meeting Link:</p>
+                  <Input
+                    value={editEventMeetingLink}
+                    onChange={(e) => setEditEventMeetingLink(e.target.value)}
+                    placeholder="https://..."
+                    className="mt-1"
+                  />
                 </div>
               )}
 
               {selectedEvent.description && (
                 <div>
                   <p className="font-medium">Description:</p>
-                  <p className="whitespace-pre-wrap">{selectedEvent.description}</p>
+                  {canEditFullSelectedEvent ? (
+                    <Textarea
+                      value={editEventDescription}
+                      onChange={(e) => setEditEventDescription(e.target.value)}
+                      placeholder="Description"
+                      className="mt-1"
+                    />
+                  ) : (
+                    <p className="whitespace-pre-wrap">{selectedEvent.description}</p>
+                  )}
+                </div>
+              )}
+
+              {canEditFullSelectedEvent && !selectedEvent.description && (
+                <div>
+                  <p className="font-medium">Description:</p>
+                  <Textarea
+                    value={editEventDescription}
+                    onChange={(e) => setEditEventDescription(e.target.value)}
+                    placeholder="Description"
+                    className="mt-1"
+                  />
+                </div>
+              )}
+
+              {isSelectedEventPast && (selectedEvent.meetingMinutes || isEditingEvent) && (
+                <div>
+                  <p className="font-medium">Meeting Minutes:</p>
+                  {isEditingEvent ? (
+                    <Textarea
+                      value={editEventMeetingMinutes}
+                      onChange={(e) => setEditEventMeetingMinutes(e.target.value)}
+                      placeholder="Add meeting minutes"
+                      className="mt-1"
+                    />
+                  ) : (
+                    <p className="whitespace-pre-wrap">{selectedEvent.meetingMinutes}</p>
+                  )}
+                </div>
+              )}
+
+              {isEditingEvent && isSelectedEventPast && (
+                <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+                  This meeting is in the past. Only Minutes of Meeting can be updated.
                 </div>
               )}
 
@@ -1134,26 +2119,66 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
             </div>
 
             <DialogFooter>
-              <Button
-                variant="destructive"
-                onClick={handleDeleteEvent}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    Deleting...
-                  </>
-                ) : (
-                  <>
-                    <Trash2Icon className="mr-2 h-4 w-4" />
-                    Delete
-                  </>
-                )}
-              </Button>
-              <DialogClose asChild>
-                <Button variant="outline">Close</Button>
-              </DialogClose>
+              {isEditingEvent ? (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      resetSelectedEventEditFields();
+                      setIsEditingEvent(false);
+                    }}
+                    disabled={isSubmitting}
+                  >
+                    Cancel Edit
+                  </Button>
+                  <Button
+                    onClick={handleUpdateEvent}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Changes'
+                    )}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      resetSelectedEventEditFields();
+                      setIsEditingEvent(true);
+                    }}
+                    disabled={isSubmitting}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeleteEvent}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2Icon className="mr-2 h-4 w-4" />
+                        Delete
+                      </>
+                    )}
+                  </Button>
+                  <DialogClose asChild>
+                    <Button variant="outline">Close</Button>
+                  </DialogClose>
+                </>
+              )}
             </DialogFooter>
           </DialogContent>
         )}

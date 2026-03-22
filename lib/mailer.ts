@@ -30,6 +30,11 @@ export async function sendMail(args: {
   html: string;
   text?: string;
   replyTo?: string;
+  attachments?: {
+    filename: string;
+    content: string;
+    contentType?: string;
+  }[];
 }) {
   const transporter = getTransporter();
 
@@ -40,5 +45,6 @@ export async function sendMail(args: {
     html: args.html,
     text: args.text,
     replyTo: args.replyTo,
+    attachments: args.attachments,
   });
 }
