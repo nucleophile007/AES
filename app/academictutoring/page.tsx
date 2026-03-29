@@ -510,24 +510,9 @@ function TestimonialsSection() {
           <div className="flex-1 max-w-lg">
             <div
               key={selectedTestimonial.id}
-              className="bg-[#1a2236]/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-yellow-400/20 animate-in fade-in-50 slide-in-from-right-5 duration-500 flex flex-col h-[550px]"
+              className="bg-[#1a2236]/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-yellow-400/20 animate-in fade-in-50 slide-in-from-right-5 duration-500 flex flex-col h-[550px] items-center text-center"
             >
-              {/* Rating Stars - Only show if rating exists */}
-              {selectedTestimonial.rating && (
-                <div className="flex gap-1 mb-6">
-                  {[...Array(selectedTestimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                  ))}
-                </div>
-              )}
-
-              <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide">
-                <blockquote className="theme-text-light leading-relaxed font-medium">
-                  {renderTestimonialContent(selectedTestimonial)}
-                </blockquote>
-              </div>
-
-              <div className="flex items-center gap-4 mt-6">
+              <div className="flex flex-col items-center justify-center gap-2 mb-6">
                 <Avatar className="w-12 h-12 ring-2 ring-yellow-100">
                   <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-[#1a2236] font-semibold">
                     {selectedTestimonial.initials || selectedTestimonial.name
@@ -536,10 +521,23 @@ function TestimonialsSection() {
                       .join("")}
                   </AvatarFallback>
                 </Avatar>
-                <div>
-                  <div className="font-semibold theme-text-light">{selectedTestimonial.name}</div>
-                  <div className="text-yellow-400 text-sm font-medium">{selectedTestimonial.designation}</div>
+                <div className="font-semibold theme-text-light">{selectedTestimonial.name}</div>
+                <div className="text-yellow-400 text-sm font-medium">{selectedTestimonial.designation}</div>
+              </div>
+
+              {/* Rating Stars - Only show if rating exists */}
+              {selectedTestimonial.rating && (
+                <div className="flex gap-1 mb-6 justify-center">
+                  {[...Array(selectedTestimonial.rating)].map((_, i) => (
+                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                  ))}
                 </div>
+              )}
+
+              <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide w-full">
+                <blockquote className="theme-text-light leading-relaxed font-medium">
+                  {renderTestimonialContent(selectedTestimonial)}
+                </blockquote>
               </div>
             </div>
           </div>

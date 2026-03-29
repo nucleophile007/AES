@@ -656,42 +656,40 @@ const TestimonialsSection = () => {
           <div className="flex-1 max-w-lg">
             <div
               key={selectedTestimonial.id}
-              className="bg-gradient-to-br from-[#1a2236]/95 to-[#2a3246]/90 backdrop-blur-xl rounded-2xl p-8 shadow-2xl border border-yellow-400/30 animate-in fade-in-50 slide-in-from-right-5 duration-500 relative overflow-hidden flex flex-col h-[550px]"
+              className="bg-gradient-to-br from-[#1a2236]/95 to-[#2a3246]/90 backdrop-blur-xl rounded-2xl p-8 shadow-2xl border border-yellow-400/30 animate-in fade-in-50 slide-in-from-right-5 duration-500 relative overflow-hidden flex flex-col h-[550px] items-center text-center"
             >
               {/* Content Background Glow */}
               <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 via-transparent to-blue-400/5 rounded-2xl"></div>
               <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-400/10 rounded-full blur-3xl"></div>
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-400/10 rounded-full blur-3xl"></div>
-              <div className="relative z-10 flex flex-col h-full">
-              {/* Rating Stars - Only show if rating exists */}
-              {selectedTestimonial.rating && (
-                <div className="flex gap-1 mb-6">
-                  {[...Array(selectedTestimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                  ))}
-                </div>
-              )}
-
-              <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide">
-                <blockquote className="theme-text-light leading-relaxed font-medium">
-                  {renderTestimonialContent(selectedTestimonial)}
-                </blockquote>
-              </div>
-
-              <div className="flex items-center gap-4 mt-6">
-                <Avatar className="w-12 h-12 ring-2 ring-yellow-100">
-                  <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-[#1a2236] font-semibold">
-                    {selectedTestimonial.initials || selectedTestimonial.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
+              <div className="relative z-10 flex flex-col h-full items-center text-center">
+                <div className="flex flex-col items-center justify-center gap-2 mb-6">
+                  <Avatar className="w-12 h-12 ring-2 ring-yellow-100">
+                    <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-[#1a2236] font-semibold">
+                      {selectedTestimonial.initials || selectedTestimonial.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </AvatarFallback>
+                  </Avatar>
                   <div className="font-semibold theme-text-light">{selectedTestimonial.name}</div>
                   <div className="text-yellow-400 text-sm font-medium">{selectedTestimonial.designation}</div>
                 </div>
-              </div>
+
+                {/* Rating Stars - Only show if rating exists */}
+                {selectedTestimonial.rating && (
+                  <div className="flex gap-1 mb-6 justify-center">
+                    {[...Array(selectedTestimonial.rating)].map((_, i) => (
+                      <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide w-full">
+                  <blockquote className="theme-text-light leading-relaxed font-medium">
+                    {renderTestimonialContent(selectedTestimonial)}
+                  </blockquote>
+                </div>
               </div>
             </div>
           </div>
