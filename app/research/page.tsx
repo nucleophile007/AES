@@ -51,7 +51,7 @@ interface APIResponse {
 }
 
 const DOMAIN_PAGE_SIZE = 4;
-const DOMAIN_ORDER = ["AI/ML", "Pre-Med/BIO/CHEM", "Engg", "Law & Political Sciences"] as const;
+const DOMAIN_ORDER = ["AI/ML", "Pre-Med/BIO/CHEM", "Engineering", "Law & Political Sciences"] as const;
 type DomainPageMap = Record<string, number>;
 type DomainCollapseMap = Record<string, boolean>;
 
