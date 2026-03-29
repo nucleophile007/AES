@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
     const domainCounts: Record<string, number> = {
       "AI/ML": 0,
       "Pre-Med/BIO/CHEM": 0,
-      "Engg": 0,
+      "Engineering": 0,
       "Law & Political Sciences": 0,
     };
     filteredResearch.forEach((r) => {
