@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import Image from "next/image"
-import { motion } from "framer-motion"
 import { Star } from "lucide-react"
 import useSWR from "swr"
 
@@ -88,7 +87,7 @@ export default function ParentTestimonialCarousel() {
 
   const duplicatedTestimonials =
     testimonials.length > 0
-      ? [...testimonials, ...testimonials, ...testimonials, ...testimonials]
+      ? [...testimonials, ...testimonials]
       : []
 
   /* ---------------- Empty State ---------------- */
@@ -130,7 +129,7 @@ export default function ParentTestimonialCarousel() {
       <div className="relative overflow-hidden group pt-24 pb-8">
         {isLoading ? (
           <div className="flex animate-scroll group-hover:pause-animation">
-            {[...Array(12)].map((_, i) => (
+            {[...Array(6)].map((_, i) => (
               <TestimonialSkeleton key={i} />
             ))}
           </div>
@@ -138,12 +137,7 @@ export default function ParentTestimonialCarousel() {
           <div className="flex animate-scroll group-hover:pause-animation">
             {duplicatedTestimonials.map((t, i) => (
               <div key={`${t.id}-${i}`} className="flex-shrink-0 mx-6">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className="w-80 md:w-96 h-[420px] bg-slate-800 rounded-2xl p-6 border border-slate-700 hover:border-yellow-400 transition-all flex flex-col"
-                >
+                <div className="w-80 md:w-96 h-[420px] bg-slate-800 rounded-2xl p-6 border border-slate-700 hover:border-yellow-400 transition-all flex flex-col">
                   {/* Avatar */}
                   <div className="relative -mt-16 mb-4 flex justify-center">
                     <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-yellow-400">
@@ -225,7 +219,7 @@ export default function ParentTestimonialCarousel() {
                       {t.school}
                     </p>
                   </div>
-                </motion.div>
+                </div>
               </div>
             ))}
           </div>

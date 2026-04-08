@@ -1,8 +1,9 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
+import { Compare } from "@/components/ui/compare";
+import { cn } from "@/lib/utils";
 import useSWR from "swr";
 import {
   IconAdjustmentsBolt,
@@ -77,12 +78,7 @@ export default function FeaturesGridSection() {
     ],
     []
   );
-
-  /* ---------- Random 4 Features (Hydration Safe) ---------- */
-
-  const [features, setFeatures] = React.useState<
-    typeof allFeatures
-  >([]);
+  const [sliderProgress, setSliderProgress] = React.useState(50);
 
   /* ---------- Fetch Before/After ---------- */
 
@@ -93,28 +89,55 @@ export default function FeaturesGridSection() {
   );
 
   const story = data?.story;
+  const isStoryPending = typeof data === "undefined" || isLoading;
+  const hasStoryPanel = isStoryPending || Boolean(story);
+  const beforeText = (story?.before || "").trim();
+  const afterText = (story?.after || "").trim();
+  const beforeActive = sliderProgress >= 50;
+  const afterActive = !beforeActive;
+  const visibleFeatures = React.useMemo(
+    () => (hasStoryPanel ? allFeatures.slice(0, 4) : allFeatures),
+    [allFeatures, hasStoryPanel]
+  );
 
-  // Debug logging
-  React.useEffect(() => {
-    if (story) {
-      console.log("Story data:", story);
-      console.log("School:", story.school);
-      console.log("Grade:", story.grade);
-    }
-  }, [story]);
+  const storyTextSettings = React.useMemo(() => {
+    const maxLength = Math.max(beforeText.length, afterText.length);
 
-  // Set features based on whether story exists
-  React.useEffect(() => {
-    // If no story, show all 8 features, otherwise show random 4
-    if (!story) {
-      setFeatures(allFeatures);
-    } else {
-      const shuffled = [...allFeatures]
-        .sort(() => 0.5 - Math.random())
-        .slice(0, 4);
-      setFeatures(shuffled);
+    if (maxLength <= 180) {
+      return {
+        textClass: "text-base sm:text-lg leading-relaxed",
+        clampLines: 10,
+      };
     }
-  }, [allFeatures, story]);
+
+    if (maxLength <= 340) {
+      return {
+        textClass: "text-sm sm:text-base leading-relaxed",
+        clampLines: 13,
+      };
+    }
+
+    return {
+      textClass: "text-xs sm:text-sm leading-relaxed",
+      clampLines: 16,
+    };
+  }, [afterText.length, beforeText.length]);
+
+  const sharedTextClampStyle = React.useMemo<React.CSSProperties>(
+    () => ({
+      display: "-webkit-box",
+      WebkitBoxOrient: "vertical",
+      WebkitLineClamp: storyTextSettings.clampLines,
+      overflow: "hidden",
+      hyphens: "auto",
+      overflowWrap: "anywhere",
+      wordBreak: "break-word",
+      textWrap: "pretty",
+      maxWidth: "34ch",
+      lineHeight: 1.32,
+    }),
+    [storyTextSettings.clampLines]
+  );
 
   /* ---------- Story has separate before/after fields ---------- */
 
@@ -139,16 +162,12 @@ export default function FeaturesGridSection() {
         </div>
 
         {/* Layout */}
-        <div className={story ? "grid lg:grid-cols-2 gap-12 items-start" : ""}>
+        <div className={hasStoryPanel ? "grid lg:grid-cols-2 gap-12 items-start" : ""}>
           {/* FEATURES */}
-          <div className={story ? "grid grid-cols-1 sm:grid-cols-2 gap-6" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"}>
-            {features.length > 0 &&
-              features.map((feature, index) => (
-                <motion.div
+          <div className={hasStoryPanel ? "grid grid-cols-1 sm:grid-cols-2 gap-6" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"}>
+            {visibleFeatures.map((feature) => (
+                <div
                   key={feature.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
                   className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm p-6 rounded-2xl border border-gray-700/30 hover:border-yellow-400/30 transition-all duration-300"
                 >
                   <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-xl flex items-center justify-center text-gray-900 mb-4">
@@ -160,122 +179,122 @@ export default function FeaturesGridSection() {
                   <p className="theme-text-muted text-sm leading-relaxed">
                     {feature.description}
                   </p>
-                </motion.div>
+                </div>
               ))}
           </div>
 
           {/* RIGHT SIDE - BEFORE / AFTER STORY */}
-          {story && (
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="h-full flex items-center max-h-500px"
-            >
-              {isLoading ? (
-              <div className="relative w-full max-w-md mx-auto max-h-full">
-                {/* Skeleton Card */}
-                <div className="relative bg-slate-800 border border-slate-700 rounded-3xl shadow-xl text-center animate-pulse h-[500px] flex flex-col">
-                  {/* Skeleton Top - Fixed */}
-                  <div className="pt-4 px-8 pb-1 flex-shrink-0">
-                  </div>
-
-                  {/* Skeleton Middle (Scrollable area) */}
-                  <div className="flex-1 px-8 overflow-hidden">
-                    <div className="space-y-3 py-4">
-                      <div className="h-4 bg-slate-700 rounded w-full"></div>
-                      <div className="h-4 bg-slate-700 rounded w-5/6 mx-auto"></div>
-                      <div className="h-4 bg-slate-700 rounded w-4/6 mx-auto"></div>
-                    </div>
-                  </div>
-
-                  {/* Skeleton Bottom - Fixed */}
-                  <div className="px-8 pb-10 pt-4 flex-shrink-0">
-                    <div className="w-16 h-[1px] bg-slate-700 mx-auto mb-6"></div>
-                    <div className="space-y-2">
-                      <div className="h-4 bg-slate-700 rounded w-32 mx-auto"></div>
-                      <div className="h-3 bg-slate-700 rounded w-24 mx-auto"></div>
+          {hasStoryPanel && (
+            <div className="h-full flex items-center">
+              {isStoryPending ? (
+                <div className="relative w-full max-w-md mx-auto animate-pulse">
+                  <div className="bg-slate-800 border border-slate-700 rounded-3xl p-3 shadow-xl">
+                    <div className="h-[420px] rounded-2xl bg-slate-700/60"></div>
+                    <div className="mt-4 space-y-2 text-center">
+                      <div className="h-4 bg-slate-700 rounded w-40 mx-auto"></div>
+                      <div className="h-3 bg-slate-700 rounded w-28 mx-auto"></div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ) : story ? (
-              <div className="relative w-full max-w-md mx-auto max-h-full">
-                {/* Card - Fixed Height with Scrollable Middle Section */}
-                <div className="relative bg-slate-800 border border-slate-700 rounded-3xl shadow-xl text-center h-[500px] flex flex-col">
-
-                  {/* Top Section - Fixed */}
-                  <div className="pt-4 px-8 pb-1 flex-shrink-0">
-                  </div>
-
-                  {/* Middle Section - Scrollable (Before/After Content Only) */}
-                  <div className="flex-1 overflow-y-auto px-8 scrollbar-hide">
-                    <div className="space-y-6 py-4">
-                    {/* Before Section */}
-                    {story.before && (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-center gap-2">
-                          <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-red-500/30"></div>
-                          <span className="text-red-400 text-base sm:text-lg font-extrabold uppercase tracking-[0.22em] px-4 py-1.5 bg-red-500/10 rounded-full border border-red-500/20">
-                            Before
-                          </span>
-                          <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-red-500/30"></div>
-                        </div>
-                        <p className="text-slate-300 text-sm leading-relaxed bg-red-500/5 border border-red-500/10 rounded-xl p-4">
-                          {story.before}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* After Section */}
-                    {story.after && (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-center gap-2">
-                          <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-green-500/30"></div>
-                          <span className="text-green-400 text-base sm:text-lg font-extrabold uppercase tracking-[0.22em] px-4 py-1.5 bg-green-500/10 rounded-full border border-green-500/20">
-                            After
-                          </span>
-                          <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-green-500/30"></div>
-                        </div>
-                        <p className="text-slate-300 text-sm leading-relaxed bg-green-500/5 border border-green-500/10 rounded-xl p-4">
-                          {story.after}
-                        </p>
-                      </div>
-                    )}
+              ) : story ? (
+                <div className="relative w-full max-w-md mx-auto">
+                  <div className="relative rounded-3xl p-[1px] bg-gradient-to-br from-[#F4BE4A]/32 via-slate-600/15 to-sky-400/25 shadow-[0_18px_48px_rgba(2,6,23,0.56)]">
+                    <div className="relative rounded-[22px] bg-slate-800/95 border border-slate-700/70 p-3 overflow-hidden">
+                      <div className="pointer-events-none absolute inset-0 rounded-[22px] bg-[radial-gradient(100%_70%_at_50%_0%,rgba(148,163,184,0.14),transparent_65%)]" />
+                    <div className={cn(
+                      "pointer-events-none absolute top-5 left-5 z-50 rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] transition-all duration-300 backdrop-blur-md",
+                      beforeActive
+                        ? "border border-[#F3BA49]/85 bg-[#EE8F1B]/34 text-[#FFF1D8] shadow-[0_0_0_1px_rgba(243,186,73,0.2),0_0_24px_rgba(238,143,27,0.24)]"
+                        : "border border-[#F3BA49]/55 bg-[#EE8F1B]/16 text-[#FFE2B0]/90"
+                    )}>
+                      Before
                     </div>
-                  </div>
-
-                  {/* Bottom Section - Fixed (Divider + Footer) */}
-                  <div className="px-8 pb-10 pt-4 flex-shrink-0">
-                    {/* Divider */}
-                    <div className="w-16 h-[1px] bg-slate-600 mx-auto mb-6"></div>
-
-                    {/* Footer */}
-                    <div className="space-y-1">
-                      <p className="text-white font-small text-sm">
-                        {story.studentName || "Student"}
+                    <div className={cn(
+                      "pointer-events-none absolute top-5 right-5 z-50 rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] transition-all duration-300 backdrop-blur-md",
+                      afterActive
+                        ? "border border-blue-300/85 bg-blue-500/34 text-blue-50 shadow-[0_0_0_1px_rgba(147,197,253,0.25),0_0_24px_rgba(59,130,246,0.24)]"
+                        : "border border-blue-300/55 bg-blue-500/16 text-blue-100/90"
+                    )}>
+                      After
+                    </div>
+                      <div className="relative">
+                        <Compare
+                          className="w-full h-[420px] rounded-2xl"
+                          slideMode="drag"
+                          mobileTapToggle
+                          centerSafeZonePx={24}
+                          onProgressChange={setSliderProgress}
+                          autoplay
+                          autoplayDuration={4500}
+                          firstContent={
+                            <div className={cn(
+                              "relative h-full w-full overflow-hidden bg-gradient-to-br from-[#7A3E06] via-[#8F4708] to-[#241A15] pl-5 pr-16 pt-14 pb-6 sm:pl-6 sm:pr-20 transition-all duration-300",
+                              beforeActive ? "saturate-110 brightness-105" : "saturate-90 brightness-90"
+                            )}>
+                              <p
+                                className={cn(
+                                  "mx-auto text-[#FFF0D5] whitespace-pre-wrap antialiased",
+                                  storyTextSettings.textClass
+                                )}
+                                style={sharedTextClampStyle}
+                              >
+                                {beforeText || "Before story not available."}
+                              </p>
+                              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#7A3E06]/95 via-[#8F4708]/72 to-transparent" />
+                            </div>
+                          }
+                          secondContent={
+                            <div className={cn(
+                              "relative h-full w-full overflow-hidden bg-gradient-to-br from-blue-950 via-sky-950 to-slate-900 pl-16 pr-5 pt-14 pb-6 sm:pl-20 sm:pr-6 transition-all duration-300",
+                              afterActive ? "saturate-110 brightness-105" : "saturate-90 brightness-90"
+                            )}>
+                              <p
+                                className={cn(
+                                  "mx-auto text-blue-50 whitespace-pre-wrap antialiased",
+                                  storyTextSettings.textClass
+                                )}
+                                style={sharedTextClampStyle}
+                              >
+                                {afterText || "After story not available."}
+                              </p>
+                              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-blue-950/95 via-sky-950/60 to-transparent" />
+                            </div>
+                          }
+                        />
+                        <div className="pointer-events-none absolute inset-0 rounded-2xl shadow-[inset_0_0_0_1px_rgba(148,163,184,0.18),inset_0_-90px_130px_rgba(2,6,23,0.5)]" />
+                        <div className="pointer-events-none absolute inset-0 rounded-2xl bg-[radial-gradient(140%_100%_at_50%_120%,rgba(2,6,23,0.72),transparent_60%)]" />
+                      </div>
+                      <p className="text-center text-[11px] uppercase tracking-[0.18em] text-slate-400 mt-3">
+                        Drag or Tap to Compare
                       </p>
-                      {story.grade && (
-                        <p className="text-yellow-400 text-xs uppercase tracking-widest">
-                          {story.grade}
-                        </p>
-                      )}
-                      {story.school && (
-                        <p className="text-yellow-400 text-xs uppercase tracking-widest">
-                          {story.school}
-                        </p>
-                      )}
-                      {!story.grade && !story.school && (
-                        <p className="text-yellow-400 text-xs uppercase tracking-widest">
-                          Student Story
-                        </p>
-                      )}
+                    </div>
+                  </div>
+                  <div className="relative mt-3 rounded-2xl border border-slate-700/80 bg-gradient-to-r from-slate-900/86 via-slate-900/78 to-blue-950/42 py-3 text-center space-y-1 overflow-hidden">
+                    <div className="pointer-events-none absolute left-0 top-0 h-full w-16 rounded-l-2xl bg-gradient-to-r from-[#F0B63F]/18 to-transparent"></div>
+                    <div className="relative">
+                    <p className="text-white text-sm">
+                      {story.studentName || "Student"}
+                    </p>
+                    {story.grade && (
+                      <p className="text-[#F0B63F] text-xs uppercase tracking-widest">
+                        {story.grade}
+                      </p>
+                    )}
+                    {story.school && (
+                      <p className="text-blue-300 text-xs uppercase tracking-widest">
+                        {story.school}
+                      </p>
+                    )}
+                    {!story.grade && !story.school && (
+                      <p className="text-[#F0B63F] text-xs uppercase tracking-widest">
+                        Student Story
+                      </p>
+                    )}
                     </div>
                   </div>
                 </div>
-              </div>
-            ) : null}
-            </motion.div>
+              ) : null}
+            </div>
           )}
         </div>
       </div>
