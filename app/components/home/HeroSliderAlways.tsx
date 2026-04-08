@@ -60,15 +60,6 @@ export function HeroSliderAlways({
 
   if (!activeSlide) return null;
 
-  React.useEffect(() => {
-    if (count === 0) return;
-    if (index >= count) setIndex(0);
-  }, [count, index]);
-
-  const startX = React.useRef<number | null>(null);
-
-  if (!activeSlide) return null;
-
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (!enableNav) return;
     if (e.key === "ArrowRight") {
@@ -278,25 +269,9 @@ export function HeroSliderAlways({
                           )}
                         </>
                       )}
-                    >
-                      <Link href={activeSlide.cta.href}>
-                        {isPosterSlide ? activeSlide.cta.label : "Learn More"}
-                      </Link>
-                    </Button>
-                    {!activeSlide.hideSecondaryCta && (
-                      <Button
-                        asChild
-                        variant="outline"
-                        size="lg"
-                        className="font-semibold bg-white/10 hover:bg-white/20 text-white border-white/30 rounded-lg"
-                      >
-                        <Link href={activeSlide.secondaryCta?.href || "/book-session"}>
-                          {activeSlide.secondaryCta?.label || activeSlide.cta.label}
-                        </Link>
-                      </Button>
-                    )}
-                  </>
-                )}
+                    </div>
+                  ) : null}
+                </div>
               </div>
             )}
           </>

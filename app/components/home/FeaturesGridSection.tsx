@@ -225,7 +225,7 @@ export default function FeaturesGridSection() {
                           centerSafeZonePx={24}
                           onProgressChange={setSliderProgress}
                           autoplay
-                          autoplayDuration={4500}
+                          autoplayDuration={8000}
                           firstContent={
                             <div className={cn(
                               "relative h-full w-full overflow-hidden bg-gradient-to-br from-[#7A3E06] via-[#8F4708] to-[#241A15] pl-5 pr-16 pt-14 pb-6 sm:pl-6 sm:pr-20 transition-all duration-300",

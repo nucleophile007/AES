@@ -685,21 +685,21 @@ model Research {
   title                   String
   slug                    String          @unique
   description             String?
-  createdAt               DateTime
-  author                  String?
   published               Boolean         @default(true)
+  author                  String?
+  createdAt               DateTime
   pdfFilename             String?
-  presentationPdfFilename String?
   abstract                String?
+  category                String?
   extractedAt             DateTime?
   extractedContent        Json?
   extractionStatus        String?
-  keywords                String[]
-  category                String?
   grade                   String?
+  keywords                String[]
   school                  String?
   studentId               Int?
   domain                  String?
+  presentationPdfFilename String?
   accessRequests          AccessRequest[]
   Student                 Student?        @relation(fields: [studentId], references: [id])
 }
