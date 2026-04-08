@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { HeroSliderAlways } from "./HeroSliderAlways";
+import { HeroSliderAlways, type Slide } from "./HeroSliderAlways";
 
 interface Event {
   id: number;
@@ -67,7 +67,7 @@ export function ProgramsHero() {
       });
   }, []);
 
-  const programSlides = [
+  const programSlides: Slide[] = [
     {
       title: "Greater Sacramento Math League",
       subtitle: "Apr 25 • Sacramento • Grades 6-12",
@@ -102,7 +102,7 @@ export function ProgramsHero() {
   ];
 
   // Add latest event as first slide if available (don't wait for loading to finish)
-  const slides = latestEvent
+  const slides: Slide[] = latestEvent
     ? [
         {
           title: latestEvent.title,

@@ -6,7 +6,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-type Slide = {
+export type Slide = {
   title: string;
   subtitle?: string;
   description?: string;
@@ -260,7 +260,7 @@ export function HeroSliderAlways({
         )}
       </div>
 
-      {showCutoutCta && (
+      {showCutoutCta && activeSlide.cta && (
         <>
           <div className="pointer-events-none absolute inset-x-0 bottom-8 md:bottom-10 z-30 flex justify-center px-4">
             <Button
