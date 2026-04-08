@@ -1,18 +1,16 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { SlideViewer } from "./slide-viewer"
+import { PdfPresentationViewer } from "./pdf-presentation-viewer"
 import { TechnicalReportSection } from "./technical-report-section"
 
 interface ArticleContentProps {
-    slides: {
-        id: string
-        imagePath: string
-        order: number
-    }[]
+    researchId: string
+    presentationTotalPages: number
+    accessEmail: string | null
     onSectionChange: (section: string) => void
     hasAccess: boolean
-    onSlideView: (index: number) => void
+    onLockedPageClick: (pageNumber: number) => void
     onViewPDF: () => void
     onDownloadPDF: () => void
     onRequestAccess: () => void
@@ -29,10 +27,12 @@ interface ArticleContentProps {
 
 
 export function ArticleContent({
-    slides,
+    researchId,
+    presentationTotalPages,
+    accessEmail,
     onSectionChange,
     hasAccess,
-    onSlideView,
+    onLockedPageClick,
     onViewPDF,
     onDownloadPDF,
     onRequestAccess,
@@ -179,18 +179,19 @@ export function ArticleContent({
                 </section>
             )}
 
-            {/* Research Slides */}
+            {/* Research Presentation */}
             <section id="research-slides" ref={setRef("research-slides")} className="space-y-6">
-                <h2 className="text-3xl font-serif font-semibold theme-text-light">Research Slides</h2>
+                <h2 className="text-3xl font-serif font-semibold theme-text-light">Research Presentation</h2>
                 <p className="theme-text-muted">
-                    Explore the visual presentation of this research. The first 2 slides are freely available—request full access
-                    to view the complete presentation.
+                    The first 2 pages are available as preview. Remaining pages are locked until your access request is approved.
                 </p>
-                <SlideViewer
-                    slides={slides}
-                    onSlideView={onSlideView}
+                <PdfPresentationViewer
+                    researchId={researchId}
+                    totalPages={presentationTotalPages}
                     hasAccess={hasAccess}
-                    maxFreeSlides={2}
+                    accessEmail={accessEmail}
+                    maxFreePages={2}
+                    onLockedPageClick={onLockedPageClick}
                 />
             </section>
 

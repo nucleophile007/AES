@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
-import { getSignedSlideUrl } from "@/lib/supabase-storage"
 import ResearchClient from "./research-client"
+
+export const revalidate = 300
 
 export default async function ResearchPage({
   params,
@@ -16,6 +17,7 @@ export default async function ResearchPage({
       title: true,
       description: true,
       pdfFilename: true,
+      presentationPdfFilename: true,
       author: true,
       grade: true,
       school: true,
@@ -23,14 +25,6 @@ export default async function ResearchPage({
       extractedContent: true,
       abstract: true,
       keywords: true,
-      slides: {
-        select: {
-          id: true,
-          imageFilename: true,
-          order: true,
-        },
-        orderBy: { order: "asc" },
-      },
     },
   })
 
@@ -38,35 +32,8 @@ export default async function ResearchPage({
     return <div>Research not found</div>
   }
 
-  // Generate signed URLs for all slides (server-side for security)
-  const slidesWithUrls = await Promise.all(
-    research.slides.map(async (slide) => {
-      try {
-        // Construct full path: {researchId}/{filename}
-        const fullPath = `${research.id}/${slide.imageFilename}`
-        const signedUrl = await getSignedSlideUrl(fullPath, 3600)
-        return {
-          id: slide.id,
-          imagePath: signedUrl,
-          order: slide.order,
-        }
-      } catch (error) {
-        console.error(`Failed to generate URL for slide ${slide.id}:`, error)
-        return null
-      }
-    })
-  )
-
-  // Filter out any failed URLs
-  const validSlides = slidesWithUrls.filter((slide) => slide !== null)
-
   return (
-    <ResearchClient
-      research={{
-        ...research,
-        slides: validSlides,
-      }}
-    />
+    <ResearchClient research={research} />
   )
 }
 
