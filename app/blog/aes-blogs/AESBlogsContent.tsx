@@ -95,6 +95,7 @@ export default function AESBlogsContent() {
               We couldn&apos;t load the blogs at this time. Please try again later.
             </p>
             <button
+              type="button"
               onClick={() => window.location.reload()}
               className="px-6 py-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-slate-900 font-semibold rounded-lg hover:shadow-lg transition-all"
             >

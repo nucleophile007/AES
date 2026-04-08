@@ -218,6 +218,7 @@ export default function SuccessStoriesSection() {
           <div className="flex flex-wrap justify-center gap-2 mb-8">
             {categories.map((category) => (
               <button
+                type="button"
                 key={category}
                 onClick={() => {
                   setActiveCategory(category);
