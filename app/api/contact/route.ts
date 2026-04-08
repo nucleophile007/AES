@@ -1,6 +1,22 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sendMail } from "@/lib/mailer";
 import { contactFormSchema } from "@/lib/validation/contact";
+
+const CONTACT_NOTIFICATION_TO = process.env.CONTACT_NOTIFICATION_TO ?? "davk312@gmail.com";
+
+function formatField(value: string | null | undefined) {
+  return value && value.trim().length > 0 ? value : "Not provided";
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 export async function POST(request: Request) {
   try {
@@ -40,7 +56,61 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, submissionId: submission.id });
+    const preferredContact = parsed.data.preferredContact ?? "email";
+
+    const textBody = [
+      "New contact form submission",
+      `Submission ID: ${submission.id}`,
+      `Full Name: ${parsed.data.fullName}`,
+      `Email: ${parsed.data.email}`,
+      `Phone: ${formatField(parsed.data.phone)}`,
+      `Role: ${formatField(parsed.data.role)}`,
+      `Program Interest: ${formatField(parsed.data.programInterest)}`,
+      `Preferred Contact: ${preferredContact}`,
+      `Student Name: ${formatField(parsed.data.studentName)}`,
+      `Student Grade: ${formatField(parsed.data.studentGrade)}`,
+      `Subject: ${parsed.data.subject}`,
+      "Message:",
+      parsed.data.message,
+    ].join("\n");
+
+    const htmlBody = `
+      <div style="font-family:Segoe UI,Arial,sans-serif;line-height:1.5;">
+        <h2>New contact form submission</h2>
+        <p><strong>Submission ID:</strong> ${submission.id}</p>
+        <p><strong>Full Name:</strong> ${escapeHtml(parsed.data.fullName)}</p>
+        <p><strong>Email:</strong> ${escapeHtml(parsed.data.email)}</p>
+        <p><strong>Phone:</strong> ${escapeHtml(formatField(parsed.data.phone))}</p>
+        <p><strong>Role:</strong> ${escapeHtml(formatField(parsed.data.role))}</p>
+        <p><strong>Program Interest:</strong> ${escapeHtml(formatField(parsed.data.programInterest))}</p>
+        <p><strong>Preferred Contact:</strong> ${escapeHtml(preferredContact)}</p>
+        <p><strong>Student Name:</strong> ${escapeHtml(formatField(parsed.data.studentName))}</p>
+        <p><strong>Student Grade:</strong> ${escapeHtml(formatField(parsed.data.studentGrade))}</p>
+        <p><strong>Subject:</strong> ${escapeHtml(parsed.data.subject)}</p>
+        <p><strong>Message:</strong></p>
+        <pre style="white-space:pre-wrap;background:#f6f6f6;padding:12px;border-radius:8px;">${escapeHtml(parsed.data.message)}</pre>
+      </div>
+    `.trim();
+
+    let notificationEmailSent = true;
+    try {
+      await sendMail({
+        to: CONTACT_NOTIFICATION_TO,
+        subject: `New Contact Form: ${parsed.data.subject}`,
+        html: htmlBody,
+        text: textBody,
+        replyTo: parsed.data.email,
+      });
+    } catch (emailError) {
+      notificationEmailSent = false;
+      console.error("Contact notification email error:", emailError);
+    }
+
+    return NextResponse.json({
+      success: true,
+      submissionId: submission.id,
+      notificationEmailSent,
+    });
   } catch (error) {
     console.error("Contact submission error:", error);
     return NextResponse.json(

@@ -1,51 +1,32 @@
 "use client";
 import React, { useState } from "react";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
 import { NavbarDemo } from "./navbar";
 import { LoginModal } from "@/components/ui/LoginModal";
-import { Menu, X, Sparkles, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   return (
-    <motion.header
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="fixed top-0 w-full bg-gradient-to-r from-[#1a2236]/40 via-[#1a2236]/30 to-[#1a2236]/40 backdrop-blur-2xl border-b border-yellow-400/10 shadow-lg z-50"
-    >
-      {/* Enhanced backdrop blur layer */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#1a2236]/20 via-[#1a2236]/15 to-[#1a2236]/20 backdrop-blur-3xl"></div>
-
-      {/* Subtle animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-32 h-32 bg-yellow-400/3 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute top-0 right-1/4 w-24 h-24 bg-blue-400/3 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute bottom-0 left-1/3 w-20 h-20 bg-purple-400/3 rounded-full blur-3xl animate-pulse delay-500"></div>
-      </div>
+    <header className="fixed top-0 w-full bg-[#1a2236] border-b border-yellow-400/15 shadow-[0_8px_24px_rgba(8,15,35,0.5)] z-50">
 
       <div className="container mx-auto py-4 px-4 flex items-center justify-between relative z-10">
         {/* Logo and Brand */}
         <Link href="/">
-          <motion.div
-            className="flex items-center space-x-3 group cursor-pointer"
-            whileHover={{ scale: 1.05 }}
-            transition={{ type: "spring", stiffness: 400 }}
-          >
+          <div className="flex items-center space-x-3 group cursor-pointer">
             <div className="relative">
               <Image
                 src="https://cdn.builder.io/api/v1/image/assets%2F5ed38136cd50447f928d11cc8bb6d314%2Ff894b9769d704ee88e744e40bde62d12?format=webp&width=800"
                 alt="ACHARYA Educational Services Logo"
-                className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl object-cover ring-2 ring-yellow-400/20 group-hover:ring-yellow-400/40 transition-all duration-300 shadow-lg group-hover:shadow-yellow-400/20 backdrop-blur-sm"
+                className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl object-cover ring-2 ring-yellow-400/20 group-hover:ring-yellow-400/40 transition-all duration-300 shadow-lg group-hover:shadow-yellow-400/20"
                 width={56}
                 height={56}
                 priority
               />
-              <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400/15 to-orange-400/15 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </div>
             <div className="hidden sm:block">
               <h1 className="text-xl sm:text-2xl font-black bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent drop-shadow-sm">
@@ -53,7 +34,7 @@ export default function Header() {
               </h1>
               <p className="text-xs text-yellow-400/70 font-medium">Educational Services</p>
             </div>
-          </motion.div>
+          </div>
         </Link>
 
         {/* Desktop Navigation */}
@@ -75,7 +56,6 @@ export default function Header() {
             <Button
               className="bg-gradient-to-r from-yellow-400/90 via-amber-500/90 to-orange-500/90 hover:from-yellow-400 hover:via-amber-500 hover:to-orange-500 text-[#1a2236] font-bold shadow-lg hover:shadow-xl hover:shadow-yellow-400/20 transition-all duration-300 transform hover:scale-105 backdrop-blur-md"
             >
-              <Sparkles className="mr-2 h-4 w-4" />
               Book Free Session
             </Button>
           </Link>
@@ -96,12 +76,7 @@ export default function Header() {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-          className="lg:hidden bg-gradient-to-b from-[#1a2236]/60 to-[#1a2236]/80 backdrop-blur-3xl border-t border-yellow-400/10 shadow-2xl relative z-40"
-        >
+        <div className="lg:hidden bg-gradient-to-b from-[#1a2236] to-[#18243d] border-t border-yellow-400/15 shadow-2xl relative z-40">
           <div className="container mx-auto px-4 py-6 space-y-4">
             <nav className="space-y-4">
               <Link href="/#home" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Home</Link>
@@ -157,14 +132,13 @@ export default function Header() {
               </LoginModal>
               <Link href="/book-session" className="block">
                 <Button className="w-full bg-gradient-to-r from-yellow-400/90 via-amber-500/90 to-orange-500/90 hover:from-yellow-400 hover:via-amber-500 hover:to-orange-500 text-[#1a2236] font-bold shadow-lg backdrop-blur-md">
-                  <Sparkles className="mr-2 h-4 w-4" />
                   Book Free Session
                 </Button>
               </Link>
             </div>
           </div>
-        </motion.div>
+        </div>
       )}
-    </motion.header>
+    </header>
   );
 } 

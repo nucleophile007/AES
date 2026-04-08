@@ -500,6 +500,12 @@
   animation: floatReverse 4s ease-in-out infinite;
 }
 
+/* Hide decorative floating background circles site-wide */
+div.animate-float,
+div.animate-float-reverse {
+  display: none !important;
+}
+
 .animate-pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
 }
@@ -623,16 +629,43 @@
 
 .animate-scroll {
   animation: scroll 40s linear infinite;
+  will-change: transform;
 }
 
 .animate-scroll-reverse {
   animation: scroll-reverse 45s linear infinite;
+  will-change: transform;
 }
 
 .animate-scroll-bounce {
   animation: scroll-bounce 50s ease-in-out infinite;
+  will-change: transform;
 }
 
 .pause-animation {
   animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-float,
+  .animate-float-reverse,
+  .animate-pulse-glow,
+  .animate-shimmer,
+  .animate-slide-in-left,
+  .animate-slide-in-right,
+  .animate-slide-in-bottom,
+  .animate-scale-in,
+  .animate-wave,
+  .animate-morphing,
+  .animate-gradient-shift,
+  .animate-scroll,
+  .animate-scroll-reverse,
+  .animate-scroll-bounce,
+  .animate-pulse {
+    animation: none !important;
+  }
 }
