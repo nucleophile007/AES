@@ -13,15 +13,16 @@ interface SyncRequest {
   scheduleId: number;
   timezone?: string; // User's timezone from browser
   eventData?: {
-    title: string;
+    title?: string;
     description?: string;
-    date: string;
-    startTime: string;
-    endTime: string;
+    date?: string;
+    startTime?: string;
+    endTime?: string;
     location?: string;
     meetingLink?: string;
     studentName?: string;
     subject?: string;
+    googleCalendarEventId?: string;
   };
 }
 
@@ -96,6 +97,7 @@ export async function POST(request: NextRequest) {
   try {
     const body: SyncRequest = await request.json();
     const { teacherEmail, action, scheduleId, eventData, timezone } = body;
+    const fallbackGoogleEventId = eventData?.googleCalendarEventId?.trim() || null;
     
     // Default to America/Los_Angeles if no timezone provided
     const userTimezone = timezone || 'America/Los_Angeles';
@@ -160,9 +162,16 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (!schedule) {
+    if (!schedule && action !== 'delete') {
       return NextResponse.json(
         { error: 'Schedule not found' },
+        { status: 404 }
+      );
+    }
+
+    if (!schedule && action === 'delete' && !fallbackGoogleEventId) {
+      return NextResponse.json(
+        { error: 'Schedule not found and Google event ID missing' },
         { status: 404 }
       );
     }
@@ -171,16 +180,23 @@ export async function POST(request: NextRequest) {
 
     switch (action) {
       case 'create': {
-        if (!eventData) {
+        if (!eventData || !schedule) {
           return NextResponse.json(
             { error: 'Event data is required for create action' },
             { status: 400 }
           );
         }
+        const { title, date, startTime, endTime } = eventData;
+        if (!title || !date || !startTime || !endTime) {
+          return NextResponse.json(
+            { error: 'Missing required event fields for create action' },
+            { status: 400 }
+          );
+        }
 
         // Build datetime strings
-        const startDateTime = `${eventData.date}T${eventData.startTime}:00`;
-        const endDateTime = `${eventData.date}T${eventData.endTime}:00`;
+        const startDateTime = `${date}T${startTime}:00`;
+        const endDateTime = `${date}T${endTime}:00`;
 
         const description = `Student: ${eventData.studentName || schedule.student.name}\nSubject: ${eventData.subject || schedule.subject}${eventData.description ? `\n\n${eventData.description}` : ''}`;
         const attendees = buildGoogleAttendees(schedule);
@@ -189,7 +205,7 @@ export async function POST(request: NextRequest) {
           accessToken,
           teacher.googleRefreshToken || undefined,
           {
-            title: eventData.title,
+            title,
             description,
             startTime: startDateTime,
             endTime: endDateTime,
@@ -214,17 +230,24 @@ export async function POST(request: NextRequest) {
       }
 
       case 'update': {
-        if (!eventData) {
+        if (!eventData || !schedule) {
           return NextResponse.json(
             { error: 'Event data is required for update action' },
+            { status: 400 }
+          );
+        }
+        const { title, date, startTime, endTime } = eventData;
+        if (!title || !date || !startTime || !endTime) {
+          return NextResponse.json(
+            { error: 'Missing required event fields for update action' },
             { status: 400 }
           );
         }
 
         if (!schedule.googleCalendarEventId) {
           // Event doesn't exist in Google Calendar, create it instead
-          const startDateTime = `${eventData.date}T${eventData.startTime}:00`;
-          const endDateTime = `${eventData.date}T${eventData.endTime}:00`;
+          const startDateTime = `${date}T${startTime}:00`;
+          const endDateTime = `${date}T${endTime}:00`;
 
           const description = `Student: ${eventData.studentName || schedule.student.name}\nSubject: ${eventData.subject || schedule.subject}${eventData.description ? `\n\n${eventData.description}` : ''}`;
           const attendees = buildGoogleAttendees(schedule);
@@ -233,7 +256,7 @@ export async function POST(request: NextRequest) {
             accessToken,
             teacher.googleRefreshToken || undefined,
             {
-              title: eventData.title,
+              title,
               description,
               startTime: startDateTime,
               endTime: endDateTime,
@@ -255,8 +278,8 @@ export async function POST(request: NextRequest) {
           result = { success: true, googleEventId, created: true };
         } else {
           // Update existing event
-          const startDateTime = `${eventData.date}T${eventData.startTime}:00`;
-          const endDateTime = `${eventData.date}T${eventData.endTime}:00`;
+          const startDateTime = `${date}T${startTime}:00`;
+          const endDateTime = `${date}T${endTime}:00`;
 
           const description = `Student: ${eventData.studentName || schedule.student.name}\nSubject: ${eventData.subject || schedule.subject}${eventData.description ? `\n\n${eventData.description}` : ''}`;
           const attendees = buildGoogleAttendees(schedule);
@@ -266,7 +289,7 @@ export async function POST(request: NextRequest) {
             teacher.googleRefreshToken || undefined,
             schedule.googleCalendarEventId,
             {
-              title: eventData.title,
+              title,
               description,
               startTime: startDateTime,
               endTime: endDateTime,
@@ -284,26 +307,35 @@ export async function POST(request: NextRequest) {
       }
 
       case 'delete': {
-        if (schedule.googleCalendarEventId) {
+        const googleEventId = schedule?.googleCalendarEventId || fallbackGoogleEventId;
+
+        if (googleEventId) {
           try {
             await deleteCalendarEvent(
               accessToken,
               teacher.googleRefreshToken || undefined,
-              schedule.googleCalendarEventId
+              googleEventId
             );
           } catch (error) {
             // Event might already be deleted from Google Calendar
             console.warn('Error deleting from Google Calendar:', error);
           }
+        }
 
-          // Clear the Google Calendar event ID
+        if (schedule?.googleCalendarEventId) {
+          // Clear the Google Calendar event ID when the schedule row still exists.
           await prisma.classSchedule.update({
             where: { id: scheduleId },
             data: { googleCalendarEventId: null },
           });
         }
 
-        result = { success: true, deleted: true };
+        result = {
+          success: true,
+          deleted: true,
+          scheduleFound: !!schedule,
+          googleEventDeleted: !!googleEventId,
+        };
         break;
       }
 

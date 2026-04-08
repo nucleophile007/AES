@@ -13,7 +13,7 @@ export const MenuItem = ({
   href,
   className,
 }: {
-  setActive: (item: string) => void;
+  setActive: (item: string | null) => void;
   active: string | null;
   item: string;
   children?: React.ReactNode;
@@ -29,6 +29,7 @@ export const MenuItem = ({
   return (
     <div
       onMouseEnter={() => setActive(item)}
+      onMouseLeave={() => setActive(null)}
       className="relative group"
     >
       {href ? (
@@ -63,7 +64,7 @@ export const MenuItem = ({
               <motion.div
                 transition={transition}
                 layoutId="active"
-                className="bg-[#1a2236]/95 backdrop-blur-2xl rounded-xl overflow-hidden border border-yellow-400/30 shadow-2xl ring-1 ring-yellow-400/20"
+                className="bg-[#1a2236] rounded-xl overflow-hidden border border-yellow-400/30 shadow-2xl ring-1 ring-yellow-400/20"
               >
                 <motion.div
                   layout
@@ -89,8 +90,7 @@ export const Menu = ({
 }) => {
   return (
     <nav
-      onMouseLeave={() => setActive(null)} // resets the state
-      className="relative flex items-center space-x-6 px-4 py-2 bg-white/5 backdrop-blur-md rounded-full border border-yellow-400/20 hover:bg-white/10 hover:border-yellow-400/30 transition-all duration-300 shadow-lg"
+      className="relative flex items-center space-x-6 px-4 py-2 bg-[#223252] rounded-full border border-yellow-400/25 hover:bg-[#2a3a5f] hover:border-yellow-400/35 transition-all duration-300 shadow-lg"
     >
       {children}
     </nav>

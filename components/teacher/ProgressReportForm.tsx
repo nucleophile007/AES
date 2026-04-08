@@ -192,6 +192,7 @@ const ProgressReportForm: React.FC<ProgressReportFormProps> = ({
               variant="outline"
               size="icon"
               onClick={() => removeArrayItem(index, setter)}
+              aria-label={`Remove ${label.toLowerCase()} item ${index + 1}`}
             >
               <X className="h-4 w-4" />
             </Button>

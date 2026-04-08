@@ -19,6 +19,7 @@ export default function YearSelector({ years, selectedYear, onYearSelect }: Year
           
           return (
             <button
+              type="button"
               key={year}
               onClick={() => onYearSelect(year)}
               className={`

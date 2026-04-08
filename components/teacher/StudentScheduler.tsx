@@ -80,6 +80,7 @@ interface ClassEvent {
   status?: string | null;
   color?: string | null;
   meetingLink?: string | null;
+  googleCalendarEventId?: string | null;
   studentId: number;
   teacherId: number;
   groupId?: number | null;  // Group ID if scheduled via a group
@@ -97,6 +98,25 @@ interface ClassEvent {
     program: string;
   };
 }
+
+type GoogleSyncEventData = {
+  title?: string;
+  description?: string;
+  date?: string;
+  startTime?: string;
+  endTime?: string;
+  location?: string;
+  meetingLink?: string;
+  studentName?: string;
+  subject?: string;
+  googleCalendarEventId?: string | null;
+};
+
+type GoogleSyncResult = {
+  ok: boolean;
+  error?: string;
+  needsReconnect?: boolean;
+};
 
 interface StudentSchedulerProps {
   teacherEmail: string;
@@ -128,6 +148,9 @@ const addMinutesToTime = (time: string, minutesToAdd: number) => {
   const nextMinutes = String(clamped % 60).padStart(2, '0');
   return `${nextHours}:${nextMinutes}`;
 };
+
+const GOOGLE_SYNC_TIMEOUT_MS = 8000;
+const DELETE_UNDO_WINDOW_MS = 3000;
 
 // Color palette for students (used in "all" view mode)
 const STUDENT_COLORS = [
@@ -199,6 +222,10 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
   const [googleCalendarConnected, setGoogleCalendarConnected] = useState(false);
   const [googleCalendarLoading, setGoogleCalendarLoading] = useState(false);
   const [isSyncingToGoogle, setIsSyncingToGoogle] = useState(false);
+  const [googleSyncInFlightCount, setGoogleSyncInFlightCount] = useState(0);
+  const [googleSyncFailureCount, setGoogleSyncFailureCount] = useState(0);
+  const [deletePendingEventId, setDeletePendingEventId] = useState<number | null>(null);
+  const [isDeleteInProgress, setIsDeleteInProgress] = useState(false);
   const [editEventDate, setEditEventDate] = useState("");
   const [editEventStartTime, setEditEventStartTime] = useState("");
   const [editEventEndTime, setEditEventEndTime] = useState("");
@@ -214,6 +241,8 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
   const todayLocalDate = toLocalDateInput(currentNow);
   const minStartTimeForToday = toLocalTimeInput(new Date(currentNow.getTime() + 60 * 1000));
   const minStartTime = eventStartDate === todayLocalDate ? minStartTimeForToday : undefined;
+  const isDeleteBusy = deletePendingEventId !== null || isDeleteInProgress;
+  const isActionLocked = isSubmitting || isDeleteBusy;
 
   const groupNameById = useMemo(() => {
     const map = new Map<number, string>();
@@ -311,6 +340,9 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
       const response = await fetch(`/api/teacher/calendar/status?email=${encodeURIComponent(teacherEmail)}`);
       const data = await response.json();
       setGoogleCalendarConnected(data.connected || false);
+      if (data.connected) {
+        setGoogleSyncFailureCount(0);
+      }
       if (data.needsReconnect) {
         toast({
           title: "Google Calendar needs reconnection",
@@ -353,6 +385,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
       });
       if (response.ok) {
         setGoogleCalendarConnected(false);
+        setGoogleSyncFailureCount(0);
         toast({
           title: "Disconnected",
           description: "Google Calendar has been disconnected.",
@@ -373,23 +406,18 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
   const syncEventToGoogleCalendar = async (
     action: 'create' | 'update' | 'delete',
     scheduleId: number,
-    eventData?: {
-      title: string;
-      description?: string;
-      date: string;
-      startTime: string;
-      endTime: string;
-      location?: string;
-      meetingLink?: string;
-      studentName?: string;
-      subject?: string;
+    eventData?: GoogleSyncEventData
+  ): Promise<GoogleSyncResult> => {
+    if (!googleCalendarConnected) {
+      return { ok: false, error: 'Google Calendar not connected' };
     }
-  ) => {
-    if (!googleCalendarConnected) return;
-    
+
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    setGoogleSyncInFlightCount((count) => count + 1);
+
     try {
       const userTimezone = getUserTimezone();
-      const response = await fetch('/api/teacher/calendar/sync', {
+      const requestPromise = fetch('/api/teacher/calendar/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -400,6 +428,14 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
           timezone: userTimezone,
         }),
       });
+
+      const timeoutPromise = new Promise<Response>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error('Google Calendar sync timed out'));
+        }, GOOGLE_SYNC_TIMEOUT_MS);
+      });
+
+      const response = await Promise.race([requestPromise, timeoutPromise]);
       
       const data = await response.json();
       if (!response.ok) {
@@ -412,9 +448,25 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
           });
         }
         console.error('Failed to sync with Google Calendar:', data.error);
+        setGoogleSyncFailureCount((count) => count + 1);
+        return {
+          ok: false,
+          error: data.error || 'Google Calendar sync failed',
+          needsReconnect: Boolean(data.needsReconnect),
+        };
       }
+      return { ok: true };
     } catch (err) {
       console.error('Error syncing to Google Calendar:', err);
+      const isTimeoutError = err instanceof Error && err.message === 'Google Calendar sync timed out';
+      setGoogleSyncFailureCount((count) => count + 1);
+      return {
+        ok: false,
+        error: isTimeoutError ? 'Google Calendar sync timed out' : 'Google Calendar sync failed',
+      };
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
+      setGoogleSyncInFlightCount((count) => Math.max(0, count - 1));
     }
   };
 
@@ -432,6 +484,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
       
       const data = await response.json();
       if (response.ok) {
+        setGoogleSyncFailureCount(0);
         toast({
           title: "Sync complete",
           description: `Synced ${data.synced} events to Google Calendar.${data.failed > 0 ? ` ${data.failed} failed.` : ''}`,
@@ -515,6 +568,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
             subject: schedule.subject,
             location: schedule.location || '',
             meetingLink: schedule.meetingLink || '',
+            googleCalendarEventId: schedule.googleCalendarEventId || null,
             meetingMinutes: schedule.meetingMinutes || '',
             status: schedule.status || 'scheduled',
             color: schedule.color || '',
@@ -575,6 +629,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
       
       if (calendarConnected === 'true') {
         setGoogleCalendarConnected(true);
+        setGoogleSyncFailureCount(0);
         toast({
           title: "Google Calendar Connected",
           description: "Your schedule will now sync to Google Calendar.",
@@ -614,7 +669,15 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
   }, [selectedStudent, viewMode, fetchEvents]);
 
   const handleAddEvent = async () => {
-    if (schedulerActionInFlightRef.current || isSubmitting) return;
+    if (schedulerActionInFlightRef.current || isSubmitting || isDeleteBusy) {
+      if (isDeleteBusy) {
+        toast({
+          title: "Please wait",
+          description: "A class deletion is still in progress.",
+        });
+      }
+      return;
+    }
     if (!eventTitle || !eventSubject || !eventStartDate || !eventStartTime || !eventEndTime) {
       setError('Please fill in all required fields');
       return;
@@ -693,7 +756,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
         const student = students.find(s => s.id === targetStudentId);
         
         if (responseData.schedule?.id) {
-          await syncEventToGoogleCalendar('create', responseData.schedule.id, {
+          void syncEventToGoogleCalendar('create', responseData.schedule.id, {
             title: eventTitle,
             description: eventDescription,
             date: eventStartDate,
@@ -703,6 +766,13 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
             meetingLink: eventMeetingLink || undefined,
             studentName: selectedGroup ? `${selectedGroup.name} (${selectedGroup.members.length} students)` : student?.name,
             subject: eventSubject,
+          }).then((syncResult) => {
+            if (syncResult.ok) return;
+            toast({
+              title: "Class saved",
+              description: "Saved in AES, but Google Calendar sync needs attention.",
+              variant: "destructive",
+            });
           });
         }
       }
@@ -728,11 +798,47 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
         }
       }
 
-      // Refresh events based on view mode
-      if (viewMode === 'all') {
-        await fetchEvents(null);
-      } else if (selectedStudent) {
-        await fetchEvents(selectedStudent);
+      if (!isRecurring && responseData.schedule?.id) {
+        const optimisticDate = new Date(eventStartDate);
+        const optimisticStart = new Date(`${eventStartDate}T${eventStartTime}`);
+        const optimisticEnd = new Date(`${eventStartDate}T${eventEndTime}`);
+        const fallbackStudent = students.find((s) => s.id === targetStudentId);
+
+        const optimisticEvent: ClassEvent = {
+          id: responseData.schedule.id,
+          title: eventTitle,
+          description: eventDescription || '',
+          meetingMinutes: '',
+          date: optimisticDate,
+          start: optimisticStart,
+          end: optimisticEnd,
+          startTime: eventStartTime,
+          endTime: eventEndTime,
+          subject: eventSubject,
+          location: eventLocation || '',
+          status: "scheduled",
+          color: responseData.schedule.color || null,
+          meetingLink: eventMeetingLink || '',
+          googleCalendarEventId: responseData.schedule.googleCalendarEventId || null,
+          studentId: targetStudentId,
+          teacherId: responseData.schedule.teacherId || 0,
+          groupId: selectedGroup ? selectedGroup.id : null,
+          group: selectedGroup ? { id: selectedGroup.id, name: selectedGroup.name } : null,
+          createdAt: responseData.schedule.createdAt || new Date().toISOString(),
+          updatedAt: responseData.schedule.updatedAt || new Date().toISOString(),
+          student: fallbackStudent || {
+            id: targetStudentId,
+            name: selectedGroup?.members[0]?.name || 'Student',
+            email: selectedGroup?.members[0]?.email || '',
+            grade: selectedGroup?.members[0]?.grade || '',
+            program: selectedGroup?.members[0]?.program || '',
+          },
+        };
+
+        setEvents((prev) => {
+          if (prev.some((event) => event.id === optimisticEvent.id)) return prev;
+          return [...prev, optimisticEvent].sort((a, b) => a.start.getTime() - b.start.getTime());
+        });
       }
 
       // Reset form
@@ -740,6 +846,13 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
       resetForm();
       setIsAddEventDialogOpen(false);
       setSelectedGroupId("");
+
+      // Refresh in background to hydrate any recurring/group expansions from server.
+      if (viewMode === 'all') {
+        void fetchEvents(null);
+      } else if (selectedStudent) {
+        void fetchEvents(selectedStudent);
+      }
 
     } catch (err: any) {
       console.error('Error saving event:', err);
@@ -751,12 +864,21 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
   };
 
   const handleDeleteEvent = async () => {
-    if (schedulerActionInFlightRef.current || isSubmitting) return;
+    if (schedulerActionInFlightRef.current || isSubmitting || isDeleteBusy) {
+      if (isDeleteBusy) {
+        toast({
+          title: "Delete in progress",
+          description: "Please wait for the current delete to finish.",
+        });
+      }
+      return;
+    }
     if (!selectedEvent) return;
     if (pendingDeleteTimeoutRef.current) return;
     const eventToDelete = selectedEvent;
 
     try {
+      setDeletePendingEventId(eventToDelete.id);
       setEvents((prev) => prev.filter((event) => event.id !== eventToDelete.id));
       setIsViewEventDialogOpen(false);
       setSelectedEvent(null);
@@ -766,12 +888,15 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
         try {
           schedulerActionInFlightRef.current = true;
           setIsSubmitting(true);
-          
-          // Sync deletion to Google Calendar first (before deleting from DB)
-          if (googleCalendarConnected) {
-            await syncEventToGoogleCalendar('delete', eventToDelete.id);
-          }
-          
+          setIsDeleteInProgress(true);
+
+          // Kick off Google deletion immediately, but don't block AES deletion UX on it.
+          const googleDeletePromise = googleCalendarConnected
+            ? syncEventToGoogleCalendar('delete', eventToDelete.id, {
+                googleCalendarEventId: eventToDelete.googleCalendarEventId || null,
+              })
+            : Promise.resolve<GoogleSyncResult>({ ok: true });
+
           const response = await fetch(`/api/teacher/schedule?id=${eventToDelete.id}`, {
             method: 'DELETE',
             headers: {
@@ -785,12 +910,21 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
             throw new Error(errorData.error || 'Failed to delete event');
           }
 
-          // Refresh events based on view mode
+          // Refresh in background to keep UI snappy after optimistic removal.
           if (viewMode === 'all') {
-            await fetchEvents(null);
+            void fetchEvents(null);
           } else if (selectedStudent) {
-            await fetchEvents(selectedStudent);
+            void fetchEvents(selectedStudent);
           }
+
+          void googleDeletePromise.then((syncResult) => {
+            if (syncResult.ok) return;
+            toast({
+              title: "Class deleted",
+              description: "Deleted in AES, but Google Calendar sync needs attention.",
+              variant: "destructive",
+            });
+          });
         } catch (err: any) {
           setEvents((prev) => {
             if (prev.some((event) => event.id === eventToDelete.id)) return prev;
@@ -802,14 +936,16 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
           pendingDeletedEventRef.current = null;
           schedulerActionInFlightRef.current = false;
           setIsSubmitting(false);
+          setDeletePendingEventId(null);
+          setIsDeleteInProgress(false);
         }
       };
 
-      pendingDeleteTimeoutRef.current = setTimeout(finalizeDelete, 5000);
+      pendingDeleteTimeoutRef.current = setTimeout(finalizeDelete, DELETE_UNDO_WINDOW_MS);
 
       toast({
-        title: "Class scheduled for delete",
-        description: "Undo within 5 seconds to keep it.",
+        title: "Class removed",
+        description: `Undo within ${Math.floor(DELETE_UNDO_WINDOW_MS / 1000)} seconds to keep it.`,
         action: (
           <ToastAction
             altText="Undo delete"
@@ -821,6 +957,8 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
               clearTimeout(pendingTimeout);
               pendingDeleteTimeoutRef.current = null;
               pendingDeletedEventRef.current = null;
+              setDeletePendingEventId(null);
+              setIsDeleteInProgress(false);
 
               setEvents((prev) => {
                 if (prev.some((event) => event.id === pendingEvent.id)) return prev;
@@ -841,10 +979,19 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
     } catch (err: any) {
       console.error('Error deleting event:', err);
       setError(err.message || 'Failed to delete event');
+      setDeletePendingEventId(null);
+      setIsDeleteInProgress(false);
     }
   };
 
   const handleEventSelect = (event: ClassEvent) => {
+    if (isDeleteBusy) {
+      toast({
+        title: "Delete in progress",
+        description: "Please wait until the current delete finishes.",
+      });
+      return;
+    }
     setEditEventDate(event.date ? toLocalDateInput(new Date(event.date)) : toLocalDateInput(new Date(event.start)));
     setEditEventStartTime(event.startTime);
     setEditEventEndTime(event.endTime);
@@ -869,7 +1016,15 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
   };
 
   const handleUpdateEvent = async () => {
-    if (schedulerActionInFlightRef.current || isSubmitting) return;
+    if (schedulerActionInFlightRef.current || isSubmitting || isDeleteBusy) {
+      if (isDeleteBusy) {
+        toast({
+          title: "Please wait",
+          description: "A class deletion is still in progress.",
+        });
+      }
+      return;
+    }
     if (!selectedEvent) return;
 
     const isPastEvent = selectedEvent.end.getTime() <= Date.now();
@@ -937,7 +1092,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
       }
 
       if (googleCalendarConnected && !isPastEvent) {
-        await syncEventToGoogleCalendar('update', selectedEvent.id, {
+        void syncEventToGoogleCalendar('update', selectedEvent.id, {
           title: selectedEvent.title,
           description: editEventDescription,
           date: editEventDate,
@@ -949,13 +1104,46 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
             ? `${selectedEvent.group?.name || 'Group'}`
             : selectedEvent.student.name,
           subject: editEventSubject,
+        }).then((syncResult) => {
+          if (syncResult.ok) return;
+          toast({
+            title: "Class updated",
+            description: "Saved in AES, but Google Calendar sync needs attention.",
+            variant: "destructive",
+          });
         });
       }
 
+      const optimisticUpdatedAt = new Date().toISOString();
+      setEvents((prev) => prev.map((event) => {
+        if (event.id !== selectedEvent.id) return event;
+
+        if (isPastEvent) {
+          return {
+            ...event,
+            meetingMinutes: editEventMeetingMinutes || '',
+            updatedAt: optimisticUpdatedAt,
+          };
+        }
+
+        return {
+          ...event,
+          subject: editEventSubject,
+          description: editEventDescription || '',
+          meetingLink: editEventMeetingLink || '',
+          date: new Date(editEventDate),
+          start: new Date(`${editEventDate}T${editEventStartTime}`),
+          end: new Date(`${editEventDate}T${editEventEndTime}`),
+          startTime: editEventStartTime,
+          endTime: editEventEndTime,
+          updatedAt: optimisticUpdatedAt,
+        };
+      }));
+
       if (viewMode === 'all') {
-        await fetchEvents(null);
+        void fetchEvents(null);
       } else if (selectedStudent) {
-        await fetchEvents(selectedStudent);
+        void fetchEvents(selectedStudent);
       }
 
       setIsEditingEvent(false);
@@ -1421,7 +1609,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
 
           <Button
             onClick={openAddEventDialog}
-            disabled={!selectedStudent && studentGroups.length === 0}
+            disabled={isActionLocked || (!selectedStudent && studentGroups.length === 0)}
           >
             <PlusIcon className="h-4 w-4 mr-2" /> Add Class
           </Button>
@@ -1437,7 +1625,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
                 fetchStudents();
               }
             }}
-            disabled={loading}
+            disabled={loading || isActionLocked}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} /> Refresh
           </Button>
@@ -1466,7 +1654,9 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
                 <Link2Off className="h-4 w-4" />
               </Button>
               <span className="text-xs text-green-600 flex items-center gap-1">
-                <Link2 className="h-3 w-3" /> Google Calendar
+                <Link2 className="h-3 w-3" />
+                {googleSyncInFlightCount > 0 ? `Syncing (${googleSyncInFlightCount})` : 'Google Calendar'}
+                {googleSyncFailureCount > 0 ? ` • ${googleSyncFailureCount} issue${googleSyncFailureCount === 1 ? '' : 's'}` : ''}
               </span>
             </div>
           ) : (
@@ -1482,6 +1672,12 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
           )}
         </div>
       </div>
+
+      {isDeleteBusy && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          Deleting class in background. Please wait a moment before opening or editing another class.
+        </div>
+      )}
 
       {error && (
         <div className="bg-red-50 border-l-4 border-red-400 p-4 my-4">
@@ -1880,12 +2076,12 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
             </Button>
             <Button
               onClick={handleAddEvent}
-              disabled={isSubmitting}
+              disabled={isActionLocked}
             >
-              {isSubmitting ? (
+              {isActionLocked ? (
                 <>
                   <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
+                  {isDeleteBusy ? 'Please wait...' : 'Saving...'}
                 </>
               ) : (
                 'Add Class'
@@ -2081,7 +2277,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
                 </div>
               )}
 
-              {isSelectedEventPast && (selectedEvent.meetingMinutes || isEditingEvent) && (
+              {isSelectedEventPast && (
                 <div>
                   <p className="font-medium">Meeting Minutes:</p>
                   {isEditingEvent ? (
@@ -2092,7 +2288,11 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
                       className="mt-1"
                     />
                   ) : (
-                    <p className="whitespace-pre-wrap">{selectedEvent.meetingMinutes}</p>
+                    selectedEvent.meetingMinutes?.trim() ? (
+                      <p className="whitespace-pre-wrap">{selectedEvent.meetingMinutes}</p>
+                    ) : (
+                      <p className="text-sm text-gray-500">No meeting minutes added yet.</p>
+                    )
                   )}
                 </div>
               )}
@@ -2127,18 +2327,18 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
                       resetSelectedEventEditFields();
                       setIsEditingEvent(false);
                     }}
-                    disabled={isSubmitting}
+                    disabled={isActionLocked}
                   >
                     Cancel Edit
                   </Button>
                   <Button
                     onClick={handleUpdateEvent}
-                    disabled={isSubmitting}
+                    disabled={isActionLocked}
                   >
-                    {isSubmitting ? (
+                    {isActionLocked ? (
                       <>
                         <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                        Saving...
+                        {isDeleteBusy ? 'Please wait...' : 'Saving...'}
                       </>
                     ) : (
                       'Save Changes'
@@ -2153,19 +2353,19 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
                       resetSelectedEventEditFields();
                       setIsEditingEvent(true);
                     }}
-                    disabled={isSubmitting}
+                    disabled={isActionLocked}
                   >
                     Edit
                   </Button>
                   <Button
                     variant="destructive"
                     onClick={handleDeleteEvent}
-                    disabled={isSubmitting}
+                    disabled={isActionLocked}
                   >
-                    {isSubmitting ? (
+                    {isActionLocked ? (
                       <>
                         <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                        Deleting...
+                        {isDeleteBusy ? 'Delete pending...' : 'Deleting...'}
                       </>
                     ) : (
                       <>

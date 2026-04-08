@@ -220,22 +220,26 @@ export function ProgramCarousel() {
 
         {/* Simple Navigation Arrows */}
         <Button
+          type="button"
           variant="outline"
           size="icon"
           className="absolute left-4 top-1/2 -translate-y-1/2 theme-bg-medium border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-slate-900 transition-colors"
           onClick={prevSlide}
           disabled={isTransitioning}
+          aria-label="Previous program"
         >
           <ChevronLeft className="h-4 w-4" />
           <span className="sr-only">Previous slide</span>
         </Button>
 
         <Button
+          type="button"
           variant="outline"
           size="icon"
           className="absolute right-4 top-1/2 -translate-y-1/2 theme-bg-medium border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-slate-900 transition-colors"
           onClick={nextSlide}
           disabled={isTransitioning}
+          aria-label="Next program"
         >
           <ChevronRight className="h-4 w-4" />
           <span className="sr-only">Next slide</span>
@@ -246,6 +250,7 @@ export function ProgramCarousel() {
       <div className="flex justify-center mt-6 gap-2">
         {programs.map((_, index) => (
           <button
+            type="button"
             key={index}
             className={`w-3 h-3 rounded-full transition-colors ${
               index === (currentSlide % programs.length)

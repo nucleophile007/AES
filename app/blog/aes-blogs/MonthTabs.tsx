@@ -41,6 +41,7 @@ export default function MonthTabs({ selectedYear, selectedMonth, onMonthSelect, 
         <div className="flex gap-2 pb-2 min-w-max px-4 justify-center">
           {/* All Months Button */}
           <button
+            type="button"
             onClick={() => onMonthSelect(null)}
             className={`
               relative px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-300 whitespace-nowrap
@@ -69,6 +70,7 @@ export default function MonthTabs({ selectedYear, selectedMonth, onMonthSelect, 
 
             return (
               <button
+                type="button"
                 key={monthName}
                 onClick={() => hasBlogs && onMonthSelect(monthNumber)}
                 disabled={!hasBlogs}

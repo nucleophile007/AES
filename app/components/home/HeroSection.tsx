@@ -103,7 +103,9 @@ export default function HeroSection() {
            >
              {/* Close Button */}
              <button
+               type="button"
                onClick={() => setIsVideoOpen(false)}
+               aria-label="Close video modal"
                className="absolute -top-4 -right-4 w-10 h-10 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-colors z-10"
              >
                <X className="w-5 h-5" />

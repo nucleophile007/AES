@@ -105,6 +105,7 @@ export const AnimatedTestimonials = ({
       <div className="mb-16 flex flex-wrap justify-center gap-3 md:gap-5 relative z-10">
         {Object.entries(sectionLabels).map(([key, label]) => (
           <button
+            type="button"
             key={key}
             onClick={() => handleSectionChange(key as keyof Section)}
             className={`rounded-full px-5 py-3 text-sm font-medium transition-all duration-200 md:px-7 md:py-4 md:text-base transform hover:scale-105 ${
@@ -264,6 +265,7 @@ export const AnimatedTestimonials = ({
           >
             <div className="flex gap-4">
               <button
+                type="button"
                 onClick={handlePrev}
                 disabled={currentTestimonials.length <= 1}
                 className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-400 hover:bg-yellow-300 hover:scale-110 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
@@ -272,6 +274,7 @@ export const AnimatedTestimonials = ({
                 <IconArrowLeft className="h-5 w-5 text-slate-900" />
               </button>
               <button
+                type="button"
                 onClick={handleNext}
                 disabled={currentTestimonials.length <= 1}
                 className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-400 hover:bg-yellow-300 hover:scale-110 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
@@ -285,6 +288,7 @@ export const AnimatedTestimonials = ({
             <div className="flex gap-2">
               {currentTestimonials.map((_, index) => (
                 <button
+                  type="button"
                   key={`progress-${activeSection}-${index}`}
                   onClick={() => setActive(index)}
                   className={`h-2 rounded-full transition-all duration-200 hover:scale-125 ${

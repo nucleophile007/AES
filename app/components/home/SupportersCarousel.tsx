@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import Image from "next/image"
-import { cn } from "@/lib/utils"
 
 const supporters = [
   {
@@ -43,8 +42,25 @@ const supporters = [
 ]
 
 export function SupportersCarousel() {
-  // Duplicate the array to create seamless infinite scroll
-  const duplicatedSupporters = [...supporters, ...supporters, ...supporters, ...supporters]
+  const loopCopies = React.useMemo(() => {
+    if (supporters.length <= 3) return 10
+    if (supporters.length <= 5) return 8
+    return 6
+  }, [])
+
+  const loopedSupporters = React.useMemo(
+    () => Array.from({ length: loopCopies }, () => supporters).flat(),
+    [loopCopies]
+  )
+
+  const scrollStyle = React.useMemo(
+    () =>
+      ({
+        "--loop-copies": loopCopies,
+        "--scroll-duration": "48s",
+      }) as React.CSSProperties,
+    [loopCopies]
+  )
 
   return (
     <section className="py-12 sm:py-16 lg:py-20 theme-bg-dark relative overflow-hidden">
@@ -56,9 +72,9 @@ export function SupportersCarousel() {
         <div className="absolute bottom-32 left-1/4 w-16 h-16 bg-green-400 rounded-full opacity-5 animate-float-reverse"></div>
       </div> */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-32 right-10 w-24 h-24 bg-blue-400 rounded-full opacity-5 animate-float-reverse"></div>
-        <div className="absolute bottom-32 left-20 w-20 h-20 bg-purple-400 rounded-full opacity-5 animate-float"></div>
-        <div className="absolute top-1/2 right-1/3 w-16 h-16 bg-green-400 rounded-full opacity-5 animate-float-reverse"></div>
+        <div className="absolute top-32 right-10 w-24 h-24 bg-blue-400 rounded-full opacity-5"></div>
+        <div className="absolute bottom-32 left-20 w-20 h-20 bg-purple-400 rounded-full opacity-5"></div>
+        <div className="absolute top-1/2 right-1/3 w-16 h-16 bg-green-400 rounded-full opacity-5"></div>
       </div>
       
       {/* Gradient Overlay */}
@@ -79,11 +95,14 @@ export function SupportersCarousel() {
 
         {/* Infinite Carousel */}
         <div className="relative overflow-hidden group py-8">
-          <div className="flex animate-scroll-reverse group-hover:pause-animation">
-            {duplicatedSupporters.map((supporter, index) => (
+          <div
+            className="flex w-max gap-6 md:gap-8 animate-scroll-reverse group-hover:pause-animation"
+            style={scrollStyle}
+          >
+            {loopedSupporters.map((supporter, index) => (
               <div
                 key={`${supporter.name}-${index}`}
-                className="flex-shrink-0 mx-6 md:mx-8 flex items-center justify-center"
+                className="flex-shrink-0 flex items-center justify-center"
               >
                 <div className="w-24 h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-yellow-400/20 hover:scale-110 hover:shadow-xl transition-transform duration-300 overflow-hidden">
                   <Image

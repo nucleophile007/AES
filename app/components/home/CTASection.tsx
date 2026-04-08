@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MessageCircle, ArrowRight } from "lucide-react";
@@ -20,12 +19,7 @@ export default function CTASection() {
       <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/10 via-transparent to-amber-500/10"></div>
       
       <div className="container mx-auto text-center relative z-10">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8 }}
-          className="max-w-4xl mx-auto space-y-6 sm:space-y-8"
-        >
+        <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
           <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
             Get Started Today
           </Badge>
@@ -67,12 +61,7 @@ export default function CTASection() {
           </div>
           
           {/* Trust Indicators */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="pt-8 border-t border-gray-700/30"
-          >
+          <div className="pt-8 border-t border-gray-700/30">
             <div className="flex flex-wrap justify-center items-center gap-6 sm:gap-8 text-sm theme-text-muted">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
@@ -83,9 +72,9 @@ export default function CTASection() {
                 <span>Expert Educators</span>
               </div>
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       </div>
     </section>
   );
-} 
+}
