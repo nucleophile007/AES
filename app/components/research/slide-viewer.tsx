@@ -298,16 +298,22 @@ export function SlideViewer({
           {/* Top-right controls (visual only for now) */}
           <div className="absolute top-4 right-4 flex gap-2">
             <Button
+              type="button"
               size="icon"
               variant="ghost"
               className="bg-slate-800/80 border border-slate-700"
+              aria-label="Play slide preview"
+              title="Play preview"
             >
               <Play className="w-4 h-4" />
             </Button>
             <Button
+              type="button"
               size="icon"
               variant="ghost"
               className="bg-slate-800/80 border border-slate-700"
+              aria-label="Toggle full screen"
+              title="Toggle full screen"
             >
               <Maximize2 className="w-4 h-4" />
             </Button>
@@ -316,20 +322,24 @@ export function SlideViewer({
 
         {/* Navigation arrows */}
         <Button
+          type="button"
           size="icon"
           variant="ghost"
           onClick={prevSlide}
           disabled={currentSlide === 0}
+          aria-label="Previous slide"
           className="absolute left-4 top-1/2 -translate-y-1/2 bg-slate-800 border border-slate-700"
         >
           <ChevronLeft />
         </Button>
 
         <Button
+          type="button"
           size="icon"
           variant="ghost"
           onClick={nextSlide}
           disabled={currentSlide === slides.length - 1}
+          aria-label="Next slide"
           className="absolute right-4 top-1/2 -translate-y-1/2 bg-slate-800 border border-slate-700"
         >
           <ChevronRight />

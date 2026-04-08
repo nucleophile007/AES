@@ -63,7 +63,11 @@ export default function Header() {
 
         {/* Mobile Menu Button */}
         <button
+          type="button"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+          aria-expanded={isMobileMenuOpen}
+          aria-controls="mobile-nav-menu"
           className="lg:hidden p-2 rounded-xl hover:bg-white/10 transition-all duration-300 border border-yellow-400/15 hover:border-yellow-400/30 backdrop-blur-md bg-white/5"
         >
           <div className="w-6 h-6 flex flex-col justify-center items-center">
@@ -76,7 +80,7 @@ export default function Header() {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden bg-gradient-to-b from-[#1a2236] to-[#18243d] border-t border-yellow-400/15 shadow-2xl relative z-40">
+        <div id="mobile-nav-menu" className="lg:hidden bg-gradient-to-b from-[#1a2236] to-[#18243d] border-t border-yellow-400/15 shadow-2xl relative z-40">
           <div className="container mx-auto px-4 py-6 space-y-4">
             <nav className="space-y-4">
               <Link href="/#home" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Home</Link>
@@ -85,14 +89,17 @@ export default function Header() {
               {/* Programs Dropdown */}
               <div className="space-y-2">
                 <button
+                  type="button"
                   onClick={() => setOpenDropdown(openDropdown === 'programs' ? null : 'programs')}
+                  aria-expanded={openDropdown === 'programs'}
+                  aria-controls="mobile-programs-menu"
                   className="flex items-center justify-between w-full text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm"
                 >
                   Programs
                   <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${openDropdown === 'programs' ? 'rotate-180' : ''}`} />
                 </button>
                 {openDropdown === 'programs' && (
-                  <div className="pl-6 space-y-2">
+                  <div id="mobile-programs-menu" className="pl-6 space-y-2">
                     <Link href="/academictutoring" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">Academic Tutoring</Link>
                     <Link href="/collegeprep" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">College Prep</Link>
                     <Link href="/satcoaching" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">SAT Coaching</Link>
@@ -103,14 +110,17 @@ export default function Header() {
               {/* Profile Enrichment Dropdown */}
               <div className="space-y-2">
                 <button
+                  type="button"
                   onClick={() => setOpenDropdown(openDropdown === 'profile' ? null : 'profile')}
+                  aria-expanded={openDropdown === 'profile'}
+                  aria-controls="mobile-profile-menu"
                   className="flex items-center justify-between w-full text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm"
                 >
                   Profile Enrichment
                   <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${openDropdown === 'profile' ? 'rotate-180' : ''}`} />
                 </button>
                 {openDropdown === 'profile' && (
-                  <div className="pl-6 space-y-2">
+                  <div id="mobile-profile-menu" className="pl-6 space-y-2">
                     <Link href="/aes-explorers" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">AES Explorers</Link>
                     <Link href="/aes-champions" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">AES Champions</Link>
                     <Link href="/aes-creatorverse" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">AES Creatorverse</Link>

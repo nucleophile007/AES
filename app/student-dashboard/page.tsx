@@ -909,7 +909,7 @@ export default function StudentDashboard() {
               <Badge variant="outline" className="hidden md:inline-flex border-slate-300 bg-slate-100 text-slate-700">
                 {currentTabMeta.title}
               </Badge>
-              <Button variant="ghost" size="icon" className="relative">
+              <Button type="button" variant="ghost" size="icon" className="relative" aria-label="Notifications">
                 <Bell className="h-5 w-5" />
                 {messageUnreadCount > 0 && (
                   <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500" />

@@ -231,6 +231,8 @@ export default function BookSessionPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [availability, setAvailability] = useState<Record<string, string[]>>({})
   const [isLoadingAvailability, setIsLoadingAvailability] = useState(false)
+  const [submissionError, setSubmissionError] = useState<string | null>(null)
+  const [userTimezone, setUserTimezone] = useState('your local time')
 
   // Fetch availability data from API
   const fetchAvailability = async () => {
@@ -294,14 +296,25 @@ export default function BookSessionPage() {
     }
   }, [formData.programInterested])
 
+  useEffect(() => {
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+      if (tz) setUserTimezone(tz)
+    } catch {
+      setUserTimezone('your local time')
+    }
+  }, [])
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
+    setSubmissionError(null)
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    setSubmissionError(null)
 
     try {
       const response = await fetch('/api/book-session', {
@@ -327,6 +340,7 @@ export default function BookSessionPage() {
 
       if (response.ok && result.success) {
         console.log('✅ Registration successful! Booking ID:', result.bookingId)
+        setSubmissionError(null)
         setShowSuccessModal(true)
         setTimeout(() => {
           setShowSuccessModal(false)
@@ -345,12 +359,12 @@ export default function BookSessionPage() {
           })
         }, 8000)
       } else {
-        alert("Registration failed. Please try again.")
         console.error('❌ Registration error:', result)
+        setSubmissionError(result?.error || "Registration failed. Please try again.")
       }
     } catch (error) {
       console.error("❌ Submission error:", error)
-      alert("Network error. Please check your connection and try again.")
+      setSubmissionError("Network error. Please check your connection and try again.")
     }
 
     setIsSubmitting(false)
@@ -470,6 +484,16 @@ export default function BookSessionPage() {
             </div>
 
             <form onSubmit={handleSubmit}>
+              {submissionError ? (
+                <div
+                  role="alert"
+                  aria-live="polite"
+                  className="mb-6 rounded-lg border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100"
+                >
+                  {submissionError}
+                </div>
+              ) : null}
+
               {currentStep === 1 && (
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
@@ -484,24 +508,28 @@ export default function BookSessionPage() {
                   {/* Student Information */}
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block theme-text-light font-medium mb-2">Student Name *</label>
+                      <label htmlFor="studentName" className="block theme-text-light font-medium mb-2">Student Name *</label>
                       <input
+                        id="studentName"
                         type="text"
                         name="studentName"
                         value={formData.studentName}
                         onChange={handleInputChange}
+                        autoComplete="name"
                         required
                         className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg theme-text-light placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                         placeholder="Student&apos;s full name"
                       />
                     </div>
                     <div>
-                      <label className="block theme-text-light font-medium mb-2">Student Email *</label>
+                      <label htmlFor="email" className="block theme-text-light font-medium mb-2">Student Email *</label>
                       <input
+                        id="email"
                         type="email"
                         name="email"
                         value={formData.email}
                         onChange={handleInputChange}
+                        autoComplete="email"
                         required
                         className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg theme-text-light placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                         placeholder="student@example.com"
@@ -511,8 +539,9 @@ export default function BookSessionPage() {
 
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block theme-text-light font-medium mb-2">Current Grade *</label>
+                      <label htmlFor="grade" className="block theme-text-light font-medium mb-2">Current Grade *</label>
                       <select
+                        id="grade"
                         name="grade"
                         value={formData.grade}
                         onChange={handleInputChange}
@@ -528,12 +557,14 @@ export default function BookSessionPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block theme-text-light font-medium mb-2">School Name *</label>
+                      <label htmlFor="schoolName" className="block theme-text-light font-medium mb-2">School Name *</label>
                       <input
+                        id="schoolName"
                         type="text"
                         name="schoolName"
                         value={formData.schoolName}
                         onChange={handleInputChange}
+                        autoComplete="organization"
                         required
                         className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg theme-text-light placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                         placeholder="School name"
@@ -546,24 +577,28 @@ export default function BookSessionPage() {
                     <h4 className="text-lg font-semibold theme-text-light mb-4">Parent/Guardian Information</h4>
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block theme-text-light font-medium mb-2">Parent Name *</label>
+                        <label htmlFor="parentName" className="block theme-text-light font-medium mb-2">Parent Name *</label>
                         <input
+                          id="parentName"
                           type="text"
                           name="parentName"
                           value={formData.parentName}
                           onChange={handleInputChange}
+                          autoComplete="name"
                           required
                           className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg theme-text-light placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                           placeholder="Parent&apos;s full name"
                         />
                       </div>
                       <div>
-                        <label className="block theme-text-light font-medium mb-2">Parent Email *</label>
+                        <label htmlFor="parentEmail" className="block theme-text-light font-medium mb-2">Parent Email *</label>
                         <input
+                          id="parentEmail"
                           type="email"
                           name="parentEmail"
                           value={formData.parentEmail}
                           onChange={handleInputChange}
+                          autoComplete="email"
                           required
                           className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg theme-text-light placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                           placeholder="parent@example.com"
@@ -571,12 +606,15 @@ export default function BookSessionPage() {
                       </div>
                     </div>
                     <div className="mt-4">
-                      <label className="block theme-text-light font-medium mb-2">Parent Phone *</label>
+                      <label htmlFor="parentPhone" className="block theme-text-light font-medium mb-2">Parent Phone *</label>
                       <input
+                        id="parentPhone"
                         type="tel"
                         name="parentPhone"
                         value={formData.parentPhone}
                         onChange={handleInputChange}
+                        autoComplete="tel"
+                        inputMode="tel"
                         required
                         className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg theme-text-light placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                         placeholder="(209) 920-7147"
@@ -586,8 +624,9 @@ export default function BookSessionPage() {
 
                   {/* Program Selection */}
                   <div>
-                    <label className="block theme-text-light font-medium mb-2">Program of Interest *</label>
+                    <label htmlFor="programInterested" className="block theme-text-light font-medium mb-2">Program of Interest *</label>
                     <select
+                      id="programInterested"
                       name="programInterested"
                       value={formData.programInterested}
                       onChange={handleInputChange}
@@ -625,6 +664,12 @@ export default function BookSessionPage() {
                   <div className="text-center mb-8">
                     <h3 className="text-2xl font-bold theme-text-light mb-2">Select Date & Time</h3>
                     <p className="theme-text-muted">Choose your preferred session schedule</p>
+                    <p className="theme-text-muted text-sm mt-2">
+                      Times are shown in <span className="theme-text-light font-medium">{userTimezone}</span>.{" "}
+                      {showAllHalfHourSlots
+                        ? "All visible slots are 30-minute sessions."
+                        : "For this program, only 1-hour slots are shown when two consecutive 30-minute slots are available."}
+                    </p>
                   </div>
 
                   {isLoadingAvailability ? (
@@ -636,8 +681,14 @@ export default function BookSessionPage() {
                     <CalendarPicker
                       selectedDate={formData.selectedDate}
                       selectedTime={formData.selectedTime}
-                      onDateSelect={(date: string) => setFormData((prev) => ({ ...prev, selectedDate: date }))}
-                      onTimeSelect={(time: string) => setFormData((prev) => ({ ...prev, selectedTime: time }))}
+                      onDateSelect={(date: string) => {
+                        setSubmissionError(null)
+                        setFormData((prev) => ({ ...prev, selectedDate: date }))
+                      }}
+                      onTimeSelect={(time: string) => {
+                        setSubmissionError(null)
+                        setFormData((prev) => ({ ...prev, selectedTime: time }))
+                      }}
                       dateTimeMapping={availability}
                       showAllHalfHourSlots={showAllHalfHourSlots}
                     />

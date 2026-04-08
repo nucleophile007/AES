@@ -69,39 +69,35 @@ export function ProgramsHero() {
 
   const programSlides = [
     {
-      title: "Academic Tutoring",
-      subtitle: "Master Your Subjects",
+      title: "Greater Sacramento Math League",
+      subtitle: "Apr 25 • Sacramento • Grades 6-12",
       description:
-        "Personalized, mastery-focused tutoring across STEM and humanities. Build strong foundations, gain confidence, and excel in your studies.",
-      cta: { label: "Explore Tutoring", href: "/academictutoring" },
-      imageSrc: "/program-image/acharyaes-academic-hero.jpg",
-      imageAlt: "Students engaged in personalized academic tutoring",
+        "High-energy math competition with medals and certificates for top performers and participants.",
+      cta: { label: "Register Now", href: "/summer-program/register" },
+      imageSrc: "/program-image/greater-sacramento-math-league.png",
+      imageAlt: "Greater Sacramento Math League event poster",
+      visualStyle: "poster",
+      hideSecondaryCta: true,
+      hideContent: true,
+      showCtaWhenHidden: true,
     },
     {
-      title: "AES Explorers",
-      subtitle: "Discover & Innovate",
-      description:
-        "Guided research with faculty and industry mentors. Develop real projects, publish findings, and present your work at conferences.",
-      cta: { label: "See Research Tracks", href: "/aes-explorers" },
-      imageSrc: "/program-image/acharyaes-research-hero.jpg",
-      imageAlt: "Students collaborating on cutting-edge research projects",
+      title: "AP Bridge Summer Program",
+      cta: { label: "Register Now", href: "/summer-program/register" },
+      imageSrc: "/program-image/ap-bridge-summer-program.png",
+      imageAlt: "AP Bridge Summer Program poster",
+      visualStyle: "poster",
+      hideContent: true,
+      showCtaWhenHidden: true,
     },
     {
-      title: "AES Champions",
-      subtitle: "Compete & Excel",
-      description: "AMC, AIME, and Olympiad preparation with proven problem-solving frameworks, mock contests, and expert feedback.",
-      cta: { label: "Join Training", href: "/mathcompetition" },
-      imageSrc: "/program-image/acharyaes-math-hero.jpg",
-      imageAlt: "Students preparing for prestigious math competitions",
-    },
-    {
-      title: "UAchieve",
-      subtitle: "Your Path Forward",
-      description:
-        "Strategic guidance on essays, profile building, and applications that highlight your authentic strengths for selective admissions.",
-      cta: { label: "Start Your Journey", href: "/collegeprep" },
-      imageSrc: "/program-image/acharyaes-college-hero.jpg",
-      imageAlt: "Students preparing for college admissions success",
+      title: "AES Explorers Summer Camp",
+      cta: { label: "Register Now", href: "/summer-program/register" },
+      imageSrc: "/program-image/aes-explorers-summer-camp.png",
+      imageAlt: "AES Explorers summer camp poster",
+      visualStyle: "poster",
+      hideContent: true,
+      showCtaWhenHidden: true,
     },
   ];
 
@@ -122,8 +118,14 @@ export function ProgramsHero() {
     : programSlides;
 
   // Show carousel immediately with program slides, event will be injected when ready
-  return <HeroSliderAlways slides={slides} intervalMs={4500} ariaLabel="AcharyaES Programs" className="w-full pt-20" />;
+  return (
+    <HeroSliderAlways
+      slides={slides}
+      intervalMs={4500}
+      ariaLabel="AcharyaES Programs"
+      className="w-full mt-20 h-[calc(100vh-5rem)]"
+    />
+  );
 }
 
 export default ProgramsHero;
-

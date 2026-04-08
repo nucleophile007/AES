@@ -193,6 +193,7 @@ export const Carousel = memo(({ items }: CarouselProps) => {
 
         {/* Navigation buttons - Left and Right sides */}
         <button
+          type="button"
           className={cn(
             "absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-40 flex h-8 w-8 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-110 text-white",
             lastClickedArrow === "left" 
@@ -208,6 +209,7 @@ export const Carousel = memo(({ items }: CarouselProps) => {
           </svg>
         </button>
         <button
+          type="button"
           className={cn(
             "absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-40 flex h-8 w-8 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-110 text-white",
             lastClickedArrow === "right" 
@@ -232,6 +234,7 @@ export const Carousel = memo(({ items }: CarouselProps) => {
         >
           {items.map((_, index) => (
             <button
+              type="button"
               key={index}
               onClick={() => setCurrentIndex(index)}
               className={cn(
