@@ -14,20 +14,19 @@ export async function GET(request: Request) {
     prisma = new PrismaClient();
 
     const { searchParams } = new URL(request.url);
-    const program = searchParams.get('program');
+    const requestedProgram = searchParams.get('program');
 
-    // For now, return empty data since the new models aren't generated yet
-    // This will work once you run: npx prisma generate && npx prisma db push
-    
     try {
-      // Fetch ALL availability rows for the program (including multiple rows per date)
+      // Fetch all availability rows. `program` query param is accepted for backward compatibility,
+      // but availability is now managed at date level only.
       const availabilityData = await prisma.availabilityDay.findMany({
-        where: program ? { program } : {},
         select: {
           id: true,
           date: true,
           times: true,
-          program: true,
+          adminEmail: true,
+          timesUTC: true,
+          timezone: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -37,7 +36,7 @@ export async function GET(request: Request) {
         ]
       });
 
-      console.log('Query params:', { program });
+      console.log('Query params:', { requestedProgram });
       console.log('Found availability rows:', availabilityData.length);
 
       // Aggregate multiple rows for the same date by combining their time slots
@@ -62,7 +61,9 @@ export async function GET(request: Request) {
             id: row.id,
             date: row.date,
             times: Array.isArray(row.times) ? row.times : [],
-            program: row.program,
+            adminEmail: row.adminEmail,
+            timesUTC: row.timesUTC,
+            timezone: row.timezone,
             createdAt: row.createdAt,
             updatedAt: row.updatedAt,
           });

@@ -1,12 +1,61 @@
 "use client";
 
-import Link from "next/link";
-import { Calendar } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useRef, useState } from "react";
 import { LayoutGrid } from "@/components/ui/layout-grid";
-import { HeroSliderAlways } from "./HeroSliderAlways";
+import { HeroSliderAlways, type Slide } from "./HeroSliderAlways";
+
+interface Event {
+  id: number;
+  title: string;
+  date: string;
+  time: string;
+  location: string;
+  description: string;
+  category: string;
+  image: string;
+}
+
+// Cache for the latest event (in-memory)
+let cachedEvent: Event | null = null;
+let cacheTimestamp = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export function ProgramsHero() {
+  const [latestEvent, setLatestEvent] = useState<Event | null>(cachedEvent);
+  const fetchedRef = useRef(false);
+
+  useEffect(() => {
+    if (fetchedRef.current) return;
+
+    const now = Date.now();
+    const isCacheValid = cachedEvent && now - cacheTimestamp < CACHE_DURATION;
+
+    if (isCacheValid) {
+      setLatestEvent(cachedEvent);
+      return;
+    }
+
+    fetchedRef.current = true;
+
+    fetch("/api/events/latest", {
+      next: { revalidate: 300 },
+    })
+      .then((res) => {
+        if (res.status === 404) return null;
+        if (!res.ok) throw new Error("Failed to fetch");
+        return res.json();
+      })
+      .then((event) => {
+        if (!event) return;
+        cachedEvent = event;
+        cacheTimestamp = Date.now();
+        setLatestEvent(event);
+      })
+      .catch((error) => {
+        console.error("Error fetching latest event:", error);
+      });
+  }, []);
+
   const AcademicContent = () => (
     <div>
       <p className="font-bold md:text-4xl text-xl text-white">Academic Tutoring</p>
@@ -82,7 +131,7 @@ export function ProgramsHero() {
     },
   ];
 
-  const parallaxSlide = {
+  const programsSlide: Slide = {
     title: "Programs",
     imageSrc: "/program-image/acharyaes-academic-hero.jpg",
     imageAlt: "AcharyaES programs",
@@ -103,9 +152,59 @@ export function ProgramsHero() {
     ),
   };
 
+  const programSlides: Slide[] = [
+    {
+      title: "Greater Sacramento Math League",
+      subtitle: "Apr 25 • Sacramento • Grades 6-12",
+      description:
+        "High-energy math competition with medals and certificates for top performers and participants.",
+      cta: { label: "Register Now", href: "/summer-program/register" },
+      imageSrc: "/program-image/greater-sacramento-math-league.png",
+      imageAlt: "Greater Sacramento Math League event poster",
+      visualStyle: "poster",
+      hideSecondaryCta: true,
+      hideContent: true,
+      showCtaWhenHidden: true,
+    },
+    {
+      title: "AP Bridge Summer Program",
+      cta: { label: "Register Now", href: "/summer-program/register" },
+      imageSrc: "/program-image/ap-bridge-summer-program.png",
+      imageAlt: "AP Bridge Summer Program poster",
+      visualStyle: "poster",
+      hideContent: true,
+      showCtaWhenHidden: true,
+    },
+    {
+      title: "AES Explorers Summer Camp",
+      cta: { label: "Register Now", href: "/summer-program/register" },
+      imageSrc: "/program-image/aes-explorers-summer-camp.png",
+      imageAlt: "AES Explorers summer camp poster",
+      visualStyle: "poster",
+      hideContent: true,
+      showCtaWhenHidden: true,
+    },
+  ];
+
+  const slides: Slide[] = latestEvent
+    ? [
+        programsSlide,
+        {
+          title: latestEvent.title,
+          subtitle: `${latestEvent.category} • ${latestEvent.date}`,
+          description: `${latestEvent.description} Join us ${latestEvent.location} at ${latestEvent.time}.`,
+          cta: { label: "Register Now", href: `/events/register/${latestEvent.id}` },
+          imageSrc: latestEvent.image,
+          imageAlt: latestEvent.title,
+          isEvent: true,
+        },
+        ...programSlides,
+      ]
+    : [programsSlide, ...programSlides];
+
   return (
     <HeroSliderAlways
-      slides={[parallaxSlide]}
+      slides={slides}
       intervalMs={4500}
       ariaLabel="AcharyaES Programs"
       className="w-full pt-16 sm:pt-20"
@@ -114,4 +213,3 @@ export function ProgramsHero() {
 }
 
 export default ProgramsHero;
-

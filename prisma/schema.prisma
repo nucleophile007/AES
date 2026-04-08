@@ -29,14 +29,13 @@ model AvailabilityDay {
   id         Int      @id @default(autoincrement())
   date       String
   times      Json
-  program    String
   adminEmail String   @default("acharya.folsom@gmail.com")
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   timesUTC   Json?
   timezone   String?
 
-  @@unique([date, program, adminEmail])
+  @@unique([date, adminEmail])
 }
 
 model Teacher {
@@ -388,20 +387,20 @@ model Testimonial {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
   videoLink             String?
+  beforeAfterApproved   Boolean   @default(false)
   consentToFeature      Boolean   @default(false)
+  contentApproved       Boolean   @default(false)
   experienceDescription String?
   grade                 String?
   programs              String[]
+  programsApproved      Boolean   @default(false)
   rating                Int?
+  ratingApproved        Boolean   @default(false)
   school                String?
   studentInfo           String?
   studentName           String?
   submittedAt           DateTime?
   successStory          String?
-  beforeAfterApproved   Boolean   @default(false)
-  contentApproved       Boolean   @default(false)
-  programsApproved      Boolean   @default(false)
-  ratingApproved        Boolean   @default(false)
   successStoryApproved  Boolean   @default(false)
   afterChanges          String?
   beforeExpectations    String?
@@ -547,12 +546,12 @@ model Mentor {
   experience   String?
   specialties  String[]
   achievements String[]
-  department   String   @default("General")
   bio          String
   isActive     Boolean  @default(true)
   displayOrder Int      @default(0)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  department   String   @default("General")
   teacher      Teacher? @relation(fields: [teacherId], references: [id])
 
   @@index([isActive, displayOrder])

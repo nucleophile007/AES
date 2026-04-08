@@ -500,6 +500,19 @@
   animation: floatReverse 4s ease-in-out infinite;
 }
 
+/* Hide decorative background circles/orbs site-wide */
+div.animate-float,
+div.animate-float-reverse,
+div.absolute.rounded-full[class*="bg-"][class*="w-"][class*="h-"][class*="opacity-"],
+div.absolute.rounded-full[class*="bg-"][class*="w-"][class*="h-"][class*="blur"],
+div.absolute.rounded-full[class*="bg-"][class*="w-"][class*="h-"][class*="/5"],
+div.absolute.rounded-full[class*="bg-"][class*="w-"][class*="h-"][class*="/10"],
+div.absolute.rounded-full[class*="bg-"][class*="w-"][class*="h-"][class*="/15"],
+div.absolute.rounded-full[class*="bg-"][class*="w-"][class*="h-"][class*="/20"],
+div.absolute.rounded-full[class*="bg-gradient"][class*="w-"][class*="h-"]:not([class*="flex"]) {
+  display: none !important;
+}
+
 .animate-pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
 }
@@ -587,13 +600,13 @@
   }
 
   100% {
-    transform: translateX(-50%);
+    transform: translateX(calc(-100% / var(--loop-copies, 2)));
   }
 }
 
 @keyframes scroll-reverse {
   0% {
-    transform: translateX(-50%);
+    transform: translateX(calc(-100% / var(--loop-copies, 2)));
   }
 
   100% {
@@ -622,17 +635,54 @@
 }
 
 .animate-scroll {
-  animation: scroll 40s linear infinite;
+  animation: scroll var(--scroll-duration, 40s) linear infinite;
+  will-change: transform;
 }
 
 .animate-scroll-reverse {
-  animation: scroll-reverse 45s linear infinite;
+  animation: scroll-reverse var(--scroll-duration, 45s) linear infinite;
+  will-change: transform;
 }
 
 .animate-scroll-bounce {
   animation: scroll-bounce 50s ease-in-out infinite;
+  will-change: transform;
 }
 
 .pause-animation {
   animation-play-state: paused;
+}
+
+/* Global button accessibility baseline */
+button:focus-visible {
+  outline: 2px solid #facc15;
+  outline-offset: 2px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-float,
+  .animate-float-reverse,
+  .animate-pulse-glow,
+  .animate-shimmer,
+  .animate-slide-in-left,
+  .animate-slide-in-right,
+  .animate-slide-in-bottom,
+  .animate-scale-in,
+  .animate-wave,
+  .animate-morphing,
+  .animate-gradient-shift,
+  .animate-scroll,
+  .animate-scroll-reverse,
+  .animate-scroll-bounce,
+  .animate-pulse {
+    animation: none !important;
+  }
 }

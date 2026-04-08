@@ -18,10 +18,10 @@ interface CalendarPickerProps {
   onDateSelect: (date: string) => void
   onTimeSelect: (time: string) => void
   dateTimeMapping: Record<string, string[]>
-  intervalMinutes: number
+  showAllHalfHourSlots: boolean
 }
 
-function CalendarPicker({ selectedDate, selectedTime, onDateSelect, onTimeSelect, dateTimeMapping, intervalMinutes }: CalendarPickerProps) {
+function CalendarPicker({ selectedDate, selectedTime, onDateSelect, onTimeSelect, dateTimeMapping, showAllHalfHourSlots }: CalendarPickerProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
 
   const monthNames = [
@@ -72,7 +72,6 @@ function CalendarPicker({ selectedDate, selectedTime, onDateSelect, onTimeSelect
   }
 
   const isSelectedDate = (day: number) => selectedDate === formatDate(day)
-  const isDateAvailable = (day: number) => Object.prototype.hasOwnProperty.call(dateTimeMapping, formatDate(day))
   const getAvailableTimesForDate = (date: string) => dateTimeMapping[date] || []
 
   // Parse a time string like "9:00 AM" or "12:30 pm" to minutes since midnight
@@ -91,9 +90,6 @@ function CalendarPicker({ selectedDate, selectedTime, onDateSelect, onTimeSelect
 
   const days = getDaysInMonth(currentMonth)
 
-  // Filter times by interval
-  const availableTimesForSelectedDate = getAvailableTimesForDate(selectedDate)
-
   // Helper to format time in 12-hour format
   const minutesToTimeString = (minutes: number) => {
     let h = Math.floor(minutes / 60);
@@ -104,18 +100,42 @@ function CalendarPicker({ selectedDate, selectedTime, onDateSelect, onTimeSelect
     return `${h}:${m.toString().padStart(2, "0")} ${ampm}`;
   };
 
-  // Build slot ranges for display
-  const sortedTimesForSelectedDate = [...availableTimesForSelectedDate]
-    .sort((a, b) => timeStringToMinutes(a) - timeStringToMinutes(b))
-    .map((startTime) => {
-      const startMins = timeStringToMinutes(startTime);
-      const endMins = startMins + intervalMinutes;
-      const endTime = minutesToTimeString(endMins);
+  const getDisplayStartTimes = (times: string[]) => {
+    const uniqueMinutes = Array.from(
+      new Set(
+        times
+          .map((time) => timeStringToMinutes(time))
+          .filter((mins) => Number.isFinite(mins) && mins !== Number.MAX_SAFE_INTEGER)
+      )
+    ).sort((a, b) => a - b)
+
+    if (showAllHalfHourSlots) {
+      return uniqueMinutes.map(minutesToTimeString)
+    }
+
+    const minuteSet = new Set(uniqueMinutes)
+    return uniqueMinutes
+      .filter((start) => minuteSet.has(start + 30))
+      .map(minutesToTimeString)
+  }
+
+  const getDisplayTimeRangesForDate = (date: string) => {
+    const availableTimesForDate = getAvailableTimesForDate(date)
+    const durationMinutes = showAllHalfHourSlots ? 30 : 60
+
+    return getDisplayStartTimes(availableTimesForDate).map((start) => {
+      const startMins = timeStringToMinutes(start)
+      const endMins = startMins + durationMinutes
+      const endTime = minutesToTimeString(endMins)
       return {
-        start: startTime,
-        range: `${startTime} - ${endTime}`,
-      };
-    });
+        start,
+        range: `${start} - ${endTime}`,
+      }
+    })
+  }
+
+  const isDateAvailable = (day: number) => getDisplayTimeRangesForDate(formatDate(day)).length > 0
+  const timeRangesForSelectedDate = selectedDate ? getDisplayTimeRangesForDate(selectedDate) : []
 
   return (
     <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
@@ -170,8 +190,8 @@ function CalendarPicker({ selectedDate, selectedTime, onDateSelect, onTimeSelect
           <h5 className="font-bold theme-text-light text-sm">Available Times</h5>
           {selectedDate ? (
             <div className="space-y-2 max-h-60 overflow-y-auto">
-              {sortedTimesForSelectedDate.length > 0 ? (
-                sortedTimesForSelectedDate.map(({ start, range }) => (
+              {timeRangesForSelectedDate.length > 0 ? (
+                timeRangesForSelectedDate.map(({ start, range }) => (
                   <button key={start} type="button" onClick={() => onTimeSelect(start)} className={`w-full px-3 py-2 text-sm rounded-lg border transition-all duration-200 whitespace-nowrap ${
                       selectedTime === start
                         ? "bg-gradient-to-r from-yellow-400 to-amber-500 text-gray-900 border-yellow-400"
@@ -211,12 +231,14 @@ export default function BookSessionPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [availability, setAvailability] = useState<Record<string, string[]>>({})
   const [isLoadingAvailability, setIsLoadingAvailability] = useState(false)
+  const [submissionError, setSubmissionError] = useState<string | null>(null)
+  const [userTimezone, setUserTimezone] = useState('your local time')
 
   // Fetch availability data from API
-  const fetchAvailability = async (program: string) => {
+  const fetchAvailability = async () => {
     setIsLoadingAvailability(true)
     try {
-      const response = await fetch(`/api/availability?program=${encodeURIComponent(program)}`)
+      const response = await fetch('/api/availability')
       const data = await response.json()
       
       if (data.success) {
@@ -224,12 +246,13 @@ export default function BookSessionPage() {
         const availabilityMap: Record<string, string[]> = {}
         
         data.data.forEach((item: any) => {
-          if (item.program === program && item.date && Array.isArray(item.times)) {
-            availabilityMap[item.date] = item.times
+          if (item.date && Array.isArray(item.times)) {
+            const existingTimes = availabilityMap[item.date] || []
+            availabilityMap[item.date] = [...new Set([...existingTimes, ...item.times])]
           }
         })
         
-        console.log(`✅ Loaded availability for ${program}:`, {
+        console.log('✅ Loaded availability:', {
           totalRows: data.totalRows,
           aggregatedDates: data.aggregatedDates,
           availableDates: Object.keys(availabilityMap).length,
@@ -268,19 +291,30 @@ export default function BookSessionPage() {
     if (formData.programInterested) {
       // Clear previous date/time selection
       setFormData(prev => ({ ...prev, selectedDate: "", selectedTime: "" }))
-      // Fetch availability for the selected program
-      fetchAvailability(formData.programInterested)
+      // Fetch all availability and filter slots based on selected program rules.
+      fetchAvailability()
     }
   }, [formData.programInterested])
 
+  useEffect(() => {
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+      if (tz) setUserTimezone(tz)
+    } catch {
+      setUserTimezone('your local time')
+    }
+  }, [])
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
+    setSubmissionError(null)
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    setSubmissionError(null)
 
     try {
       const response = await fetch('/api/book-session', {
@@ -306,6 +340,7 @@ export default function BookSessionPage() {
 
       if (response.ok && result.success) {
         console.log('✅ Registration successful! Booking ID:', result.bookingId)
+        setSubmissionError(null)
         setShowSuccessModal(true)
         setTimeout(() => {
           setShowSuccessModal(false)
@@ -324,12 +359,12 @@ export default function BookSessionPage() {
           })
         }, 8000)
       } else {
-        alert("Registration failed. Please try again.")
         console.error('❌ Registration error:', result)
+        setSubmissionError(result?.error || "Registration failed. Please try again.")
       }
     } catch (error) {
       console.error("❌ Submission error:", error)
-      alert("Network error. Please check your connection and try again.")
+      setSubmissionError("Network error. Please check your connection and try again.")
     }
 
     setIsSubmitting(false)
@@ -349,6 +384,7 @@ export default function BookSessionPage() {
     formData.programInterested
 
   const canSubmit = canProceedStep1 && formData.selectedDate && formData.selectedTime
+  const showAllHalfHourSlots = ["Academic Tutoring", "SAT Coaching"].includes(formData.programInterested)
 
   if (showSuccessModal) {
     return (
@@ -448,6 +484,16 @@ export default function BookSessionPage() {
             </div>
 
             <form onSubmit={handleSubmit}>
+              {submissionError ? (
+                <div
+                  role="alert"
+                  aria-live="polite"
+                  className="mb-6 rounded-lg border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100"
+                >
+                  {submissionError}
+                </div>
+              ) : null}
+
               {currentStep === 1 && (
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
@@ -462,24 +508,28 @@ export default function BookSessionPage() {
                   {/* Student Information */}
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block theme-text-light font-medium mb-2">Student Name *</label>
+                      <label htmlFor="studentName" className="block theme-text-light font-medium mb-2">Student Name *</label>
                       <input
+                        id="studentName"
                         type="text"
                         name="studentName"
                         value={formData.studentName}
                         onChange={handleInputChange}
+                        autoComplete="name"
                         required
                         className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg theme-text-light placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                         placeholder="Student&apos;s full name"
                       />
                     </div>
                     <div>
-                      <label className="block theme-text-light font-medium mb-2">Student Email *</label>
+                      <label htmlFor="email" className="block theme-text-light font-medium mb-2">Student Email *</label>
                       <input
+                        id="email"
                         type="email"
                         name="email"
                         value={formData.email}
                         onChange={handleInputChange}
+                        autoComplete="email"
                         required
                         className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg theme-text-light placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                         placeholder="student@example.com"
@@ -489,8 +539,9 @@ export default function BookSessionPage() {
 
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block theme-text-light font-medium mb-2">Current Grade *</label>
+                      <label htmlFor="grade" className="block theme-text-light font-medium mb-2">Current Grade *</label>
                       <select
+                        id="grade"
                         name="grade"
                         value={formData.grade}
                         onChange={handleInputChange}
@@ -506,12 +557,14 @@ export default function BookSessionPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block theme-text-light font-medium mb-2">School Name *</label>
+                      <label htmlFor="schoolName" className="block theme-text-light font-medium mb-2">School Name *</label>
                       <input
+                        id="schoolName"
                         type="text"
                         name="schoolName"
                         value={formData.schoolName}
                         onChange={handleInputChange}
+                        autoComplete="organization"
                         required
                         className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg theme-text-light placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                         placeholder="School name"
@@ -524,24 +577,28 @@ export default function BookSessionPage() {
                     <h4 className="text-lg font-semibold theme-text-light mb-4">Parent/Guardian Information</h4>
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block theme-text-light font-medium mb-2">Parent Name *</label>
+                        <label htmlFor="parentName" className="block theme-text-light font-medium mb-2">Parent Name *</label>
                         <input
+                          id="parentName"
                           type="text"
                           name="parentName"
                           value={formData.parentName}
                           onChange={handleInputChange}
+                          autoComplete="name"
                           required
                           className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg theme-text-light placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                           placeholder="Parent&apos;s full name"
                         />
                       </div>
                       <div>
-                        <label className="block theme-text-light font-medium mb-2">Parent Email *</label>
+                        <label htmlFor="parentEmail" className="block theme-text-light font-medium mb-2">Parent Email *</label>
                         <input
+                          id="parentEmail"
                           type="email"
                           name="parentEmail"
                           value={formData.parentEmail}
                           onChange={handleInputChange}
+                          autoComplete="email"
                           required
                           className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg theme-text-light placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                           placeholder="parent@example.com"
@@ -549,12 +606,15 @@ export default function BookSessionPage() {
                       </div>
                     </div>
                     <div className="mt-4">
-                      <label className="block theme-text-light font-medium mb-2">Parent Phone *</label>
+                      <label htmlFor="parentPhone" className="block theme-text-light font-medium mb-2">Parent Phone *</label>
                       <input
+                        id="parentPhone"
                         type="tel"
                         name="parentPhone"
                         value={formData.parentPhone}
                         onChange={handleInputChange}
+                        autoComplete="tel"
+                        inputMode="tel"
                         required
                         className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg theme-text-light placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                         placeholder="(209) 920-7147"
@@ -564,8 +624,9 @@ export default function BookSessionPage() {
 
                   {/* Program Selection */}
                   <div>
-                    <label className="block theme-text-light font-medium mb-2">Program of Interest *</label>
+                    <label htmlFor="programInterested" className="block theme-text-light font-medium mb-2">Program of Interest *</label>
                     <select
+                      id="programInterested"
                       name="programInterested"
                       value={formData.programInterested}
                       onChange={handleInputChange}
@@ -603,6 +664,12 @@ export default function BookSessionPage() {
                   <div className="text-center mb-8">
                     <h3 className="text-2xl font-bold theme-text-light mb-2">Select Date & Time</h3>
                     <p className="theme-text-muted">Choose your preferred session schedule</p>
+                    <p className="theme-text-muted text-sm mt-2">
+                      Times are shown in <span className="theme-text-light font-medium">{userTimezone}</span>.{" "}
+                      {showAllHalfHourSlots
+                        ? "All visible slots are 30-minute sessions."
+                        : "For this program, only 1-hour slots are shown when two consecutive 30-minute slots are available."}
+                    </p>
                   </div>
 
                   {isLoadingAvailability ? (
@@ -614,14 +681,16 @@ export default function BookSessionPage() {
                     <CalendarPicker
                       selectedDate={formData.selectedDate}
                       selectedTime={formData.selectedTime}
-                      onDateSelect={(date: string) => setFormData((prev) => ({ ...prev, selectedDate: date }))}
-                      onTimeSelect={(time: string) => setFormData((prev) => ({ ...prev, selectedTime: time }))}
+                      onDateSelect={(date: string) => {
+                        setSubmissionError(null)
+                        setFormData((prev) => ({ ...prev, selectedDate: date }))
+                      }}
+                      onTimeSelect={(time: string) => {
+                        setSubmissionError(null)
+                        setFormData((prev) => ({ ...prev, selectedTime: time }))
+                      }}
                       dateTimeMapping={availability}
-                      intervalMinutes={
-                        ["Academic Tutoring", "SAT Coaching"].includes(formData.programInterested)
-                          ? 30
-                          : 60
-                      }
+                      showAllHalfHourSlots={showAllHalfHourSlots}
                     />
                   )}
 

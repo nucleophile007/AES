@@ -419,6 +419,7 @@ export default function CustomChatDialog({
                 disabled={isSending || !newMessage.trim()}
                 className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 size="icon"
+                aria-label="Send message"
               >
                 <Send className="h-4 w-4" />
               </Button>
