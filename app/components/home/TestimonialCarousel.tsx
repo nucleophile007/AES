@@ -27,7 +27,7 @@ interface ParentTestimonial {
 /* ------------------------------------------------------------------ */
 
 const TestimonialSkeleton = () => (
-  <div className="flex-shrink-0 mx-6">
+  <div className="flex-shrink-0">
     <div className="w-80 md:w-96 h-[420px] bg-slate-800 rounded-2xl p-6 border border-slate-700 animate-pulse">
       <div className="relative -mt-16 mb-4 flex justify-center">
         <div className="w-24 h-24 rounded-full bg-slate-700" />
@@ -85,10 +85,35 @@ export default function ParentTestimonialCarousel() {
     )
   }, [data])
 
-  const duplicatedTestimonials =
-    testimonials.length > 0
-      ? [...testimonials, ...testimonials]
-      : []
+  const loopCopies = React.useMemo(() => {
+    if (testimonials.length <= 2) return 10
+    if (testimonials.length <= 4) return 8
+    if (testimonials.length <= 6) return 6
+    return 4
+  }, [testimonials.length])
+
+  const loopedTestimonials = React.useMemo<ParentTestimonial[]>(() => {
+    if (testimonials.length === 0) return []
+    return Array.from({ length: loopCopies }, () => testimonials).flat()
+  }, [testimonials, loopCopies])
+
+  const scrollStyle = React.useMemo(
+    () =>
+      ({
+        "--loop-copies": loopCopies,
+        "--scroll-duration": testimonials.length <= 4 ? "55s" : "45s",
+      }) as React.CSSProperties,
+    [loopCopies, testimonials.length]
+  )
+
+  const loadingStyle = React.useMemo(
+    () =>
+      ({
+        "--loop-copies": 3,
+        "--scroll-duration": "35s",
+      }) as React.CSSProperties,
+    []
+  )
 
   /* ---------------- Empty State ---------------- */
 
@@ -128,15 +153,21 @@ export default function ParentTestimonialCarousel() {
       {/* Carousel */}
       <div className="relative overflow-hidden group pt-24 pb-8">
         {isLoading ? (
-          <div className="flex animate-scroll group-hover:pause-animation">
-            {[...Array(6)].map((_, i) => (
+          <div
+            className="flex w-max gap-6 animate-scroll group-hover:pause-animation"
+            style={loadingStyle}
+          >
+            {[...Array(18)].map((_, i) => (
               <TestimonialSkeleton key={i} />
             ))}
           </div>
         ) : (
-          <div className="flex animate-scroll group-hover:pause-animation">
-            {duplicatedTestimonials.map((t, i) => (
-              <div key={`${t.id}-${i}`} className="flex-shrink-0 mx-6">
+          <div
+            className="flex w-max gap-6 animate-scroll group-hover:pause-animation"
+            style={scrollStyle}
+          >
+            {loopedTestimonials.map((t, i) => (
+              <div key={`${t.id}-${i}`} className="flex-shrink-0">
                 <div className="w-80 md:w-96 h-[420px] bg-slate-800 rounded-2xl p-6 border border-slate-700 hover:border-yellow-400 transition-all flex flex-col">
                   {/* Avatar */}
                   <div className="relative -mt-16 mb-4 flex justify-center">

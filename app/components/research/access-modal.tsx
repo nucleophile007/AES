@@ -80,6 +80,7 @@ export function AccessModal({
             variant="ghost"
             size="icon"
             onClick={onClose}
+            aria-label="Close access request modal"
             className="absolute top-4 right-4 theme-text-muted hover:text-yellow-400"
           >
             <X className="w-5 h-5" />

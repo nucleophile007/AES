@@ -500,9 +500,16 @@
   animation: floatReverse 4s ease-in-out infinite;
 }
 
-/* Hide decorative floating background circles site-wide */
+/* Hide decorative background circles/orbs site-wide */
 div.animate-float,
-div.animate-float-reverse {
+div.animate-float-reverse,
+div.absolute.rounded-full[class*="bg-"][class*="w-"][class*="h-"][class*="opacity-"],
+div.absolute.rounded-full[class*="bg-"][class*="w-"][class*="h-"][class*="blur"],
+div.absolute.rounded-full[class*="bg-"][class*="w-"][class*="h-"][class*="/5"],
+div.absolute.rounded-full[class*="bg-"][class*="w-"][class*="h-"][class*="/10"],
+div.absolute.rounded-full[class*="bg-"][class*="w-"][class*="h-"][class*="/15"],
+div.absolute.rounded-full[class*="bg-"][class*="w-"][class*="h-"][class*="/20"],
+div.absolute.rounded-full[class*="bg-gradient"][class*="w-"][class*="h-"]:not([class*="flex"]) {
   display: none !important;
 }
 
@@ -593,13 +600,13 @@ div.animate-float-reverse {
   }
 
   100% {
-    transform: translateX(-50%);
+    transform: translateX(calc(-100% / var(--loop-copies, 2)));
   }
 }
 
 @keyframes scroll-reverse {
   0% {
-    transform: translateX(-50%);
+    transform: translateX(calc(-100% / var(--loop-copies, 2)));
   }
 
   100% {
@@ -628,12 +635,12 @@ div.animate-float-reverse {
 }
 
 .animate-scroll {
-  animation: scroll 40s linear infinite;
+  animation: scroll var(--scroll-duration, 40s) linear infinite;
   will-change: transform;
 }
 
 .animate-scroll-reverse {
-  animation: scroll-reverse 45s linear infinite;
+  animation: scroll-reverse var(--scroll-duration, 45s) linear infinite;
   will-change: transform;
 }
 
@@ -644,6 +651,16 @@ div.animate-float-reverse {
 
 .pause-animation {
   animation-play-state: paused;
+}
+
+/* Global button accessibility baseline */
+button:focus-visible {
+  outline: 2px solid #facc15;
+  outline-offset: 2px;
+}
+
+button:disabled {
+  cursor: not-allowed;
 }
 
 @media (prefers-reduced-motion: reduce) {
