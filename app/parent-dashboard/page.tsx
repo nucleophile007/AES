@@ -444,7 +444,8 @@ export default function ParentDashboard() {
           const availabilityMap: Record<string, string[]> = {};
 
           data.data.forEach((item: any) => {
-            if (item.program === "Parent Meet" && item.date && Array.isArray(item.times)) {
+            const isParentMeetRow = item.program ? item.program === "Parent Meet" : true;
+            if (isParentMeetRow && item.date && Array.isArray(item.times)) {
               availabilityMap[item.date] = item.times;
             }
           });

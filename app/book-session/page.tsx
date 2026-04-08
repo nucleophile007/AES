@@ -18,10 +18,10 @@ interface CalendarPickerProps {
   onDateSelect: (date: string) => void
   onTimeSelect: (time: string) => void
   dateTimeMapping: Record<string, string[]>
-  intervalMinutes: number
+  showAllHalfHourSlots: boolean
 }
 
-function CalendarPicker({ selectedDate, selectedTime, onDateSelect, onTimeSelect, dateTimeMapping, intervalMinutes }: CalendarPickerProps) {
+function CalendarPicker({ selectedDate, selectedTime, onDateSelect, onTimeSelect, dateTimeMapping, showAllHalfHourSlots }: CalendarPickerProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
 
   const monthNames = [
@@ -72,7 +72,6 @@ function CalendarPicker({ selectedDate, selectedTime, onDateSelect, onTimeSelect
   }
 
   const isSelectedDate = (day: number) => selectedDate === formatDate(day)
-  const isDateAvailable = (day: number) => Object.prototype.hasOwnProperty.call(dateTimeMapping, formatDate(day))
   const getAvailableTimesForDate = (date: string) => dateTimeMapping[date] || []
 
   // Parse a time string like "9:00 AM" or "12:30 pm" to minutes since midnight
@@ -91,9 +90,6 @@ function CalendarPicker({ selectedDate, selectedTime, onDateSelect, onTimeSelect
 
   const days = getDaysInMonth(currentMonth)
 
-  // Filter times by interval
-  const availableTimesForSelectedDate = getAvailableTimesForDate(selectedDate)
-
   // Helper to format time in 12-hour format
   const minutesToTimeString = (minutes: number) => {
     let h = Math.floor(minutes / 60);
@@ -104,18 +100,42 @@ function CalendarPicker({ selectedDate, selectedTime, onDateSelect, onTimeSelect
     return `${h}:${m.toString().padStart(2, "0")} ${ampm}`;
   };
 
-  // Build slot ranges for display
-  const sortedTimesForSelectedDate = [...availableTimesForSelectedDate]
-    .sort((a, b) => timeStringToMinutes(a) - timeStringToMinutes(b))
-    .map((startTime) => {
-      const startMins = timeStringToMinutes(startTime);
-      const endMins = startMins + intervalMinutes;
-      const endTime = minutesToTimeString(endMins);
+  const getDisplayStartTimes = (times: string[]) => {
+    const uniqueMinutes = Array.from(
+      new Set(
+        times
+          .map((time) => timeStringToMinutes(time))
+          .filter((mins) => Number.isFinite(mins) && mins !== Number.MAX_SAFE_INTEGER)
+      )
+    ).sort((a, b) => a - b)
+
+    if (showAllHalfHourSlots) {
+      return uniqueMinutes.map(minutesToTimeString)
+    }
+
+    const minuteSet = new Set(uniqueMinutes)
+    return uniqueMinutes
+      .filter((start) => minuteSet.has(start + 30))
+      .map(minutesToTimeString)
+  }
+
+  const getDisplayTimeRangesForDate = (date: string) => {
+    const availableTimesForDate = getAvailableTimesForDate(date)
+    const durationMinutes = showAllHalfHourSlots ? 30 : 60
+
+    return getDisplayStartTimes(availableTimesForDate).map((start) => {
+      const startMins = timeStringToMinutes(start)
+      const endMins = startMins + durationMinutes
+      const endTime = minutesToTimeString(endMins)
       return {
-        start: startTime,
-        range: `${startTime} - ${endTime}`,
-      };
-    });
+        start,
+        range: `${start} - ${endTime}`,
+      }
+    })
+  }
+
+  const isDateAvailable = (day: number) => getDisplayTimeRangesForDate(formatDate(day)).length > 0
+  const timeRangesForSelectedDate = selectedDate ? getDisplayTimeRangesForDate(selectedDate) : []
 
   return (
     <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
@@ -170,8 +190,8 @@ function CalendarPicker({ selectedDate, selectedTime, onDateSelect, onTimeSelect
           <h5 className="font-bold theme-text-light text-sm">Available Times</h5>
           {selectedDate ? (
             <div className="space-y-2 max-h-60 overflow-y-auto">
-              {sortedTimesForSelectedDate.length > 0 ? (
-                sortedTimesForSelectedDate.map(({ start, range }) => (
+              {timeRangesForSelectedDate.length > 0 ? (
+                timeRangesForSelectedDate.map(({ start, range }) => (
                   <button key={start} type="button" onClick={() => onTimeSelect(start)} className={`w-full px-3 py-2 text-sm rounded-lg border transition-all duration-200 whitespace-nowrap ${
                       selectedTime === start
                         ? "bg-gradient-to-r from-yellow-400 to-amber-500 text-gray-900 border-yellow-400"
@@ -213,10 +233,10 @@ export default function BookSessionPage() {
   const [isLoadingAvailability, setIsLoadingAvailability] = useState(false)
 
   // Fetch availability data from API
-  const fetchAvailability = async (program: string) => {
+  const fetchAvailability = async () => {
     setIsLoadingAvailability(true)
     try {
-      const response = await fetch(`/api/availability?program=${encodeURIComponent(program)}`)
+      const response = await fetch('/api/availability')
       const data = await response.json()
       
       if (data.success) {
@@ -224,12 +244,13 @@ export default function BookSessionPage() {
         const availabilityMap: Record<string, string[]> = {}
         
         data.data.forEach((item: any) => {
-          if (item.program === program && item.date && Array.isArray(item.times)) {
-            availabilityMap[item.date] = item.times
+          if (item.date && Array.isArray(item.times)) {
+            const existingTimes = availabilityMap[item.date] || []
+            availabilityMap[item.date] = [...new Set([...existingTimes, ...item.times])]
           }
         })
         
-        console.log(`✅ Loaded availability for ${program}:`, {
+        console.log('✅ Loaded availability:', {
           totalRows: data.totalRows,
           aggregatedDates: data.aggregatedDates,
           availableDates: Object.keys(availabilityMap).length,
@@ -268,8 +289,8 @@ export default function BookSessionPage() {
     if (formData.programInterested) {
       // Clear previous date/time selection
       setFormData(prev => ({ ...prev, selectedDate: "", selectedTime: "" }))
-      // Fetch availability for the selected program
-      fetchAvailability(formData.programInterested)
+      // Fetch all availability and filter slots based on selected program rules.
+      fetchAvailability()
     }
   }, [formData.programInterested])
 
@@ -349,6 +370,7 @@ export default function BookSessionPage() {
     formData.programInterested
 
   const canSubmit = canProceedStep1 && formData.selectedDate && formData.selectedTime
+  const showAllHalfHourSlots = ["Academic Tutoring", "SAT Coaching"].includes(formData.programInterested)
 
   if (showSuccessModal) {
     return (
@@ -617,11 +639,7 @@ export default function BookSessionPage() {
                       onDateSelect={(date: string) => setFormData((prev) => ({ ...prev, selectedDate: date }))}
                       onTimeSelect={(time: string) => setFormData((prev) => ({ ...prev, selectedTime: time }))}
                       dateTimeMapping={availability}
-                      intervalMinutes={
-                        ["Academic Tutoring", "SAT Coaching"].includes(formData.programInterested)
-                          ? 30
-                          : 60
-                      }
+                      showAllHalfHourSlots={showAllHalfHourSlots}
                     />
                   )}
 

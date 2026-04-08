@@ -1,8 +1,8 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { getUserFromRequest, hasRole } from '../../../../lib/auth';
 import { prisma } from '../../../../lib/prisma';
+import { Prisma } from '../../../../generated/prisma';
 import { sendMail } from '../../../../lib/mailer';
-import { cancelReminderForClass, scheduleReminderForClass } from '../../../../lib/qstash-reminders';
 
 // Helper function to generate random colors based on subject
 function generateRandomColor(subject: string): string {
@@ -101,6 +101,46 @@ function getDayBoundsFromDateKey(dateKey: string): { gte: Date; lt: Date } {
   const nextDay = new Date(dayStart);
   nextDay.setUTCDate(nextDay.getUTCDate() + 1);
   return { gte: dayStart, lt: nextDay };
+}
+
+function getReminderScheduledFor(classStartUtc: Date): Date | null {
+  const leadMinutes = Number(process.env.SCHEDULE_REMINDER_LEAD_MINUTES || '60');
+  const normalizedLeadMinutes = Number.isFinite(leadMinutes) && leadMinutes > 0 ? Math.floor(leadMinutes) : 60;
+  const reminderScheduledFor = new Date(classStartUtc.getTime() - normalizedLeadMinutes * 60 * 1000);
+  return reminderScheduledFor.getTime() > Date.now() ? reminderScheduledFor : null;
+}
+
+async function updateMeetingMinutesRaw(args: {
+  scheduleId: number;
+  meetingMinutes: string | null;
+  updatedAt: Date;
+  groupId: number | null;
+  teacherId: number;
+  date: Date;
+  startTime: string;
+  endTime: string;
+  subject: string;
+}) {
+  await prisma.$executeRaw`
+    UPDATE "ClassSchedule"
+    SET "meetingMinutes" = ${args.meetingMinutes},
+        "updatedAt" = ${args.updatedAt}
+    WHERE "id" = ${args.scheduleId}
+  `;
+
+  if (args.groupId) {
+    await prisma.$executeRaw`
+      UPDATE "ClassSchedule"
+      SET "meetingMinutes" = ${args.meetingMinutes},
+          "updatedAt" = ${args.updatedAt}
+      WHERE "teacherId" = ${args.teacherId}
+        AND "groupId" = ${args.groupId}
+        AND "date" = ${args.date}
+        AND "startTime" = ${args.startTime}
+        AND "endTime" = ${args.endTime}
+        AND "subject" = ${args.subject}
+    `;
+  }
 }
 
 function isGoogleMeetLink(link?: string | null): boolean {
@@ -286,13 +326,6 @@ type ScheduleWithParticipants = {
     }>;
   } | null;
 };
-
-function prismaSupportsMeetingMinutes(): boolean {
-  const runtimeModel = (prisma as any)?._runtimeDataModel?.models?.ClassSchedule;
-  const fields = runtimeModel?.fields;
-  if (!Array.isArray(fields)) return false;
-  return fields.some((field: any) => field?.name === 'meetingMinutes');
-}
 
 function formatWithTimezone(date: Date, timezone: string): string {
   return new Intl.DateTimeFormat('en-US', {
@@ -619,8 +652,26 @@ export async function GET(request: NextRequest) {
       ]
     });
 
+    let schedulesWithMinutes: typeof schedules = schedules;
+    if (
+      schedules.length > 0 &&
+      !Object.prototype.hasOwnProperty.call(schedules[0], 'meetingMinutes')
+    ) {
+      const ids = schedules.map((schedule) => schedule.id);
+      const rows = await prisma.$queryRaw<Array<{ id: number; meetingMinutes: string | null }>>`
+        SELECT id, "meetingMinutes"
+        FROM "ClassSchedule"
+        WHERE id = ANY(ARRAY[${Prisma.join(ids)}]::int[])
+      `;
+      const minutesMap = new Map(rows.map((row) => [row.id, row.meetingMinutes]));
+      schedulesWithMinutes = schedules.map((schedule) => ({
+        ...schedule,
+        meetingMinutes: minutesMap.get(schedule.id) ?? null,
+      }));
+    }
+
     // Format dates for JSON response
-    const formattedSchedules = schedules.map(schedule => {
+    const formattedSchedules = schedulesWithMinutes.map(schedule => {
       // Create a new object to avoid type issues
       return {
         ...schedule,
@@ -686,8 +737,6 @@ export async function POST(request: NextRequest) {
     const normalizedMeetingMinutes = typeof meetingMinutes === 'string' && meetingMinutes.trim().length > 0
       ? meetingMinutes.trim()
       : null;
-    const supportsMeetingMinutes = prismaSupportsMeetingMinutes();
-
     if (!id && normalizedMeetingMinutes) {
       return NextResponse.json({
         success: false,
@@ -910,12 +959,9 @@ export async function POST(request: NextRequest) {
         timezone: clientTimezone,
       };
 
-      if (supportsMeetingMinutes && isPastMeeting) {
-        updateData.meetingMinutes = normalizedMeetingMinutes;
-      }
-
       if (changedFields.timeChanged) {
         updateData.reminderSentAt = null;
+        updateData.reminderJobId = null;
       }
 
       // Only update date if provided
@@ -934,27 +980,33 @@ export async function POST(request: NextRequest) {
         data: updateData
       });
 
-      if (changedFields.timeChanged) {
-        try {
-          await cancelReminderForClass(existingSchedule.reminderJobId);
-        } catch (cancelError) {
-          console.error('Failed to cancel previous reminder job:', cancelError);
-        }
+      if (isPastMeeting && changedFields.meetingMinutesChanged) {
+        const minutesUpdatedAt = new Date();
+        await updateMeetingMinutesRaw({
+          scheduleId: schedule.id,
+          meetingMinutes: normalizedMeetingMinutes,
+          updatedAt: minutesUpdatedAt,
+          groupId: existingSchedule.groupId ?? null,
+          teacherId: existingSchedule.teacherId,
+          date: existingSchedule.date,
+          startTime: existingSchedule.startTime,
+          endTime: existingSchedule.endTime,
+          subject: existingSchedule.subject,
+        });
+      }
 
+      if (changedFields.timeChanged) {
         const updatedStartUtc = schedule.startDateTime
           ? new Date(schedule.startDateTime)
           : convertToUTC(schedule.date.toISOString(), schedule.startTime, clientTimezone);
 
-        const reminderInfo = await scheduleReminderForClass({
-          scheduleId: schedule.id,
-          classStartUtc: updatedStartUtc,
-        });
+        const reminderScheduledFor = getReminderScheduledFor(updatedStartUtc);
 
         schedule = await prisma.classSchedule.update({
           where: { id: schedule.id },
           data: {
-            reminderJobId: reminderInfo.messageId,
-            reminderScheduledFor: reminderInfo.scheduledFor,
+            reminderJobId: null,
+            reminderScheduledFor,
             reminderSentAt: null,
           },
         });
@@ -1314,21 +1366,18 @@ export async function POST(request: NextRequest) {
             ? new Date(createdSchedule.startDateTime)
             : convertToUTC(createdSchedule.date.toISOString(), createdSchedule.startTime, clientTimezone);
 
-          const reminderInfo = await scheduleReminderForClass({
-            scheduleId: createdSchedule.id,
-            classStartUtc: startUtc,
-          });
+          const reminderScheduledFor = getReminderScheduledFor(startUtc);
 
           await prisma.classSchedule.update({
             where: { id: createdSchedule.id },
             data: {
-              reminderJobId: reminderInfo.messageId,
-              reminderScheduledFor: reminderInfo.scheduledFor,
+              reminderJobId: null,
+              reminderScheduledFor,
               reminderSentAt: null,
             },
           });
 
-          return reminderInfo;
+          return reminderScheduledFor;
         })
       );
 
@@ -1339,7 +1388,7 @@ export async function POST(request: NextRequest) {
             return acc;
           }
 
-          if (result.value.messageId) {
+          if (result.value) {
             acc.scheduled += 1;
           } else {
             acc.skipped += 1;
@@ -1451,12 +1500,6 @@ export async function DELETE(request: NextRequest) {
     // Check if the schedule belongs to this teacher
     if (schedule.teacherId !== teacher.id) {
       return NextResponse.json({ error: 'Unauthorized to delete this schedule' }, { status: 403 });
-    }
-
-    try {
-      await cancelReminderForClass(schedule.reminderJobId);
-    } catch (cancelError) {
-      console.error('Failed to cancel reminder job on delete:', cancelError);
     }
 
     await sendScheduleStatusEmail({

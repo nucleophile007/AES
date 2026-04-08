@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "../../../../lib/prisma";
+import { Prisma } from "../../../../generated/prisma";
 import { getUserFromRequest, hasRole } from "../../../../lib/auth";
 
 export async function GET(request: NextRequest) {
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
 
     const now = new Date();
 
-    const meetings = await prisma.classSchedule.findMany({
+    let meetings = await prisma.classSchedule.findMany({
       where: {
         teacherId: teacher.id,
         OR: [
@@ -76,6 +77,23 @@ export async function GET(request: NextRequest) {
         group: { select: { name: true } },
       },
     });
+
+    if (
+      meetings.length > 0 &&
+      !Object.prototype.hasOwnProperty.call(meetings[0], "meetingMinutes")
+    ) {
+      const ids = meetings.map((meeting) => meeting.id);
+      const rows = await prisma.$queryRaw<Array<{ id: number; meetingMinutes: string | null }>>`
+        SELECT id, "meetingMinutes"
+        FROM "ClassSchedule"
+        WHERE id = ANY(ARRAY[${Prisma.join(ids)}]::int[])
+      `;
+      const minutesMap = new Map(rows.map((row) => [row.id, row.meetingMinutes]));
+      meetings = meetings.map((meeting) => ({
+        ...meeting,
+        meetingMinutes: minutesMap.get(meeting.id) ?? null,
+      }));
+    }
 
     const pastMeetings = meetings.filter((meeting) => {
       const comparisonTime = meeting.endDateTime ?? meeting.startDateTime ?? meeting.date;
