@@ -135,6 +135,14 @@ export default function AESBlogPage() {
                 );
               }
 
+              if (id === "student-spotlights") {
+                return (
+                  <Link key={index} href="/blog/student-spotlights" className="block h-full">
+                    {card}
+                  </Link>
+                );
+              }
+
               return card;
             })}
           </div>

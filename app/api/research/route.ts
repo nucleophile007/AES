@@ -150,7 +150,7 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       research: fullResearch,
       totalCount,
@@ -162,12 +162,19 @@ export async function GET(request: NextRequest) {
         byYear: yearCounts,
         byDomain: domainCounts,
       },
-    });
+    })
+
+    response.headers.set(
+      "Cache-Control",
+      "public, max-age=300, s-maxage=600, stale-while-revalidate=600"
+    )
+
+    return response
   } catch (error) {
     console.error("Error fetching research:", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch research" },
-      { status: 500 }
+      { status: 500, headers: { "Cache-Control": "no-store" } }
     );
   }
 }
