@@ -78,8 +78,8 @@ const programTiers = [
       "Paper Submission at STEM Competition"
     ],
     fees: {
-      ic: "$250/week",
-      gp: "$150/week"
+      ic: "$2500",
+      gp: "From $1000"
     },
     color: "from-orange-500 to-orange-600",
     illustration: "/learning-journey-cartoon.png",
@@ -96,8 +96,8 @@ const programTiers = [
       "Publish to high school level journal"
     ],
     fees: {
-      ic: "$200/week",
-      gp: "$100/week"
+      ic: "$3500",
+      gp: "From $2500"
     },
     color: "from-blue-500 to-blue-600",
     illustration: "/progress-mountain-climb.png",
@@ -113,8 +113,8 @@ const programTiers = [
       "Publish to College Level Journal"
     ],
     fees: {
-      ic: "$150/week",
-      gp: "$100/week"
+      ic: "$5000",
+      gp: "From $3500"
     },
     color: "from-purple-500 to-purple-600",
     illustration: "/successful-celebration.png",

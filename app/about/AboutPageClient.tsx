@@ -38,7 +38,7 @@ const webTeam = [
     experience: "Web Development & Software Engineering",
     specialties: ["Full Stack Development", "React & Next.js", "Backend Development", "UI/UX Design"],
     achievements: ["2+ years web development experience", "Modern web technologies expert", "Full stack proficiency", "IIT Dharwad student"],
-    bio: "Final year student at IIT Dharwad with over 2 years of hands-on experience in web development. Specializes in building scalable web applications using modern technologies and frameworks.",
+    bio: "Senior, IIT Dharwad with over 2 years of hands-on experience in web development. Specializes in building scalable web applications using modern technologies and frameworks.",
     image: "/luv.png",
   },
   {
@@ -49,7 +49,7 @@ const webTeam = [
     experience: "Web Development & Software Engineering",
     specialties: ["Full Stack Development", "Frontend Technologies", "Database Management", "API Development"],
     achievements: ["2+ years web development experience", "Problem-solving expertise", "Collaborative development", "IIT Dharwad student"],
-    bio: "Final year student at IIT Dharwad with 2+ years of professional web development experience. Passionate about creating efficient, user-friendly web solutions and working with cutting-edge technologies.",
+    bio: "Senior, IIT Dharwad with 2+ years of professional web development experience. Passionate about creating efficient, user-friendly web solutions and working with cutting-edge technologies.",
     image: "/deepak.png",
   },
 ];

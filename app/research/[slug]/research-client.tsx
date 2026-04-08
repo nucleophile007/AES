@@ -18,6 +18,7 @@ interface ResearchClientProps {
     title: string
     description: string | null
     pdfFilename: string | null
+    presentationPdfFilename: string | null
     author: string | null
     grade: string | null
     school: string | null
@@ -25,17 +26,14 @@ interface ResearchClientProps {
     extractedContent: any
     abstract: string | null
     keywords: string[]
-    slides: {
-      id: string
-      imagePath: string
-      order: number
-    }[]
   }
 }
 
 export default function ResearchClient({ research }: ResearchClientProps) {
   const [showModal, setShowModal] = useState(false)
   const [hasAccess, setHasAccess] = useState(false)
+  const [accessEmail, setAccessEmail] = useState<string | null>(null)
+  const [presentationTotalPages, setPresentationTotalPages] = useState(0)
   
   // Generate dynamic Table of Contents from extractedContent
   const extractedContent = research.extractedContent as {
@@ -54,45 +52,45 @@ export default function ResearchClient({ research }: ResearchClientProps) {
       id: section.id,
       label: section.title
     })),
-    { id: "research-slides", label: "Research Slides" },
+    { id: "research-slides", label: "Research Presentation" },
     { id: "technical-report", label: "Technical Report" },
   ]
   
   const [activeSection, setActiveSection] = useState(tableOfContentsItems[0]?.id || "research-slides")
   
+  const fetchPresentationMeta = async (email: string | null) => {
+    const searchParams = new URLSearchParams({ researchId: research.id })
 
-  const handleSlideView = (slideIndex: number) => {
-    if (slideIndex >= 2 && !hasAccess) {
-      setShowModal(true)
+    if (email) {
+      searchParams.set("email", email)
+    }
+
+    const res = await fetch(`/api/research/presentation/meta?${searchParams.toString()}`)
+
+    if (!res.ok) {
+      return
+    }
+
+    const data = await res.json()
+    setPresentationTotalPages(data.totalPages ?? 0)
+
+    if (Boolean(data.hasAccess)) {
+      setHasAccess(true)
     }
   }
 
-  // ✅ Check access on load
   useEffect(() => {
-    const savedEmail = localStorage.getItem(
-      `research-access-${research.id}`
-    )
+    const savedEmail = localStorage.getItem(`research-access-${research.id}`)
+    const normalizedEmail = savedEmail?.trim() ? savedEmail : null
 
-    if (!savedEmail) return
+    setAccessEmail(normalizedEmail)
 
-    const checkAccess = async () => {
-      const res = await fetch("/api/research/check-access", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          researchId: research.id,
-          email: savedEmail,
-        }),
-      })
-
-      const data = await res.json()
-      if (data.hasAccess) {
-        setHasAccess(true)
-      }
-    }
-
-    checkAccess()
+    fetchPresentationMeta(normalizedEmail)
   }, [research.id])
+
+  const handleLockedPageClick = () => {
+    setShowModal(true)
+  }
 
   // ✅ CORRECT PDF HANDLER (GET + redirect)
   const handleViewPDF = () => {
@@ -200,10 +198,12 @@ export default function ResearchClient({ research }: ResearchClientProps) {
         <div className="flex flex-col lg:flex-row gap-12">
           <article className="flex-1">
             <ArticleContent
-              slides={research.slides}
+              researchId={research.id}
+              presentationTotalPages={presentationTotalPages}
+              accessEmail={accessEmail}
               onSectionChange={setActiveSection}
               hasAccess={hasAccess}
-              onSlideView={handleSlideView}
+              onLockedPageClick={handleLockedPageClick}
               onRequestAccess={() => setShowModal(true)}
               onViewPDF={handleViewPDF}
               onDownloadPDF={handleDownloadPDF}
@@ -239,6 +239,10 @@ export default function ResearchClient({ research }: ResearchClientProps) {
             `research-access-${research.id}`,
             formData.email
           )
+
+          setAccessEmail(formData.email)
+
+          await fetchPresentationMeta(formData.email)
 
           toast.success("Request Submitted! Admin will review it soon.")
           setShowModal(false)

@@ -14,6 +14,7 @@ type Slide = {
   imageAlt: string;
   cta?: { label: string; href: string };
   isEvent?: boolean; // Flag to identify event slides
+  customContent?: React.ReactNode;
 };
 
 type HeroSliderAlwaysProps = {
@@ -31,15 +32,18 @@ export function HeroSliderAlways({
 }: HeroSliderAlwaysProps) {
   const [index, setIndex] = React.useState(0);
   const count = slides.length;
+  const enableNav = count > 1;
 
   React.useEffect(() => {
+    if (!enableNav) return;
     const id = setInterval(() => {
       setIndex((prev) => (prev + 1) % count);
     }, intervalMs);
     return () => clearInterval(id);
-  }, [count, intervalMs]);
+  }, [count, enableNav, intervalMs]);
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!enableNav) return;
     if (e.key === "ArrowRight") {
       e.preventDefault();
       setIndex((i) => (i + 1) % count);
@@ -52,9 +56,11 @@ export function HeroSliderAlways({
 
   const startX = React.useRef<number | null>(null);
   const onPointerDown = (e: React.PointerEvent) => {
+    if (!enableNav) return;
     startX.current = e.clientX;
   };
   const onPointerUp = (e: React.PointerEvent) => {
+    if (!enableNav) return;
     if (startX.current == null) return;
     const dx = e.clientX - startX.current;
     const threshold = 40;
@@ -88,6 +94,11 @@ export function HeroSliderAlways({
                 isActive ? "opacity-100" : "opacity-0"
               )}
             >
+              {slide.customContent ? (
+                <div className="absolute inset-0 bg-[#0b0f1f]">
+                  {slide.customContent}
+                </div>
+              ) : (
               <Image
                 src={slide.imageSrc || "/placeholder.svg?height=1080&width=1920&query=professional%20education%20hero"}
                 alt={slide.imageAlt || "Hero image"}
@@ -95,9 +106,13 @@ export function HeroSliderAlways({
                 className={`object-cover ${slide.isEvent ? '' : 'blur-[2px]'}`}
                 priority={i === 0}
               />
+              )}
 
-              <div className={`absolute inset-0 ${slide.isEvent ? 'bg-gradient-to-r from-black/80 via-black/50 to-black/30' : 'bg-gradient-to-r from-black/60 via-black/30 to-transparent'}`} />
+              {!slide.customContent && (
+                <div className={`absolute inset-0 ${slide.isEvent ? 'bg-gradient-to-r from-black/80 via-black/50 to-black/30' : 'bg-gradient-to-r from-black/60 via-black/30 to-transparent'}`} />
+              )}
 
+              {!slide.customContent && (
               <div className="absolute inset-0 flex flex-col justify-center px-6 md:px-10 lg:px-16 py-12 md:py-16 lg:py-20 z-10">
                 <div className={`${slide.isEvent ? 'max-w-3xl' : 'max-w-2xl'} ml-8 md:ml-16 mt-8 md:mt-16`}>
                   {slide.isEvent && (
@@ -189,51 +204,56 @@ export function HeroSliderAlways({
                   ) : null}
                 </div>
               </div>
+              )}
             </div>
           );
         })}
       </div>
 
-      <div className="absolute inset-x-0 bottom-8 md:bottom-10 flex items-center justify-center gap-3 z-20">
-        {slides.map((_, i) => {
-          const isActive = i === index;
-          return (
-            <button
-              key={i}
-              aria-label={`Go to slide ${i + 1}`}
-              aria-current={isActive ? "true" : undefined}
-              onClick={() => setIndex(i)}
-              className={cn(
-                "h-2.5 rounded-full transition-all duration-300",
-                isActive ? "bg-accent w-8" : "bg-white/40 hover:bg-white/60 w-2.5"
-              )}
-            />
-          );
-        })}
-      </div>
+      {enableNav && (
+        <div className="absolute inset-x-0 bottom-8 md:bottom-10 flex items-center justify-center gap-3 z-20">
+          {slides.map((_, i) => {
+            const isActive = i === index;
+            return (
+              <button
+                key={i}
+                aria-label={`Go to slide ${i + 1}`}
+                aria-current={isActive ? "true" : undefined}
+                onClick={() => setIndex(i)}
+                className={cn(
+                  "h-2.5 rounded-full transition-all duration-300",
+                  isActive ? "bg-accent w-8" : "bg-white/40 hover:bg-white/60 w-2.5"
+                )}
+              />
+            );
+          })}
+        </div>
+      )}
 
-      <div className="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-between z-20 px-4 md:px-8">
-        <button
-          aria-label="Previous slide"
-          className="pointer-events-auto h-14 w-14 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-all duration-300 backdrop-blur-sm border border-white/20"
-          onClick={() => setIndex((i) => (i - 1 + count) % count)}
-        >
-          <span className="sr-only">Previous</span>
-          <svg width="28" height="28" viewBox="0 0 24 24" className="fill-current" aria-hidden="true">
-            <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path>
-          </svg>
-        </button>
-        <button
-          aria-label="Next slide"
-          className="pointer-events-auto h-14 w-14 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-all duration-300 backdrop-blur-sm border border-white/20"
-          onClick={() => setIndex((i) => (i + 1) % count)}
-        >
-          <span className="sr-only">Next</span>
-          <svg width="28" height="28" viewBox="0 0 24 24" className="fill-current" aria-hidden="true">
-            <path d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6z"></path>
-          </svg>
-        </button>
-      </div>
+      {enableNav && (
+        <div className="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-between z-20 px-4 md:px-8">
+          <button
+            aria-label="Previous slide"
+            className="pointer-events-auto h-14 w-14 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-all duration-300 backdrop-blur-sm border border-white/20"
+            onClick={() => setIndex((i) => (i - 1 + count) % count)}
+          >
+            <span className="sr-only">Previous</span>
+            <svg width="28" height="28" viewBox="0 0 24 24" className="fill-current" aria-hidden="true">
+              <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path>
+            </svg>
+          </button>
+          <button
+            aria-label="Next slide"
+            className="pointer-events-auto h-14 w-14 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-all duration-300 backdrop-blur-sm border border-white/20"
+            onClick={() => setIndex((i) => (i + 1) % count)}
+          >
+            <span className="sr-only">Next</span>
+            <svg width="28" height="28" viewBox="0 0 24 24" className="fill-current" aria-hidden="true">
+              <path d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6z"></path>
+            </svg>
+          </button>
+        </div>
+      )}
     </section>
   );
 }
