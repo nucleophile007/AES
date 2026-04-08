@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import Image from "next/image"
-import { cn } from "@/lib/utils"
 
 const supporters = [
   {
@@ -44,7 +43,7 @@ const supporters = [
 
 export function SupportersCarousel() {
   // Duplicate the array to create seamless infinite scroll
-  const duplicatedSupporters = [...supporters, ...supporters, ...supporters, ...supporters]
+  const duplicatedSupporters = [...supporters, ...supporters]
 
   return (
     <section className="py-12 sm:py-16 lg:py-20 theme-bg-dark relative overflow-hidden">
@@ -56,9 +55,9 @@ export function SupportersCarousel() {
         <div className="absolute bottom-32 left-1/4 w-16 h-16 bg-green-400 rounded-full opacity-5 animate-float-reverse"></div>
       </div> */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-32 right-10 w-24 h-24 bg-blue-400 rounded-full opacity-5 animate-float-reverse"></div>
-        <div className="absolute bottom-32 left-20 w-20 h-20 bg-purple-400 rounded-full opacity-5 animate-float"></div>
-        <div className="absolute top-1/2 right-1/3 w-16 h-16 bg-green-400 rounded-full opacity-5 animate-float-reverse"></div>
+        <div className="absolute top-32 right-10 w-24 h-24 bg-blue-400 rounded-full opacity-5"></div>
+        <div className="absolute bottom-32 left-20 w-20 h-20 bg-purple-400 rounded-full opacity-5"></div>
+        <div className="absolute top-1/2 right-1/3 w-16 h-16 bg-green-400 rounded-full opacity-5"></div>
       </div>
       
       {/* Gradient Overlay */}
