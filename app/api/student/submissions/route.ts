@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '../../../../generated/prisma';
+import { prisma } from '@/lib/prisma';
 import { deleteR2File, extractFileKeyFromUrl } from '../../../../lib/r2';
-
-const prisma = new PrismaClient();
 
 // GET: Fetch submissions for a student or specific submission
 export async function GET(request: NextRequest) {

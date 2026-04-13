@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "../../../../generated/prisma";
+import { prisma } from "@/lib/prisma";
 
 // This route will directly query messages in the database
 // to help debug why they're not appearing in the UI
 export async function GET(request: NextRequest) {
-  const prisma = new PrismaClient();
-  
   try {
     // Get query parameters
     const url = new URL(request.url);

@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "../../../../generated/prisma";
+import { prisma } from "@/lib/prisma";
 
 // This route allows creating test messages to help debug the chat functionality
 export async function POST(request: NextRequest) {
-  const prisma = new PrismaClient();
-  
   try {
     // Parse request body
     const body = await request.json();
@@ -67,16 +65,12 @@ export async function POST(request: NextRequest) {
       }, 
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
 // GET endpoint to show the form for creating messages
 export async function GET(request: NextRequest) {
   try {
-    const prisma = new PrismaClient();
-    
     // Get a list of teachers and students for the form
     const teachers = await prisma.teacher.findMany({
       select: { id: true, name: true, email: true },

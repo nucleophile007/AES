@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "../../../../generated/prisma";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
-  const prisma = new PrismaClient();
-  
   try {
     // Get query parameters
     const url = new URL(request.url);

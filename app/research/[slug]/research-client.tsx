@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Header from "@/components/home/Header"
 import Footer from "@/components/home/Footer"
 import Chatbot from "@/components/home/Chatbot"
@@ -58,7 +58,7 @@ export default function ResearchClient({ research }: ResearchClientProps) {
   
   const [activeSection, setActiveSection] = useState(tableOfContentsItems[0]?.id || "research-slides")
   
-  const fetchPresentationMeta = async (email: string | null) => {
+  const fetchPresentationMeta = useCallback(async (email: string | null) => {
     const searchParams = new URLSearchParams({ researchId: research.id })
 
     if (email) {
@@ -77,7 +77,7 @@ export default function ResearchClient({ research }: ResearchClientProps) {
     if (Boolean(data.hasAccess)) {
       setHasAccess(true)
     }
-  }
+  }, [research.id])
 
   useEffect(() => {
     const savedEmail = localStorage.getItem(`research-access-${research.id}`)
@@ -86,7 +86,7 @@ export default function ResearchClient({ research }: ResearchClientProps) {
     setAccessEmail(normalizedEmail)
 
     fetchPresentationMeta(normalizedEmail)
-  }, [research.id])
+  }, [research.id, fetchPresentationMeta])
 
   const handleLockedPageClick = () => {
     setShowModal(true)

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '../../../../../generated/prisma';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 // POST: Mark a resource as viewed by a student
 export async function POST(request: NextRequest) {

@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "../../../../generated/prisma";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
-  const prisma = new PrismaClient();
-  
   try {
     // Get counts for different entities
     const messageCount = await prisma.message.count();
@@ -301,8 +299,6 @@ export async function GET(request: NextRequest) {
       { success: false, error: error.message || String(error) }, 
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 

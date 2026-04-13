@@ -1,7 +1,5 @@
-import { PrismaClient } from '../../../generated/prisma';
+import { prisma } from '@/lib/prisma';
 import { qstash } from '@/lib/qstash';
-
-const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
   try {

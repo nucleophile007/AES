@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import Chatbot from "@/components/home/Chatbot";
@@ -62,9 +63,12 @@ function SpotlightCard({ spotlight, index }: { spotlight: Spotlight; index: numb
     <article className="group overflow-hidden rounded-3xl border border-slate-700/40 bg-slate-900/30 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-yellow-400/40 hover:shadow-[0_10px_30px_rgba(250,204,21,0.12)]">
       <div className="relative h-52 overflow-hidden bg-slate-900/70">
         {spotlight.studentPhoto ? (
-          <img
+          <Image
             src={spotlight.studentPhoto}
             alt={studentName}
+            fill
+            unoptimized
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (

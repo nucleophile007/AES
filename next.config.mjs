@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    minimumCacheTTL: 60 * 60 * 24 * 30,
     remotePatterns: [
       {
         protocol: 'https',
@@ -15,6 +16,28 @@ const nextConfig = {
         hostname: 'pub-6860df273959446786e5c3556348f4b4.r2.dev',
       },
     ],
+  },
+  async headers() {
+    return [
+      {
+        source: '/program-image/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/_next/image',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+    ];
   },
   reactStrictMode: true,
   webpack: (config, { dev }) => {
