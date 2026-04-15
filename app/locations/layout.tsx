@@ -6,14 +6,14 @@ export const metadata: Metadata = {
   description:
     "Learn how ACHARYA Educational Services supports students across the USA, with strong presence in California, Texas, New York and beyond.",
   alternates: {
-    canonical: "/locations",
+    canonical: "./",
   },
   openGraph: {
     title: "US Tutoring & SAT Coaching Locations | ACHARYA Educational Services",
     description:
       "Online and in-person tutoring, SAT coaching, math competition training, and research programs for students across key US regions.",
     type: "website",
-    url: "/locations",
+    url: "./",
   },
   twitter: {
     title: "US Tutoring & SAT Coaching Locations | ACHARYA Educational Services",

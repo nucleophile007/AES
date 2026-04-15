@@ -6,14 +6,14 @@ export const metadata: Metadata = {
   description:
     "Schedule a free discovery session to explore academic tutoring, SAT coaching, math competition training, and student research programs tailored to your goals.",
   alternates: {
-    canonical: "/book-session",
+    canonical: "./",
   },
   openGraph: {
     title: "Book a Free Consultation | ACHARYA Educational Services",
     description:
       "Connect with AES mentors to design a personalized learning or test-prep plan for your student.",
     type: "website",
-    url: "/book-session",
+    url: "./",
   },
   twitter: {
     title: "Book a Free Consultation | ACHARYA Educational Services",

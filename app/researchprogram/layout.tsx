@@ -6,14 +6,14 @@ export const metadata: Metadata = {
   description:
     "High school and middle school research programs with PhD-level mentorship, publication guidance, and competition preparation to strengthen US college applications.",
   alternates: {
-    canonical: "/researchprogram",
+    canonical: "./",
   },
   openGraph: {
     title: "Student Research Programs | ACHARYA Educational Services",
     description:
       "Work with expert mentors to design, execute, and present original research projects for college admissions, publications, and competitions.",
     type: "website",
-    url: "/researchprogram",
+    url: "./",
   },
   twitter: {
     title: "Student Research Programs | ACHARYA Educational Services",

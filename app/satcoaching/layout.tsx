@@ -6,14 +6,14 @@ export const metadata: Metadata = {
   description:
     "Personalized SAT coaching for high school students across the USA, with full-length mocks, targeted practice, and expert strategy.",
   alternates: {
-    canonical: "/satcoaching",
+    canonical: "./",
   },
   openGraph: {
     title: "SAT Coaching | ACHARYA Educational Services",
     description:
       "Score-boosting SAT prep with structured lessons, diagnostics, and individualized feedback.",
     type: "website",
-    url: "/satcoaching",
+    url: "./",
   },
   twitter: {
     title: "SAT Coaching | ACHARYA Educational Services",

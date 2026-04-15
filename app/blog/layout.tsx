@@ -6,14 +6,14 @@ export const metadata: Metadata = {
   description:
     "Articles, tips, and stories on SAT prep, academic tutoring, research, and college admissions from the ACHARYA Educational Services team.",
   alternates: {
-    canonical: "/blog",
+    canonical: "./",
   },
   openGraph: {
     title: "Education Blog & Insights | ACHARYA Educational Services",
     description:
       "Explore insights on test prep, academics, competitions, and research to support students and families.",
     type: "website",
-    url: "/blog",
+    url: "./",
   },
   twitter: {
     title: "Education Blog & Insights | ACHARYA Educational Services",

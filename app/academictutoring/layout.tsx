@@ -6,14 +6,14 @@ export const metadata: Metadata = {
   description:
     "Personalized academic tutoring in math, science, and AP courses for middle and high school students. Improve grades, build strong foundations, and gain confidence.",
   alternates: {
-    canonical: "/academictutoring",
+    canonical: "./",
   },
   openGraph: {
     title: "Academic Tutoring | ACHARYA Educational Services",
     description:
       "1:1 and small-group academic tutoring in mathematics, physics, chemistry, and biology for middle and high school students.",
     type: "website",
-    url: "/academictutoring",
+    url: "./",
   },
   twitter: {
     title: "Academic Tutoring | ACHARYA Educational Services",

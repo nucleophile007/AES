@@ -36,12 +36,12 @@ export const metadata: Metadata = {
   ],
   category: "education",
   alternates: {
-    canonical: "/",
+    canonical: "./",
   },
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: siteUrl,
+    url: "./",
     title: siteName,
     description: defaultDescription,
     siteName,

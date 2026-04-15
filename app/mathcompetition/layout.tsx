@@ -6,14 +6,14 @@ export const metadata: Metadata = {
   description:
     "Prepare for AMC 8/10/12, AIME, MathCounts and other competitive math contests with structured problem-solving coaching and expert guidance.",
   alternates: {
-    canonical: "/mathcompetition",
+    canonical: "./",
   },
   openGraph: {
     title: "Math Competition Training | ACHARYA Educational Services",
     description:
       "Competition-focused math coaching to help motivated students excel in US math contests and olympiads.",
     type: "website",
-    url: "/mathcompetition",
+    url: "./",
   },
   twitter: {
     title: "Math Competition Training | ACHARYA Educational Services",
