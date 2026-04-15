@@ -4,6 +4,7 @@ import Chatbot from "@/components/home/Chatbot";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import RegistrationCloseButton from "@/components/events/RegistrationCloseButton";
+import type { Metadata } from "next";
 
 const EVENT_FORMS: Record<string, { title: string; viewUrl: string }> = {
   "math-league": {
@@ -22,6 +23,42 @@ const EVENT_FORMS: Record<string, { title: string; viewUrl: string }> = {
       "https://docs.google.com/forms/d/e/1FAIpQLScADaWPXsKAeOw6Ryve0OuRyh1INZDxHV5XG91j5CGwlxMfNg/viewform",
   },
 };
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const eventConfig = EVENT_FORMS[id];
+
+  if (!eventConfig) {
+    return {
+      title: "Event Registration | ACHARYA Educational Services",
+      description: "Register for ACHARYA Educational Services events and programs.",
+      alternates: { canonical: "./" },
+    };
+  }
+
+  return {
+    title: eventConfig.title,
+    description: `Register for ${eventConfig.title} through ACHARYA Educational Services.`,
+    alternates: {
+      canonical: "./",
+    },
+    openGraph: {
+      title: eventConfig.title,
+      description: `Complete your registration for ${eventConfig.title}.`,
+      type: "website",
+      url: "./",
+    },
+    twitter: {
+      title: eventConfig.title,
+      description: `Complete your registration for ${eventConfig.title}.`,
+      card: "summary_large_image",
+    },
+  };
+}
 
 function toEmbedUrl(viewUrl: string) {
   return `${viewUrl}${viewUrl.includes("?") ? "&" : "?"}embedded=true`;
