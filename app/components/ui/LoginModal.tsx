@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../../../contexts/AuthContext";
 import { toast } from "sonner";
 import {
@@ -20,7 +20,7 @@ interface LoginModalProps {
 }
 
 export function LoginModal({ children }: LoginModalProps) {
-  const { login } = useAuth();
+  const { login, user, isLoading: isAuthLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -37,6 +37,22 @@ export function LoginModal({ children }: LoginModalProps) {
       setShowPassword(false);
     }
   };
+
+  useEffect(() => {
+    if (!open || isAuthLoading || !user) {
+      return;
+    }
+
+    const redirectTo =
+      user.role === "teacher"
+        ? "/teacher-dashboard"
+        : user.role === "student"
+          ? "/student-dashboard"
+          : "/parent-dashboard";
+
+    setOpen(false);
+    window.location.href = redirectTo;
+  }, [open, isAuthLoading, user]);
 
   const handlePasswordResetRequest = async (e: React.FormEvent) => {
     e.preventDefault();
