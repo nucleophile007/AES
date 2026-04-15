@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   applicationName: siteName,
   title: {
     default: siteName,
-    template: `%s | ${siteName}`,
+    template: "%s",
   },
   description: defaultDescription,
   keywords: [
