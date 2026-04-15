@@ -152,25 +152,6 @@ export default function EventsPage() {
           </div>
         </div>
       </section>
-
-      <section className="theme-bg-dark pb-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8 lg:p-10 text-slate-200">
-            <div className="max-w-4xl">
-              <h2 className="text-2xl sm:text-3xl font-bold theme-text-light mb-4">
-                What to expect from an ACHARYA event
-              </h2>
-              <p className="theme-text-muted leading-7 mb-4">
-                Our events are built to be useful, not just promotional. Families can use this page to find competitions, research experiences, and summer intensives that are time-bound, clearly described, and easy to register for. Each listing is intentionally concise so you can compare the audience, schedule, and format at a glance before deciding whether to join.
-              </p>
-              <p className="theme-text-muted leading-7">
-                We also use events to help students test their strengths in a real setting. Some are designed to sharpen problem-solving under pressure, while others open doors to mentorship and longer-term learning pathways. If you are exploring the right next step for your student, this page gives you a practical overview of the options currently available.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section id="upcoming-events" className="py-12 md:py-14 theme-bg-medium relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 mb-10">

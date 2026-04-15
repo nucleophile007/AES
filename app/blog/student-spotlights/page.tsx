@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import Chatbot from "@/components/home/Chatbot";
@@ -63,12 +62,9 @@ function SpotlightCard({ spotlight, index }: { spotlight: Spotlight; index: numb
     <article className="group overflow-hidden rounded-3xl border border-slate-700/40 bg-slate-900/30 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-yellow-400/40 hover:shadow-[0_10px_30px_rgba(250,204,21,0.12)]">
       <div className="relative h-52 overflow-hidden bg-slate-900/70">
         {spotlight.studentPhoto ? (
-          <Image
+          <img
             src={spotlight.studentPhoto}
             alt={studentName}
-            fill
-            unoptimized
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
@@ -161,9 +157,6 @@ export default function StudentSpotlightsPage() {
             <p className="mt-4 text-lg sm:text-xl theme-text-muted max-w-2xl">
               Wondering what it&apos;s like to do a Acharya project? Hear directly from our students about their research journeys and passions.
             </p>
-            <p className="mt-4 text-base sm:text-lg theme-text-muted max-w-2xl leading-7">
-              These spotlights are short, student-centered stories that show what research can look like from the learner&apos;s point of view. Some students are just starting to explore a topic, while others are already presenting or publishing their work. The common thread is steady mentorship, curiosity, and the confidence that grows when a project becomes your own.
-            </p>
 
             {/* <div className="mt-6">
               <Link
@@ -200,20 +193,6 @@ export default function StudentSpotlightsPage() {
             ))}
           </div>
         )}
-      </section>
-
-      <section className="mx-auto w-full max-w-6xl px-4 pb-14 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-8 text-slate-200">
-          <h2 className="text-2xl font-bold theme-text-light mb-3">
-            What you can learn from these stories
-          </h2>
-          <p className="theme-text-muted leading-7 mb-3">
-            Student spotlights help families understand the process behind a research project, not just the final result. They can show how a topic was chosen, how the student stayed organized, how mentor feedback shaped the work, and what kind of confidence came from completing the project. That makes the page useful for students who are curious about research but not yet sure where to begin.
-          </p>
-          <p className="theme-text-muted leading-7">
-            If you are considering our research pathway, use these stories to compare experiences and see how students with different interests move through the program. They are a helpful complement to the main research page and the program descriptions on the site.
-          </p>
-        </div>
       </section>
 
       <Footer />

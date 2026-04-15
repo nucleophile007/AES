@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import TestimonialsPageClient from "./TestimonialsPageClient";
 
-export const revalidate = 3600;
+export const revalidate = 60;
 
 interface Testimonial {
   id: string;

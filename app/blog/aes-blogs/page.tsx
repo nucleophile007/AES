@@ -33,28 +33,12 @@ export default function AESBlogsPage() {
             <p className="text-lg theme-text-muted max-w-3xl mx-auto">
               Explore research insights, academic journeys, and creative perspectives from our talented student community
             </p>
-              <p className="text-base theme-text-muted max-w-3xl mx-auto mt-4 leading-7">
-                This section is meant for families who want practical explanations, not just headlines. We publish short guides and reflections on academic planning, student growth, and the habits that help learners stay consistent. The goal is to make complex topics easier to understand while still giving enough detail to be genuinely useful.
-              </p>
           </div>
         </div>
       </section>
 
       {/* Main Content */}
       <AESBlogsContent />
-        <section className="container mx-auto px-4 pb-10">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-8 text-slate-200 max-w-5xl mx-auto">
-            <h2 className="text-2xl font-bold theme-text-light mb-3">
-              Why these articles exist
-            </h2>
-            <p className="theme-text-muted leading-7 mb-3">
-              AES blogs are written to answer the kinds of questions parents and students ask before they commit to a program. That includes how to choose a tutor, how to think about long-term admissions strategy, how to approach competitions, and how to build productive study routines at home. Each post is meant to be a helpful reference rather than a sales pitch.
-            </p>
-            <p className="theme-text-muted leading-7">
-              If you are comparing program options, these posts can give you more context about the methods we use and why they matter. They also complement our testimonials and program pages by showing the reasoning behind our approach.
-            </p>
-          </div>
-        </section>
 
       {/* Footer */}
       <Footer />

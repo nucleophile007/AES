@@ -179,24 +179,6 @@ export default function ContactPage() {
               Share a question, request, or program inquiry, and our team will
               follow up.
             </p>
-            <p className="theme-text-muted mt-4 max-w-2xl leading-7">
-              Use this page if you want a direct answer about tutoring, SAT coaching, research, events, or whether a program is the right fit for your student. We keep the process simple: tell us what you are looking for, and we will route your message to the appropriate person so you do not have to guess where to start.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="theme-bg-dark pb-10">
-        <div className="container mx-auto px-4">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-8 text-slate-200 max-w-4xl">
-            <h2 className="text-2xl font-semibold theme-text-light mb-3">
-              What helps us respond faster
-            </h2>
-            <ul className="space-y-2 text-sm theme-text-muted list-disc pl-5 leading-7">
-              <li>Include the student&apos;s grade and the program you are interested in.</li>
-              <li>Share whether you want tutoring, admissions help, event information, or research guidance.</li>
-              <li>Tell us the best way to reach you so we can follow up without delay.</li>
-            </ul>
           </div>
         </div>
       </section>
