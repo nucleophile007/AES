@@ -1,23 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../../lib/prisma';
+import { getUserFromRequest, hasRole } from '../../../../lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    if (!hasRole(user, 'teacher')) {
+      return NextResponse.json({ error: 'Unauthorized access' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const teacherEmail = searchParams.get('teacherEmail');
+    const limitRaw = searchParams.get('limit');
+    const parsedLimit = limitRaw ? Number(limitRaw) : Number.NaN;
+    const limit = Number.isFinite(parsedLimit)
+      ? Math.min(Math.max(Math.floor(parsedLimit), 1), 200)
+      : null;
     
-    if (!teacherEmail) {
-      return NextResponse.json(
-        { error: 'Teacher email is required' },
-        { status: 400 }
-      );
+    if (teacherEmail && teacherEmail.toLowerCase() !== user.email.toLowerCase()) {
+      return NextResponse.json({ error: 'Unauthorized access' }, { status: 403 });
     }
 
     // First, find the teacher
     const teacher = await prisma.teacher.findUnique({
-      where: { email: teacherEmail },
+      where: { email: user.email },
       include: {
         students: {
+          ...(limit ? { take: limit } : {}),
+          orderBy: {
+            assignedAt: 'desc',
+          },
           include: {
             student: {
               include: {
@@ -70,6 +86,10 @@ export async function GET(request: NextRequest) {
         programs: teacher.programs
       },
       students: studentsWithPrograms
+    }, {
+      headers: {
+        'Cache-Control': 'private, max-age=15, stale-while-revalidate=30',
+      },
     });
 
   } catch (error) {

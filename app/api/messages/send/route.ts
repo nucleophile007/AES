@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     // Verify authentication
     console.log('[Send Message] Starting authentication...');
     const authStart = Date.now();
-    const user = getUserFromRequest(request);
+    const user = await getUserFromRequest(request);
     console.log(`[Send Message] Auth completed in ${Date.now() - authStart}ms`);
     
     if (!user) {
@@ -36,6 +36,86 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
     
+    if (senderRole === 'student' && recipientRole === 'teacher') {
+      const link = await prisma.teacherStudent.findFirst({
+        where: {
+          studentId: senderId,
+          teacherId: recipientId,
+        },
+        select: { id: true },
+      });
+
+      if (!link) {
+        return NextResponse.json({ success: false, error: 'Unauthorized recipient' }, { status: 403 });
+      }
+    } else if (senderRole === 'teacher' && recipientRole === 'student') {
+      const link = await prisma.teacherStudent.findFirst({
+        where: {
+          teacherId: senderId,
+          studentId: recipientId,
+        },
+        select: { id: true },
+      });
+
+      if (!link) {
+        return NextResponse.json({ success: false, error: 'Unauthorized recipient' }, { status: 403 });
+      }
+    } else if (senderRole === 'parent' && recipientRole === 'teacher') {
+      const parent = await prisma.parentAccount.findUnique({
+        where: { id: senderId },
+        select: { email: true },
+      });
+
+      if (!parent) {
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      }
+
+      const linked = await prisma.teacherStudent.findFirst({
+        where: {
+          teacherId: recipientId,
+          student: {
+            OR: [
+              { parentAccountId: senderId },
+              { parentEmail: parent.email },
+            ],
+          },
+        },
+        select: { id: true },
+      });
+
+      if (!linked) {
+        return NextResponse.json({ success: false, error: 'Unauthorized recipient' }, { status: 403 });
+      }
+    } else if (senderRole === 'teacher' && recipientRole === 'parent') {
+      const parent = await prisma.parentAccount.findUnique({
+        where: { id: recipientId },
+        select: { email: true },
+      });
+
+      if (!parent) {
+        return NextResponse.json({ success: false, error: 'Recipient not found' }, { status: 404 });
+      }
+
+      const linked = await prisma.teacherStudent.findFirst({
+        where: {
+          teacherId: senderId,
+          student: {
+            OR: [
+              { parentAccountId: recipientId },
+              { parentEmail: parent.email },
+            ],
+          },
+        },
+        select: { id: true },
+      });
+
+      if (!linked) {
+        return NextResponse.json({ success: false, error: 'Unauthorized recipient' }, { status: 403 });
+      }
+    } else {
+      return NextResponse.json({ success: false, error: 'Unsupported message routing' }, { status: 400 });
+    }
+
     // Create the message
     console.log('[Send Message] Creating message in database...');
     const dbStart = Date.now();

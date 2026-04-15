@@ -3,6 +3,10 @@ import { ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { r2Client, R2_CONFIG } from '../../../lib/r2';
 
 export async function GET(request: NextRequest) {
+  if (process.env.NODE_ENV !== 'development') {
+    return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
+  }
+
   try {
     console.log('=== Testing R2 Connection ===');
     console.log('R2_ENDPOINT:', process.env.R2_ENDPOINT);

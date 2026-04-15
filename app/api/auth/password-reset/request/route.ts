@@ -12,7 +12,20 @@ import {
   passwordResetRequestRateLimiter,
 } from "@/lib/rate-limiter";
 
-const DEFAULT_TTL_MINUTES = 60;
+function getPasswordResetTtlMinutes(): number {
+  const rawValue = process.env.PASSWORD_RESET_TTL_MINUTES;
+
+  if (!rawValue) {
+    throw new Error("PASSWORD_RESET_TTL_MINUTES is required.");
+  }
+
+  const parsed = Number(rawValue);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw new Error("PASSWORD_RESET_TTL_MINUTES must be a positive number.");
+  }
+
+  return Math.floor(parsed);
+}
 
 function sha256(input: string) {
   return crypto.createHash("sha256").update(input).digest("hex");
@@ -153,9 +166,7 @@ export async function POST(request: NextRequest) {
     const token = crypto.randomBytes(32).toString("hex");
     const tokenHash = sha256(token);
 
-    const ttlMinutes = Number(
-      process.env.PASSWORD_RESET_TTL_MINUTES ?? String(DEFAULT_TTL_MINUTES)
-    );
+    const ttlMinutes = getPasswordResetTtlMinutes();
     const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000);
 
     await prisma.passwordResetRequest.create({

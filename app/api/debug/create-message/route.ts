@@ -3,6 +3,13 @@ import { prisma } from "@/lib/prisma";
 
 // This route allows creating test messages to help debug the chat functionality
 export async function POST(request: NextRequest) {
+  if (process.env.NODE_ENV !== 'development') {
+    return NextResponse.json(
+      { success: false, error: 'This endpoint is only available in development mode' },
+      { status: 403 }
+    );
+  }
+
   try {
     // Parse request body
     const body = await request.json();
@@ -70,6 +77,13 @@ export async function POST(request: NextRequest) {
 
 // GET endpoint to show the form for creating messages
 export async function GET(request: NextRequest) {
+  if (process.env.NODE_ENV !== 'development') {
+    return NextResponse.json(
+      { success: false, error: 'This endpoint is only available in development mode' },
+      { status: 403 }
+    );
+  }
+
   try {
     // Get a list of teachers and students for the form
     const teachers = await prisma.teacher.findMany({
@@ -81,9 +95,7 @@ export async function GET(request: NextRequest) {
       select: { id: true, name: true, email: true },
       take: 10
     });
-    
-    await prisma.$disconnect();
-    
+
     const html = `
     <!DOCTYPE html>
     <html>

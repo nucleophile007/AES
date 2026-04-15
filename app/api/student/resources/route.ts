@@ -1,23 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getUserFromRequest, hasRole } from '../../../../lib/auth';
 
 // GET: Get resources available to a student
 export async function GET(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+    }
+
+    if (!hasRole(user, 'student')) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const studentEmail = searchParams.get('studentEmail');
     const assignmentId = searchParams.get('assignmentId');
 
-    if (!studentEmail) {
-      return NextResponse.json(
-        { success: false, error: 'Student email is required' },
-        { status: 400 }
-      );
+    if (studentEmail && studentEmail.toLowerCase() !== user.email.toLowerCase()) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
     }
 
     // Find student
     const student = await prisma.student.findUnique({
-      where: { email: studentEmail }
+      where: { email: user.email }
     });
 
     if (!student) {

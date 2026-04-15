@@ -4,6 +4,13 @@ import { prisma } from "@/lib/prisma";
 // This route will directly query messages in the database
 // to help debug why they're not appearing in the UI
 export async function GET(request: NextRequest) {
+  if (process.env.NODE_ENV !== 'development') {
+    return NextResponse.json(
+      { success: false, error: 'This endpoint is only available in development mode' },
+      { status: 403 }
+    );
+  }
+
   try {
     // Get query parameters
     const url = new URL(request.url);
@@ -101,7 +108,5 @@ export async function GET(request: NextRequest) {
       }, 
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

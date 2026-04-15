@@ -1,24 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getUserFromRequest, hasRole } from '../../../../lib/auth';
 
 // GET: List all assignments for a teacher
 export async function GET(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+    }
+
+    if (!hasRole(user, 'teacher')) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const teacherEmail = searchParams.get('teacherEmail');
     const program = searchParams.get('program');
     const grade = searchParams.get('grade');
+    const limitRaw = searchParams.get('limit');
+    const parsedLimit = limitRaw ? Number(limitRaw) : Number.NaN;
+    const limit = Number.isFinite(parsedLimit)
+      ? Math.min(Math.max(Math.floor(parsedLimit), 1), 200)
+      : null;
 
-    if (!teacherEmail) {
-      return NextResponse.json(
-        { success: false, error: 'Teacher email is required' },
-        { status: 400 }
-      );
+    if (teacherEmail && teacherEmail.toLowerCase() !== user.email.toLowerCase()) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
     }
 
     // Find teacher
     const teacher = await prisma.teacher.findUnique({
-      where: { email: teacherEmail }
+      where: { email: user.email }
     });
 
     if (!teacher) {
@@ -40,6 +52,7 @@ export async function GET(request: NextRequest) {
     // Get assignments with related data
     const assignments = await prisma.assignment.findMany({
       where: filters,
+      ...(limit ? { take: limit } : {}),
       include: {
         targetStudent: { // Include assigned student info
           select: { id: true, name: true, email: true }
@@ -70,12 +83,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       assignments
+    }, {
+      headers: {
+        'Cache-Control': 'private, max-age=15, stale-while-revalidate=30',
+      },
     });
 
   } catch (error) {
     console.error('Error fetching assignments:', error);
+    const details = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch assignments' },
+      {
+        success: false,
+        error: 'Failed to fetch assignments',
+        ...(process.env.NODE_ENV === 'development' ? { details } : {}),
+      },
       { status: 500 }
     );
   }
@@ -84,6 +106,15 @@ export async function GET(request: NextRequest) {
 // POST: Create new assignment
 export async function POST(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+    }
+
+    if (!hasRole(user, 'teacher')) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
     const data = await request.json();
     const {
       title,
@@ -95,7 +126,7 @@ export async function POST(request: NextRequest) {
       timezone, // Client's timezone for proper UTC storage
       totalPoints = 100,
       allowLateSubmission = false,
-      teacherEmail,
+      teacherEmail: teacherEmailParam,
       studentId, // Add studentId parameter
       studentIds = [],
       resourceIds = []
@@ -104,11 +135,15 @@ export async function POST(request: NextRequest) {
     // Default to America/Los_Angeles if no timezone provided (for backward compatibility)
     const dueDateTimezone = timezone || 'America/Los_Angeles';
 
-    if (!title || !description || !program || !subject || !dueDate || !teacherEmail) {
+    if (!title || !description || !program || !subject || !dueDate) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields' },
         { status: 400 }
       );
+    }
+
+    if (teacherEmailParam && String(teacherEmailParam).toLowerCase() !== user.email.toLowerCase()) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
     }
 
     const parsedDueDate = new Date(dueDate);
@@ -142,7 +177,7 @@ export async function POST(request: NextRequest) {
 
     // Find teacher
     const teacher = await prisma.teacher.findUnique({
-      where: { email: teacherEmail }
+      where: { email: user.email }
     });
 
     if (!teacher) {
@@ -254,6 +289,15 @@ export async function POST(request: NextRequest) {
 // PUT: Update assignment
 export async function PUT(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+    }
+
+    if (!hasRole(user, 'teacher')) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
     const data = await request.json();
     const {
       id,
@@ -267,20 +311,24 @@ export async function PUT(request: NextRequest) {
       totalPoints,
       allowLateSubmission,
       isActive,
-      teacherEmail,
+      teacherEmail: teacherEmailParam,
       resourceIds = []
     } = data;
 
-    if (!id || !teacherEmail) {
+    if (!id) {
       return NextResponse.json(
-        { success: false, error: 'Assignment ID and teacher email are required' },
+        { success: false, error: 'Assignment ID is required' },
         { status: 400 }
       );
     }
 
+    if (teacherEmailParam && String(teacherEmailParam).toLowerCase() !== user.email.toLowerCase()) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
     // Find teacher
     const teacher = await prisma.teacher.findUnique({
-      where: { email: teacherEmail }
+      where: { email: user.email }
     });
 
     if (!teacher) {
@@ -372,20 +420,33 @@ export async function PUT(request: NextRequest) {
 // DELETE: Delete assignment
 export async function DELETE(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+    }
+
+    if (!hasRole(user, 'teacher')) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const teacherEmail = searchParams.get('teacherEmail');
 
-    if (!id || !teacherEmail) {
+    if (!id) {
       return NextResponse.json(
-        { success: false, error: 'Assignment ID and teacher email are required' },
+        { success: false, error: 'Assignment ID is required' },
         { status: 400 }
       );
     }
 
+    if (teacherEmail && teacherEmail.toLowerCase() !== user.email.toLowerCase()) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
     // Find teacher
     const teacher = await prisma.teacher.findUnique({
-      where: { email: teacherEmail }
+      where: { email: user.email }
     });
 
     if (!teacher) {

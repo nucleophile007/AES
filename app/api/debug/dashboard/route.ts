@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
+  if (process.env.NODE_ENV !== 'development') {
+    return NextResponse.json(
+      { success: false, error: 'This endpoint is only available in development mode' },
+      { status: 403 }
+    );
+  }
+
   try {
     // Get counts for different entities
     const messageCount = await prisma.message.count();

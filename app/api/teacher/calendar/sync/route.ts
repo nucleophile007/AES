@@ -6,6 +6,7 @@ import {
   deleteCalendarEvent,
   refreshAccessToken,
 } from '@/lib/google-calendar';
+import { getUserFromRequest, hasRole } from '../../../../../lib/auth';
 
 interface SyncRequest {
   teacherEmail: string;
@@ -95,23 +96,33 @@ async function getValidAccessToken(teacher: {
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    if (!hasRole(user, 'teacher')) {
+      return NextResponse.json({ error: 'Unauthorized access' }, { status: 403 });
+    }
+
     const body: SyncRequest = await request.json();
     const { teacherEmail, action, scheduleId, eventData, timezone } = body;
     const fallbackGoogleEventId = eventData?.googleCalendarEventId?.trim() || null;
-    
+
     // Default to America/Los_Angeles if no timezone provided
     const userTimezone = timezone || 'America/Los_Angeles';
 
-    if (!teacherEmail || !action || !scheduleId) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+    if (!action || !scheduleId) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Get teacher with Google Calendar credentials
+    if (teacherEmail && teacherEmail.toLowerCase() !== user.email.toLowerCase()) {
+      return NextResponse.json({ error: 'Unauthorized access' }, { status: 403 });
+    }
+
+    // Get authenticated teacher with Google Calendar credentials
     const teacher = await prisma.teacher.findUnique({
-      where: { email: teacherEmail },
+      where: { email: user.email },
       select: {
         id: true,
         email: true,
@@ -123,20 +134,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (!teacher) {
-      return NextResponse.json(
-        { error: 'Teacher not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Teacher not found' }, { status: 404 });
     }
 
     if (!teacher.googleCalendarConnected) {
-      return NextResponse.json(
-        { error: 'Google Calendar not connected', needsConnection: true },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Google Calendar not connected' }, { status: 400 });
     }
 
-    // Get valid access token (refresh if needed)
     const accessToken = await getValidAccessToken(teacher);
     if (!accessToken) {
       return NextResponse.json(
@@ -163,10 +167,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!schedule && action !== 'delete') {
-      return NextResponse.json(
-        { error: 'Schedule not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Schedule not found' }, { status: 404 });
     }
 
     if (!schedule && action === 'delete' && !fallbackGoogleEventId) {
@@ -174,6 +175,10 @@ export async function POST(request: NextRequest) {
         { error: 'Schedule not found and Google event ID missing' },
         { status: 404 }
       );
+    }
+
+    if (schedule && schedule.teacherId !== teacher.id) {
+      return NextResponse.json({ error: 'Unauthorized access' }, { status: 403 });
     }
 
     let result;
@@ -194,7 +199,6 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        // Build datetime strings
         const startDateTime = `${date}T${startTime}:00`;
         const endDateTime = `${date}T${endTime}:00`;
 
@@ -217,7 +221,6 @@ export async function POST(request: NextRequest) {
           }
         );
 
-        // Store the Google Calendar event ID
         if (googleEventId) {
           await prisma.classSchedule.update({
             where: { id: scheduleId },
@@ -245,7 +248,6 @@ export async function POST(request: NextRequest) {
         }
 
         if (!schedule.googleCalendarEventId) {
-          // Event doesn't exist in Google Calendar, create it instead
           const startDateTime = `${date}T${startTime}:00`;
           const endDateTime = `${date}T${endTime}:00`;
 
@@ -277,7 +279,6 @@ export async function POST(request: NextRequest) {
 
           result = { success: true, googleEventId, created: true };
         } else {
-          // Update existing event
           const startDateTime = `${date}T${startTime}:00`;
           const endDateTime = `${date}T${endTime}:00`;
 
@@ -317,13 +318,11 @@ export async function POST(request: NextRequest) {
               googleEventId
             );
           } catch (error) {
-            // Event might already be deleted from Google Calendar
             console.warn('Error deleting from Google Calendar:', error);
           }
         }
 
         if (schedule?.googleCalendarEventId) {
-          // Clear the Google Calendar event ID when the schedule row still exists.
           await prisma.classSchedule.update({
             where: { id: scheduleId },
             data: { googleCalendarEventId: null },
@@ -340,10 +339,7 @@ export async function POST(request: NextRequest) {
       }
 
       default:
-        return NextResponse.json(
-          { error: 'Invalid action' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
     return NextResponse.json(result);
@@ -359,18 +355,24 @@ export async function POST(request: NextRequest) {
 // Bulk sync all existing events
 export async function PUT(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    if (!hasRole(user, 'teacher')) {
+      return NextResponse.json({ error: 'Unauthorized access' }, { status: 403 });
+    }
+
     const { teacherEmail, timezone } = await request.json();
     const userTimezone = timezone || 'America/Los_Angeles';
 
-    if (!teacherEmail) {
-      return NextResponse.json(
-        { error: 'Teacher email is required' },
-        { status: 400 }
-      );
+    if (teacherEmail && String(teacherEmail).toLowerCase() !== user.email.toLowerCase()) {
+      return NextResponse.json({ error: 'Unauthorized access' }, { status: 403 });
     }
 
     const teacher = await prisma.teacher.findUnique({
-      where: { email: teacherEmail },
+      where: { email: user.email },
       select: {
         id: true,
         email: true,
@@ -382,21 +384,14 @@ export async function PUT(request: NextRequest) {
     });
 
     if (!teacher || !teacher.googleCalendarConnected) {
-      return NextResponse.json(
-        { error: 'Google Calendar not connected' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Google Calendar not connected' }, { status: 400 });
     }
 
     const accessToken = await getValidAccessToken(teacher);
     if (!accessToken) {
-      return NextResponse.json(
-        { error: 'Unable to authenticate' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unable to authenticate' }, { status: 401 });
     }
 
-    // Get all schedules without Google Calendar event IDs
     const schedules = await prisma.classSchedule.findMany({
       where: {
         teacherId: teacher.id,

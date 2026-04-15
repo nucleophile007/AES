@@ -12,7 +12,7 @@ export function handlePrismaError(error: unknown) {
     // Log additional debug information
     console.error('Prisma client initialization error. Debug info:');
     console.error('- Node environment:', process.env.NODE_ENV);
-    console.error('- Prisma schema path:', process.env.PRISMA_SCHEMA_PATH || 'Not set');
+    console.error('- Prisma schema path:', process.env.PRISMA_SCHEMA_PATH);
     console.error('- Generated client path:', process.cwd() + '/generated/prisma');
     
     // Try to check if the generated files exist

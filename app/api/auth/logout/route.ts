@@ -1,15 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clearAuthCookie } from '../../../../lib/auth';
+import {
+  clearAuthCookie,
+  clearRefreshTokenCookie,
+  extractAuthToken,
+  extractRefreshToken,
+  revokeRefreshToken,
+  revokeToken,
+} from '../../../../lib/auth';
+import { getClientIP } from '@/lib/security-utils';
 
 export async function POST(request: NextRequest) {
   try {
+    const accessToken = extractAuthToken(request);
+    if (accessToken) {
+      await revokeToken(accessToken, {
+        ipAddress: getClientIP(request),
+        userAgent: request.headers.get('user-agent') || 'unknown',
+      });
+    }
+
+    const refreshToken = extractRefreshToken(request);
+    if (refreshToken) {
+      await revokeRefreshToken(refreshToken);
+    }
+
     const response = NextResponse.json({
       success: true,
       message: 'Logged out successfully'
     });
 
-    // Clear the auth cookie
+    // Clear auth cookies
     clearAuthCookie(response);
+    clearRefreshTokenCookie(response);
     
     return response;
   } catch (error) {

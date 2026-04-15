@@ -724,3 +724,18 @@ model Blog {
   @@index([published])
   @@index([studentId])
 }
+
+model RefreshToken {
+  id        Int       @id @default(autoincrement())
+  tokenHash String    @unique
+  userId    Int
+  userRole  String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now())
+
+  @@index([expiresAt])
+  @@index([revokedAt])
+  @@index([userId, userRole])
+}

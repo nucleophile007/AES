@@ -1,8 +1,13 @@
 import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
 import { sendMail } from "@/lib/mailer";
 
-const CONTACT_NOTIFICATION_TO =
-  process.env.CONTACT_NOTIFICATION_TO ?? "davk312@gmail.com";
+const CONTACT_NOTIFICATION_TO: string = (() => {
+  const value = process.env.CONTACT_NOTIFICATION_TO || process.env.ADMIN_EMAIL;
+  if (!value) {
+    throw new Error("CONTACT_NOTIFICATION_TO (or ADMIN_EMAIL) is required.");
+  }
+  return value;
+})();
 
 function formatField(value: string | null | undefined) {
   return value && value.trim().length > 0 ? value : "Not provided";

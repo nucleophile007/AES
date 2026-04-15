@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
+  if (process.env.NODE_ENV !== 'development') {
+    return NextResponse.json(
+      { success: false, error: 'This endpoint is only available in development mode' },
+      { status: 403 }
+    );
+  }
+
   try {
     // Get query parameters
     const url = new URL(request.url);
@@ -198,8 +205,6 @@ export async function GET(request: NextRequest) {
       { success: false, error: error.message || String(error) }, 
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 

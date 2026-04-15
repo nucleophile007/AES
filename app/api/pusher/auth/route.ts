@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPusherServer } from '../../../../lib/pusher-server';
+import { getUserFromRequest, hasRole } from '../../../../lib/auth';
+import { prisma } from '../../../../lib/prisma';
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getUserFromRequest(req);
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
     // Pusher sends data as form data, not JSON
     const formData = await req.text();
     const params = new URLSearchParams(formData);
@@ -27,9 +34,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // TODO: Add authentication check here
-    // Verify that the user is part of this conversation
-    // For now, we'll allow all authenticated requests
+    const studentId = parseInt(match[1], 10);
+    const teacherId = parseInt(match[2], 10);
+
+    if (hasRole(user, 'student')) {
+      if (user.id !== studentId) {
+        return NextResponse.json({ error: 'Unauthorized channel access' }, { status: 403 });
+      }
+    } else if (hasRole(user, 'teacher')) {
+      if (user.id !== teacherId) {
+        return NextResponse.json({ error: 'Unauthorized channel access' }, { status: 403 });
+      }
+    } else {
+      return NextResponse.json({ error: 'Unauthorized channel access' }, { status: 403 });
+    }
+
+    const link = await prisma.teacherStudent.findFirst({
+      where: { teacherId, studentId },
+      select: { id: true },
+    });
+
+    if (!link) {
+      return NextResponse.json({ error: 'Unauthorized channel access' }, { status: 403 });
+    }
     
     const pusher = getPusherServer();
     const authResponse = pusher.authorizeChannel(socket_id, channel_name);

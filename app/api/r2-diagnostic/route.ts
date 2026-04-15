@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { r2Client, R2_CONFIG } from '../../../lib/r2';
 
 export async function GET(request: NextRequest) {
+  if (process.env.NODE_ENV !== 'development') {
+    return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
+  }
+
   try {
     // Diagnostic information
     const diagnostic = {
@@ -22,7 +26,7 @@ export async function GET(request: NextRequest) {
         R2_ENDPOINT: process.env.R2_ENDPOINT 
           ? `${process.env.R2_ENDPOINT.substring(0, 30)}...${process.env.R2_ENDPOINT.substring(process.env.R2_ENDPOINT.length - 10)}`
           : 'NOT SET',
-        R2_BUCKET_NAME: process.env.R2_BUCKET_NAME || 'NOT SET',
+        R2_BUCKET_NAME: process.env.R2_BUCKET_NAME,
       },
       
       // R2 Client config

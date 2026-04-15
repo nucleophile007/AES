@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { verifySignatureAppRouter } from '@upstash/qstash/nextjs';
 import { prisma } from '@/lib/prisma';
 import { sendMail } from '@/lib/mailer';
 
@@ -372,4 +373,4 @@ async function handler(request: Request) {
   }
 }
 
-export const POST = handler;
+export const POST = verifySignatureAppRouter(handler);

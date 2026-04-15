@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   console.log('Student Schedule API called');
   try {
     // Check authentication
-    const user = getUserFromRequest(request);
+    const user = await getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
@@ -26,14 +26,45 @@ export async function GET(request: NextRequest) {
 
     let student;
     if (studentEmail) {
+      if (hasRole(user, 'student') && studentEmail.toLowerCase() !== user.email.toLowerCase()) {
+        return NextResponse.json({ error: 'Unauthorized access' }, { status: 403 });
+      }
+
       // Fetch student by email
       console.log('Searching for student with email:', studentEmail);
       student = await prisma.student.findUnique({
         where: { email: studentEmail },
         select: { id: true, name: true, email: true }
       });
+
+      if (hasRole(user, 'teacher') && student) {
+        const teacher = await prisma.teacher.findUnique({
+          where: { email: user.email },
+          select: { id: true }
+        });
+
+        if (!teacher) {
+          return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
+        }
+
+        const teacherStudentLink = await prisma.teacherStudent.findFirst({
+          where: {
+            teacherId: teacher.id,
+            studentId: student.id,
+          },
+          select: { id: true },
+        });
+
+        if (!teacherStudentLink) {
+          return NextResponse.json({ error: 'Unauthorized access' }, { status: 403 });
+        }
+      }
     } else {
       // Use authenticated user's email
+      if (!hasRole(user, 'student')) {
+        return NextResponse.json({ error: 'Student email is required' }, { status: 400 });
+      }
+
       console.log('Using authenticated user email:', user.email);
       student = await prisma.student.findUnique({
         where: { email: user.email },

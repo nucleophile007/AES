@@ -38,7 +38,26 @@ CREATE INDEX IF NOT EXISTS "FailedActivation_token_idx" ON "FailedActivation"("t
 CREATE INDEX IF NOT EXISTS "FailedActivation_ipAddress_idx" ON "FailedActivation"("ipAddress");
 CREATE INDEX IF NOT EXISTS "FailedActivation_createdAt_idx" ON "FailedActivation"("createdAt");
 
+-- Create RefreshToken table for rotating refresh sessions
+CREATE TABLE IF NOT EXISTS "RefreshToken" (
+    "id" SERIAL NOT NULL,
+    "tokenHash" TEXT NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "userRole" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "revokedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "RefreshToken_pkey" PRIMARY KEY ("id")
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "RefreshToken_tokenHash_key" ON "RefreshToken"("tokenHash");
+CREATE INDEX IF NOT EXISTS "RefreshToken_userId_userRole_idx" ON "RefreshToken"("userId", "userRole");
+CREATE INDEX IF NOT EXISTS "RefreshToken_expiresAt_idx" ON "RefreshToken"("expiresAt");
+CREATE INDEX IF NOT EXISTS "RefreshToken_revokedAt_idx" ON "RefreshToken"("revokedAt");
+
 -- Verify tables were created
 SELECT table_name FROM information_schema.tables 
 WHERE table_schema = 'public' 
-AND table_name IN ('SecurityLog', 'FailedActivation');
+AND table_name IN ('SecurityLog', 'FailedActivation', 'RefreshToken');

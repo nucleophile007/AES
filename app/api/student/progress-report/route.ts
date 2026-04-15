@@ -4,7 +4,7 @@ import { prisma } from '../../../../lib/prisma';
 
 export async function GET(request: NextRequest) {
     try {
-        const user = getUserFromRequest(request);
+        const user = await getUserFromRequest(request);
         if (!user) {
             return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
         }

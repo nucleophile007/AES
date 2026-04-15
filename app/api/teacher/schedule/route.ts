@@ -104,10 +104,40 @@ function getDayBoundsFromDateKey(dateKey: string): { gte: Date; lt: Date } {
 }
 
 function getReminderScheduledFor(classStartUtc: Date): Date | null {
-  const leadMinutes = Number(process.env.SCHEDULE_REMINDER_LEAD_MINUTES || '60');
-  const normalizedLeadMinutes = Number.isFinite(leadMinutes) && leadMinutes > 0 ? Math.floor(leadMinutes) : 60;
+  const leadMinutes = Number(process.env.SCHEDULE_REMINDER_LEAD_MINUTES);
+  if (!Number.isFinite(leadMinutes) || leadMinutes <= 0) {
+    throw new Error('SCHEDULE_REMINDER_LEAD_MINUTES must be a positive number.');
+  }
+  const normalizedLeadMinutes = Math.floor(leadMinutes);
   const reminderScheduledFor = new Date(classStartUtc.getTime() - normalizedLeadMinutes * 60 * 1000);
   return reminderScheduledFor.getTime() > Date.now() ? reminderScheduledFor : null;
+}
+
+function getAppBaseUrl(): string | null {
+  const rawBaseUrl =
+    process.env.APP_BASE_URL ||
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL;
+
+  if (!rawBaseUrl) return null;
+
+  const withProtocol = /^https?:\/\//i.test(rawBaseUrl)
+    ? rawBaseUrl
+    : `https://${rawBaseUrl}`;
+
+  try {
+    const parsed = new URL(withProtocol);
+    const hostname = parsed.hostname.toLowerCase();
+
+    // QStash cannot deliver to loopback/private local destinations.
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') {
+      return null;
+    }
+
+    return `${parsed.protocol}//${parsed.host}`.replace(/\/$/, '');
+  } catch {
+    return null;
+  }
 }
 
 async function updateMeetingMinutesRaw(args: {
@@ -296,6 +326,124 @@ async function sendScheduleInvitations(args: {
   };
 }
 
+async function sendRecurringScheduleSummary(args: {
+  teacherName: string;
+  teacherEmail: string;
+  title: string;
+  subject: string;
+  description?: string | null;
+  location?: string | null;
+  meetingLink?: string | null;
+  timezone: string;
+  recipients: Array<{ email: string; name: string }>;
+  groupName?: string;
+  recurrencePattern: string;
+  occurrences: Array<{ startUtc: Date; endUtc: Date }>;
+}) {
+  if (args.occurrences.length === 0) {
+    return { attempted: 0, sent: 0, failed: 0 };
+  }
+
+  const sortedOccurrences = [...args.occurrences].sort(
+    (first, second) => first.startUtc.getTime() - second.startUtc.getTime()
+  );
+
+  const firstOccurrence = sortedOccurrences[0];
+  const lastOccurrence = sortedOccurrences[sortedOccurrences.length - 1];
+
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: args.timezone,
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+
+  const patternLabelMap: Record<string, string> = {
+    daily: 'Daily',
+    weekly: 'Weekly',
+    biweekly: 'Bi-weekly',
+    monthly: 'Monthly',
+  };
+
+  const patternLabel = patternLabelMap[args.recurrencePattern] || args.recurrencePattern;
+  const firstWindow = `${formatter.format(firstOccurrence.startUtc)} - ${formatter.format(firstOccurrence.endUtc)}`;
+  const lastWindow = `${formatter.format(lastOccurrence.startUtc)} - ${formatter.format(lastOccurrence.endUtc)}`;
+  const previewLines = sortedOccurrences
+    .slice(0, 5)
+    .map((occurrence) => `${formatter.format(occurrence.startUtc)} - ${formatter.format(occurrence.endUtc)}`);
+  const hasMorePreviewItems = sortedOccurrences.length > previewLines.length;
+
+  const sendTasks = args.recipients.map((recipient) => {
+    const seriesPrefix = args.groupName ? `Group Class Series: ${args.groupName}` : 'Class Series Scheduled';
+    const subjectLine = `${seriesPrefix} • ${args.title}`;
+
+    const text = [
+      `Hi ${recipient.name},`,
+      '',
+      `${args.teacherName} scheduled a recurring class series.`,
+      `Class: ${args.title}`,
+      `Subject: ${args.subject}`,
+      `Pattern: ${patternLabel}`,
+      `Occurrences: ${sortedOccurrences.length}`,
+      `First Class: ${firstWindow} (${args.timezone})`,
+      `Last Class: ${lastWindow} (${args.timezone})`,
+      `Location: ${args.location || 'Online'}`,
+      args.groupName ? `Group: ${args.groupName}` : '',
+      args.meetingLink ? `Meeting Link: ${args.meetingLink}` : '',
+      args.description ? `Notes: ${args.description}` : '',
+      '',
+      'Upcoming classes:',
+      ...previewLines,
+      hasMorePreviewItems ? `...and ${sortedOccurrences.length - previewLines.length} more` : '',
+    ].filter(Boolean).join('\n');
+
+    const html = `
+      <div style="font-family:Arial,sans-serif;line-height:1.5;color:#0f172a;">
+        <p>Hi ${recipient.name},</p>
+        <p><strong>${args.teacherName}</strong> scheduled a recurring class series.</p>
+        <ul>
+          <li><strong>Class:</strong> ${args.title}</li>
+          <li><strong>Subject:</strong> ${args.subject}</li>
+          <li><strong>Pattern:</strong> ${patternLabel}</li>
+          <li><strong>Occurrences:</strong> ${sortedOccurrences.length}</li>
+          <li><strong>First Class:</strong> ${firstWindow} (${args.timezone})</li>
+          <li><strong>Last Class:</strong> ${lastWindow} (${args.timezone})</li>
+          <li><strong>Location:</strong> ${args.location || 'Online'}</li>
+          ${args.groupName ? `<li><strong>Group:</strong> ${args.groupName}</li>` : ''}
+        </ul>
+        ${args.meetingLink ? `<p><strong>Meeting Link:</strong> <a href="${args.meetingLink}">${args.meetingLink}</a></p>` : ''}
+        ${args.description ? `<p><strong>Notes:</strong><br/>${args.description}</p>` : ''}
+        <p><strong>Upcoming classes:</strong></p>
+        <ul>
+          ${previewLines.map((line) => `<li>${line}</li>`).join('')}
+          ${hasMorePreviewItems ? `<li>...and ${sortedOccurrences.length - previewLines.length} more</li>` : ''}
+        </ul>
+      </div>
+    `;
+
+    return sendMail({
+      to: recipient.email,
+      subject: subjectLine,
+      text,
+      html,
+      replyTo: args.teacherEmail,
+    });
+  });
+
+  const results = await Promise.allSettled(sendTasks);
+  const sent = results.filter((result) => result.status === 'fulfilled').length;
+  const failed = results.length - sent;
+
+  return {
+    attempted: results.length,
+    sent,
+    failed,
+  };
+}
+
 type ScheduleWithParticipants = {
   id: number;
   title: string;
@@ -356,6 +504,7 @@ async function sendScheduleStatusEmail(args: {
   type: 'rescheduled' | 'cancelled';
   schedule: ScheduleWithParticipants;
   previousStartUtc?: Date | null;
+  cancellationReason?: string | null;
 }) {
   const timezone = args.schedule.timezone || 'America/Los_Angeles';
   const recipients = getUniqueScheduleRecipients(args.schedule);
@@ -382,6 +531,7 @@ async function sendScheduleStatusEmail(args: {
         args.type === 'rescheduled' && previousStart ? `Previous Time: ${previousStart} (${timezone})` : '',
         `Location: ${args.schedule.location || 'Online'}`,
         args.schedule.group ? `Group: ${args.schedule.group.name}` : '',
+        args.type === 'cancelled' && args.cancellationReason ? `Reason: ${args.cancellationReason}` : '',
         args.schedule.meetingLink ? `Meeting Link: ${args.schedule.meetingLink}` : '',
       ].filter(Boolean).join('\n');
 
@@ -397,6 +547,7 @@ async function sendScheduleStatusEmail(args: {
             ${args.type === 'rescheduled' && previousStart ? `<li><strong>Previous Time:</strong> ${previousStart} (${timezone})</li>` : ''}
             <li><strong>Location:</strong> ${args.schedule.location || 'Online'}</li>
             ${args.schedule.group ? `<li><strong>Group:</strong> ${args.schedule.group.name}</li>` : ''}
+            ${args.type === 'cancelled' && args.cancellationReason ? `<li><strong>Reason:</strong> ${args.cancellationReason}</li>` : ''}
           </ul>
           ${args.schedule.meetingLink ? `<p><strong>Meeting Link:</strong> <a href="${args.schedule.meetingLink}">${args.schedule.meetingLink}</a></p>` : ''}
         </div>
@@ -561,7 +712,7 @@ async function sendPastMeetingMinutesUpdatedEmail(args: {
 export async function GET(request: NextRequest) {
   try {
     // Check authentication
-    const user = getUserFromRequest(request);
+    const user = await getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
@@ -573,6 +724,10 @@ export async function GET(request: NextRequest) {
 
     // Check if user is authorized (must be a teacher)
     if (!hasRole(user, 'teacher')) {
+      return NextResponse.json({ error: 'Unauthorized access' }, { status: 403 });
+    }
+
+    if (teacherEmail && teacherEmail.toLowerCase() !== user.email.toLowerCase()) {
       return NextResponse.json({ error: 'Unauthorized access' }, { status: 403 });
     }
 
@@ -699,7 +854,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const user = getUserFromRequest(request);
+    const user = await getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
@@ -771,21 +926,20 @@ export async function POST(request: NextRequest) {
 
     const nowUtc = new Date();
 
-    // Determine the teacher ID to use (from request or from user)
-    let finalTeacherId = teacherId;
-    if (!finalTeacherId) {
-      // Get the teacher ID from the authenticated user
-      const teacher = await prisma.teacher.findUnique({
-        where: { email: user.email },
-        select: { id: true }
-      });
+    const authenticatedTeacher = await prisma.teacher.findUnique({
+      where: { email: user.email },
+      select: { id: true }
+    });
 
-      if (!teacher) {
-        return NextResponse.json({ error: 'Teacher not found' }, { status: 404 });
-      }
-
-      finalTeacherId = teacher.id;
+    if (!authenticatedTeacher) {
+      return NextResponse.json({ error: 'Teacher not found' }, { status: 404 });
     }
+
+    if (teacherId && Number(teacherId) !== authenticatedTeacher.id) {
+      return NextResponse.json({ error: 'Unauthorized access' }, { status: 403 });
+    }
+
+    const finalTeacherId = authenticatedTeacher.id;
 
     // Check if student exists
     const student = await prisma.student.findUnique({
@@ -796,7 +950,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Student not found' }, { status: 404 });
     }
 
+    const teacherStudentLink = await prisma.teacherStudent.findFirst({
+      where: {
+        teacherId: finalTeacherId,
+        studentId: parsedStudentId,
+      },
+      select: { id: true },
+    });
+
+    if (!teacherStudentLink) {
+      return NextResponse.json({ error: 'You are not assigned to this student' }, { status: 403 });
+    }
+
     let schedule;
+    let recurringPatternUsed: string | null = null;
     let createdSchedulesForInvitation: Array<{
       id: number;
       title: string;
@@ -1071,7 +1238,26 @@ export async function POST(request: NextRequest) {
 
       const { isRecurring, recurrencePattern, recurrenceEndDate } = requestData;
 
-      if (isRecurring && recurrencePattern && recurrenceEndDate) {
+      if (isRecurring) {
+        const allowedRecurrencePatterns = new Set(['daily', 'weekly', 'biweekly', 'monthly']);
+
+        if (!recurrencePattern || !recurrenceEndDate) {
+          return NextResponse.json({
+            success: false,
+            error: 'Recurrence pattern and end date are required for recurring classes',
+          }, { status: 400 });
+        }
+
+        if (!allowedRecurrencePatterns.has(recurrencePattern)) {
+          return NextResponse.json({
+            success: false,
+            error: 'Invalid recurrence pattern',
+          }, { status: 400 });
+        }
+      }
+
+      if (isRecurring) {
+        recurringPatternUsed = recurrencePattern;
         // Handle recurrence
         const startDate = new Date(requestData.date);
         const endDate = new Date(recurrenceEndDate);
@@ -1120,7 +1306,9 @@ export async function POST(request: NextRequest) {
           }); // removed createdAt to let DB handle default or add if needed
 
           // Increment date based on pattern
-          if (recurrencePattern === 'weekly') {
+          if (recurrencePattern === 'daily') {
+            currentDate.setDate(currentDate.getDate() + 1);
+          } else if (recurrencePattern === 'weekly') {
             currentDate.setDate(currentDate.getDate() + 7);
           } else if (recurrencePattern === 'biweekly') {
             currentDate.setDate(currentDate.getDate() + 14);
@@ -1262,8 +1450,32 @@ export async function POST(request: NextRequest) {
 
     let invitationStatus: { attempted: number; sent: number; failed: number } | undefined;
     let reminderSchedulingStatus: { scheduled: number; skipped: number; failed: number } | undefined;
+    let backgroundProcessingQueued = false;
 
     if (!id && createdSchedulesForInvitation.length > 0) {
+      const appBaseUrl = getAppBaseUrl();
+      if (appBaseUrl) {
+        try {
+          const { qstash } = await import('@/lib/qstash');
+          await qstash.publishJSON({
+            url: `${appBaseUrl}/api/jobs/schedule-post-create`,
+            body: {
+              teacherId: finalTeacherId,
+              scheduleIds: createdSchedulesForInvitation.map((scheduleItem) => scheduleItem.id),
+              recurrencePattern: recurringPatternUsed,
+            },
+            // Avoid duplicate notification emails on job retries.
+            retries: 0,
+          });
+
+          backgroundProcessingQueued = true;
+        } catch (queueError) {
+          console.error('Failed to queue schedule post-create job, falling back to inline processing:', queueError);
+        }
+      }
+    }
+
+    if (!backgroundProcessingQueued && !id && createdSchedulesForInvitation.length > 0) {
       const teacherInfo = await prisma.teacher.findUnique({
         where: { id: finalTeacherId },
         select: { name: true, email: true }
@@ -1316,50 +1528,80 @@ export async function POST(request: NextRequest) {
       );
 
       if (teacherInfo && uniqueRecipients.length > 0) {
-        const inviteResults = await Promise.allSettled(
-          createdSchedulesForInvitation.map(async (createdSchedule) => {
+        const isRecurringSeries = Boolean(recurringPatternUsed && createdSchedulesForInvitation.length > 1);
+
+        if (isRecurringSeries) {
+          const occurrences = createdSchedulesForInvitation.map((createdSchedule) => {
             const startUtc = createdSchedule.startDateTime
               ? new Date(createdSchedule.startDateTime)
               : convertToUTC(createdSchedule.date.toISOString(), createdSchedule.startTime, clientTimezone);
-
             const endUtc = createdSchedule.endDateTime
               ? new Date(createdSchedule.endDateTime)
               : convertToUTC(createdSchedule.date.toISOString(), createdSchedule.endTime, clientTimezone);
 
-            return sendScheduleInvitations({
-              teacherName: teacherInfo.name || 'Your teacher',
-              teacherEmail: teacherInfo.email,
-              title: createdSchedule.title,
-              subject: createdSchedule.subject,
-              description: createdSchedule.description,
-              location: createdSchedule.location,
-              meetingLink: createdSchedule.meetingLink,
-              startUtc,
-              endUtc,
-              startTime: createdSchedule.startTime,
-              endTime: createdSchedule.endTime,
-              timezone: clientTimezone,
-              recipients: uniqueRecipients,
-              groupName,
-            });
-          })
-        );
+            return { startUtc, endUtc };
+          });
 
-        invitationStatus = inviteResults.reduce(
-          (acc, result) => {
-            if (result.status === 'fulfilled') {
-              acc.attempted += result.value.attempted;
-              acc.sent += result.value.sent;
-              acc.failed += result.value.failed;
-            }
-            return acc;
-          },
-          { attempted: 0, sent: 0, failed: 0 }
-        );
+          invitationStatus = await sendRecurringScheduleSummary({
+            teacherName: teacherInfo.name || 'Your teacher',
+            teacherEmail: teacherInfo.email,
+            title,
+            subject,
+            description,
+            location,
+            meetingLink,
+            timezone: clientTimezone,
+            recipients: uniqueRecipients,
+            groupName,
+            recurrencePattern: recurringPatternUsed || 'weekly',
+            occurrences,
+          });
+        } else {
+          const inviteResults = await Promise.allSettled(
+            createdSchedulesForInvitation.map(async (createdSchedule) => {
+              const startUtc = createdSchedule.startDateTime
+                ? new Date(createdSchedule.startDateTime)
+                : convertToUTC(createdSchedule.date.toISOString(), createdSchedule.startTime, clientTimezone);
+
+              const endUtc = createdSchedule.endDateTime
+                ? new Date(createdSchedule.endDateTime)
+                : convertToUTC(createdSchedule.date.toISOString(), createdSchedule.endTime, clientTimezone);
+
+              return sendScheduleInvitations({
+                teacherName: teacherInfo.name || 'Your teacher',
+                teacherEmail: teacherInfo.email,
+                title: createdSchedule.title,
+                subject: createdSchedule.subject,
+                description: createdSchedule.description,
+                location: createdSchedule.location,
+                meetingLink: createdSchedule.meetingLink,
+                startUtc,
+                endUtc,
+                startTime: createdSchedule.startTime,
+                endTime: createdSchedule.endTime,
+                timezone: clientTimezone,
+                recipients: uniqueRecipients,
+                groupName,
+              });
+            })
+          );
+
+          invitationStatus = inviteResults.reduce(
+            (acc, result) => {
+              if (result.status === 'fulfilled') {
+                acc.attempted += result.value.attempted;
+                acc.sent += result.value.sent;
+                acc.failed += result.value.failed;
+              }
+              return acc;
+            },
+            { attempted: 0, sent: 0, failed: 0 }
+          );
+        }
       }
     }
 
-    if (!id && createdSchedulesForInvitation.length > 0) {
+    if (!backgroundProcessingQueued && !id && createdSchedulesForInvitation.length > 0) {
       const reminderResults = await Promise.allSettled(
         createdSchedulesForInvitation.map(async (createdSchedule) => {
           const startUtc = createdSchedule.startDateTime
@@ -1412,7 +1654,8 @@ export async function POST(request: NextRequest) {
       success: true,
       schedule: formattedSchedule,
       invitationStatus,
-      reminderSchedulingStatus
+      reminderSchedulingStatus,
+      backgroundProcessingQueued,
     }, { status: id ? 200 : 201 });
 
   } catch (error: any) {
@@ -1427,8 +1670,18 @@ export async function POST(request: NextRequest) {
 // DELETE endpoint to remove a class schedule
 export async function DELETE(request: NextRequest) {
   try {
+        let cancellationReason: string | null = null;
+        try {
+          const body = await request.json();
+          if (typeof body?.reason === 'string' && body.reason.trim()) {
+            cancellationReason = body.reason.trim().slice(0, 500);
+          }
+        } catch {
+          // Ignore requests without JSON body.
+        }
+
     // Check authentication
-    const user = getUserFromRequest(request);
+    const user = await getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
@@ -1505,6 +1758,7 @@ export async function DELETE(request: NextRequest) {
     await sendScheduleStatusEmail({
       type: 'cancelled',
       schedule,
+      cancellationReason,
     });
 
     // Delete the schedule

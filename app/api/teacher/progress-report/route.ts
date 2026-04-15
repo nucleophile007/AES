@@ -4,7 +4,7 @@ import { prisma } from '../../../../lib/prisma';
 
 export async function GET(request: NextRequest) {
     try {
-        const user = getUserFromRequest(request);
+        const user = await getUserFromRequest(request);
         if (!user) {
             return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
         }
@@ -33,7 +33,20 @@ export async function GET(request: NextRequest) {
                 return NextResponse.json({ error: 'Report not found' }, { status: 404 });
             }
 
+            const teacher = await prisma.teacher.findUnique({
+                where: { email: user.email },
+                select: { id: true }
+            });
+
+            if (!teacher || report.teacherId !== teacher.id) {
+                return NextResponse.json({ error: 'Unauthorized access' }, { status: 403 });
+            }
+
             return NextResponse.json({ success: true, report });
+        }
+
+        if (teacherEmail && teacherEmail.toLowerCase() !== user.email.toLowerCase()) {
+            return NextResponse.json({ error: 'Unauthorized access' }, { status: 403 });
         }
 
         // Verify teacher
@@ -86,7 +99,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
-        const user = getUserFromRequest(request);
+        const user = await getUserFromRequest(request);
         if (!user || !hasRole(user, 'teacher')) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -116,6 +129,10 @@ export async function POST(request: NextRequest) {
 
         if (!studentId || !overallProgress) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
+        if (teacherEmail && String(teacherEmail).toLowerCase() !== user.email.toLowerCase()) {
+            return NextResponse.json({ error: 'Unauthorized access' }, { status: 403 });
         }
 
         // Find teacher
@@ -179,7 +196,7 @@ export async function POST(request: NextRequest) {
 // UPDATE existing progress report
 export async function PUT(request: NextRequest) {
     try {
-        const user = getUserFromRequest(request);
+        const user = await getUserFromRequest(request);
         if (!user || !hasRole(user, 'teacher')) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -253,7 +270,7 @@ export async function PUT(request: NextRequest) {
 // DELETE progress report
 export async function DELETE(request: NextRequest) {
     try {
-        const user = getUserFromRequest(request);
+        const user = await getUserFromRequest(request);
         if (!user || !hasRole(user, 'teacher')) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -301,7 +318,7 @@ export async function DELETE(request: NextRequest) {
 // PATCH - Publish/Unpublish progress report
 export async function PATCH(request: NextRequest) {
     try {
-        const user = getUserFromRequest(request);
+        const user = await getUserFromRequest(request);
         if (!user || !hasRole(user, 'teacher')) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }

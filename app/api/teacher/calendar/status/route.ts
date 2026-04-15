@@ -1,21 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { refreshAccessToken } from '@/lib/google-calendar';
+import { getUserFromRequest, hasRole } from '../../../../../lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    if (!hasRole(user, 'teacher')) {
+      return NextResponse.json({ error: 'Unauthorized access' }, { status: 403 });
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const teacherEmail = searchParams.get('email');
 
-    if (!teacherEmail) {
-      return NextResponse.json(
-        { error: 'Teacher email is required' },
-        { status: 400 }
-      );
+    if (teacherEmail && teacherEmail.toLowerCase() !== user.email.toLowerCase()) {
+      return NextResponse.json({ error: 'Unauthorized access' }, { status: 403 });
     }
 
     const teacher = await prisma.teacher.findUnique({
-      where: { email: teacherEmail },
+      where: { email: user.email },
       select: {
         email: true,
         googleCalendarConnected: true,
@@ -80,18 +87,24 @@ export async function GET(request: NextRequest) {
 // Disconnect Google Calendar
 export async function DELETE(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    if (!hasRole(user, 'teacher')) {
+      return NextResponse.json({ error: 'Unauthorized access' }, { status: 403 });
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const teacherEmail = searchParams.get('email');
 
-    if (!teacherEmail) {
-      return NextResponse.json(
-        { error: 'Teacher email is required' },
-        { status: 400 }
-      );
+    if (teacherEmail && teacherEmail.toLowerCase() !== user.email.toLowerCase()) {
+      return NextResponse.json({ error: 'Unauthorized access' }, { status: 403 });
     }
 
     await prisma.teacher.update({
-      where: { email: teacherEmail },
+      where: { email: user.email },
       data: {
         googleAccessToken: null,
         googleRefreshToken: null,

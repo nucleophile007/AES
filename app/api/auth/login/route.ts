@@ -1,11 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import { generateToken, setAuthCookie, type AuthUser } from '../../../../lib/auth';
+import {
+  generateToken,
+  issueRefreshToken,
+  setAuthCookie,
+  setRefreshTokenCookie,
+  type AuthUser,
+} from '../../../../lib/auth';
+import { getClientIP, isSecureConnection, timingSafeDelay } from '@/lib/security-utils';
+import { getRateLimitKey, loginRateLimiter } from '@/lib/rate-limiter';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    if (process.env.NODE_ENV === 'production' && !isSecureConnection(request)) {
+      return NextResponse.json(
+        { success: false, error: 'Secure connection required. Please use HTTPS.' },
+        { status: 403 }
+      );
+    }
+
+    const clientIP = getClientIP(request);
+    const rateLimitKey = getRateLimitKey('login', clientIP);
+    const { success, resetAt } = await loginRateLimiter.limit(rateLimitKey);
+
+    if (!success) {
+      await timingSafeDelay();
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Too many login attempts. Please try again later.',
+          resetAt,
+        },
+        { status: 429 }
+      );
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const email = String(body?.email ?? '').trim();
+    const password = String(body?.password ?? '');
 
     if (!email || !password) {
       return NextResponse.json(
@@ -29,10 +62,9 @@ export async function POST(request: NextRequest) {
 
     if (student) {
       // Check if password exists
-      console.log(student);
       if (!student.password) {
         return NextResponse.json(
-          { success: false, error: 'Accountt not activated. Please check your email for activation link.' },
+          { success: false, error: 'Account not activated. Please check your email for activation link.' },
           { status: 401 }
         );
       }
@@ -49,6 +81,7 @@ export async function POST(request: NextRequest) {
         };
 
         const token = generateToken(authUser);
+        const refreshToken = await issueRefreshToken(authUser);
 
         const responseData = {
           success: true,
@@ -72,12 +105,12 @@ export async function POST(request: NextRequest) {
             })),
             enrollments: student.enrollments
           },
-          token,
           redirectTo: '/student-dashboard'
         };
 
         const response = NextResponse.json(responseData);
         setAuthCookie(response, token);
+        setRefreshTokenCookie(response, refreshToken);
         return response;
       }
     }
@@ -98,7 +131,7 @@ export async function POST(request: NextRequest) {
       // Check if password exists
       if (!teacher.password) {
         return NextResponse.json(
-          { success: false, error: 'Accounttt not activated. Please check your email for activation link.' },
+          { success: false, error: 'Account not activated. Please check your email for activation link.' },
           { status: 401 }
         );
       }
@@ -115,6 +148,7 @@ export async function POST(request: NextRequest) {
         };
 
         const token = generateToken(authUser);
+        const refreshToken = await issueRefreshToken(authUser);
 
         const responseData = {
           success: true,
@@ -134,12 +168,12 @@ export async function POST(request: NextRequest) {
               program: link.program
             }))
           },
-          token,
           redirectTo: '/teacher-dashboard'
         };
 
         const response = NextResponse.json(responseData);
         setAuthCookie(response, token);
+        setRefreshTokenCookie(response, refreshToken);
         return response;
       }
     }
@@ -186,6 +220,7 @@ export async function POST(request: NextRequest) {
         };
 
         const token = generateToken(authUser);
+        const refreshToken = await issueRefreshToken(authUser);
 
         const responseData = {
           success: true,
@@ -204,44 +239,18 @@ export async function POST(request: NextRequest) {
               program: student.program
             }))
           },
-          token,
           redirectTo: '/parent-dashboard'
         };
 
         const response = NextResponse.json(responseData);
         setAuthCookie(response, token);
+        setRefreshTokenCookie(response, refreshToken);
         return response;
       }
     }
 
-    // Parent DEMO login (no DB) - fallback for testing
-    if (email === 'parent.demo@aes.com' && password === 'parent123') {
-      const authUser: AuthUser = {
-        id: 900000,
-        email,
-        name: 'Parent Demo',
-        role: 'parent'
-      };
-
-      const token = generateToken(authUser);
-      const responseData = {
-        success: true,
-        user: {
-          id: authUser.id,
-          name: authUser.name,
-          email: authUser.email,
-          type: 'parent',
-          role: 'parent'
-        },
-        token,
-        redirectTo: '/parent-dashboard'
-      };
-      const response = NextResponse.json(responseData);
-      setAuthCookie(response, token);
-      return response;
-    }
-
     // If we get here, credentials are invalid
+    await timingSafeDelay();
     return NextResponse.json(
       { success: false, error: 'Invalid email or password' },
       { status: 401 }
@@ -253,7 +262,5 @@ export async function POST(request: NextRequest) {
       { success: false, error: 'Internal server error' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

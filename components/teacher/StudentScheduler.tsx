@@ -224,6 +224,8 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
   const [isSyncingToGoogle, setIsSyncingToGoogle] = useState(false);
   const [googleSyncInFlightCount, setGoogleSyncInFlightCount] = useState(0);
   const [googleSyncFailureCount, setGoogleSyncFailureCount] = useState(0);
+  const [isDeleteReasonDialogOpen, setIsDeleteReasonDialogOpen] = useState(false);
+  const [deleteReasonInput, setDeleteReasonInput] = useState('');
   const [deletePendingEventId, setDeletePendingEventId] = useState<number | null>(null);
   const [isDeleteInProgress, setIsDeleteInProgress] = useState(false);
   const [editEventDate, setEditEventDate] = useState("");
@@ -358,18 +360,50 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
   const connectGoogleCalendar = async () => {
     try {
       setGoogleCalendarLoading(true);
-      const response = await fetch(`/api/auth/google-calendar?email=${encodeURIComponent(teacherEmail)}`);
-      const data = await response.json();
-      if (data.authUrl) {
-        window.location.href = data.authUrl;
-      } else {
-        throw new Error('Failed to get authorization URL');
+      const authHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      const localAuthToken = typeof window !== 'undefined' ? localStorage.getItem('auth-token') : null;
+      if (localAuthToken) {
+        authHeaders.Authorization = `Bearer ${localAuthToken}`;
       }
+
+      const requestAuthUrl = () =>
+        fetch(`/api/auth/google-calendar?email=${encodeURIComponent(teacherEmail)}`, {
+          credentials: 'include',
+          headers: authHeaders,
+        });
+
+      let response = await requestAuthUrl();
+
+      if (response.status === 401) {
+        const refreshResponse = await fetch('/api/auth/refresh', {
+          method: 'POST',
+          credentials: 'include',
+        });
+
+        if (refreshResponse.ok) {
+          response = await requestAuthUrl();
+        }
+      }
+
+      const data = await response.json().catch(() => ({ error: 'Unexpected server response' }));
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate authorization URL');
+      }
+
+      if (!data.authUrl || typeof data.authUrl !== 'string') {
+        throw new Error('Authorization URL not returned by server');
+      }
+
+      window.location.assign(data.authUrl);
     } catch (err) {
       console.error('Error connecting Google Calendar:', err);
       toast({
         title: "Error",
-        description: "Failed to connect Google Calendar. Please try again.",
+        description: err instanceof Error ? err.message : "Failed to connect Google Calendar. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -476,13 +510,30 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
     try {
       setIsSyncingToGoogle(true);
       const userTimezone = getUserTimezone();
-      const response = await fetch('/api/teacher/calendar/sync', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ teacherEmail, timezone: userTimezone }),
-      });
-      
-      const data = await response.json();
+      const requestBody = JSON.stringify({ teacherEmail, timezone: userTimezone });
+
+      const sendBulkSyncRequest = () =>
+        fetch('/api/teacher/calendar/sync', {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: requestBody,
+        });
+
+      let response = await sendBulkSyncRequest();
+
+      if (response.status === 401) {
+        const refreshResponse = await fetch('/api/auth/refresh', {
+          method: 'POST',
+          credentials: 'include',
+        });
+
+        if (refreshResponse.ok) {
+          response = await sendBulkSyncRequest();
+        }
+      }
+
+      const data = await response.json().catch(() => ({ error: 'Unexpected server response' }));
       if (response.ok) {
         setGoogleSyncFailureCount(0);
         toast({
@@ -490,7 +541,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
           description: `Synced ${data.synced} events to Google Calendar.${data.failed > 0 ? ` ${data.failed} failed.` : ''}`,
         });
       } else {
-        throw new Error(data.error);
+        throw new Error(data.error || 'Failed to sync events to Google Calendar.');
       }
     } catch (err) {
       console.error('Error bulk syncing:', err);
@@ -683,6 +734,20 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
       return;
     }
 
+    if (isRecurring) {
+      const allowedRecurrencePatterns = new Set(['daily', 'weekly', 'biweekly', 'monthly']);
+
+      if (!recurrencePattern || !recurrenceEndDate) {
+        setError('Please select a recurrence pattern and recurrence end date');
+        return;
+      }
+
+      if (!allowedRecurrencePatterns.has(recurrencePattern)) {
+        setError('Please select a valid recurrence pattern');
+        return;
+      }
+    }
+
     const selectedGroup = selectedGroupId
       ? studentGroups.find((group) => group.id.toString() === selectedGroupId)
       : null;
@@ -715,6 +780,12 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
         schedulerActionInFlightRef.current = false;
         return;
       }
+
+      setIsAddEventDialogOpen(false);
+      toast({
+        title: isRecurring ? 'Creating recurring classes...' : 'Creating class...',
+        description: 'You can continue using the dashboard while we process this.',
+      });
 
       const eventData = {
         title: eventTitle,
@@ -749,6 +820,13 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
 
       if (!response.ok) {
         throw new Error(responseData.error || 'Failed to save event');
+      }
+
+      if (responseData.backgroundProcessingQueued) {
+        toast({
+          title: isRecurring ? 'Recurring classes created' : 'Class created',
+          description: 'Invitations and reminders are being processed in the background.',
+        });
       }
 
       // Sync to Google Calendar if connected
@@ -856,14 +934,20 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
 
     } catch (err: any) {
       console.error('Error saving event:', err);
+      setIsAddEventDialogOpen(true);
       setError(err.message || 'Failed to save event');
+      toast({
+        title: 'Failed to create class',
+        description: err?.message || 'Please review details and try again.',
+        variant: 'destructive',
+      });
     } finally {
       setIsSubmitting(false);
       schedulerActionInFlightRef.current = false;
     }
   };
 
-  const handleDeleteEvent = async () => {
+  const handleDeleteEvent = async (reason?: string) => {
     if (schedulerActionInFlightRef.current || isSubmitting || isDeleteBusy) {
       if (isDeleteBusy) {
         toast({
@@ -902,7 +986,8 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
-            }
+            },
+            body: JSON.stringify({ reason: reason?.trim() || null }),
           });
 
           if (!response.ok) {
@@ -1000,6 +1085,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
     setEditEventMeetingLink(event.meetingLink || '');
     setEditEventMeetingMinutes(event.meetingMinutes || '');
     setIsEditingEvent(false);
+    setDeleteReasonInput('');
     setSelectedEvent(event);
     setIsViewEventDialogOpen(true);
   };
@@ -1877,204 +1963,222 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
 
       {/* Add Event Dialog */}
       <Dialog open={isAddEventDialogOpen} onOpenChange={handleAddDialogOpenChange}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add New Class</DialogTitle>
+        <DialogContent className="w-[96vw] max-w-6xl border border-slate-200 bg-white p-0 shadow-2xl">
+          <DialogHeader className="space-y-2 border-b border-slate-200 bg-gradient-to-r from-slate-50 via-white to-slate-50 px-6 py-4">
+            <DialogTitle className="text-2xl font-semibold tracking-tight text-slate-900">Add New Class</DialogTitle>
+            <p className="text-sm text-slate-600">Set details, schedule timing, and optional recurrence in one place.</p>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="event-group" className="text-right">
-                Assign to Group
-              </Label>
-              <Select
-                value={selectedGroupId || "none"}
-                onValueChange={(value) => setSelectedGroupId(value === "none" ? "" : value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a group (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No group (use selected student)</SelectItem>
-                  {studentGroups.map((group) => (
-                    <SelectItem key={group.id} value={group.id.toString()}>
-                      {group.name} ({group.members.length})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="px-6 py-4">
+            <div className="space-y-4">
+              <section className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Class Details</p>
+                <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
+                  <div>
+                    <Label htmlFor="event-group" className="text-slate-700">
+                      Assign to Group
+                    </Label>
+                    <Select
+                      value={selectedGroupId || "none"}
+                      onValueChange={(value) => setSelectedGroupId(value === "none" ? "" : value)}
+                    >
+                      <SelectTrigger className="mt-1 h-10 bg-white">
+                        <SelectValue placeholder="Select a group (optional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No group (use selected student)</SelectItem>
+                        {studentGroups.map((group) => (
+                          <SelectItem key={group.id} value={group.id.toString()}>
+                            {group.name} ({group.members.length})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-            <div>
-              <Label htmlFor="event-title" className="text-right">
-                Title <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="event-title"
-                value={eventTitle}
-                onChange={(e) => setEventTitle(e.target.value)}
-                placeholder="e.g. Math Session"
-                className="mt-1"
-              />
-            </div>
+                  <div>
+                    <Label htmlFor="event-title" className="text-slate-700">
+                      Title <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="event-title"
+                      value={eventTitle}
+                      onChange={(e) => setEventTitle(e.target.value)}
+                      placeholder="e.g. Math Session"
+                      className="mt-1 h-10 bg-white"
+                    />
+                  </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="event-subject" className="text-right">
-                  Subject <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="event-subject"
-                  value={eventSubject}
-                  onChange={(e) => setEventSubject(e.target.value)}
-                  placeholder="e.g. Mathematics"
-                  className="mt-1"
-                />
+                  <div>
+                    <Label htmlFor="event-subject" className="text-slate-700">
+                      Subject <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="event-subject"
+                      value={eventSubject}
+                      onChange={(e) => setEventSubject(e.target.value)}
+                      placeholder="e.g. Mathematics"
+                      className="mt-1 h-10 bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="event-location" className="text-slate-700">
+                      Location
+                    </Label>
+                    <Input
+                      id="event-location"
+                      value={eventLocation}
+                      onChange={(e) => setEventLocation(e.target.value)}
+                      placeholder="e.g. Room 101, Online"
+                      className="mt-1 h-10 bg-white"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Label htmlFor="event-meeting-link" className="text-slate-700">
+                      Meeting Link
+                    </Label>
+                    <Input
+                      id="event-meeting-link"
+                      value={eventMeetingLink}
+                      onChange={(e) => setEventMeetingLink(e.target.value)}
+                      placeholder="e.g. https://zoom.us/j/123456789"
+                      className="mt-1 h-10 bg-white"
+                    />
+                  </div>
+
+                  <div className="md:col-span-3">
+                    <Label htmlFor="event-description" className="text-slate-700">
+                      Description
+                    </Label>
+                    <Textarea
+                      id="event-description"
+                      value={eventDescription}
+                      onChange={(e) => setEventDescription(e.target.value)}
+                      placeholder="Add details about this class..."
+                      className="mt-1 min-h-[90px] bg-white"
+                    />
+                  </div>
+                </div>
+              </section>
+
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
+                <section className="rounded-xl border border-slate-200 bg-white p-4 xl:col-span-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Schedule</p>
+                  <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
+                    <div>
+                      <Label htmlFor="event-date" className="text-slate-700">
+                        Date <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="event-date"
+                        type="date"
+                        value={eventStartDate}
+                        onChange={(e) => handleEventDateChange(e.target.value)}
+                        min={todayLocalDate}
+                        className="mt-1 h-10"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="event-start-time" className="text-slate-700">
+                        Start Time <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="event-start-time"
+                        type="time"
+                        value={eventStartTime}
+                        onChange={(e) => handleEventStartTimeChange(e.target.value)}
+                        min={minStartTime}
+                        step={60}
+                        className="mt-1 h-10"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="event-end-time" className="text-slate-700">
+                        End Time <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="event-end-time"
+                        type="time"
+                        value={eventEndTime}
+                        onChange={(e) => handleEventEndTimeChange(e.target.value)}
+                        min={eventStartTime || minStartTime}
+                        step={60}
+                        className="mt-1 h-10"
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <section className="rounded-xl border border-slate-200 bg-white p-4 xl:col-span-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Recurrence</p>
+                    <div className="flex items-center space-x-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2">
+                      <Checkbox
+                        id="event-recurring"
+                        checked={isRecurring}
+                        onCheckedChange={(checked) => setIsRecurring(checked as boolean)}
+                      />
+                      <label
+                        htmlFor="event-recurring"
+                        className="text-sm font-medium leading-none text-slate-700"
+                      >
+                        Recurring
+                      </label>
+                    </div>
+                  </div>
+
+                  {isRecurring && (
+                    <div className="mt-3 grid grid-cols-1 gap-3">
+                      <div>
+                        <Label htmlFor="recurrence-pattern" className="text-slate-700">
+                          Recurrence Pattern
+                        </Label>
+                        <Select
+                          value={recurrencePattern}
+                          onValueChange={setRecurrencePattern}
+                        >
+                          <SelectTrigger className="mt-1 h-10">
+                            <SelectValue placeholder="Select pattern" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="daily">Daily</SelectItem>
+                            <SelectItem value="weekly">Weekly</SelectItem>
+                            <SelectItem value="biweekly">Bi-weekly</SelectItem>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="recurrence-end-date" className="text-slate-700">
+                          Recurrence End Date
+                        </Label>
+                        <Input
+                          id="recurrence-end-date"
+                          type="date"
+                          value={recurrenceEndDate}
+                          onChange={(e) => setRecurrenceEndDate(e.target.value)}
+                          className="mt-1 h-10"
+                          min={eventStartDate}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </section>
               </div>
-
-              <div>
-                <Label htmlFor="event-location" className="text-right">
-                  Location
-                </Label>
-                <Input
-                  id="event-location"
-                  value={eventLocation}
-                  onChange={(e) => setEventLocation(e.target.value)}
-                  placeholder="e.g. Room 101, Online"
-                  className="mt-1"
-                />
-              </div>
             </div>
-
-            <div>
-              <Label htmlFor="event-meeting-link" className="text-right">
-                Meeting Link
-              </Label>
-              <Input
-                id="event-meeting-link"
-                value={eventMeetingLink}
-                onChange={(e) => setEventMeetingLink(e.target.value)}
-                placeholder="e.g. https://zoom.us/j/123456789"
-                className="mt-1"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="event-date" className="text-right">
-                Date <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="event-date"
-                type="date"
-                value={eventStartDate}
-                onChange={(e) => handleEventDateChange(e.target.value)}
-                min={todayLocalDate}
-                className="mt-1"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="event-start-time" className="text-right">
-                  Start Time <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="event-start-time"
-                  type="time"
-                  value={eventStartTime}
-                  onChange={(e) => handleEventStartTimeChange(e.target.value)}
-                  min={minStartTime}
-                  step={60}
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="event-end-time" className="text-right">
-                  End Time <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="event-end-time"
-                  type="time"
-                  value={eventEndTime}
-                  onChange={(e) => handleEventEndTimeChange(e.target.value)}
-                  min={eventStartTime || minStartTime}
-                  step={60}
-                  className="mt-1"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="event-description" className="text-right">
-                Description
-              </Label>
-              <Textarea
-                id="event-description"
-                value={eventDescription}
-                onChange={(e) => setEventDescription(e.target.value)}
-                placeholder="Add details about this class..."
-                className="mt-1"
-              />
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="event-recurring"
-                checked={isRecurring}
-                onCheckedChange={(checked) => setIsRecurring(checked as boolean)}
-              />
-              <label
-                htmlFor="event-recurring"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                This is a recurring class
-              </label>
-            </div>
-
-            {isRecurring && (
-              <div>
-                <Label htmlFor="recurrence-pattern" className="text-right">
-                  Recurrence Pattern
-                </Label>
-                <Select
-                  value={recurrencePattern}
-                  onValueChange={setRecurrencePattern}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select pattern" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="biweekly">Bi-weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {isRecurring && (
-              <div>
-                <Label htmlFor="recurrence-end-date" className="text-right">
-                  Recurrence End Date
-                </Label>
-                <Input
-                  id="recurrence-end-date"
-                  type="date"
-                  value={recurrenceEndDate}
-                  onChange={(e) => setRecurrenceEndDate(e.target.value)}
-                  className="mt-1"
-                  min={eventStartDate} // Cannot end before start date
-                />
-              </div>
-            )}
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => handleAddDialogOpenChange(false)}>
+          <DialogFooter className="border-t border-slate-200 bg-white px-6 py-3">
+            <Button variant="outline" className="h-10 px-5" onClick={() => handleAddDialogOpenChange(false)}>
               Cancel
             </Button>
             <Button
+              className="h-10 px-5"
               onClick={handleAddEvent}
               disabled={isActionLocked}
             >
@@ -2108,10 +2212,55 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog
+        open={isDeleteReasonDialogOpen}
+        onOpenChange={(open) => {
+          setIsDeleteReasonDialogOpen(open);
+          if (!open) {
+            setDeleteReasonInput('');
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Class</AlertDialogTitle>
+            <AlertDialogDescription>
+              You can optionally add a cancellation reason. This reason will be included in the cancellation email.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-2">
+            <Label htmlFor="delete-class-reason">Reason (optional)</Label>
+            <Textarea
+              id="delete-class-reason"
+              value={deleteReasonInput}
+              onChange={(e) => setDeleteReasonInput(e.target.value)}
+              placeholder="e.g. Teacher unavailable due to exam duty"
+              className="min-h-[90px]"
+              maxLength={500}
+            />
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isActionLocked}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setIsDeleteReasonDialogOpen(false);
+                void handleDeleteEvent(deleteReasonInput);
+                setDeleteReasonInput('');
+              }}
+              disabled={isActionLocked}
+            >
+              Delete Class
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* View/Edit Event Dialog */}
       <Dialog open={isViewEventDialogOpen} onOpenChange={setIsViewEventDialogOpen}>
         {selectedEvent && (
-          <DialogContent className="max-w-md">
+          <DialogContent className="w-[95vw] max-w-4xl max-h-[92vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{selectedEvent.title}</DialogTitle>
             </DialogHeader>
@@ -2359,7 +2508,10 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
                   </Button>
                   <Button
                     variant="destructive"
-                    onClick={handleDeleteEvent}
+                    onClick={() => {
+                      setDeleteReasonInput('');
+                      setIsDeleteReasonDialogOpen(true);
+                    }}
                     disabled={isActionLocked}
                   >
                     {isActionLocked ? (

@@ -1,22 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getUserFromRequest, hasRole } from '../../../../../lib/auth';
 
 // GET: Teacher views student submissions sent to them
 export async function GET(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+    }
+
+    if (!hasRole(user, 'teacher')) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const teacherEmail = searchParams.get('teacherEmail');
 
-    if (!teacherEmail) {
-      return NextResponse.json(
-        { success: false, error: 'Teacher email is required' },
-        { status: 400 }
-      );
+    if (teacherEmail && teacherEmail.toLowerCase() !== user.email.toLowerCase()) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
     }
 
     // Find teacher
     const teacher = await prisma.teacher.findUnique({
-      where: { email: teacherEmail }
+      where: { email: user.email }
     });
 
     if (!teacher) {
@@ -72,8 +79,13 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Error fetching student submissions for teacher:', error);
+    const details = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch submissions' },
+      {
+        success: false,
+        error: 'Failed to fetch submissions',
+        ...(process.env.NODE_ENV === 'development' ? { details } : {}),
+      },
       { status: 500 }
     );
   }
@@ -82,6 +94,15 @@ export async function GET(request: NextRequest) {
 // POST: Teacher adds a remark to a student submission
 export async function POST(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+    }
+
+    if (!hasRole(user, 'teacher')) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
     const data = await request.json();
     const {
       teacherEmail,
@@ -89,16 +110,20 @@ export async function POST(request: NextRequest) {
       remark
     } = data;
 
-    if (!teacherEmail || !submissionId || !remark) {
+    if (!submissionId || !remark) {
       return NextResponse.json(
-        { success: false, error: 'Teacher email, submission ID, and remark are required' },
+        { success: false, error: 'Submission ID and remark are required' },
         { status: 400 }
       );
     }
 
+    if (teacherEmail && String(teacherEmail).toLowerCase() !== user.email.toLowerCase()) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
     // Find teacher
     const teacher = await prisma.teacher.findUnique({
-      where: { email: teacherEmail }
+      where: { email: user.email }
     });
 
     if (!teacher) {

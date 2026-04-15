@@ -5,7 +5,7 @@ import { prisma } from "../../../../lib/prisma";
 export async function GET(request: NextRequest) {
   try {
     // Check authentication
-    const user = getUserFromRequest(request);
+    const user = await getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
@@ -94,7 +94,5 @@ export async function GET(request: NextRequest) {
       { error: "Failed to fetch student progress" },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

@@ -1,25 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getUserFromRequest, hasRole } from '../../../../lib/auth';
 
 // GET: View submissions for teacher's assignments
 export async function GET(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+    }
+
+    if (!hasRole(user, 'teacher')) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const teacherEmail = searchParams.get('teacherEmail');
     const assignmentId = searchParams.get('assignmentId');
     const status = searchParams.get('status'); // submitted, graded, pending
     const studentId = searchParams.get('studentId');
 
-    if (!teacherEmail) {
-      return NextResponse.json(
-        { success: false, error: 'Teacher email is required' },
-        { status: 400 }
-      );
+    if (teacherEmail && teacherEmail.toLowerCase() !== user.email.toLowerCase()) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
     }
 
     // Find teacher
     const teacher = await prisma.teacher.findUnique({
-      where: { email: teacherEmail }
+      where: { email: user.email }
     });
 
     if (!teacher) {
@@ -115,19 +122,32 @@ export async function GET(request: NextRequest) {
 // PUT: Grade submission
 export async function PUT(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+    }
+
+    if (!hasRole(user, 'teacher')) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
     const data = await request.json();
     const {
       submissionId,
       grade,
       feedback,
-      teacherEmail
+      teacherEmail: teacherEmailParam
     } = data;
 
-    if (!submissionId || !teacherEmail) {
+    if (!submissionId) {
       return NextResponse.json(
-        { success: false, error: 'Submission ID and teacher email are required' },
+        { success: false, error: 'Submission ID is required' },
         { status: 400 }
       );
+    }
+
+    if (teacherEmailParam && String(teacherEmailParam).toLowerCase() !== user.email.toLowerCase()) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
     }
 
     if (grade !== null && (grade < 0 || grade > 100)) {
@@ -139,7 +159,7 @@ export async function PUT(request: NextRequest) {
 
     // Find teacher
     const teacher = await prisma.teacher.findUnique({
-      where: { email: teacherEmail }
+      where: { email: user.email }
     });
 
     if (!teacher) {
@@ -221,22 +241,35 @@ export async function PUT(request: NextRequest) {
 // POST: Bulk grade multiple submissions
 export async function POST(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+    }
+
+    if (!hasRole(user, 'teacher')) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
     const data = await request.json();
     const {
       submissions, // Array of {submissionId, grade, feedback}
-      teacherEmail
+      teacherEmail: teacherEmailParam
     } = data;
 
-    if (!submissions || !Array.isArray(submissions) || !teacherEmail) {
+    if (!submissions || !Array.isArray(submissions)) {
       return NextResponse.json(
-        { success: false, error: 'Submissions array and teacher email are required' },
+        { success: false, error: 'Submissions array is required' },
         { status: 400 }
       );
     }
 
+    if (teacherEmailParam && String(teacherEmailParam).toLowerCase() !== user.email.toLowerCase()) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
     // Find teacher
     const teacher = await prisma.teacher.findUnique({
-      where: { email: teacherEmail }
+      where: { email: user.email }
     });
 
     if (!teacher) {

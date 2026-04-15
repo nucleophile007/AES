@@ -1,20 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getUserFromRequest, hasRole } from '../../../../lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+    }
+
+    if (!hasRole(user, 'teacher')) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const teacherEmail = searchParams.get('teacherEmail');
 
-    if (!teacherEmail) {
-      return NextResponse.json(
-        { success: false, error: 'Teacher email is required' },
-        { status: 400 }
-      );
+    if (teacherEmail && teacherEmail.toLowerCase() !== user.email.toLowerCase()) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
     }
 
     const teacher = await prisma.teacher.findUnique({
-      where: { email: teacherEmail },
+      where: { email: user.email },
       select: { id: true, name: true, email: true }
     });
 
@@ -56,25 +63,41 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching student groups:', error);
+    const details = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch groups' },
+      {
+        success: false,
+        error: 'Failed to fetch groups',
+        ...(process.env.NODE_ENV === 'development' ? { details } : {}),
+      },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const data = await request.json();
-    const { teacherEmail, name, studentIds } = data;
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+    }
 
-    if (!teacherEmail || !name || !Array.isArray(studentIds) || studentIds.length === 0) {
+    if (!hasRole(user, 'teacher')) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
+    const data = await request.json();
+    const { teacherEmail: teacherEmailParam, name, studentIds } = data;
+
+    if (!name || !Array.isArray(studentIds) || studentIds.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'Teacher email, group name, and at least one student are required' },
+        { success: false, error: 'Group name and at least one student are required' },
         { status: 400 }
       );
+    }
+
+    if (teacherEmailParam && String(teacherEmailParam).toLowerCase() !== user.email.toLowerCase()) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
     }
 
     const trimmedName = String(name).trim();
@@ -86,7 +109,7 @@ export async function POST(request: NextRequest) {
     }
 
     const teacher = await prisma.teacher.findUnique({
-      where: { email: teacherEmail },
+      where: { email: user.email },
       select: { id: true }
     });
 
@@ -170,11 +193,14 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error creating student group:', error);
+    const details = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { success: false, error: 'Failed to create group' },
+      {
+        success: false,
+        error: 'Failed to create group',
+        ...(process.env.NODE_ENV === 'development' ? { details } : {}),
+      },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

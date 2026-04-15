@@ -1,6 +1,6 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AuthUser } from '../../lib/auth';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import type { AuthUser } from '../../lib/auth';
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -16,29 +16,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check if user is authenticated on app load
-  useEffect(() => {
-    checkAuth();
+  const tryRefreshSession = useCallback(async () => {
+    const refreshResponse = await fetch('/api/auth/refresh', {
+      method: 'POST',
+      credentials: 'include'
+    });
+
+    return refreshResponse.ok;
   }, []);
 
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
-      const response = await fetch('/api/auth/me', {
+      let response = await fetch('/api/auth/me', {
         credentials: 'include'
       });
+
+      if (response.status === 401) {
+        const refreshed = await tryRefreshSession();
+        if (refreshed) {
+          response = await fetch('/api/auth/me', {
+            credentials: 'include'
+          });
+        }
+      }
       
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
           setUser(data.user);
         }
+      } else {
+        setUser(null);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [tryRefreshSession]);
+
+  // Check if user is authenticated on app load
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const login = async (email: string, password: string) => {
     try {

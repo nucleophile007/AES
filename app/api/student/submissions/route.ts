@@ -1,25 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { deleteR2File, extractFileKeyFromUrl } from '../../../../lib/r2';
+import { getUserFromRequest, hasRole } from '../../../../lib/auth';
 
 // GET: Fetch submissions for a student or specific submission
 export async function GET(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+    }
+
+    if (!hasRole(user, 'student')) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const studentEmail = searchParams.get('studentEmail');
     const assignmentId = searchParams.get('assignmentId');
     const submissionId = searchParams.get('submissionId');
 
-    if (!studentEmail) {
-      return NextResponse.json(
-        { success: false, error: 'Student email is required' },
-        { status: 400 }
-      );
+    if (studentEmail && studentEmail.toLowerCase() !== user.email.toLowerCase()) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
     }
 
     // Find student
     const student = await prisma.student.findUnique({
-      where: { email: studentEmail }
+      where: { email: user.email }
     });
 
     if (!student) {
@@ -107,6 +114,15 @@ export async function GET(request: NextRequest) {
 // POST: Create new submission
 export async function POST(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+    }
+
+    if (!hasRole(user, 'student')) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
     const data = await request.json();
     const {
       studentEmail,
@@ -117,11 +133,15 @@ export async function POST(request: NextRequest) {
       fileSize
     } = data;
 
-    if (!studentEmail || !assignmentId) {
+    if (!assignmentId) {
       return NextResponse.json(
-        { success: false, error: 'Student email and assignment ID are required' },
+        { success: false, error: 'Assignment ID is required' },
         { status: 400 }
       );
+    }
+
+    if (studentEmail && String(studentEmail).toLowerCase() !== user.email.toLowerCase()) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
     }
 
     if (!content && !fileUrl) {
@@ -133,7 +153,7 @@ export async function POST(request: NextRequest) {
 
     // Find student
     const student = await prisma.student.findUnique({
-      where: { email: studentEmail }
+      where: { email: user.email }
     });
 
     if (!student) {
@@ -220,6 +240,15 @@ export async function POST(request: NextRequest) {
 // PUT: Update/resubmit submission
 export async function PUT(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+    }
+
+    if (!hasRole(user, 'student')) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
     const data = await request.json();
     const {
       studentEmail,
@@ -230,16 +259,20 @@ export async function PUT(request: NextRequest) {
       fileSize
     } = data;
 
-    if (!studentEmail || !assignmentId) {
+    if (!assignmentId) {
       return NextResponse.json(
-        { success: false, error: 'Student email and assignment ID are required' },
+        { success: false, error: 'Assignment ID is required' },
         { status: 400 }
       );
     }
 
+    if (studentEmail && String(studentEmail).toLowerCase() !== user.email.toLowerCase()) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
     // Find student
     const student = await prisma.student.findUnique({
-      where: { email: studentEmail }
+      where: { email: user.email }
     });
 
     if (!student) {

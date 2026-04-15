@@ -1,32 +1,46 @@
 import type { MetadataRoute } from "next";
+import { buildAbsoluteUrl } from "@/lib/seo";
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://www.example.com";
+type StaticRoute = {
+  path: string;
+  changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"];
+  priority: number;
+};
+
+const staticRoutes: StaticRoute[] = [
+  { path: "", changeFrequency: "daily", priority: 1.0 },
+  { path: "/about", changeFrequency: "monthly", priority: 0.8 },
+  { path: "/satcoaching", changeFrequency: "weekly", priority: 0.9 },
+  { path: "/academictutoring", changeFrequency: "weekly", priority: 0.9 },
+  { path: "/collegeprep", changeFrequency: "weekly", priority: 0.9 },
+  { path: "/mathcompetition", changeFrequency: "weekly", priority: 0.85 },
+  { path: "/researchprogram", changeFrequency: "weekly", priority: 0.85 },
+  { path: "/research", changeFrequency: "weekly", priority: 0.8 },
+  { path: "/events", changeFrequency: "weekly", priority: 0.8 },
+  { path: "/blog", changeFrequency: "weekly", priority: 0.8 },
+  { path: "/blog/aes-blogs", changeFrequency: "weekly", priority: 0.75 },
+  {
+    path: "/blog/student-spotlights",
+    changeFrequency: "weekly",
+    priority: 0.75,
+  },
+  { path: "/aes-champions", changeFrequency: "monthly", priority: 0.75 },
+  { path: "/aes-creatorverse", changeFrequency: "monthly", priority: 0.75 },
+  { path: "/aes-explorers", changeFrequency: "monthly", priority: 0.75 },
+  { path: "/locations", changeFrequency: "monthly", priority: 0.75 },
+  { path: "/testimonials", changeFrequency: "monthly", priority: 0.75 },
+  { path: "/summer-program/register", changeFrequency: "weekly", priority: 0.75 },
+  { path: "/book-session", changeFrequency: "daily", priority: 0.95 },
+  { path: "/contact", changeFrequency: "monthly", priority: 0.8 },
+];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const routes = [
-    "",
-    "/about",
-    "/satcoaching",
-    "/academictutoring",
-    "/collegeprep",
-    "/mathcompetition",
-    "/researchprogram",
-    "/events",
-    "/blog",
-    "/aes-champions",
-    "/aes-creatorverse",
-    "/locations",
-    "/book-session",
-    "/contact",
-  ];
-
   const now = new Date();
 
-  return routes.map((route) => ({
-    url: new URL(route, siteUrl).toString(),
+  return staticRoutes.map((route) => ({
+    url: buildAbsoluteUrl(route.path),
     lastModified: now,
-    changeFrequency: "weekly",
-    priority: route === "" ? 1.0 : 0.7,
+    changeFrequency: route.changeFrequency,
+    priority: route.priority,
   }));
 }

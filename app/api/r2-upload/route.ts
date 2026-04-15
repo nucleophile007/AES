@@ -2,11 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { r2Client, R2_CONFIG, generateFileKey, validateFile, getR2PublicUrl } from '../../../lib/r2';
+import { getUserFromRequest, hasRole } from '../../../lib/auth';
+import { prisma } from '../../../lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+    }
+
+    if (!hasRole(user, 'student')) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
     const body = await request.json();
     const { studentId, assignmentId, fileName, fileType, fileSize } = body;
+
+    const parsedStudentId = Number(studentId);
+    const parsedAssignmentId = Number(assignmentId);
 
     // Validate required fields
     if (!studentId || !assignmentId || !fileName || !fileType || !fileSize) {
@@ -17,6 +31,35 @@ export async function POST(request: NextRequest) {
         },
         { status: 400 }
       );
+    }
+
+    if (!Number.isFinite(parsedStudentId) || parsedStudentId !== user.id) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
+    if (!Number.isFinite(parsedAssignmentId)) {
+      return NextResponse.json({ success: false, error: 'Invalid assignmentId' }, { status: 400 });
+    }
+
+    const assignment = await prisma.assignment.findUnique({
+      where: { id: parsedAssignmentId },
+      select: { id: true, teacherId: true },
+    });
+
+    if (!assignment) {
+      return NextResponse.json({ success: false, error: 'Assignment not found' }, { status: 404 });
+    }
+
+    const link = await prisma.teacherStudent.findFirst({
+      where: {
+        studentId: parsedStudentId,
+        teacherId: assignment.teacherId,
+      },
+      select: { id: true },
+    });
+
+    if (!link) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
     }
 
     // Create a mock file object for validation
@@ -40,7 +83,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate unique file key for R2
-    const fileKey = generateFileKey(studentId, assignmentId, fileName);
+    const fileKey = generateFileKey(parsedStudentId, parsedAssignmentId, fileName);
 
     // Create the PutObject command for R2
     const putObjectCommand = new PutObjectCommand({
@@ -51,7 +94,7 @@ export async function POST(request: NextRequest) {
       // Optional: Add metadata
       Metadata: {
         studentId: studentId.toString(),
-        assignmentId: assignmentId.toString(),
+        assignmentId: parsedAssignmentId.toString(),
         originalFileName: fileName,
         uploadedAt: new Date().toISOString(),
       },
@@ -95,6 +138,11 @@ export async function POST(request: NextRequest) {
 // Optional: GET endpoint to check if a file exists in R2
 export async function GET(request: NextRequest) {
   try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const fileKey = searchParams.get('fileKey');
 

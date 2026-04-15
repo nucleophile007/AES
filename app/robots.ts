@@ -1,7 +1,18 @@
 import type { MetadataRoute } from "next";
+import { getSiteUrl } from "@/lib/seo";
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://www.example.com";
+const siteUrl = getSiteUrl();
+
+const blockedPaths = [
+  "/admin",
+  "/teacher-dashboard",
+  "/student-dashboard",
+  "/parent-dashboard",
+  "/debug",
+  "/auth/",
+  "/reset-password",
+  "/api/",
+];
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -9,16 +20,15 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: ["/"],
-        disallow: [
-          "/admin",
-          "/teacher-dashboard",
-          "/student-dashboard",
-          "/parent-dashboard",
-          "/debug",
-          "/api/",
-        ],
+        disallow: blockedPaths,
+      },
+      {
+        userAgent: ["GPTBot", "Google-Extended", "CCBot"],
+        allow: ["/"],
+        disallow: blockedPaths,
       },
     ],
+    host: siteUrl,
     sitemap: `${siteUrl}/sitemap.xml`,
   };
 }

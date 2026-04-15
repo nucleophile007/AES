@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTokensFromCode } from '@/lib/google-calendar';
 import { prisma } from '@/lib/prisma';
+import { verifySignedOAuthState } from '@/lib/oauth-state';
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,12 +23,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Decode state to get teacher email
-    let teacherEmail: string;
-    try {
-      const stateData = JSON.parse(Buffer.from(state, 'base64').toString());
-      teacherEmail = stateData.email;
-    } catch {
+    // Verify signed state and decode teacher identity.
+    const stateData = verifySignedOAuthState(state);
+    if (!stateData || stateData.role !== 'teacher') {
       return NextResponse.redirect(
         new URL('/teacher-dashboard?tab=schedule&calendar_error=invalid_state', request.url)
       );
@@ -42,19 +40,25 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Preserve existing refresh token if Google does not return a new one.
-    // Google often omits refresh_token on subsequent consent flows.
-    const existingTeacher = await prisma.teacher.findUnique({
-      where: { email: teacherEmail },
-      select: { googleRefreshToken: true },
+    const teacher = await prisma.teacher.findUnique({
+      where: { id: stateData.userId },
+      select: { id: true, email: true, googleRefreshToken: true },
     });
 
+    if (!teacher || teacher.email.toLowerCase() !== stateData.email.toLowerCase()) {
+      return NextResponse.redirect(
+        new URL('/teacher-dashboard?tab=schedule&calendar_error=invalid_state', request.url)
+      );
+    }
+
+    // Preserve existing refresh token if Google does not return a new one.
+    // Google often omits refresh_token on subsequent consent flows.
     // Update teacher with Google Calendar tokens
     await prisma.teacher.update({
-      where: { email: teacherEmail },
+      where: { id: teacher.id },
       data: {
         googleAccessToken: tokens.access_token,
-        googleRefreshToken: tokens.refresh_token || existingTeacher?.googleRefreshToken || null,
+        googleRefreshToken: tokens.refresh_token || teacher.googleRefreshToken || null,
         googleTokenExpiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
         googleCalendarConnected: true,
       },

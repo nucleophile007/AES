@@ -1,7 +1,10 @@
 import nodemailer from "nodemailer";
 
 function getSmtpPort(): number {
-  const raw = process.env.SMTP_PORT ?? "587";
+  const raw = process.env.SMTP_PORT;
+  if (!raw) {
+    throw new Error("SMTP_PORT is required");
+  }
   const port = Number(raw);
   if (!Number.isFinite(port)) {
     throw new Error("Invalid SMTP_PORT");

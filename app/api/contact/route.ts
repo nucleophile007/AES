@@ -4,7 +4,23 @@ import { sendMail } from "@/lib/mailer";
 import { qstash } from "@/lib/qstash";
 import { contactFormSchema } from "@/lib/validation/contact";
 
-const CONTACT_NOTIFICATION_TO = process.env.CONTACT_NOTIFICATION_TO ?? "davk312@gmail.com";
+const CONTACT_NOTIFICATION_TO: string = (() => {
+  const value = process.env.CONTACT_NOTIFICATION_TO || process.env.ADMIN_EMAIL;
+  if (!value) {
+    throw new Error("CONTACT_NOTIFICATION_TO (or ADMIN_EMAIL) is required.");
+  }
+  return value;
+})();
+
+function getAppBaseUrl(): string {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL;
+
+  if (!baseUrl) {
+    throw new Error("NEXT_PUBLIC_BASE_URL or NEXT_PUBLIC_SITE_URL is required.");
+  }
+
+  return baseUrl.replace(/\/$/, "");
+}
 
 function formatField(value: string | null | undefined) {
   return value && value.trim().length > 0 ? value : "Not provided";
@@ -58,11 +74,7 @@ export async function POST(request: Request) {
     });
 
     const preferredContact = parsed.data.preferredContact ?? "email";
-    const appBaseUrl = (
-      process.env.NEXT_PUBLIC_BASE_URL ||
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      "http://localhost:3000"
-    ).replace(/\/$/, "");
+    const appBaseUrl = getAppBaseUrl();
 
     let notificationEmailQueued = false;
     let notificationEmailSent = false;
