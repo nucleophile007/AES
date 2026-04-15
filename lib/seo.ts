@@ -20,7 +20,24 @@ export const coreServices: ServiceLink[] = [
 
 function normalizeUrl(value: string): string {
   const withProtocol = /^https?:\/\//i.test(value) ? value : `https://${value}`;
-  return withProtocol.replace(/\/$/, "");
+  const parsed = new URL(withProtocol);
+
+  const isLocalHost =
+    parsed.hostname === "localhost" ||
+    parsed.hostname === "127.0.0.1" ||
+    parsed.hostname === "::1";
+
+  if (!isLocalHost) {
+    parsed.protocol = "https:";
+  }
+
+  // Canonicalize apex to www for this production domain to avoid sitemap redirects.
+  if (parsed.hostname === "acharyaes.com") {
+    parsed.hostname = "www.acharyaes.com";
+  }
+
+  const normalized = parsed.toString();
+  return normalized.replace(/\/$/, "");
 }
 
 export function getSiteUrl(): string {

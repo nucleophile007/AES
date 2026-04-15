@@ -1,5 +1,7 @@
 User-agent: *
 Allow: /
+Allow: /api/testimonials/before-after
+Allow: /api/testimonials/parent-testimonials
 Disallow: /admin
 Disallow: /teacher-dashboard
 Disallow: /student-dashboard
@@ -11,6 +13,8 @@ Disallow: /api/
 
 User-agent: GPTBot
 Allow: /
+Allow: /api/testimonials/before-after
+Allow: /api/testimonials/parent-testimonials
 Disallow: /admin
 Disallow: /teacher-dashboard
 Disallow: /student-dashboard
@@ -20,4 +24,4 @@ Disallow: /auth/
 Disallow: /reset-password
 Disallow: /api/
 
-Sitemap: /sitemap.xml
+Sitemap: https://www.acharyaes.com/sitemap.xml

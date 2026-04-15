@@ -14,17 +14,22 @@ const blockedPaths = [
   "/api/",
 ];
 
+const allowedApiPaths = [
+  "/api/testimonials/before-after",
+  "/api/testimonials/parent-testimonials",
+];
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
         userAgent: "*",
-        allow: ["/"],
+        allow: ["/", ...allowedApiPaths],
         disallow: blockedPaths,
       },
       {
         userAgent: ["GPTBot", "Google-Extended", "CCBot"],
-        allow: ["/"],
+        allow: ["/", ...allowedApiPaths],
         disallow: blockedPaths,
       },
     ],
