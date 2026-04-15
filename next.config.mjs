@@ -17,6 +17,21 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'acharyaes.com',
+          },
+        ],
+        destination: 'https://www.acharyaes.com/:path*',
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
