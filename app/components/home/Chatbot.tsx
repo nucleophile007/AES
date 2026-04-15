@@ -20,7 +20,7 @@ const ROUTES = [
   { label: "College Prep", href: "/collegeprep", kw: ["college", "admission", "essay", "essays", "application", "uachieve"] },
   { label: "Academic Tutoring", href: "/academictutoring", kw: ["tutor", "tutoring", "math", "physics", "chem", "bio", "subject", "academic"] },
   { label: "Research Programs", href: "/aes-explorers", kw: ["research", "paper", "publication", "mentor", "project"] },
-  { label: "Math Competitions", href: "/mathcompetition", kw: ["competition", "olympiad", "amc", "aime", "contest"] },
+  { label: "AES Champions", href: "/aes-champions", kw: ["competition", "olympiad", "amc", "aime", "contest"] },
   { label: "AES Explorers", href: "/aes-explorers", kw: ["explorer", "explorers"] },
   { label: "Book a Session", href: "/book-session", kw: ["book", "consult", "session", "call", "meeting"] },
 ];

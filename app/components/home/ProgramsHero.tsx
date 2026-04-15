@@ -66,7 +66,7 @@ export function ProgramsHero() {
       content: <ChampionsContent />,
       thumbnail: "/program-image/acharyaes-math-hero.jpg",
       label: "AES Champions",
-      href: "/mathcompetition",
+      href: "/aes-champions",
       className: "col-span-1",
     },
     {

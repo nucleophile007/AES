@@ -13,8 +13,8 @@ export const defaultOgImage = "/hero.png";
 export const coreServices: ServiceLink[] = [
   { name: "Academic Tutoring", path: "/academictutoring" },
   { name: "SAT Coaching", path: "/satcoaching" },
-  { name: "Math Competition Training", path: "/mathcompetition" },
-  { name: "Student Research Programs", path: "/researchprogram" },
+  { name: "Math Competition Training", path: "/aes-champions" },
+  { name: "Student Research Programs", path: "/aes-explorers" },
   { name: "College Preparation", path: "/collegeprep" },
 ];
 

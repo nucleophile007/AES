@@ -189,7 +189,7 @@ export default function EventsPage() {
                     </div>
                     <Button asChild className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold group-hover:shadow-lg group-hover:shadow-yellow-400/50 transition-all" disabled={event.availableSpots === 0}>
                       {(() => {
-                        const href = event.registerHref || "/summer-program/register";
+                        const href = event.registerHref || "/book-session";
                         const label = event.availableSpots === 0 ? 'Event Full' : 'Register Now';
                         if (isExternalLink(href)) {
                           return (

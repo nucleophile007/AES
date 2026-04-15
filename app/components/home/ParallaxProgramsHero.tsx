@@ -20,7 +20,7 @@ const HERO_IMAGES = [
   },
   {
     src: "/program-image/acharyaes-math-hero.jpg",
-    href: "/mathcompetition",
+    href: "/aes-champions",
     alt: "Math competition program",
     label: "AES Champions",
   },

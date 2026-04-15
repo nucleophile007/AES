@@ -60,7 +60,7 @@ const programs: Program[] = [
     image: "/program-image/mathimage.png",
     buttonText: "Learn More",
     buttonVariant: "default",
-    href: "/mathcompetition"
+    href: "/aes-champions"
   },
 ]
 

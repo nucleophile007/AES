@@ -13,8 +13,6 @@ const staticRoutes: StaticRoute[] = [
   { path: "/satcoaching", changeFrequency: "weekly", priority: 0.9 },
   { path: "/academictutoring", changeFrequency: "weekly", priority: 0.9 },
   { path: "/collegeprep", changeFrequency: "weekly", priority: 0.9 },
-  { path: "/mathcompetition", changeFrequency: "weekly", priority: 0.85 },
-  { path: "/researchprogram", changeFrequency: "weekly", priority: 0.85 },
   { path: "/research", changeFrequency: "weekly", priority: 0.8 },
   { path: "/events", changeFrequency: "weekly", priority: 0.8 },
   { path: "/blog", changeFrequency: "weekly", priority: 0.8 },
@@ -27,9 +25,7 @@ const staticRoutes: StaticRoute[] = [
   { path: "/aes-champions", changeFrequency: "monthly", priority: 0.75 },
   { path: "/aes-creatorverse", changeFrequency: "monthly", priority: 0.75 },
   { path: "/aes-explorers", changeFrequency: "monthly", priority: 0.75 },
-  { path: "/locations", changeFrequency: "monthly", priority: 0.75 },
   { path: "/testimonials", changeFrequency: "monthly", priority: 0.75 },
-  { path: "/summer-program/register", changeFrequency: "weekly", priority: 0.75 },
   { path: "/book-session", changeFrequency: "daily", priority: 0.95 },
   { path: "/contact", changeFrequency: "monthly", priority: 0.8 },
 ];
