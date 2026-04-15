@@ -37,6 +37,7 @@ export async function generateMetadata({
       title: "Event Registration | ACHARYA Educational Services",
       description: "Register for ACHARYA Educational Services events and programs.",
       alternates: { canonical: "./" },
+      robots: { index: false, follow: false },
     };
   }
 
@@ -46,6 +47,7 @@ export async function generateMetadata({
     alternates: {
       canonical: "./",
     },
+    robots: { index: false, follow: false },
     openGraph: {
       title: eventConfig.title,
       description: `Complete your registration for ${eventConfig.title}.`,
@@ -81,6 +83,17 @@ export default async function EventRegistrationPage({
   return (
     <main className="min-h-screen theme-bg-dark flex flex-col">
       <Header />
+
+      <section className="mx-auto w-full max-w-7xl px-4 pb-4 pt-24 md:px-8">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-slate-200">
+          <p className="text-sm uppercase tracking-[0.2em] text-yellow-300 mb-2">
+            Registration Form
+          </p>
+          <p className="leading-7 text-slate-300">
+            This form is for families who have already chosen a specific event and want to complete the sign-up process. The embedded form below is the official registration step, and it is intentionally kept simple so you can submit the details we need without extra navigation or distractions.
+          </p>
+        </div>
+      </section>
 
       <section className="mx-auto w-full max-w-7xl px-4 pb-10 pt-24 md:px-8">
         <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">

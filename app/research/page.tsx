@@ -333,6 +333,24 @@ function ResearchShowcaseContent() {
         </div>
       </section>
 
+      <section className="theme-bg-dark py-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-8 text-slate-200">
+            <div className="max-w-4xl">
+              <h2 className="text-2xl sm:text-3xl font-bold theme-text-light mb-4">
+                How to use this research showcase
+              </h2>
+              <p className="theme-text-muted leading-7 mb-4">
+                This page collects student research work so families can see the range of topics, writing styles, and academic outcomes our mentors support. You can browse by category, year, or domain to find examples that feel relevant to your interests. The goal is to make research feel approachable while still showing the level of rigor expected in a strong project.
+              </p>
+              <p className="theme-text-muted leading-7">
+                If you are new to research, start by looking at the domains you care about most and the summaries that explain how each project developed. If you already know you want a deeper project, use the filters to narrow the list and compare themes, topics, and the kinds of student growth reflected in the work.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Filters Section */}
       <section className="py-6 theme-bg-dark">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">

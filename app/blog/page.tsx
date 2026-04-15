@@ -149,6 +149,20 @@ export default function AESBlogPage() {
         </div>
       </section>
 
+      <section className="container mx-auto px-4 mt-6 mb-10">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-8 text-slate-200 max-w-5xl mx-auto">
+          <h2 className="text-2xl font-bold theme-text-light mb-3">
+            What this blog covers
+          </h2>
+          <p className="theme-text-muted leading-7 mb-3">
+            The blog is where we explain ideas in more depth than a program card can. You will find writing about research habits, academic planning, admissions strategy, and student experiences that show how different programs work in practice. We use it to share guidance that is useful to both current families and visitors who are still exploring their options.
+          </p>
+          <p className="theme-text-muted leading-7">
+            The three categories above help you move quickly to the content that matters most: student spotlights for real examples, AES blogs for guidance and commentary, and research showcase content for students interested in academic depth. If you are researching ACHARYA before contacting us, this is one of the best places to start.
+          </p>
+        </div>
+      </section>
+
 
 
       {/* Dummy Content Section for Future Use */}

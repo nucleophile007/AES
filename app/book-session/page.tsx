@@ -454,6 +454,22 @@ export default function BookSessionPage() {
         </div>
       </section>
 
+      <section className="theme-bg-dark pb-4">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-8 text-slate-200">
+            <h2 className="text-2xl font-bold theme-text-light mb-3">
+              A quick way to start the right conversation
+            </h2>
+            <p className="theme-text-muted leading-7 mb-3">
+              The discovery call is meant to help us understand your student&apos;s goals, current grade level, and the kind of support that would be most useful. You do not need to prepare a long presentation or have every detail finalized. The goal is to make the first conversation simple, focused, and practical.
+            </p>
+            <p className="theme-text-muted leading-7">
+              After you request a session, we review the information you provide, check availability, and follow up with the next best options. That may include academic tutoring, SAT preparation, research mentorship, competition training, or a college-prep discussion depending on what your family is looking for.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Booking Form Section */}
       <section className="py-12 theme-bg-dark">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
