@@ -61,6 +61,7 @@ import {
   ChevronRight,
   Calendar,
 } from "lucide-react";
+import ProgressReportList from "@/components/common/ProgressReportList";
 
 interface StudentProgress {
   studentName: string;
@@ -95,12 +96,12 @@ interface AdminMeetCalendarProps {
   dateTimeMapping: Record<string, string[]>;
 }
 
-function AdminMeetCalendar({ 
-  selectedDate, 
-  selectedTime, 
-  onDateSelect, 
-  onTimeSelect, 
-  dateTimeMapping 
+function AdminMeetCalendar({
+  selectedDate,
+  selectedTime,
+  onDateSelect,
+  onTimeSelect,
+  dateTimeMapping
 }: AdminMeetCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
@@ -213,8 +214,8 @@ function AdminMeetCalendar({
                   selected
                     ? "bg-gradient-to-br from-brand-blue to-blue-600 text-white shadow-lg scale-105 ring-4 ring-blue-200"
                     : available
-                    ? "bg-white border-2 border-blue-200 text-gray-700 hover:border-brand-blue hover:bg-blue-50"
-                    : ""
+                      ? "bg-white border-2 border-blue-200 text-gray-700 hover:border-brand-blue hover:bg-blue-50"
+                      : ""
                 )}
               >
                 {day}
@@ -274,6 +275,7 @@ export default function ParentDashboard() {
   // Overview / Progress
   const [progress, setProgress] = useState<StudentProgress[]>([]);
   const [progressLoading, setProgressLoading] = useState(true);
+  const [progressReports, setProgressReports] = useState<any[]>([]);
 
   // Admin Meet
   const [profileAvailability, setProfileAvailability] = useState<Record<string, string[]>>({});
@@ -323,27 +325,27 @@ export default function ParentDashboard() {
       : "bg-amber-50 text-amber-700 border-amber-100";
 
   // Progress
-const loadProgress = async () => {
-  try {
-    setProgressLoading(true);
-    const response = await fetch('/api/parent/student-progress', {
-      credentials: 'include'
-    });
-    const data = await response.json();
-    
-    if (data.success) {
-      setProgress(data.progress);
-    } else {
-      console.error('Failed to load progress:', data.error);
+  const loadProgress = async () => {
+    try {
+      setProgressLoading(true);
+      const response = await fetch('/api/parent/student-progress', {
+        credentials: 'include'
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        setProgress(data.progress);
+      } else {
+        console.error('Failed to load progress:', data.error);
+        setProgress([]);
+      }
+    } catch (error) {
+      console.error('Error loading progress:', error);
       setProgress([]);
+    } finally {
+      setProgressLoading(false);
     }
-  } catch (error) {
-    console.error('Error loading progress:', error);
-    setProgress([]);
-  } finally {
-    setProgressLoading(false);
-  }
-};
+  };
 
   useEffect(() => {
     if (parentEmail) {
@@ -351,24 +353,51 @@ const loadProgress = async () => {
     }
   }, [parentEmail]);
 
+  // Fetch Progress Reports
+  useEffect(() => {
+    const fetchAllReports = async () => {
+      // @ts-ignore - students property exists on parent user object
+      if (!authUser || !authUser.students) return;
+
+      const allReports = [];
+      // @ts-ignore
+      for (const student of authUser.students) {
+        try {
+          const res = await fetch(`/api/parent/progress-report?studentId=${student.id}`);
+          const data = await res.json();
+          if (data.success) {
+            allReports.push(...data.reports);
+          }
+        } catch (e) { console.error(e); }
+      }
+      // Sort by date desc
+      allReports.sort((a: any, b: any) => new Date(b.reportDate).getTime() - new Date(a.reportDate).getTime());
+      setProgressReports(allReports);
+    };
+
+    if (authUser && activeTab === "progress") {
+      fetchAllReports();
+    }
+  }, [authUser, activeTab]);
+
   // Fetch students when Admin Meet tab becomes active
   useEffect(() => {
     const fetchStudents = async () => {
       if (activeTab !== "profile-building") return;
-      
+
       try {
         setProfileStudentsLoading(true);
         const response = await fetch('/api/parent/students', {
           credentials: 'include'
         });
         const data = await response.json();
-        
+
         if (data.success && data.students) {
           setProfileStudents(data.students);
-          
+
           console.log('✅ Loaded students:', data.students.length);
           console.log('Student data:', data.students);
-          
+
           // Auto-select first student if only one exists
           if (data.students.length === 1) {
             const student = data.students[0];
@@ -383,7 +412,7 @@ const loadProgress = async () => {
               parentPhone: student.parentPhone || "",
             }));
           }
-          
+
         } else {
           console.error('Failed to load students:', data.error);
           setProfileStudents([]);
@@ -403,28 +432,28 @@ const loadProgress = async () => {
   useEffect(() => {
     const fetchProfileAvailability = async () => {
       if (activeTab !== "profile-building") return;
-      
+
       try {
         setProfileSlotsLoading(true);
         const response = await fetch('/api/availability?program=Parent%20Meet', {
           credentials: 'include'
         });
         const data = await response.json();
-        
+
         if (data.success) {
           const availabilityMap: Record<string, string[]> = {};
-          
+
           data.data.forEach((item: any) => {
             if (item.program === "Parent Meet" && item.date && Array.isArray(item.times)) {
               availabilityMap[item.date] = item.times;
             }
           });
-          
+
           console.log('✅ Loaded Admin Meet availability:', {
             totalRows: data.totalRows,
             availableDates: Object.keys(availabilityMap).length,
           });
-          
+
           setProfileAvailability(availabilityMap);
         } else {
           console.error('Failed to load admin meet availability:', data.error);
@@ -465,13 +494,13 @@ const loadProgress = async () => {
         const response = await fetch("/api/parent/mentors", {
           credentials: "include",
         });
-        
+
         if (!response.ok) {
           throw new Error("Failed to fetch mentors");
         }
-        
+
         const data = await response.json();
-        
+
         if (data.success && data.mentors) {
           const mentorContacts: ParentChatContact[] = data.mentors.map((mentor: any) => ({
             id: mentor.id,
@@ -480,7 +509,7 @@ const loadProgress = async () => {
             subtitle: mentor.subtitle,
             status: "online" as "online" | "away" | "offline",
           }));
-          
+
           const adminContact: ParentChatContact = {
             id: "admin-support",
             name: "AES Admin Team",
@@ -488,10 +517,10 @@ const loadProgress = async () => {
             subtitle: "Administration",
             status: "away",
           };
-          
+
           const allContacts = [...mentorContacts, adminContact];
           setChatContacts(allContacts);
-          
+
           if (!selectedChatContact && allContacts.length > 0) {
             setSelectedChatContact(allContacts[0]);
           }
@@ -672,11 +701,11 @@ const loadProgress = async () => {
         prev.map((msg) =>
           msg.id === optimisticMessage.id
             ? {
-                id: data.messageId,
-                sender: "parent",
-                content: messageContent,
-                timestamp: data.message.timestamp,
-              }
+              id: data.messageId,
+              sender: "parent",
+              content: messageContent,
+              timestamp: data.message.timestamp,
+            }
             : msg
         )
       );
@@ -705,22 +734,22 @@ const loadProgress = async () => {
     }
     try {
       setSubmittingTransaction(true);
-      
+
       const formData = new FormData();
       formData.append("file", transactionReceipt);
-      
+
       const uploadRes = await fetch("/api/parent/upload", {
         method: "POST",
         body: formData,
       });
-      
+
       if (!uploadRes.ok) {
         throw new Error("Failed to upload receipt file");
       }
-      
+
       const uploadData = await uploadRes.json();
       const receiptUrl = uploadData.url;
-      
+
       const receiptData = {
         amount: transactionAmount,
         transactionDate: transactionDate,
@@ -730,16 +759,16 @@ const loadProgress = async () => {
         receiptFileName: transactionReceipt.name,
         receiptFileSize: transactionReceipt.size,
       };
-      
+
       const res = await fetch("/api/parent/transaction-receipt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(receiptData),
       });
-      
+
       const data = await res.json();
-      
+
       if (res.ok && data.success) {
         setTransactionAmount("");
         setTransactionDate("");
@@ -824,10 +853,10 @@ const loadProgress = async () => {
                 <p className="text-xs text-sidebar-foreground/70 truncate">
                   {authUser?.email || ""}
                 </p>
-          </div>
+              </div>
             </div>
           </SidebarHeader>
-          
+
           <SidebarContent>
             <SidebarGroup>
               <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
@@ -854,14 +883,14 @@ const loadProgress = async () => {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
-            onClick={async () => {
-              try {
-                await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-              } catch {}
-              window.location.href = '/';
-            }}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-          >
+                  onClick={async () => {
+                    try {
+                      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+                    } catch { }
+                    window.location.href = '/';
+                  }}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
                   <LogOut className="h-4 w-4" />
                   <span>Logout</span>
                 </SidebarMenuButton>
@@ -878,7 +907,7 @@ const loadProgress = async () => {
               <h1 className="text-lg font-semibold bg-gradient-to-r from-brand-blue to-brand-teal bg-clip-text text-transparent">
                 Parent Dashboard
               </h1>
-        </div>
+            </div>
           </header>
 
           <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
@@ -890,26 +919,26 @@ const loadProgress = async () => {
                 transition={{ duration: 0.5 }}
               >
                 <Card className="border-2">
-                <CardHeader>
+                  <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <GraduationCap className="h-5 w-5 text-brand-blue" />
                       Detailed Student Progress
                     </CardTitle>
                     <CardDescription>Comprehensive view of your children&apos;s academic journey</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {progressLoading ? (
+                  </CardHeader>
+                  <CardContent>
+                    {progressLoading ? (
                       <div className="flex items-center justify-center py-12">
                         <RefreshCw className="h-8 w-8 animate-spin text-brand-blue" />
                       </div>
-                  ) : progress.length === 0 ? (
+                    ) : progress.length === 0 ? (
                       <div className="text-center py-12 text-muted-foreground">
                         <GraduationCap className="h-16 w-16 mx-auto mb-4 opacity-50" />
                         <p className="text-lg">No progress data available</p>
                       </div>
-                  ) : (
+                    ) : (
                       <div className="space-y-6">
-                      {progress.map((p, i) => (
+                        {progress.map((p, i) => (
                           <motion.div
                             key={i}
                             initial={{ opacity: 0, y: 20 }}
@@ -921,12 +950,12 @@ const loadProgress = async () => {
                               <div>
                                 <h3 className="text-xl font-bold mb-1">{p.studentName}</h3>
                                 <Badge className="bg-brand-blue text-white">{p.program}</Badge>
-                          </div>
+                              </div>
                               <div className="text-right">
                                 <div className="text-3xl font-bold text-brand-blue">{p.completionPercent}%</div>
                                 <p className="text-xs text-muted-foreground">Complete</p>
-                        </div>
-                    </div>
+                              </div>
+                            </div>
                             <Progress value={p.completionPercent} className="h-4 mb-4" />
                             {p.recentMilestones.length > 0 && (
                               <div className="mt-4 pt-4 border-t">
@@ -939,17 +968,25 @@ const loadProgress = async () => {
                                     <div key={idx} className="flex items-center justify-between text-sm p-2 rounded bg-accent/50">
                                       <span>{m.title}</span>
                                       <span className="text-xs text-muted-foreground">{m.date}</span>
-                          </div>
+                                    </div>
                                   ))}
-                        </div>
-                    </div>
+                                </div>
+                              </div>
                             )}
                           </motion.div>
                         ))}
                       </div>
                     )}
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+
+                <div className="mt-8">
+                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-purple-600" />
+                    Detailed Evaluation Reports
+                  </h3>
+                  <ProgressReportList reports={progressReports} />
+                </div>
               </motion.div>
             )}
 
@@ -961,91 +998,91 @@ const loadProgress = async () => {
                 transition={{ duration: 0.5 }}
               >
                 <Card className="border-2">
-              <CardHeader>
+                  <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Wallet className="h-5 w-5 text-brand-teal" />
                       Upload Transaction Receipt
                     </CardTitle>
                     <CardDescription>Upload payment receipts for verification and tracking</CardDescription>
-              </CardHeader>
+                  </CardHeader>
                   <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
                         <Label htmlFor="amount" className="text-sm font-semibold">Amount *</Label>
                         <div className="relative">
                           <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="amount"
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={transactionAmount}
-                      onChange={(e) => setTransactionAmount(e.target.value)}
+                          <Input
+                            id="amount"
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={transactionAmount}
+                            onChange={(e) => setTransactionAmount(e.target.value)}
                             className="pl-10"
-                      required
-                    />
+                            required
+                          />
                         </div>
-                  </div>
-                  <div className="space-y-2">
+                      </div>
+                      <div className="space-y-2">
                         <Label htmlFor="transactionDate" className="text-sm font-semibold">Transaction Date *</Label>
                         <div className="relative">
                           <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="transactionDate"
-                      type="date"
-                      value={transactionDate}
-                      onChange={(e) => setTransactionDate(e.target.value)}
+                          <Input
+                            id="transactionDate"
+                            type="date"
+                            value={transactionDate}
+                            onChange={(e) => setTransactionDate(e.target.value)}
                             className="pl-10"
-                      required
-                    />
+                            required
+                          />
                         </div>
-                  </div>
-                </div>
-                <div className="space-y-2">
+                      </div>
+                    </div>
+                    <div className="space-y-2">
                       <Label htmlFor="transactionId" className="text-sm font-semibold">Transaction ID / Reference Number</Label>
-                  <Input
-                    id="transactionId"
-                    type="text"
-                    placeholder="Enter transaction ID if available"
-                    value={transactionId}
-                    onChange={(e) => setTransactionId(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
+                      <Input
+                        id="transactionId"
+                        type="text"
+                        placeholder="Enter transaction ID if available"
+                        value={transactionId}
+                        onChange={(e) => setTransactionId(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
                       <Label htmlFor="transactionDescription" className="text-sm font-semibold">Description</Label>
-                  <Textarea
-                    id="transactionDescription"
-                    placeholder="Brief description of the payment (e.g., Monthly fee, Registration fee)"
-                    value={transactionDescription}
-                    onChange={(e) => setTransactionDescription(e.target.value)}
+                      <Textarea
+                        id="transactionDescription"
+                        placeholder="Brief description of the payment (e.g., Monthly fee, Registration fee)"
+                        value={transactionDescription}
+                        onChange={(e) => setTransactionDescription(e.target.value)}
                         rows={3}
-                  />
-                </div>
-                <div className="space-y-2">
+                      />
+                    </div>
+                    <div className="space-y-2">
                       <Label htmlFor="receipt" className="text-sm font-semibold">Transaction Receipt / Screenshot *</Label>
                       <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-brand-teal transition-colors">
-                  <Input
-                    id="receipt"
-                    type="file"
-                    accept="image/*,.pdf"
-                    onChange={(e) => setTransactionReceipt(e.target.files?.[0] || null)}
+                        <Input
+                          id="receipt"
+                          type="file"
+                          accept="image/*,.pdf"
+                          onChange={(e) => setTransactionReceipt(e.target.files?.[0] || null)}
                           className="hidden"
-                  />
+                        />
                         <label htmlFor="receipt" className="cursor-pointer">
                           <Upload className="h-8 w-8 mx-auto mb-2 text-brand-teal" />
                           <p className="text-sm font-medium">Click to upload or drag and drop</p>
                           <p className="text-xs text-muted-foreground mt-1">JPG, PNG, PDF (Max 10MB)</p>
                         </label>
-                  </div>
-                  {transactionReceipt && (
+                      </div>
+                      {transactionReceipt && (
                         <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
                           <CheckCircle className="h-5 w-5 text-green-600" />
                           <span className="text-sm font-medium text-green-900">{transactionReceipt.name}</span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <Separator />
-                <div className="flex justify-end">
+                    <Separator />
+                    <div className="flex justify-end">
                       <Button
                         onClick={handleSubmitTransaction}
                         disabled={submittingTransaction}
@@ -1059,14 +1096,14 @@ const loadProgress = async () => {
                           </>
                         ) : (
                           <>
-                    <Upload className="h-4 w-4 mr-2" />
+                            <Upload className="h-4 w-4 mr-2" />
                             Upload Transaction Receipt
                           </>
                         )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               </motion.div>
             )}
 
@@ -1078,7 +1115,7 @@ const loadProgress = async () => {
                 transition={{ duration: 0.5 }}
               >
                 <Card className="border-2">
-              <CardHeader>
+                  <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Star className="h-5 w-5 text-brand-orange" />
                       Submit Testimonial
@@ -1086,7 +1123,7 @@ const loadProgress = async () => {
                     <CardDescription>
                       Share your experience with ACHARYA Educational Services. Your responses will be collected and may be featured on our website and marketing materials.
                     </CardDescription>
-              </CardHeader>
+                  </CardHeader>
                   <CardContent>
                     <div className="w-full rounded-lg overflow-hidden border-2" style={{ minHeight: '800px' }}>
                       <iframe
@@ -1101,9 +1138,9 @@ const loadProgress = async () => {
                       >
                         Loading…
                       </iframe>
-                </div>
-              </CardContent>
-            </Card>
+                    </div>
+                  </CardContent>
+                </Card>
               </motion.div>
             )}
 
@@ -1116,177 +1153,177 @@ const loadProgress = async () => {
                 className="grid gap-6 lg:grid-cols-3"
               >
                 <Card className="border-2 lg:col-span-1">
-              <CardHeader>
+                  <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <MessageSquare className="h-5 w-5 text-brand-blue" />
                       Channels
                     </CardTitle>
                     <CardDescription>Chat with mentors or the AES admin desk</CardDescription>
-                </CardHeader>
-                <CardContent>
+                  </CardHeader>
+                  <CardContent>
                     <ScrollArea className="h-[600px]">
                       <div className="space-y-2">
-                    {chatContacts.map((contact) => {
-                      const isActive = selectedChatContact?.id === contact.id;
-                      const accent = getContactAccent(contact.role);
-                      return (
-                        <button
-                          key={contact.id}
-                          onClick={() => setSelectedChatContact(contact)}
+                        {chatContacts.map((contact) => {
+                          const isActive = selectedChatContact?.id === contact.id;
+                          const accent = getContactAccent(contact.role);
+                          return (
+                            <button
+                              key={contact.id}
+                              onClick={() => setSelectedChatContact(contact)}
                               className={cn(
                                 "w-full text-left p-3 rounded-lg border-2 transition-all",
                                 isActive
                                   ? "border-brand-blue bg-gradient-to-r from-blue-50 to-teal-50 shadow-md"
                                   : "border-transparent hover:border-brand-blue/50 hover:bg-accent/50"
                               )}
-                        >
-                          <div className="flex items-center gap-3">
+                            >
+                              <div className="flex items-center gap-3">
                                 <Avatar className={cn("h-11 w-11 border-2", accent)}>
-                              <AvatarFallback className="text-sm font-semibold">
-                                {getContactInitials(contact.name)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <p className="font-semibold truncate">{contact.name}</p>
+                                  <AvatarFallback className="text-sm font-semibold">
+                                    {getContactInitials(contact.name)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <p className="font-semibold truncate">{contact.name}</p>
                                       <p className="text-xs text-muted-foreground">{contact.subtitle}</p>
-                                </div>
-                                <span
+                                    </div>
+                                    <span
                                       className={cn(
                                         "h-2 w-2 rounded-full",
-                                    contact.status === "online"
-                                      ? "bg-green-500"
-                                      : contact.status === "away"
-                                      ? "bg-yellow-400"
-                                      : "bg-gray-400"
+                                        contact.status === "online"
+                                          ? "bg-green-500"
+                                          : contact.status === "away"
+                                            ? "bg-yellow-400"
+                                            : "bg-gray-400"
                                       )}
-                                />
+                                    />
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </ScrollArea>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
 
                 <Card className="border-2 lg:col-span-2 flex flex-col">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg">
-                        {selectedChatContact ? selectedChatContact.name : "Select a contact"}
-                      </CardTitle>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg">
+                          {selectedChatContact ? selectedChatContact.name : "Select a contact"}
+                        </CardTitle>
                         <CardDescription>
-                        {selectedChatContact
-                          ? selectedChatContact.role === "mentor"
-                            ? "Direct mentor support"
-                            : "Administrative support desk"
-                          : "Choose who you want to message"}
+                          {selectedChatContact
+                            ? selectedChatContact.role === "mentor"
+                              ? "Direct mentor support"
+                              : "Administrative support desk"
+                            : "Choose who you want to message"}
                         </CardDescription>
+                      </div>
+                      {selectedChatContact && (
+                        <Badge variant="secondary" className="capitalize">
+                          {selectedChatContact.status}
+                        </Badge>
+                      )}
                     </div>
-                    {selectedChatContact && (
-                      <Badge variant="secondary" className="capitalize">
-                        {selectedChatContact.status}
-                      </Badge>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="flex flex-col flex-1">
-                  {!selectedChatContact ? (
+                  </CardHeader>
+                  <CardContent className="flex flex-col flex-1">
+                    {!selectedChatContact ? (
                       <div className="flex flex-1 items-center justify-center text-muted-foreground">
                         <div className="text-center">
                           <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-50" />
                           <p>Select a channel to start chatting</p>
                         </div>
-                    </div>
-                  ) : (
-                    <>
+                      </div>
+                    ) : (
+                      <>
                         <ScrollArea ref={chatScrollRef} className="h-[500px] border rounded-lg p-4 mb-4 bg-gradient-to-b from-gray-50/50 to-white">
-                        {chatLoading ? (
+                          {chatLoading ? (
                             <div className="flex items-center justify-center h-full text-muted-foreground gap-2">
-                            <RefreshCw className="h-4 w-4 animate-spin" />
-                            Loading messages...
-                          </div>
-                        ) : chatMessages.length === 0 ? (
+                              <RefreshCw className="h-4 w-4 animate-spin" />
+                              Loading messages...
+                            </div>
+                          ) : chatMessages.length === 0 ? (
                             <div className="flex items-center justify-center h-full text-muted-foreground">
                               <div className="text-center">
                                 <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
                                 <p>No messages yet. Start the conversation!</p>
                               </div>
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            {chatMessages.map((message) => {
-                              const isParent = message.sender === "parent";
-                              return (
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              {chatMessages.map((message) => {
+                                const isParent = message.sender === "parent";
+                                return (
                                   <motion.div
-                                  key={message.id}
+                                    key={message.id}
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     className={cn("flex", isParent ? "justify-end" : "justify-start")}
-                                >
-                                  <div
+                                  >
+                                    <div
                                       className={cn(
                                         "max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-md",
-                                      isParent
+                                        isParent
                                           ? "bg-gradient-to-r from-brand-blue to-brand-teal text-white rounded-br-none"
                                           : "bg-white border-2 text-gray-800 rounded-bl-none"
                                       )}
-                                  >
-                                    <p>{message.content}</p>
-                                    <span
+                                    >
+                                      <p>{message.content}</p>
+                                      <span
                                         className={cn(
                                           "block text-[11px] mt-1",
                                           isParent ? "text-blue-100" : "text-muted-foreground"
                                         )}
-                                    >
-                                      {new Date(message.timestamp).toLocaleTimeString([], {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                      })}
-                                    </span>
-                                  </div>
+                                      >
+                                        {new Date(message.timestamp).toLocaleTimeString([], {
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        })}
+                                      </span>
+                                    </div>
                                   </motion.div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </ScrollArea>
-
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Type your message..."
-                          value={chatMessageInput}
-                          onChange={(e) => setChatMessageInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault();
-                              handleSendChatMessage();
-                            }
-                          }}
-                          disabled={chatSending}
-                            className="flex-1"
-                        />
-                        <Button
-                          onClick={handleSendChatMessage}
-                          disabled={chatSending || !chatMessageInput.trim()}
-                            className="bg-gradient-to-r from-brand-blue to-brand-teal hover:from-brand-blue/90 hover:to-brand-teal/90"
-                        >
-                          {chatSending ? (
-                            <RefreshCw className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Send className="h-4 w-4" />
+                                );
+                              })}
+                            </div>
                           )}
-                        </Button>
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
+                        </ScrollArea>
+
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Type your message..."
+                            value={chatMessageInput}
+                            onChange={(e) => setChatMessageInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSendChatMessage();
+                              }
+                            }}
+                            disabled={chatSending}
+                            className="flex-1"
+                          />
+                          <Button
+                            onClick={handleSendChatMessage}
+                            disabled={chatSending || !chatMessageInput.trim()}
+                            className="bg-gradient-to-r from-brand-blue to-brand-teal hover:from-brand-blue/90 hover:to-brand-teal/90"
+                          >
+                            {chatSending ? (
+                              <RefreshCw className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Send className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
               </motion.div>
             )}
 
@@ -1358,7 +1395,7 @@ const loadProgress = async () => {
                             <Users className="h-5 w-5 text-brand-blue" />
                             Student Information
                           </h3>
-                          
+
                           {profileStudentsLoading ? (
                             <div className="flex items-center justify-center py-8">
                               <RefreshCw className="h-5 w-5 animate-spin text-brand-blue" />
@@ -1392,7 +1429,7 @@ const loadProgress = async () => {
                                   </select>
                                 </div>
                               )}
-                              
+
                               {/* Auto-filled fields - Read-only if student is selected */}
                               <div className="space-y-2">
                                 <Label htmlFor="profile-student-name">Student Name *</Label>
@@ -1430,7 +1467,7 @@ const loadProgress = async () => {
                                   required
                                 />
                               </div>
-                              
+
                               {profileStudents.length > 0 && (
                                 <div className="md:col-span-2">
                                   <p className="text-xs text-muted-foreground flex items-center gap-1">
@@ -1449,7 +1486,7 @@ const loadProgress = async () => {
                             <Calendar className="h-5 w-5 text-brand-blue" />
                             Select Date & Time
                           </h3>
-                          
+
                           {profileSlotsLoading ? (
                             <div className="flex items-center justify-center py-12">
                               <RefreshCw className="h-6 w-6 animate-spin text-brand-blue" />
@@ -1484,7 +1521,7 @@ const loadProgress = async () => {
                                 });
                                 return;
                               }
-                              
+
                               if (!profileFormData.selectedDate || !profileFormData.selectedTime) {
                                 toast({
                                   title: "No date/time selected",
@@ -1493,7 +1530,7 @@ const loadProgress = async () => {
                                 });
                                 return;
                               }
-                              
+
                               try {
                                 setBookingProfileSlot(true);
                                 const response = await fetch('/api/book-session', {
@@ -1515,19 +1552,19 @@ const loadProgress = async () => {
                                     submittedAt: new Date().toISOString(),
                                   }),
                                 });
-                                
+
                                 const data = await response.json();
-                                
+
                                 if (data.success) {
                                   console.log('✅ Admin Meet booking successful:', data.bookingId);
                                   setShowProfileSuccess(true);
-                                  
+
                                   toast({
                                     title: "Booking confirmed!",
                                     description: "Your admin meet session has been booked successfully.",
                                     className: "border-green-500 bg-green-50 text-green-900",
                                   });
-                                  
+
                                   // Auto-hide success after 8 seconds
                                   setTimeout(() => {
                                     setShowProfileSuccess(false);
@@ -1610,7 +1647,7 @@ const loadProgress = async () => {
                 </Card>
               </motion.div>
             )}
-      </div>
+          </div>
         </SidebarInset>
       </div>
     </SidebarProvider>
