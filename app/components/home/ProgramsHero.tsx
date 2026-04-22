@@ -48,34 +48,35 @@ export function ProgramsHero() {
     {
       id: 1,
       content: <AcademicContent />,
-      thumbnail: "/program-image/acharyaes-academic-hero.jpg",
+      thumbnail: "/program-image/acharyaes-academic.png",
       label: "Academic Tutoring",
       href: "/academictutoring",
-      className: "md:col-span-2",
+      className: "col-span-1",
     },
     {
       id: 2,
       content: <ResearchContent />,
-      thumbnail: "/program-image/acharyaes-research-hero.jpg",
+      thumbnail: "/program-image/acharyaes-research-1.png",
       label: "AES Explorers",
       href: "/aes-explorers",
       className: "col-span-1",
     },
+    
     {
       id: 3,
-      content: <ChampionsContent />,
-      thumbnail: "/program-image/acharyaes-math-hero.jpg",
-      label: "AES Champions",
-      href: "/aes-champions",
+      content: <CollegeContent />,
+      thumbnail: "/program-image/acharyaes-college.png",
+      label: "UAchieve",
+      href: "/collegeprep",
       className: "col-span-1",
     },
     {
       id: 4,
-      content: <CollegeContent />,
-      thumbnail: "/program-image/acharyaes-college-hero.jpg",
-      label: "UAchieve",
-      href: "/collegeprep",
-      className: "md:col-span-2",
+      content: <ChampionsContent />,
+      thumbnail: "/program-image/acharyaes-math-1.png",
+      label: "AES Champions",
+      href: "/aes-champions",
+      className: "col-span-1",
     },
   ];
 
@@ -89,10 +90,7 @@ export function ProgramsHero() {
           <div className="h-[calc(100svh-5rem)] sm:h-[calc(100svh-6rem)] w-full">
             <LayoutGrid
               cards={heroCards}
-              hoverPairs={[
-                { expandId: 2, shrinkId: 1 },
-                { expandId: 3, shrinkId: 4 },
-              ]}
+              hoverPairs={[]}
             />
           </div>
         </div>
