@@ -13,7 +13,7 @@ const HERO_IMAGES = [
     label: "Academic Tutoring",
   },
   {
-    src: "/program-image/acharyaes-research-hero.jpg",
+    src: "/program-image/acharyaes-research-hero.png?v=20260422",
     href: "/aes-explorers",
     alt: "Research program",
     label: "AES Explorers",

@@ -35,6 +35,7 @@ export function HeroSliderAlways({
   ariaLabel = "Hero carousel",
 }: HeroSliderAlwaysProps) {
   const [index, setIndex] = React.useState(0);
+  const [isHovered, setIsHovered] = React.useState(false);
   const count = slides.length;
   const enableNav = count > 1;
   const activeSlide = slides[index];
@@ -43,12 +44,12 @@ export function HeroSliderAlways({
   const showCutoutCta = hideSlideContent && !!activeSlide?.cta && activeSlide?.showCtaWhenHidden === true;
 
   React.useEffect(() => {
-    if (!enableNav) return;
+    if (!enableNav || isHovered) return;
     const id = setInterval(() => {
       setIndex((prev) => (prev + 1) % count);
     }, intervalMs);
     return () => clearInterval(id);
-  }, [count, enableNav, intervalMs]);
+  }, [count, enableNav, intervalMs, isHovered]);
 
   React.useEffect(() => {
     if (count === 0) return;
@@ -116,6 +117,8 @@ export function HeroSliderAlways({
       aria-label={ariaLabel}
       className={cn("relative w-full h-screen overflow-hidden bg-[#03133a]", className)}
       tabIndex={0}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       onKeyDown={onKeyDown}
       onPointerDown={onPointerDown}
       onPointerUp={onPointerUp}

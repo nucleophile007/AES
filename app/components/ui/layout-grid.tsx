@@ -9,6 +9,7 @@ type Card = {
   content: JSX.Element | React.ReactNode | string;
   className: string;
   thumbnail: string;
+  hoverThumbnail?: string;
   label?: string;
   href?: string;
 };
@@ -44,7 +45,7 @@ export const LayoutGrid = ({
   };
 
   return (
-    <div className="w-full h-full p-4 sm:p-6 lg:p-8 grid grid-cols-1 md:grid-cols-3 gap-4 relative">
+    <div className="w-full h-full p-4 sm:p-6 lg:p-8 grid grid-cols-1 md:grid-cols-2 md:auto-rows-fr gap-4 relative">
       {cards.map((card, i) => {
         const activePair = hoverPairs.find((pair) => pair.expandId === hoveredId);
         const shouldExpand = activePair?.expandId === card.id;
@@ -61,6 +62,11 @@ export const LayoutGrid = ({
             onClick={() => handleClick(card)}
             onMouseEnter={() => setHoveredId(card.id)}
             onMouseLeave={() => setHoveredId(null)}
+            onFocus={() => setHoveredId(card.id)}
+            onBlur={() => setHoveredId(null)}
+            onTouchStart={() => setHoveredId(card.id)}
+            onTouchEnd={() => setHoveredId(null)}
+            tabIndex={0}
             className={cn(
               card.className,
               "relative overflow-hidden",
@@ -73,12 +79,7 @@ export const LayoutGrid = ({
             layoutId={`card-${card.id}`}
           >
             {selected?.id === card.id && <SelectedCard selected={selected} />}
-            <ImageComponent card={card} />
-            {card.label ? (
-              <div className="absolute bottom-4 left-4 rounded-full bg-black/70 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md">
-                {card.label}
-              </div>
-            ) : null}
+            <ImageComponent card={card} isHovered={hoveredId === card.id} />
           </motion.div>
         </div>
       )})}
@@ -94,18 +95,39 @@ export const LayoutGrid = ({
   );
 };
 
-const ImageComponent = ({ card }: { card: Card }) => {
+const ImageComponent = ({ card, isHovered }: { card: Card; isHovered: boolean }) => {
   return (
-    <motion.img
-      layoutId={`image-${card.id}-image`}
-      src={card.thumbnail}
-      height="500"
-      width="500"
-      className={cn(
-        "object-cover object-top absolute inset-0 h-full w-full transition duration-200"
-      )}
-      alt="thumbnail"
-    />
+    <>
+      <motion.img
+        layoutId={`image-${card.id}-image`}
+        src={card.thumbnail}
+        height="500"
+        width="500"
+        className="object-cover object-top absolute inset-0 h-full w-full"
+        animate={{
+          opacity: card.hoverThumbnail && isHovered ? 0 : 1,
+          scale: card.hoverThumbnail && isHovered ? 1.03 : 1,
+        }}
+        transition={{ duration: 0.45, ease: "easeOut" }}
+        alt="thumbnail"
+      />
+      {card.hoverThumbnail ? (
+        <motion.img
+          src={card.hoverThumbnail}
+          height="500"
+          width="500"
+          className="object-contain object-center absolute inset-0 h-full w-full bg-[#0b0f1f]"
+          initial={{ opacity: 0, scale: 1.08 }}
+          animate={{
+            opacity: isHovered ? 1 : 0,
+            scale: isHovered ? 1 : 1.06,
+          }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          alt="thumbnail"
+        />
+      ) : null}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+    </>
   );
 };
 
