@@ -1,9 +1,55 @@
 "use client";
 
+import { useEffect } from "react";
+import Image from "next/image";
 import { LayoutGrid } from "@/components/ui/layout-grid";
 import { HeroSliderAlways, type Slide } from "./HeroSliderAlways";
 
 export function ProgramsHero() {
+  useEffect(() => {
+    const admissionSlideAssets = [
+      "/program-image/acharyaes-college-hero.jpg",
+      "/college-logos/washi.png",
+      "/college-logos/north.png",
+      "/college-logos/ucsand.png",
+      "/college-logos/uwash.png",
+      "/college-logos/pomona1.png",
+    ];
+
+    admissionSlideAssets.forEach((src) => {
+      const img = new window.Image();
+      img.src = src;
+    });
+  }, []);
+
+  const preMedTier1 = [
+    {
+      name: "Washington University, St. Louis",
+      accent: "from-amber-500 to-yellow-400",
+      logo: "/college-logos/washi.png",
+    },
+    {
+      name: "University of North Carolina Chapel Hill",
+      accent: "from-blue-600 to-blue-500",
+      logo: "/college-logos/north.png",
+    },
+    {
+      name: "UC San Diego",
+      accent: "from-indigo-600 to-violet-500",
+      logo: "/college-logos/ucsand.png",
+    },
+    {
+      name: "University of Washington-Seattle",
+      accent: "from-cyan-600 to-sky-500",
+      logo: "/college-logos/uwash.png",
+    },
+    {
+      name: "Pomona College",
+      accent: "from-amber-600 to-orange-500",
+      logo: "/college-logos/pomona1.png",
+    },
+  ];
+
   const AcademicContent = () => (
     <div>
       <p className="font-bold md:text-4xl text-xl text-white">Academic Tutoring</p>
@@ -99,6 +145,58 @@ export function ProgramsHero() {
   };
 
   const programSlides: Slide[] = [
+    {
+      title: "College Admissions 2026",
+      imageSrc: "/program-image/acharyaes-college-hero.jpg",
+      imageAlt: "ACHARYA college admissions highlights",
+      customContent: (
+        <div className="relative w-full h-full overflow-hidden bg-[#091636]">
+          <Image
+            src="/program-image/acharyaes-college-hero.jpg"
+            alt="Students celebrating admissions"
+            fill
+            priority
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#070f2fb5] via-[#091636b3] to-[#091636eb]" />
+
+          <div className="relative mx-auto max-w-7xl h-full px-3 sm:px-6 lg:px-8 py-20 sm:py-24 md:py-28 flex flex-col items-center justify-center text-center">
+            <h2 className="text-5xl sm:text-6xl lg:text-8xl font-black font-serif italic text-white leading-none">ACHARYA</h2>
+            <p className="mt-2 text-2xl sm:text-3xl lg:text-5xl font-extrabold font-serif italic text-yellow-400">Class of 2026</p>
+
+            {/* <p className="mt-8 text-lg sm:text-2xl lg:text-4xl font-extrabold font-serif italic uppercase tracking-[0.12em] text-white">
+              Tier 1 - Elite Medical Feeder Schools
+            </p> */}
+
+            <div className="mt-6 w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+              {preMedTier1.map((college) => (
+                <div
+                  key={college.name}
+                  className="px-3 py-3 sm:py-4 text-white flex flex-col items-center"
+                >
+                  <div className="mx-auto mb-3 h-24 w-24 sm:h-28 sm:w-28">
+                    <Image
+                      src={college.logo}
+                      alt={`${college.name} logo`}
+                      width={112}
+                      height={112}
+                      loading="eager"
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
+                  <p className="text-sm sm:text-base font-bold font-serif italic leading-snug text-center">{college.name}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-8 sm:mt-10">
+              <p className="text-4xl sm:text-5xl font-black font-serif italic text-white">We Did It!</p>
+              <p className="mt-2 text-xl sm:text-3xl font-serif italic text-yellow-300">Congratulations to our medical legends</p>
+            </div>
+          </div>
+        </div>
+      ),
+    },
     {
       title: "Greater Sacramento Math League",
       subtitle: "Apr 25 • Sacramento • Grades 6-12",
