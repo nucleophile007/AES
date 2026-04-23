@@ -191,7 +191,7 @@ export function ProgramsHero() {
 
             <div className="mt-8 sm:mt-10">
               <p className="text-4xl sm:text-5xl font-black font-serif italic text-white">We Did It!</p>
-              <p className="mt-2 text-xl sm:text-3xl font-serif italic text-yellow-300">Congratulations to our medical legends</p>
+              <p className="mt-2 text-xl sm:text-3xl font-serif italic text-yellow-300">Congratulations to our students</p>
             </div>
           </div>
         </div>
