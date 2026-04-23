@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Image from "next/image";
 import { LayoutGrid } from "@/components/ui/layout-grid";
+import { cn } from "@/lib/utils";
 import { HeroSliderAlways, type Slide } from "./HeroSliderAlways";
 
 export function ProgramsHero() {
@@ -168,13 +169,13 @@ export function ProgramsHero() {
               Tier 1 - Elite Medical Feeder Schools
             </p> */}
 
-            <div className="mt-6 w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+            <div className="mt-6 w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
               {preMedTier1.map((college) => (
                 <div
                   key={college.name}
-                  className="px-3 py-3 sm:py-4 text-white flex flex-col items-center"
+                  className="text-white flex flex-col items-center px-2 py-2 sm:px-3 sm:py-4"
                 >
-                  <div className="mx-auto mb-3 h-24 w-24 sm:h-28 sm:w-28">
+                  <div className="mx-auto mb-2 sm:mb-3 h-14 w-14 sm:h-20 sm:w-20 lg:h-28 lg:w-28">
                     <Image
                       src={college.logo}
                       alt={`${college.name} logo`}
@@ -184,7 +185,9 @@ export function ProgramsHero() {
                       className="h-full w-full object-contain"
                     />
                   </div>
-                  <p className="text-sm sm:text-base font-bold font-serif italic leading-snug text-center">{college.name}</p>
+                  <p className="text-[11px] sm:text-base font-bold font-serif italic leading-snug text-center line-clamp-2">
+                    {college.name}
+                  </p>
                 </div>
               ))}
             </div>
