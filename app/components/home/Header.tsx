@@ -132,7 +132,24 @@ export default function Header() {
 
               <Link href="/#mentors" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Mentors</Link>
               <Link href="/#animatedtestimonials" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Testimonials</Link>
-              <Link href="/blog" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Blog</Link>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setOpenDropdown(openDropdown === 'resources' ? null : 'resources')}
+                  aria-expanded={openDropdown === 'resources'}
+                  aria-controls="mobile-resources-menu"
+                  className="flex items-center justify-between w-full text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm"
+                >
+                  Resources
+                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${openDropdown === 'resources' ? 'rotate-180' : ''}`} />
+                </button>
+                {openDropdown === 'resources' && (
+                  <div id="mobile-resources-menu" className="pl-6 space-y-2">
+                    <Link href="/research" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">Research</Link>
+                    <Link href="/blog/aes-blogs" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">Blogs</Link>
+                  </div>
+                )}
+              </div>
               <Link href="/events" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Events</Link>
               <Link href="/contact" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Contact</Link>
             </nav>
