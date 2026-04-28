@@ -103,7 +103,7 @@ export function ProgramsHero() {
       href: "/aes-explorers",
     },
     {
-      title: "UACHIEVE",
+      title: "UAchieve",
       tagline: "Prepare Today. Achieve Tomorrow.",
       features: [
         { icon: <Zap className="w-5 h-5 sm:w-6 sm:h-6" />, text: "College Guidance" },
