@@ -2,13 +2,21 @@
 
 import { useEffect } from "react";
 import Image from "next/image";
-import { LayoutGrid } from "@/components/ui/layout-grid";
-import { cn } from "@/lib/utils";
+import { Lightbulb, Telescope, Zap, Trophy } from "lucide-react";
+import { BannerItem } from "./banner-item";
+import { GridBackground } from "./grid-background";
 import { HeroSliderAlways, type Slide } from "./HeroSliderAlways";
 
 export function ProgramsHero() {
   useEffect(() => {
+    // Preload all assets including banner images for instant caching
     const admissionSlideAssets = [
+      // Banner images - loaded first for instant display
+      "/program-image/banner-tutoring.png",
+      "/program-image/banner-explorers.png",
+      "/program-image/banner-future.png",
+      "/program-image/banner-champions.png",
+      // College admissions assets
       "/program-image/acharyaes-college-hero.jpg",
       "/college-logos/washi.png",
       "/college-logos/north.png",
@@ -17,10 +25,22 @@ export function ProgramsHero() {
       "/college-logos/pomona1.png",
     ];
 
-    admissionSlideAssets.forEach((src) => {
-      const img = new window.Image();
-      img.src = src;
-    });
+    // Use requestIdleCallback for non-blocking preload
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => {
+        admissionSlideAssets.forEach((src) => {
+          const img = new window.Image();
+          img.src = src;
+          img.loading = 'lazy';
+        });
+      });
+    } else {
+      // Fallback for browsers without requestIdleCallback
+      admissionSlideAssets.forEach((src) => {
+        const img = new window.Image();
+        img.src = src;
+      });
+    }
   }, []);
 
   const preMedTier1 = [
@@ -51,97 +71,98 @@ export function ProgramsHero() {
     },
   ];
 
-  const AcademicContent = () => (
-    <div>
-      <p className="font-bold md:text-4xl text-xl text-white">Academic Tutoring</p>
-      <p className="font-normal text-base text-white"></p>
-      <p className="font-normal text-base my-4 max-w-lg text-neutral-200">
-        Personalized tutoring across STEM and humanities to build mastery and confidence.
-      </p>
-    </div>
-  );
-
-  const ResearchContent = () => (
-    <div>
-      <p className="font-bold md:text-4xl text-xl text-white">AES Explorers</p>
-      <p className="font-normal text-base text-white"></p>
-      <p className="font-normal text-base my-4 max-w-lg text-neutral-200">
-        Guided research with mentors to develop projects, publish, and present.
-      </p>
-    </div>
-  );
-
-  const ChampionsContent = () => (
-    <div>
-      <p className="font-bold md:text-4xl text-xl text-white">AES Champions</p>
-      <p className="font-normal text-base text-white"></p>
-      <p className="font-normal text-base my-4 max-w-lg text-neutral-200">
-        Olympiad and contest preparation with structured practice and feedback.
-      </p>
-    </div>
-  );
-
-  const CollegeContent = () => (
-    <div>
-      <p className="font-bold md:text-4xl text-xl text-white">UAchieve</p>
-      <p className="font-normal text-base text-white"></p>
-      <p className="font-normal text-base my-4 max-w-lg text-neutral-200">
-        Admissions strategy, essays, and profile building to stand out.
-      </p>
-    </div>
-  );
-
-  const heroCards = [
+  const banners = [
     {
-      id: 1,
-      content: <AcademicContent />,
-      thumbnail: "/program-image/acharyaes-academic.png",
-      label: "Academic Tutoring",
-      href: "/academictutoring",
-      className: "col-span-1",
+      title: "Academic Tutoring",
+      subtitle: "Succeed.",
+      features: [
+        { icon: <Lightbulb className="w-5 h-5 sm:w-6 sm:h-6" />, text: "Build Confidence" },
+      ],
+      image: "/program-image/banner-tutoring.png",
     },
     {
-      id: 2,
-      content: <ResearchContent />,
-      thumbnail: "/program-image/acharyaes-research-1.png",
-      label: "AES Explorers",
-      href: "/aes-explorers",
-      className: "col-span-1",
-    },
-    
-    {
-      id: 3,
-      content: <CollegeContent />,
-      thumbnail: "/program-image/acharyaes-college.png",
-      label: "UAchieve",
-      href: "/collegeprep",
-      className: "col-span-1",
+      title: "AES Explorers",
+      subtitle: "Innovate.",
+      features: [
+        { icon: <Telescope className="w-5 h-5 sm:w-6 sm:h-6" />, text: "Curiosity Driven" },
+      ],
+      image: "/program-image/banner-explorers.png",
     },
     {
-      id: 4,
-      content: <ChampionsContent />,
-      thumbnail: "/program-image/acharyaes-math-1.png",
-      label: "AES Champions",
-      href: "/aes-champions",
-      className: "col-span-1",
+      title: "College Prep",
+      subtitle: "Ready.",
+      features: [
+        { icon: <Zap className="w-5 h-5 sm:w-6 sm:h-6" />, text: "Future Focused" },
+      ],
+      image: "/program-image/banner-future.png",
+    },
+    {
+      title: "AES Champions",
+      subtitle: "Achieve More.",
+      features: [
+        { icon: <Trophy className="w-5 h-5 sm:w-6 sm:h-6" />, text: "Achievement Mindset" },
+      ],
+      image: "/program-image/banner-champions.png",
     },
   ];
 
   const programsSlide: Slide = {
     title: "Programs",
-    imageSrc: "/program-image/acharyaes-academic-hero.jpg",
+    imageSrc: "/program-image/banner-tutoring.png",
     imageAlt: "AcharyaES programs",
     customContent: (
-      <div className="relative w-full bg-[#0b0f1f]">
+      <section className="relative w-full bg-slate-950 overflow-hidden h-full">
+        {/* Fixed height container */}
         <div className="relative mx-auto w-full max-w-none h-[100svh] px-2 sm:px-4 lg:px-6 xl:px-8 pb-6 sm:pb-8 md:pb-10 pt-20 sm:pt-24">
-          <div className="h-[calc(100svh-5rem)] sm:h-[calc(100svh-6rem)] w-full">
-            <LayoutGrid
-              cards={heroCards}
-              hoverPairs={[]}
-            />
+          {/* Grid background */}
+          <GridBackground />
+
+          {/* Content container */}
+          <div className="h-[calc(100svh-5rem)] sm:h-[calc(100svh-6rem)] w-full relative z-20 flex flex-col justify-between pb-4 sm:pb-6">
+            {/* Header */}
+            <div className="flex-shrink-0 space-y-3 sm:space-y-4 flex flex-col items-center">
+              <div className="flex items-center gap-2 rounded-full border border-yellow-400/40 bg-yellow-400/15 px-4 py-2 backdrop-blur-sm mb-5 w-fit">
+                <div className="h-1.5 w-1.5 rounded-full bg-yellow-400" />
+                <span className="text-xs sm:text-sm font-semibold uppercase tracking-[0.15em] text-yellow-200">Transform Your Journey</span>
+              </div>
+              {/* <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black bg-gradient-to-r from-white via-yellow-100 to-amber-200 bg-clip-text text-transparent text-balance leading-tight drop-shadow-[0_2px_12px_rgba(250,204,21,0.3)]">
+                Our Programs
+              </h1>
+              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-200 text-balance max-w-2xl leading-relaxed font-medium">
+                Choose your path to excellence with our comprehensive suite of academic programs designed to unlock your potential
+              </p> */}
+            </div>
+
+            {/* Banner Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-5 lg:gap-6 flex-1 w-full overflow-hidden">
+              {banners.map((banner, index) => (
+                <div 
+                  key={index} 
+                  className="animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden rounded-lg" 
+                  style={{
+                    animationDelay: `${index * 100}ms`,
+                  }}
+                >
+                  <BannerItem
+                    title={banner.title}
+                    subtitle={banner.subtitle}
+                    features={banner.features}
+                    textColor="text-white"
+                    accentColor="bg-yellow-400"
+                    image={banner.image}
+                    priority={index === 0}
+                    objectPosition={index === 3 ? "object-cover lg:object-[center_35%] xl:object-[center_40%]" : "object-cover object-center"}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+
+        {/* Decorative corner elements */}
+        <div className="absolute top-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full filter blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full filter blur-3xl translate-x-1/2 translate-y-1/2 pointer-events-none" />
+      </section>
     ),
   };
 
