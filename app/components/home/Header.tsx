@@ -102,7 +102,8 @@ export default function Header() {
                   <div id="mobile-programs-menu" className="pl-6 space-y-2">
                     <Link href="/academictutoring" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">Academic Tutoring</Link>
                     <Link href="/collegeprep" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">College Prep</Link>
-                    <Link href="/satcoaching" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">SAT Coaching</Link>
+                    {/* Keep mobile menu aligned with desktop nav (sat coaching currently hidden on desktop) */}
+                    {/* <Link href="/satcoaching" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">SAT Coaching</Link> */}
                   </div>
                 )}
               </div>
@@ -130,8 +131,7 @@ export default function Header() {
                 )}
               </div>
 
-              <Link href="/#mentors" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Mentors</Link>
-              <Link href="/#animatedtestimonials" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Testimonials</Link>
+              <Link href="/testimonials" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Testimonials</Link>
               <div className="space-y-2">
                 <button
                   type="button"
