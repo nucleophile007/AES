@@ -9,14 +9,22 @@ import { HeroSliderAlways, type Slide } from "./HeroSliderAlways";
 
 export function ProgramsHero() {
   useEffect(() => {
-    // Preload all assets including banner images for instant caching
-    const admissionSlideAssets = [
-      // Banner images - loaded first for instant display
+    // Preload banner images immediately for instant display (critical assets)
+    const bannerImages = [
       "/program-image/banner-tutoring.png",
       "/program-image/banner-explorers.png",
       "/program-image/banner-future.png",
       "/program-image/banner-champions.png",
-      // College admissions assets
+    ];
+
+    // Load banner images immediately (high priority)
+    bannerImages.forEach((src) => {
+      const img = new window.Image();
+      img.src = src;
+    });
+
+    // Preload secondary assets during idle time
+    const secondaryAssets = [
       "/program-image/acharyaes-college-hero.jpg",
       "/college-logos/washi.png",
       "/college-logos/north.png",
@@ -25,18 +33,16 @@ export function ProgramsHero() {
       "/college-logos/pomona1.png",
     ];
 
-    // Use requestIdleCallback for non-blocking preload
     if ('requestIdleCallback' in window) {
       requestIdleCallback(() => {
-        admissionSlideAssets.forEach((src) => {
+        secondaryAssets.forEach((src) => {
           const img = new window.Image();
           img.src = src;
-          img.loading = 'lazy';
         });
       });
     } else {
       // Fallback for browsers without requestIdleCallback
-      admissionSlideAssets.forEach((src) => {
+      secondaryAssets.forEach((src) => {
         const img = new window.Image();
         img.src = src;
       });
@@ -74,35 +80,51 @@ export function ProgramsHero() {
   const banners = [
     {
       title: "Academic Tutoring",
-      subtitle: "Succeed.",
+      tagline: "Learn. Understand. Succeed.",
       features: [
+        { icon: <Lightbulb className="w-5 h-5 sm:w-6 sm:h-6" />, text: "Personalized Learning" },
+        { icon: <Lightbulb className="w-5 h-5 sm:w-6 sm:h-6" />, text: "One-on-One Support" },
+        { icon: <Lightbulb className="w-5 h-5 sm:w-6 sm:h-6" />, text: "Better Results" },
         { icon: <Lightbulb className="w-5 h-5 sm:w-6 sm:h-6" />, text: "Build Confidence" },
       ],
       image: "/program-image/banner-tutoring.png",
+      href: "/academictutoring",
     },
     {
       title: "AES Explorers",
-      subtitle: "Innovate.",
+      tagline: "Explore. Discover. Innovate.",
       features: [
+        { icon: <Telescope className="w-5 h-5 sm:w-6 sm:h-6" />, text: "Hands-on Research" },
+        { icon: <Telescope className="w-5 h-5 sm:w-6 sm:h-6" />, text: "Critical Thinking" },
+        { icon: <Telescope className="w-5 h-5 sm:w-6 sm:h-6" />, text: "Real-World Impact" },
         { icon: <Telescope className="w-5 h-5 sm:w-6 sm:h-6" />, text: "Curiosity Driven" },
       ],
       image: "/program-image/banner-explorers.png",
+      href: "/aes-explorers",
     },
     {
-      title: "College Prep",
-      subtitle: "Ready.",
+      title: "UAchieve",
+      tagline: "Prepare Today. Achieve Tomorrow.",
       features: [
-        { icon: <Zap className="w-5 h-5 sm:w-6 sm:h-6" />, text: "Future Focused" },
+        { icon: <Zap className="w-5 h-5 sm:w-6 sm:h-6" />, text: "College Guidance" },
+        { icon: <Zap className="w-5 h-5 sm:w-6 sm:h-6" />, text: "Test Preparation" },
+        { icon: <Zap className="w-5 h-5 sm:w-6 sm:h-6" />, text: "Application Support" },
+        { icon: <Zap className="w-5 h-5 sm:w-6 sm:h-6" />, text: "Future Ready" },
       ],
       image: "/program-image/banner-future.png",
+      href: "/collegeprep",
     },
     {
       title: "AES Champions",
-      subtitle: "Achieve More.",
+      tagline: "Think. Solve. Excel.",
       features: [
-        { icon: <Trophy className="w-5 h-5 sm:w-6 sm:h-6" />, text: "Achievement Mindset" },
+        { icon: <Trophy className="w-5 h-5 sm:w-6 sm:h-6" />, text: "Problem Solving" },
+        { icon: <Trophy className="w-5 h-5 sm:w-6 sm:h-6" />, text: "Competitive Excellence" },
+        { icon: <Trophy className="w-5 h-5 sm:w-6 sm:h-6" />, text: "Build Confidence" },
+        { icon: <Trophy className="w-5 h-5 sm:w-6 sm:h-6" />, text: "Achieve More" },
       ],
       image: "/program-image/banner-champions.png",
+      href: "/aes-champions",
     },
   ];
 
@@ -138,19 +160,17 @@ export function ProgramsHero() {
               {banners.map((banner, index) => (
                 <div 
                   key={index} 
-                  className="animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden rounded-lg" 
-                  style={{
-                    animationDelay: `${index * 100}ms`,
-                  }}
+                  className="overflow-hidden rounded-lg"
                 >
                   <BannerItem
                     title={banner.title}
-                    subtitle={banner.subtitle}
+                    tagline={banner.tagline}
                     features={banner.features}
                     textColor="text-white"
                     accentColor="bg-yellow-400"
                     image={banner.image}
-                    priority={index === 0}
+                    href={banner.href}
+                    priority={true}
                     objectPosition={index === 3 ? "object-cover lg:object-[center_35%] xl:object-[center_40%]" : "object-cover object-center"}
                   />
                 </div>
