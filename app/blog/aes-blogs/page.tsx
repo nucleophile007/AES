@@ -50,18 +50,7 @@ export default function AESBlogsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
 
-  const mentorBlogs = useMemo(() => {
-    const likelyMentor = blogs.filter((blog) => blog.studentId === null);
-    const fallback = blogs.filter((blog) => blog.studentId !== null);
-    return [...likelyMentor, ...fallback].slice(0, 3);
-  }, [blogs]);
-
-  const studentBlogsBase = useMemo(() => {
-    const mentorIds = new Set(mentorBlogs.map((blog) => blog.id));
-    const studentOnly = blogs.filter((blog) => blog.studentId !== null && !mentorIds.has(blog.id));
-    if (studentOnly.length > 0) return studentOnly;
-    return blogs.filter((blog) => !mentorIds.has(blog.id));
-  }, [blogs, mentorBlogs]);
+  const studentBlogsBase = useMemo(() => blogs, [blogs]);
 
   const monthCounts = useMemo(() => {
     const counts: Record<number, number> = {};
@@ -124,47 +113,18 @@ export default function AESBlogsPage() {
               AES Blogs
             </h1>
             <h2 className="mt-4 text-2xl sm:text-3xl font-semibold text-slate-100 tracking-tight">
-              What our mentors have to say
+              What our students have to say
             </h2>
             <p className="mt-4 text-lg sm:text-xl theme-text-muted max-w-2xl">
-              Practical mentor insights for students on research, academics, and profile-building.
+              Practical student stories on research, academics, and profile-building.
             </p>
           </div>
 
           {isLoading ? (
-            <div className="grid gap-5 md:grid-cols-3 pb-10">
-              {Array.from({ length: 3 }).map((_, idx) => (
-                <div key={idx} className="h-80 rounded-3xl bg-slate-800/60 animate-pulse" />
-              ))}
+            <div className="pb-10">
+              <div className="h-10 w-56 rounded bg-slate-800/60 animate-pulse" />
             </div>
-          ) : (
-            <div className="grid gap-5 md:grid-cols-3 [perspective:1200px] pb-10">
-              {mentorBlogs.map((blog, idx) => (
-                <a
-                  key={blog.id}
-                  href={blog.externalUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group rounded-3xl border border-slate-700/50 bg-slate-900/70 overflow-hidden shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:rotate-x-1 hover:rotate-y-1 hover:shadow-[0_18px_40px_rgba(15,23,42,0.55)] [transform-style:preserve-3d]"
-                >
-                  <div className="relative h-48">
-                    <img
-                      src={blog.studentPhoto || fallbackImages[idx % fallbackImages.length]}
-                      alt={blog.title}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
-                  </div>
-                  <div className="p-5 space-y-3">
-                    <p className="text-xs uppercase tracking-[0.14em] text-cyan-300 font-semibold">Mentor Blogs</p>
-                    <h2 className="text-2xl font-semibold text-slate-100 leading-tight line-clamp-3">{blog.title}</h2>
-                    <p className="text-slate-300 text-sm line-clamp-3">{blog.abstract}</p>
-                    <p className="text-slate-400 text-sm">{formatDate(blog)}</p>
-                  </div>
-                </a>
-              ))}
-            </div>
-          )}
+          ) : null}
         </div>
       </section>
 
@@ -178,7 +138,7 @@ export default function AESBlogsPage() {
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search student blogs"
+                placeholder="Search blogs"
                 className="w-full rounded-full bg-slate-800/70 border border-slate-700/70 text-slate-100 placeholder:text-slate-400 pl-11 pr-4 py-3 outline-none focus:border-cyan-400/70 focus:ring-2 focus:ring-cyan-400/20 transition"
               />
             </div>
@@ -219,7 +179,7 @@ export default function AESBlogsPage() {
             </div>
           ) : filteredStudentBlogs.length === 0 ? (
             <div className="rounded-2xl border border-slate-700 bg-slate-900/50 p-8 text-center text-slate-300">
-              No student blogs found for this filter.
+              No blogs found for this filter.
             </div>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 [perspective:1200px]">
@@ -247,6 +207,9 @@ export default function AESBlogsPage() {
                     </div>
                     <h3 className="text-2xl font-semibold text-slate-100 leading-tight line-clamp-3">{blog.title}</h3>
                     <p className="text-slate-300 text-sm line-clamp-3">{blog.abstract}</p>
+                    <div className="flex justify-end pt-1">
+                      <span className="text-cyan-200 font-medium text-sm text-right">By {blog.Student?.name || "Student"}</span>
+                    </div>
                   </div>
                 </a>
               ))}
