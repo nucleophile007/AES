@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import Chatbot from "@/components/home/Chatbot";
@@ -466,33 +466,29 @@ const TestimonialsSection = () => {
 
   const intervalRef = React.useRef<NodeJS.Timeout | null>(null)
 
-  // Fetch testimonials from API
   React.useEffect(() => {
     const fetchTestimonials = async () => {
       try {
         const response = await fetch("/api/testimonials")
         const data = await response.json()
-        
+
         if (data.success && data.testimonials && data.testimonials.length > 0) {
-          // Filter testimonials for "UACHIEVE COLLEGE ADMISSIONS PREP" program
           const collegeTestimonials = data.testimonials
             .filter((t: any) => {
-              // Check if programs array includes UACHIEVE (case-insensitive)
-              return t.programs && Array.isArray(t.programs) && 
-                     t.programs.some((p: string) => p.toLowerCase().includes('uachieve'))
+              return t.programs && Array.isArray(t.programs) &&
+                t.programs.some((p: string) => p.toLowerCase().includes('uachieve'))
             })
             .map((t: any) => ({
               id: t.id || Math.random(),
               name: t.studentName || "Student",
               designation: t.grade || "Student",
               grade: t.grade || "Student",
-              // Keep all sections separate
               successStory: t.successStory,
               content: t.content || t.experienceDescription,
               rating: t.rating,
               initials: t.studentName ? t.studentName.split(" ").map((n: string) => n[0]).join("") : "ST"
             }))
-          
+
           if (collegeTestimonials.length > 0) {
             setTestimonialCards(collegeTestimonials)
             setSelectedTestimonial(collegeTestimonials[0])
@@ -500,7 +496,6 @@ const TestimonialsSection = () => {
         }
       } catch (error) {
         console.error("Error fetching testimonials:", error)
-        // Keep fallback testimonials on error
       } finally {
         setLoading(false)
       }
@@ -561,15 +556,12 @@ const TestimonialsSection = () => {
   }
 
   const renderTestimonialContent = (testimonial: any) => {
-    // If it's a fallback testimonial with JSX content
     if (typeof testimonial.content !== 'string' && testimonial.content?.props) {
       return testimonial.content
     }
-    
-    // For API testimonials, show all approved sections with headings
+
     return (
       <div className="space-y-6">
-        {/* Content/Experience Section */}
         {testimonial.content && (
           <div>
             <h3 className="text-yellow-400 font-semibold mb-2 text-base">
@@ -580,8 +572,7 @@ const TestimonialsSection = () => {
             </p>
           </div>
         )}
-        
-        {/* Success Story Section */}
+
         {testimonial.successStory && (
           <div>
             <h3 className="text-emerald-400 font-semibold mb-2 text-base">
@@ -592,8 +583,7 @@ const TestimonialsSection = () => {
             </p>
           </div>
         )}
-        
-        {/* If neither section exists (shouldn't happen but fallback) */}
+
         {!testimonial.successStory && !testimonial.content && (
           <p className="text-slate-200 text-base leading-relaxed">
             Great college prep experience!
@@ -603,18 +593,133 @@ const TestimonialsSection = () => {
     )
   }
 
+  const activeTestimonial = (testimonialCards[currentIndex] || selectedTestimonial) as any
+  const previousTestimonial = testimonialCards[(currentIndex - 1 + testimonialCards.length) % testimonialCards.length] as any
+  const nextTestimonial = testimonialCards[(currentIndex + 1) % testimonialCards.length] as any
+
   return (
     <div className="w-full relative z-10">
-      <div className="max-w-7xl mx-auto relative z-10">
-        <div className="relative flex flex-col lg:flex-row items-center justify-center gap-16">
+
+      <div className="max-w-7xl mx-auto relative z-10 px-4 sm:px-6 lg:px-8">
+        <div className="lg:hidden">
+          <div className="max-w-md mx-auto">
+            <div className="relative h-[27rem] sm:h-[28rem] overflow-hidden">
+              <motion.div
+                key={`${previousTestimonial.id}-back-left`}
+                initial={{ opacity: 0, x: -12, y: 18, scale: 0.93, rotate: -4 }}
+                animate={{ opacity: 0.45, x: -18, y: 20, scale: 0.94, rotate: -5 }}
+                transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                className="absolute inset-x-3 top-4 rounded-3xl p-4 sm:p-5 shadow-xl border border-yellow-400/15 bg-[#151c30]/70 backdrop-blur-sm overflow-hidden max-h-[12rem] sm:max-h-[13rem]"
+                style={{ zIndex: 1 }}
+              >
+                <div className="text-center space-y-2 sm:space-y-3 select-none pointer-events-none h-full flex flex-col">
+                  <h3 className="text-lg sm:text-xl font-bold theme-text-light leading-tight line-clamp-2">
+                    {previousTestimonial.name}
+                  </h3>
+                  <p className="text-sm sm:text-base text-yellow-400 font-semibold line-clamp-1">
+                    {previousTestimonial.designation}
+                  </p>
+                  <div className="mt-3 rounded-2xl bg-slate-900/40 border border-white/10 px-4 py-4 text-left overflow-y-auto max-h-[6rem] sm:max-h-[7rem] scrollbar-hide">
+                    <blockquote className="theme-text-light leading-relaxed text-sm sm:text-[15px]">
+                      {renderTestimonialContent(previousTestimonial)}
+                    </blockquote>
+                    <div className="mt-2 text-xs text-slate-400">
+                      {previousTestimonial.rating ? `${previousTestimonial.rating}/5` : ""}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                key={`${nextTestimonial.id}-back-right`}
+                initial={{ opacity: 0, x: 12, y: 34, scale: 0.93, rotate: 4 }}
+                animate={{ opacity: 0.35, x: 18, y: 36, scale: 0.94, rotate: 5 }}
+                transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.05 }}
+                className="absolute inset-x-3 top-10 rounded-3xl p-4 sm:p-5 shadow-xl border border-yellow-400/15 bg-[#151c30]/60 backdrop-blur-sm overflow-hidden max-h-[12rem] sm:max-h-[13rem]"
+                style={{ zIndex: 2 }}
+              >
+                <div className="text-center space-y-2 sm:space-y-3 select-none pointer-events-none h-full flex flex-col">
+                  <h3 className="text-lg sm:text-xl font-bold theme-text-light leading-tight line-clamp-2">
+                    {nextTestimonial.name}
+                  </h3>
+                  <p className="text-sm sm:text-base text-yellow-400 font-semibold line-clamp-1">
+                    {nextTestimonial.designation}
+                  </p>
+                  <div className="mt-3 rounded-2xl bg-slate-900/40 border border-white/10 px-4 py-4 text-left overflow-y-auto max-h-[6rem] sm:max-h-[7rem] scrollbar-hide">
+                    <blockquote className="theme-text-light leading-relaxed text-sm sm:text-[15px]">
+                      {renderTestimonialContent(nextTestimonial)}
+                    </blockquote>
+                    <div className="mt-2 text-xs text-slate-400">
+                      {nextTestimonial.rating ? `${nextTestimonial.rating}/5` : ""}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTestimonial.id}
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                  transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  className="absolute inset-x-0 top-0 rounded-3xl p-4 sm:p-5 shadow-2xl border border-yellow-400/30 bg-[#1a2236]/95 backdrop-blur-sm overflow-hidden max-h-[18.5rem] sm:max-h-[20rem]"
+                  style={{ zIndex: 3 }}
+                >
+                  <div className="text-center space-y-2 sm:space-y-3 h-full flex flex-col">
+                    <h3 className="text-lg sm:text-xl font-bold theme-text-light leading-tight">
+                      {activeTestimonial.name}
+                    </h3>
+
+                    <p className="text-sm sm:text-base text-yellow-400 font-semibold">
+                      {activeTestimonial.designation}
+                    </p>
+
+                    {activeTestimonial.rating && (
+                      <div className="flex justify-center gap-1 pt-1">
+                        {[...Array(activeTestimonial.rating)].map((_, idx) => (
+                          <Star key={idx} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="mt-3 rounded-2xl bg-slate-900/60 border border-white/10 px-4 py-4 text-left overflow-y-auto min-h-0 max-h-[10rem] sm:max-h-[11rem] scrollbar-hide">
+                      <blockquote className="theme-text-light leading-relaxed text-sm sm:text-[15px]">
+                        {renderTestimonialContent(activeTestimonial)}
+                      </blockquote>
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            <div className="flex items-center justify-center gap-6 mt-5">
+              <button
+                onClick={goToPrevious}
+                className="h-11 w-11 rounded-full bg-yellow-400 flex items-center justify-center shadow-lg active:scale-95 transition-transform"
+                aria-label="Previous testimonial"
+              >
+                <ChevronLeft className="w-5 h-5 text-[#1a2236]" />
+              </button>
+
+              <button
+                onClick={goToNext}
+                className="h-11 w-11 rounded-full bg-yellow-400 flex items-center justify-center shadow-lg active:scale-95 transition-transform"
+                aria-label="Next testimonial"
+              >
+                <ChevronRight className="w-5 h-5 text-[#1a2236]" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="hidden lg:flex relative flex-col lg:flex-row items-center justify-center gap-16">
           <div className="relative w-[600px] h-[600px] lg:w-[700px] lg:h-[700px]">
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] lg:w-[500px] lg:h-[500px] border-2 border-dashed border-yellow-400/30 rounded-full" />
-            
-                        {/* Testimonials positioned around the circle */}
+
             {testimonialCards.map((testimonial, index) => {
-              // Calculate angle so that active testimonial is always at rightmost (0 degrees)
               const angle = (index - currentIndex) * (360 / testimonialCards.length)
-              const radius = 250 // Increased radius for more spacing between avatars
+              const radius = 250
               const x = Math.cos((angle * Math.PI) / 180) * radius
               const y = Math.sin((angle * Math.PI) / 180) * radius
 
@@ -656,46 +761,39 @@ const TestimonialsSection = () => {
           <div className="flex-1 max-w-lg">
             <div
               key={selectedTestimonial.id}
-              className="bg-gradient-to-br from-[#1a2236]/95 to-[#2a3246]/90 backdrop-blur-xl rounded-2xl p-8 shadow-2xl border border-yellow-400/30 animate-in fade-in-50 slide-in-from-right-5 duration-500 relative overflow-hidden flex flex-col h-[550px] items-center text-center"
+              className="bg-[#1a2236]/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-yellow-400/20 animate-in fade-in-50 slide-in-from-right-5 duration-500 flex flex-col h-[550px] items-center text-center"
             >
-              {/* Content Background Glow */}
-              <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 via-transparent to-blue-400/5 rounded-2xl"></div>
-              <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-400/10 rounded-full blur-3xl"></div>
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-400/10 rounded-full blur-3xl"></div>
-              <div className="relative z-10 flex flex-col h-full items-center text-center">
-                <div className="flex flex-col items-center justify-center gap-2 mb-6">
-                  <Avatar className="w-12 h-12 ring-2 ring-yellow-100">
-                    <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-[#1a2236] font-semibold">
-                      {selectedTestimonial.initials || selectedTestimonial.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="font-semibold theme-text-light">{selectedTestimonial.name}</div>
-                  <div className="text-yellow-400 text-sm font-medium">{selectedTestimonial.designation}</div>
-                </div>
+              <div className="flex flex-col items-center justify-center gap-2 mb-6">
+                <Avatar className="w-12 h-12 ring-2 ring-yellow-100">
+                  <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-[#1a2236] font-semibold">
+                    {selectedTestimonial.initials || selectedTestimonial.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="font-semibold theme-text-light">{selectedTestimonial.name}</div>
+                <div className="text-yellow-400 text-sm font-medium">{selectedTestimonial.designation}</div>
+              </div>
 
-                {/* Rating Stars - Only show if rating exists */}
-                {selectedTestimonial.rating && (
-                  <div className="flex gap-1 mb-6 justify-center">
-                    {[...Array(selectedTestimonial.rating)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                    ))}
-                  </div>
-                )}
-
-                <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide w-full">
-                  <blockquote className="theme-text-light leading-relaxed font-medium">
-                    {renderTestimonialContent(selectedTestimonial)}
-                  </blockquote>
+              {selectedTestimonial.rating && (
+                <div className="flex gap-1 mb-6 justify-center">
+                  {[...Array(selectedTestimonial.rating)].map((_, i) => (
+                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                  ))}
                 </div>
+              )}
+
+              <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide w-full">
+                <blockquote className="theme-text-light leading-relaxed font-medium">
+                  {renderTestimonialContent(selectedTestimonial)}
+                </blockquote>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="flex justify-center gap-8 mt-16">
+        <div className="hidden lg:flex justify-center gap-8 mt-16">
           <button
             onClick={goToPrevious}
             className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg hover:bg-yellow-500 transition-all duration-200 hover:scale-110 active:scale-95"
@@ -912,7 +1010,7 @@ export default function CollegePrepPage() {
           <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-purple-400 rounded-full opacity-10 animate-float"></div>
           <div className="absolute top-1/3 right-1/3 w-8 h-8 bg-green-400 rounded-full opacity-10 animate-float-reverse"></div>
         </div>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-8 sm:pt-12">
           <div className="text-center mb-12 animate-slide-in-bottom">
             <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
               🎓 College Prep
