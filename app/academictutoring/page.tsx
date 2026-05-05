@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -451,16 +451,121 @@ function TestimonialsSection() {
     )
   }
 
+  const activeTestimonial = (testimonialCards[currentIndex] || selectedTestimonial) as any
+  const previousTestimonial = testimonialCards[(currentIndex - 1 + testimonialCards.length) % testimonialCards.length] as any
+  const nextTestimonial = testimonialCards[(currentIndex + 1) % testimonialCards.length] as any
+
   return (
     <div className="w-full relative z-10">
 
+      <div className="max-w-7xl mx-auto relative z-10 px-4 sm:px-6 lg:px-8">
+        <div className="lg:hidden">
+          <div className="max-w-md mx-auto">
+            <div className="relative h-[28rem] sm:h-[30rem]">
+              <motion.div
+                key={`${previousTestimonial.id}-back-left`}
+                initial={{ opacity: 0, x: -12, y: 18, scale: 0.93, rotate: -4 }}
+                animate={{ opacity: 0.45, x: -18, y: 20, scale: 0.94, rotate: -5 }}
+                transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                className="absolute inset-x-3 top-4 rounded-3xl p-4 sm:p-5 shadow-xl border border-yellow-400/15 bg-[#151c30]/70 backdrop-blur-sm"
+                style={{ zIndex: 1 }}
+              >
+                <div className="text-center space-y-2 sm:space-y-3 select-none pointer-events-none">
+                  <h3 className="text-lg sm:text-xl font-bold theme-text-light leading-tight line-clamp-2">
+                    {previousTestimonial.name}
+                  </h3>
+                  <p className="text-sm sm:text-base text-yellow-400 font-semibold line-clamp-1">
+                    {previousTestimonial.designation}
+                  </p>
+                  <div className="mt-3 rounded-2xl bg-slate-900/40 border border-white/10 px-4 py-4 text-left">
+                    <blockquote className="theme-text-light leading-relaxed text-sm sm:text-[15px] line-clamp-6">
+                      {renderTestimonialContent(previousTestimonial)}
+                    </blockquote>
+                  </div>
+                </div>
+              </motion.div>
 
+              <motion.div
+                key={`${nextTestimonial.id}-back-right`}
+                initial={{ opacity: 0, x: 12, y: 34, scale: 0.93, rotate: 4 }}
+                animate={{ opacity: 0.35, x: 18, y: 36, scale: 0.94, rotate: 5 }}
+                transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.05 }}
+                className="absolute inset-x-3 top-10 rounded-3xl p-4 sm:p-5 shadow-xl border border-yellow-400/15 bg-[#151c30]/60 backdrop-blur-sm"
+                style={{ zIndex: 2 }}
+              >
+                <div className="text-center space-y-2 sm:space-y-3 select-none pointer-events-none">
+                  <h3 className="text-lg sm:text-xl font-bold theme-text-light leading-tight line-clamp-2">
+                    {nextTestimonial.name}
+                  </h3>
+                  <p className="text-sm sm:text-base text-yellow-400 font-semibold line-clamp-1">
+                    {nextTestimonial.designation}
+                  </p>
+                  <div className="mt-3 rounded-2xl bg-slate-900/40 border border-white/10 px-4 py-4 text-left">
+                    <blockquote className="theme-text-light leading-relaxed text-sm sm:text-[15px] line-clamp-6">
+                      {renderTestimonialContent(nextTestimonial)}
+                    </blockquote>
+                  </div>
+                </div>
+              </motion.div>
 
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTestimonial.id}
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                  transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  className="absolute inset-x-0 top-0 rounded-3xl p-4 sm:p-5 shadow-2xl border border-yellow-400/30 bg-[#1a2236]/95 backdrop-blur-sm"
+                  style={{ zIndex: 3 }}
+                >
+                  <div className="text-center space-y-2 sm:space-y-3">
+                    <h3 className="text-lg sm:text-xl font-bold theme-text-light leading-tight">
+                      {activeTestimonial.name}
+                    </h3>
 
-      <div className="max-w-7xl mx-auto relative z-10">
+                    <p className="text-sm sm:text-base text-yellow-400 font-semibold">
+                      {activeTestimonial.designation}
+                    </p>
 
+                    {activeTestimonial.rating && (
+                      <div className="flex justify-center gap-1 pt-1">
+                        {[...Array(activeTestimonial.rating)].map((_, idx) => (
+                          <Star key={idx} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        ))}
+                      </div>
+                    )}
 
-        <div className="relative flex flex-col lg:flex-row items-center justify-center gap-16">
+                    <div className="mt-3 rounded-2xl bg-slate-900/60 border border-white/10 px-4 py-4 text-left">
+                      <blockquote className="theme-text-light leading-relaxed text-sm sm:text-[15px]">
+                        {renderTestimonialContent(activeTestimonial)}
+                      </blockquote>
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            <div className="flex items-center justify-center gap-6 mt-5">
+              <button
+                onClick={goToPrevious}
+                className="h-11 w-11 rounded-full bg-yellow-400 flex items-center justify-center shadow-lg active:scale-95 transition-transform"
+                aria-label="Previous testimonial"
+              >
+                <ChevronLeft className="w-5 h-5 text-[#1a2236]" />
+              </button>
+
+              <button
+                onClick={goToNext}
+                className="h-11 w-11 rounded-full bg-yellow-400 flex items-center justify-center shadow-lg active:scale-95 transition-transform"
+                aria-label="Next testimonial"
+              >
+                <ChevronRight className="w-5 h-5 text-[#1a2236]" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="hidden lg:flex relative flex-col lg:flex-row items-center justify-center gap-16">
           <div className="relative w-[600px] h-[600px] lg:w-[700px] lg:h-[700px]">
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] lg:w-[500px] lg:h-[500px] border-2 border-dashed border-yellow-400/30 rounded-full" />
             
@@ -543,7 +648,7 @@ function TestimonialsSection() {
           </div>
         </div>
 
-        <div className="flex justify-center gap-8 mt-16">
+        <div className="hidden lg:flex justify-center gap-8 mt-16">
           <button
             onClick={goToPrevious}
             className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg hover:bg-yellow-500 transition-all duration-200 hover:scale-110 active:scale-95"
@@ -579,7 +684,7 @@ export default function AcademicTutoringPage() {
           <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-purple-400 rounded-full opacity-10 animate-float"></div>
           <div className="absolute top-1/3 right-1/3 w-8 h-8 bg-green-400 rounded-full opacity-10 animate-float-reverse"></div>
         </div>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-8 sm:pt-12">
           <div className="text-center mb-12 animate-slide-in-bottom">
             <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
               ✨ Academic Tutoring
