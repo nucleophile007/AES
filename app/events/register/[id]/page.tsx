@@ -1,6 +1,7 @@
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import Chatbot from "@/components/home/Chatbot";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import RegistrationCloseButton from "@/components/events/RegistrationCloseButton";
@@ -124,42 +125,73 @@ const EVENT_FORMS: Record<string, EventFormConfig> = {
     viewUrl:
       "https://docs.google.com/forms/d/e/1FAIpQLSfnTmN-Y088mfyx9L7WSGBX-S-i9TxPsYXFNHhkc4634HvaYg/viewform",
     summary:
-      "Bridge into AP success with guided prep, concept strengthening, and structured summer sessions designed for steady progress.",
+      "8-week intensive course with expert mentors, small group settings, and take-home exam support.",
     eyebrow: "Summer Program",
     image: "/program-image/ap-bridge-summer-program.png",
-    dateLabel: "June 8 - July 31, 2026",
-    timeLabel: "Online",
-    locationLabel: "Live virtual sessions",
+    dateLabel: "June 5 - July 31",
+    timeLabel: "Frequency: 3 hrs/week",
+    locationLabel: "Deadline: May 25",
     ctaLabel: "Register for AP Bridge",
-    highlights: ["AP-focused guidance", "Live virtual instruction", "Structured summer timeline"],
+    highlights: [
+      "Courses: AP Pre-Calc",
+      "Courses: AP Calc AB/BC",
+      "Courses: AP Physics 1/C",
+      "Courses: AP Biology",
+      "Courses: AP Chemistry",
+      "Total of 25 sessions",
+      "Fees: $25/hr",
+      "Small group settings",
+      "Take-home exam support",
+      "Expert mentors",
+    ],
   },
   "aes-explorers": {
     title: "AES Explorers Summer Camp Registration",
     viewUrl:
       "https://docs.google.com/forms/d/e/1FAIpQLScADaWPXsKAeOw6Ryve0OuRyh1INZDxHV5XG91j5CGwlxMfNg/viewform",
     summary:
-      "A research-focused summer camp where students explore real questions with mentor guidance across multiple tracks.",
+      "AES presents its flagship college-level research camp for middle and high school students, with expert guidance and multiple academic tracks.",
     eyebrow: "Research Camp",
     image: "/program-image/aes-explorers-summer-camp.png",
-    dateLabel: "June 1 - August 7, 2026",
-    timeLabel: "Online",
-    locationLabel: "Live virtual sessions",
+    dateLabel: "June 1 - Aug 7",
+    timeLabel: "All sessions are online",
+    locationLabel: "From $100/week",
     ctaLabel: "Register for AES Explorers",
-    highlights: ["Mentor-led research", "Hands-on exploration", "Multiple academic tracks"],
+    highlights: [
+      "Engineering track",
+      "Law & Humanities track",
+      "Pre-Med track",
+      "AI/ML track",
+      "Guidance from university faculty (US & India)",
+      "Researchers and PhD experts",
+      "Sign up today",
+    ],
   },
   "aes-champions": {
     title: "AES Champions Math Competition Prep Registration",
     viewUrl:
       "https://docs.google.com/forms/d/1yM9aV0zpWIdIqmzvx9G4inGvtvFx6jh3VRfkbGcTP4M/viewform",
     summary:
-      "A focused math competition program that goes beyond school curricula, builds strong problem-solving habits, and prepares students for AMC, AIME, and olympiad-style contests.",
+      "Are you looking to give your child a math edge beyond the classroom? Competition prep for elementary through high school contests with cohort-based learning and online sessions.",
     eyebrow: "Competition Prep",
-    image: "/program-image/banner-champions.png",
-    dateLabel: "Starts June 8, 2026",
-    timeLabel: "Weekly live sessions",
+    image: "/program-image/math-new-event.png",
+    dateLabel: "New batches from June 8, 2026",
+    timeLabel: "Weekly 2 classes (60 min sessions)",
     locationLabel: "Online",
     ctaLabel: "Join AES Champions",
-    highlights: ["Customized mentorship", "3000+ practice problems", "Flexible level placement", "Placement test required"],
+    highlights: [
+      "Elementary: Math Kangaroo",
+      "Elementary: NLMC",
+      "Elementary: MOEMS",
+      "Middle & High school: AMC 8 (Grades 5-8)",
+      "Middle & High school: AMC 10 (Grades 9 & 10)",
+      "Cohort-based learning",
+      "Limited students per batch",
+      "1500+ practice tests",
+      "Up to 10 mock tests (live & take-home)",
+      "All sessions are online",
+      "Fees: starts from $35/hr",
+    ],
   },
 };
 
@@ -223,98 +255,106 @@ export default async function EventRegistrationPage({
     <main className="min-h-screen theme-bg-dark flex flex-col">
       <Header />
 
-      <section className="relative overflow-hidden pt-24 md:pt-28">
+      <section className="relative overflow-hidden pt-20 sm:pt-24 md:pt-28">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.12),transparent_30%),radial-gradient(circle_at_top_right,rgba(168,85,247,0.16),transparent_32%),linear-gradient(180deg,#0f1730_0%,#13203f_48%,#0b1224_100%)]" />
-        <div className="relative mx-auto w-full max-w-7xl px-4 pb-12 md:px-8 space-y-10">
-          <div className="mx-auto max-w-4xl text-center text-white">
-            <div className="inline-flex items-center gap-2 rounded-full border border-yellow-300/20 bg-yellow-300/10 px-4 py-2 text-sm uppercase tracking-[0.22em] text-yellow-200">
-              <Sparkles className="h-4 w-4" />
-              {eventConfig.eyebrow}
-            </div>
-            <h1 className="mt-4 text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">
-              {eventConfig.title.replace(" Registration", "")}
-            </h1>
-            <p className="mx-auto mt-4 max-w-3xl text-lg leading-8 text-slate-200 sm:text-xl">
-              {eventConfig.summary}
-            </p>
-          </div>
-
-          <div id="registration-form" className="mx-auto w-full max-w-6xl overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/75 shadow-2xl shadow-black/40 backdrop-blur-xl">
-            <div className="flex flex-col gap-3 border-b border-white/10 bg-white/5 p-5 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm uppercase tracking-[0.2em] text-yellow-300 mb-2">Official Registration</p>
-                <h2 className="text-2xl font-semibold text-white">Complete the form below</h2>
+        <div className="relative mx-auto w-full max-w-7xl space-y-10 px-4 pb-12 sm:px-6 md:px-8">
+          {id !== "aes-champions" && id !== "ap-bridge" && id !== "aes-explorers" && (
+            <div className="mx-auto max-w-4xl text-center text-white">
+              <div className="inline-flex items-center gap-2 rounded-full border border-yellow-300/20 bg-yellow-300/10 px-4 py-2 text-sm uppercase tracking-[0.22em] text-yellow-200">
+                <Sparkles className="h-4 w-4" />
+                {eventConfig.eyebrow}
               </div>
-              <div className="flex items-center gap-2">
-                <Link
-                  href={eventConfig.viewUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center rounded-lg border border-slate-400/40 bg-slate-800/60 px-4 py-2 text-sm font-medium text-slate-100 transition hover:bg-slate-700/70"
-                >
-                  Open In New Tab
-                </Link>
-                <RegistrationCloseButton />
-              </div>
+              <h1 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
+                {eventConfig.title.replace(" Registration", "")}
+              </h1>
+              <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-slate-200 sm:text-lg sm:leading-8">
+                {eventConfig.summary}
+              </p>
             </div>
+          )}
 
-            <div className="bg-slate-900/70 p-3">
-              <iframe
-                src={embedUrl}
-                title={eventConfig.title}
-                width="100%"
-                  height="1200"
-                frameBorder="0"
-                marginHeight={0}
-                marginWidth={0}
-                  className="block h-[1200px] w-full border-0 lg:h-[calc(100vh-7rem)] lg:min-h-[1200px]"
-              >
-                Loading...
-              </iframe>
-            </div>
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-[1fr_1fr] lg:items-start">
-            <section className="rounded-[2rem] border border-white/10 bg-slate-950/60 p-6 shadow-2xl shadow-black/40 backdrop-blur-xl">
-              <ul className="space-y-3 text-sm leading-6 text-slate-100">
-                <li>Math beyond school curricula with competition fundamentals</li>
-                <li>Problem solving, cooperative competition, and STEM integration</li>
-                <li>Customized mentorship based on skill level</li>
-                <li>Flexible support for mixed skill levels and experience</li>
-                <li>3000+ practice problems and worksheet work</li>
-              </ul>
-            </section>
-
-            <section className="rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur-xl">
-              <ul className="space-y-3 text-sm leading-6 text-slate-200">
-                <li>Weekly: Summer 2 x 60 minutes, Semester/Year 1 x 90 minutes</li>
-                <li>Practice: 1-2 hours per week</li>
-                <li>Timeline: Summer 10 weeks from the June 1st week</li>
-                <li>Fees: Summer $750, semester/year-long starting at $300 per month</li>
-                <li>Timing: PST and shared by June 1 after registration</li>
-              </ul>
-            </section>
-          </div>
-
-          <section className="rounded-[2rem] border border-white/10 bg-slate-950/40 p-5 shadow-lg">
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-              {CHAMPIONS_LEVELS.map((level) => (
-                <div key={level.level} className="rounded-[1.25rem] border border-white/10 bg-slate-900/50 p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-yellow-300">{level.level}</p>
-                  <p className="mt-2 text-sm font-semibold text-white">{level.grades}</p>
-                  <p className="mt-2 text-xs leading-5 text-slate-300">{level.focus}</p>
+          <div className="mx-auto w-full max-w-6xl">
+            <div className="mb-4 overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/70 shadow-xl shadow-black/30 sm:mb-6">
+              <div className="grid gap-5 p-4 sm:gap-6 sm:p-5 lg:grid-cols-[1.15fr_1fr] lg:items-center">
+                <div className="relative h-56 w-full overflow-hidden rounded-[1.5rem] border border-white/10 bg-slate-950/40 sm:h-64 lg:h-[24rem]">
+                  <Image
+                    src={eventConfig.image}
+                    alt={`${eventConfig.title} cover`}
+                    fill
+                    className="object-contain"
+                    sizes="(min-width: 1024px) 560px, (min-width: 640px) 70vw, 100vw"
+                  />
                 </div>
-              ))}
+                <div className="text-slate-100">
+                  <p className="text-xs uppercase tracking-[0.2em] text-yellow-300">{eventConfig.eyebrow}</p>
+                  <h2 className="mt-3 text-xl font-semibold text-white sm:text-2xl">
+                    {eventConfig.title.replace(" Registration", "")}
+                  </h2>
+                  <p className="mt-3 text-sm leading-6 text-slate-200 sm:text-base sm:leading-7">
+                    {eventConfig.summary}
+                  </p>
+                  <div className="mt-4 space-y-2 text-sm text-slate-300">
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className="h-4 w-4 text-yellow-300" />
+                      <span>{eventConfig.dateLabel}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock3 className="h-4 w-4 text-yellow-300" />
+                      <span>{eventConfig.timeLabel}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-yellow-300" />
+                      <span>{eventConfig.locationLabel}</span>
+                    </div>
+                  </div>
+                  <ul className="mt-4 grid gap-2 text-xs text-slate-200 sm:grid-cols-2 sm:text-sm">
+                    {eventConfig.highlights.map((highlight) => (
+                      <li key={highlight} className="flex items-start gap-2 rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 text-yellow-300" />
+                        <span>{highlight}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             </div>
-          </section>
 
-          <section className="rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-lg backdrop-blur-xl">
-            <ul className="grid gap-3 text-sm leading-6 text-slate-100 sm:grid-cols-2 lg:grid-cols-3">
-              <li className="rounded-2xl border border-white/10 bg-slate-950/45 p-4">Level goals align to AMC 8, AMC 10, AMC 12, and AIME milestones</li>
-              <li className="rounded-2xl border border-white/10 bg-slate-950/45 p-4">All students take a placement test after registration</li>
-              <li className="rounded-2xl border border-white/10 bg-slate-950/45 p-4">Placement test date is communicated after sign-up</li>
-            </ul>
-          </section>
+            <div id="registration-form" className="w-full overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/75 shadow-2xl shadow-black/40 backdrop-blur-xl">
+              <div className="flex flex-col gap-3 border-b border-white/10 bg-white/5 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                <div>
+                  <p className="mb-2 text-xs uppercase tracking-[0.2em] text-yellow-300 sm:text-sm">Official Registration</p>
+                  <h2 className="text-xl font-semibold text-white sm:text-2xl">Complete the form below</h2>
+                </div>
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                  <Link
+                    href={eventConfig.viewUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex w-full items-center justify-center rounded-lg border border-slate-400/40 bg-slate-800/60 px-4 py-2 text-sm font-medium text-slate-100 transition hover:bg-slate-700/70 sm:w-auto"
+                  >
+                    Open In New Tab
+                  </Link>
+                  <RegistrationCloseButton />
+                </div>
+              </div>
+
+              <div className="bg-slate-900/70 p-3 sm:p-4">
+                <iframe
+                  src={embedUrl}
+                  title={eventConfig.title}
+                  width="100%"
+                  height="1200"
+                  frameBorder="0"
+                  marginHeight={0}
+                  marginWidth={0}
+                  className="block h-[70vh] min-h-[650px] w-full border-0 sm:h-[80vh] sm:min-h-[800px] lg:h-[calc(100vh-7rem)] lg:min-h-[1200px]"
+                >
+                  Loading...
+                </iframe>
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
 

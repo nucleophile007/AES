@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -215,6 +216,34 @@ export default function DynamicEventRegistrationForm({ eventId }: DynamicEventRe
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      {event.image && (
+        <div className="mb-4 overflow-hidden rounded-2xl border border-slate-700/60 bg-slate-900/50">
+          <div className="grid gap-4 p-4 sm:grid-cols-[200px_1fr] sm:items-center">
+            <div className="relative h-32 w-full overflow-hidden rounded-xl border border-slate-700/60">
+              <Image
+                src={event.image}
+                alt={`${event.title} cover`}
+                fill
+                className="object-cover"
+                sizes="(min-width: 640px) 200px, 100vw"
+              />
+            </div>
+            <div className="text-gray-200">
+              <p className="text-xs uppercase tracking-[0.2em] text-yellow-400">Event Snapshot</p>
+              <p className="mt-2 text-sm text-gray-300">
+                {new Date(event.eventDate).toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </p>
+              <p className="text-sm text-gray-400">{event.eventTime}</p>
+              <p className="text-sm text-gray-500">{event.location}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Event Details Header */}
       <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 mb-8">
         <h1 className="text-3xl font-bold text-yellow-400 mb-4">{event.title}</h1>
