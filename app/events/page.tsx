@@ -29,19 +29,6 @@ interface Event {
 
 const HARD_CODED_UPCOMING_EVENTS: Event[] = [
   {
-    id: 101,
-    title: "Greater Sacramento Math League",
-    description:
-      "High-energy math competition with medals and certificates for top performers and participants.",
-    category: "Math Competition",
-    date: "2026-04-25",
-    time: "10:00 AM - 1:00 PM",
-    location: "Chinmaya Mission, Sacramento",
-    image: "/program-image/greater-sacramento-math-league.png",
-    isFeatured: true,
-    registerHref: "/events/register/math-league",
-  },
-  {
     id: 102,
     title: "AP Bridge Summer Program",
     description:
@@ -67,9 +54,34 @@ const HARD_CODED_UPCOMING_EVENTS: Event[] = [
     image: "/program-image/aes-explorers-summer-camp.png",
     registerHref: "/events/register/aes-explorers",
   },
+  {
+    id: 104,
+    title: "AES Champions Math Competition Prep",
+    description:
+      "Weekly cohort-based math competition prep with limited batch sizes, practice tests, and mock exams.",
+    category: "Math Competition Prep",
+    date: "2026-06-08",
+    displayDate: "Starts Jun 8",
+    time: "Online",
+    location: "Live virtual sessions",
+    image: "/program-image/math-new-event.png",
+    registerHref: "/events/register/aes-champions",
+  },
 ];
 
-const HARD_CODED_PAST_EVENTS: Event[] = [];
+const HARD_CODED_PAST_EVENTS: Event[] = [
+  {
+    id: 201,
+    title: "Greater Sancrento Math League",
+    description:
+      "High-energy math competition with medals and certificates for top performers and participants.",
+    category: "Math Competition",
+    date: "2026-04-25",
+    time: "10:00 AM - 1:00 PM",
+    location: "Chinmaya Mission, Sacramento",
+    image: "/program-image/greater-sacramento-math-league.png",
+  },
+];
 
 export default function EventsPage() {
   const upcomingEvents = HARD_CODED_UPCOMING_EVENTS;

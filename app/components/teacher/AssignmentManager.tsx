@@ -31,13 +31,19 @@ interface Assignment {
   instructions: string;
   program: string;
   subject: string;
-  grade: string;
   dueDate: string;
   totalPoints: number;
   allowLateSubmission: boolean;
   isActive: boolean;
   submissions: any[];
   resources: any[];
+  assignmentTargets?: Array<{
+    student: {
+      id: number;
+      name: string;
+      email: string;
+    };
+  }>;
   targetStudent?: {
     id: number;
     name: string;
@@ -72,33 +78,33 @@ interface AssignmentFormData {
   title: string;
   description: string;
   instructions: string;
-  program: string;
+  programs: string[];
   subject: string;
   dueDate: string;
   totalPoints: number;
   allowLateSubmission: boolean;
-  studentId: string;
-  groupId: string;
+  studentIds: string[];
+  groupIds: string[];
 }
 
 interface AssignmentManagerProps {
   teacherEmail: string;
   assignments: Assignment[];
-  onAssignmentCreated: () => Promise<void> | void;
-  onAssignmentUpdated: () => Promise<void> | void;
+  onAssignmentCreated: (assignment?: Assignment | null) => Promise<void> | void;
+  onAssignmentUpdated: (assignment?: Assignment | null) => Promise<void> | void;
 }
 
 const EMPTY_ASSIGNMENT_FORM: AssignmentFormData = {
   title: "",
   description: "",
   instructions: "",
-  program: "",
+  programs: [],
   subject: "",
   dueDate: "",
   totalPoints: 100,
   allowLateSubmission: false,
-  studentId: "",
-  groupId: "",
+  studentIds: [],
+  groupIds: [],
 };
 
 const PROGRAMS = [
@@ -134,10 +140,18 @@ const AssignmentForm = ({
   availablePrograms: string[];
   studentGroups: StudentGroup[];
 }) => {
-  const selectedGroup = formData.groupId
-    ? studentGroups.find((group) => group.id.toString() === formData.groupId)
-    : null;
-  const groupMembers = selectedGroup ? selectedGroup.members : [];
+  const filteredStudents = formData.programs.length > 0
+    ? students.filter((student) => formData.programs.includes(student.program))
+    : students;
+  const selectedGroupIdSet = new Set(formData.groupIds);
+  const groupedStudentIdSet = new Set(
+    studentGroups
+      .filter((group) => selectedGroupIdSet.has(group.id.toString()))
+      .flatMap((group) => group.members.map((member) => member.id.toString()))
+  );
+  const manualSelectedStudentIdSet = new Set(formData.studentIds);
+  const isStudentChecked = (studentId: string) =>
+    groupedStudentIdSet.has(studentId) || manualSelectedStudentIdSet.has(studentId);
 
   return (
     <div className="space-y-4">
@@ -173,30 +187,63 @@ const AssignmentForm = ({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid gap-4 lg:grid-cols-2">
         <div>
-          <Label htmlFor="program">Program *</Label>
-          <Select value={formData.program} onValueChange={(value) => {
-            setFormData({ ...formData, program: value, studentId: "", groupId: "" });
-          }}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select program" />
-            </SelectTrigger>
-            <SelectContent>
-              {availablePrograms.map((program) => (
-                <SelectItem key={program} value={program}>
+          <Label>Program filter</Label>
+          <p className="text-xs text-muted-foreground mb-2">Pick one or more programs to narrow the student list.</p>
+          <div className="flex flex-wrap gap-2 rounded-md border bg-gray-50 p-3">
+            {availablePrograms.map((program) => {
+              const isSelected = formData.programs.includes(program);
+              const nextPrograms = isSelected
+                ? formData.programs.filter((value) => value !== program)
+                : [...formData.programs, program];
+              const nextFilteredStudents = nextPrograms.length > 0
+                ? students.filter((student) => nextPrograms.includes(student.program))
+                : students;
+              const selectedStudentStillVisible = nextFilteredStudents.some(
+                (student) => formData.studentIds.includes(student.id.toString())
+              );
+
+              return (
+                <Button
+                  key={program}
+                  type="button"
+                  size="sm"
+                  variant={isSelected ? "default" : "outline"}
+                  onClick={() => {
+                    setFormData({
+                      ...formData,
+                      programs: nextPrograms,
+                      studentIds: selectedStudentStillVisible
+                        ? formData.studentIds
+                        : formData.studentIds.filter((studentId) =>
+                            nextFilteredStudents.some((student) => student.id.toString() === studentId)
+                          )
+                    });
+                  }}
+                >
                   {program}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                </Button>
+              );
+            })}
+            {formData.programs.length > 0 && (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => setFormData({ ...formData, programs: [] })}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
         </div>
 
         <div>
-          <Label htmlFor="subject">Subject *</Label>
+          <Label htmlFor="subject">Subject</Label>
           <Select value={formData.subject} onValueChange={(value) => setFormData({ ...formData, subject: value })}>
             <SelectTrigger>
-              <SelectValue placeholder="Select subject" />
+              <SelectValue placeholder="Optional" />
             </SelectTrigger>
             <SelectContent>
               {SUBJECTS.map((subject) => (
@@ -210,51 +257,102 @@ const AssignmentForm = ({
       </div>
 
       <div>
-        <Label htmlFor="group">Assign to Group</Label>
-        <Select
-          value={formData.groupId}
-          onValueChange={(value) => setFormData({ ...formData, groupId: value, studentId: "" })}
-          disabled={!formData.program}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder={formData.program ? "Select group (optional)" : "Select a program first"} />
-          </SelectTrigger>
-          <SelectContent>
-            {studentGroups.map((group) => (
-              <SelectItem key={group.id} value={group.id.toString()}>
-                {group.name} ({group.members.length})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {formData.groupId && groupMembers.length === 0 && (
-          <p className="text-sm text-orange-600 mt-1">Selected group has no students.</p>
-        )}
+        <Label>Assign to Groups (Optional)</Label>
+        <div className="space-y-2 border rounded-md p-3 bg-gray-50">
+          {studentGroups.length === 0 ? (
+            <p className="text-sm text-gray-500">No groups available</p>
+          ) : (
+            studentGroups.map((group) => (
+              <div key={group.id} className="rounded-md border bg-white p-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id={`group-${group.id}`}
+                      checked={formData.groupIds.includes(group.id.toString())}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData({
+                            ...formData,
+                            groupIds: [...formData.groupIds, group.id.toString()]
+                          });
+                        } else {
+                          setFormData({
+                            ...formData,
+                            groupIds: formData.groupIds.filter((id) => id !== group.id.toString())
+                          });
+                        }
+                      }}
+                      className="rounded"
+                    />
+                    <Label htmlFor={`group-${group.id}`} className="cursor-pointer font-normal">
+                      {group.name} ({group.members.length} students)
+                    </Label>
+                  </div>
+                  <details className="text-xs text-blue-700">
+                    <summary className="cursor-pointer">View students</summary>
+                    <p className="mt-1 max-w-[320px] text-gray-600">
+                      {group.members.map((member) => member.name).join(", ")}
+                    </p>
+                  </details>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       {/* Student Selection */}
       <div>
-        <Label htmlFor="student">Assign to Student *</Label>
-        <Select 
-          value={formData.studentId} 
-          onValueChange={(value) => setFormData({ ...formData, studentId: value, groupId: "" })}
-          disabled={!formData.program}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder={formData.program ? "Select student" : "Select a program first"} />
-          </SelectTrigger>
-          <SelectContent>
-            {students
-              .filter(student => student.program === formData.program)
-              .map((student) => (
-                <SelectItem key={student.id} value={student.id.toString()}>
+        <Label>Assign to Students</Label>
+        {formData.programs.length > 0 ? (
+          <p className="text-xs text-muted-foreground mb-1">
+            Showing students for {formData.programs.join(", ")}
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground mb-1">Showing students from all programs.</p>
+        )}
+        <div className="max-h-56 space-y-2 overflow-y-auto rounded-md border bg-gray-50 p-3">
+          {filteredStudents.map((student) => {
+            const studentId = student.id.toString();
+            const lockedByGroup = groupedStudentIdSet.has(studentId);
+            return (
+              <div key={student.id} className="flex items-center justify-between rounded-md border bg-white p-2">
+                <Label htmlFor={`student-${student.id}`} className="cursor-pointer text-sm font-normal">
                   {student.name} ({student.grade}) - {student.email}
-                </SelectItem>
-              ))}
-          </SelectContent>
-        </Select>
-        {formData.program && students.filter(s => s.program === formData.program).length === 0 && (
-          <p className="text-sm text-orange-600 mt-1">No students found for selected program</p>
+                </Label>
+                <div className="flex items-center gap-2">
+                  {lockedByGroup && <span className="text-xs text-blue-700">via group</span>}
+                  <input
+                    id={`student-${student.id}`}
+                    type="checkbox"
+                    className="rounded"
+                    checked={isStudentChecked(studentId)}
+                    disabled={lockedByGroup}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setFormData({
+                          ...formData,
+                          studentIds: Array.from(new Set([...formData.studentIds, studentId]))
+                        });
+                      } else {
+                        setFormData({
+                          ...formData,
+                          studentIds: formData.studentIds.filter((id) => id !== studentId)
+                        });
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+          {filteredStudents.length === 0 && (
+            <p className="text-sm text-gray-500">No students available for current filters.</p>
+          )}
+        </div>
+        {formData.programs.length > 0 && filteredStudents.length === 0 && (
+          <p className="text-sm text-orange-600 mt-1">No students found for selected programs</p>
         )}
       </div>
 
@@ -308,10 +406,17 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
   const [students, setStudents] = useState<Student[]>([]);
   const [availablePrograms, setAvailablePrograms] = useState<string[]>([]);
   const [studentGroups, setStudentGroups] = useState<StudentGroup[]>([]);
+  const [groupLoadError, setGroupLoadError] = useState<string | null>(null);
+  const [saveFeedback, setSaveFeedback] = useState<{
+    type: "saving" | "success" | "error";
+    message: string;
+  } | null>(null);
   const [deletingAssignmentIds, setDeletingAssignmentIds] = useState<Set<number>>(new Set());
   const [optimisticallyRemovedIds, setOptimisticallyRemovedIds] = useState<Set<number>>(new Set());
+  const [expandedAssignmentIds, setExpandedAssignmentIds] = useState<Set<number>>(new Set());
   const [initialEditSnapshot, setInitialEditSnapshot] = useState<AssignmentFormData | null>(null);
   const pendingDeleteTimeoutsRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+  const saveFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [formData, setFormData] = useState<AssignmentFormData>(EMPTY_ASSIGNMENT_FORM);
 
@@ -370,7 +475,13 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
             ).values()
           );
 
-          setAvailablePrograms(programs);
+          if (programs.length > 0) {
+            setAvailablePrograms(programs);
+          } else if (Array.isArray(data.teacher?.programs) && data.teacher.programs.length > 0) {
+            setAvailablePrograms(data.teacher.programs);
+          } else {
+            setAvailablePrograms([]);
+          }
         }
       } catch (error) {
         console.error('Error fetching students:', error);
@@ -389,9 +500,13 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
         const data = await response.json();
         if (response.ok && data.groups) {
           setStudentGroups(data.groups);
+          setGroupLoadError(null);
+        } else {
+          setGroupLoadError(data.error || 'Failed to load groups');
         }
       } catch (error) {
         console.error('Error fetching student groups:', error);
+        setGroupLoadError('Failed to load groups');
       }
     };
 
@@ -404,6 +519,82 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
     setFormData(EMPTY_ASSIGNMENT_FORM);
   };
 
+  const formatDueDateForInput = (dueDate: string) => {
+    const parsed = new Date(dueDate);
+    if (Number.isNaN(parsed.getTime())) {
+      return "";
+    }
+    const localDate = new Date(parsed.getTime() - parsed.getTimezoneOffset() * 60000);
+    return localDate.toISOString().slice(0, 16);
+  };
+
+  const getAssignmentTargetStudentIds = (assignment: Assignment): number[] => {
+    if (assignment.assignmentTargets && assignment.assignmentTargets.length > 0) {
+      return Array.from(new Set(assignment.assignmentTargets.map((target) => target.student.id)));
+    }
+    if (assignment.targetStudent?.id) {
+      return [assignment.targetStudent.id];
+    }
+    return [];
+  };
+
+  const resolveGroupIdsForTargets = (targetIds: number[]) => {
+    if (targetIds.length === 0) return [];
+
+    const targetSet = new Set(targetIds);
+    const exactGroups = studentGroups.filter((group) => {
+      const memberIds = group.members.map((member) => member.id);
+      if (memberIds.length !== targetSet.size) return false;
+      return memberIds.every((id) => targetSet.has(id));
+    });
+
+    if (exactGroups.length > 0) {
+      return exactGroups.map((group) => group.id.toString());
+    }
+
+    const exactByUnion = (startIndex: number, currentIds: Set<number>, selectedGroupIds: number[]): string[] | null => {
+      if (currentIds.size > targetSet.size) return null;
+      let isSubset = true;
+      for (const id of currentIds) {
+        if (!targetSet.has(id)) {
+          isSubset = false;
+          break;
+        }
+      }
+      if (!isSubset) return null;
+      if (currentIds.size === targetSet.size) {
+        return selectedGroupIds.map((id) => id.toString());
+      }
+
+      for (let index = startIndex; index < studentGroups.length; index += 1) {
+        const group = studentGroups[index];
+        if (group.members.length === 0) continue;
+        const nextIds = new Set(currentIds);
+        for (const member of group.members) {
+          nextIds.add(member.id);
+        }
+        const result = exactByUnion(index + 1, nextIds, [...selectedGroupIds, group.id]);
+        if (result) return result;
+      }
+
+      return null;
+    };
+
+    return exactByUnion(0, new Set<number>(), []) ?? [];
+  };
+
+  const toggleExpandedAssignment = (assignmentId: number) => {
+    setExpandedAssignmentIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(assignmentId)) {
+        next.delete(assignmentId);
+      } else {
+        next.add(assignmentId);
+      }
+      return next;
+    });
+  };
+
   const handleCreate = () => {
     setEditingAssignment(null);
     setInitialEditSnapshot(null);
@@ -413,17 +604,25 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
   };
 
   const handleEdit = (assignment: Assignment) => {
+    const targetStudentIds = getAssignmentTargetStudentIds(assignment);
+    const prefilledGroupIds = resolveGroupIdsForTargets(targetStudentIds);
+    const groupedTargetIds = new Set(
+      studentGroups
+        .filter((group) => prefilledGroupIds.includes(group.id.toString()))
+        .flatMap((group) => group.members.map((member) => member.id))
+    );
+    const manuallySelectedStudentIds = targetStudentIds.filter((id) => !groupedTargetIds.has(id));
     const snapshot: AssignmentFormData = {
       title: assignment.title,
       description: assignment.description,
       instructions: assignment.instructions || "",
-      program: assignment.program,
+      programs: assignment.program ? [assignment.program] : [],
       subject: assignment.subject,
-      dueDate: assignment.dueDate.split('T')[0], // Format for date input
+      dueDate: formatDueDateForInput(assignment.dueDate),
       totalPoints: assignment.totalPoints,
       allowLateSubmission: assignment.allowLateSubmission,
-      studentId: "",
-      groupId: ""
+      studentIds: manuallySelectedStudentIds.map((id) => id.toString()),
+      groupIds: prefilledGroupIds
     };
     const editDraft = readAssignmentDraft(assignment.id);
     setFormData(editDraft || snapshot);
@@ -482,8 +681,26 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
     return () => {
       pendingDeleteTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
       pendingDeleteTimeouts.clear();
+      if (saveFeedbackTimeoutRef.current) {
+        clearTimeout(saveFeedbackTimeoutRef.current);
+        saveFeedbackTimeoutRef.current = null;
+      }
     };
   }, []);
+
+  const showSaveFeedback = (type: "saving" | "success" | "error", message: string) => {
+    if (saveFeedbackTimeoutRef.current) {
+      clearTimeout(saveFeedbackTimeoutRef.current);
+      saveFeedbackTimeoutRef.current = null;
+    }
+    setSaveFeedback({ type, message });
+    if (type !== "saving") {
+      saveFeedbackTimeoutRef.current = setTimeout(() => {
+        setSaveFeedback(null);
+        saveFeedbackTimeoutRef.current = null;
+      }, 3500);
+    }
+  };
 
   useEffect(() => {
     if (!(isCreateDialogOpen || isEditDialogOpen)) return;
@@ -520,48 +737,76 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
       return;
     }
 
-    if (!formData.title || !formData.description || !formData.program || !formData.subject || !formData.dueDate || (!formData.studentId && !formData.groupId)) {
+    if (!formData.title || !formData.description || !formData.dueDate) {
       toast({
         title: "Missing information",
-        description: "Please fill in all required fields including student or group selection.",
+        description: "Please fill in the title, description, and due date.",
         className: "border-yellow-500 bg-yellow-50 text-yellow-900",
       });
       return;
     }
 
-    const selectedGroup = formData.groupId
-      ? studentGroups.find((group) => group.id.toString() === formData.groupId)
-      : null;
-    // When a group is selected, send the assignment to ALL members of the group,
-    // not just those filtered by program.
-    const groupStudentIds = selectedGroup
-      ? selectedGroup.members.map((member) => member.id)
-      : [];
+    // Collect all student IDs from selected groups
+    let allGroupStudentIds: number[] = [];
+    const selectedGroups = studentGroups.filter((group) => formData.groupIds.includes(group.id.toString()));
+    
+    for (const group of selectedGroups) {
+      if (group.members.length === 0) {
+        toast({
+          title: "Empty group",
+          description: `Group "${group.name}" has no students.`,
+          className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+        });
+        return;
+      }
+      allGroupStudentIds.push(...group.members.map((member) => member.id));
+    }
 
-    if (formData.groupId && groupStudentIds.length === 0) {
+    // Remove duplicates if user is also in a group
+    allGroupStudentIds = Array.from(new Set(allGroupStudentIds));
+
+    const manualStudentIds = formData.studentIds
+      .map((id) => Number(id))
+      .filter((id) => !Number.isNaN(id));
+    const allTargetStudentIds = Array.from(new Set([...allGroupStudentIds, ...manualStudentIds]));
+    if (allTargetStudentIds.length === 0) {
       toast({
-        title: "No eligible students",
-        description: "Selected group has no students.",
+        title: "No students selected",
+        description: "Choose at least one student or one group.",
         className: "border-yellow-500 bg-yellow-50 text-yellow-900",
       });
       return;
     }
+
+    const selectedStudent = students.find((student) => student.id === allTargetStudentIds[0]) || null;
+    const selectedGroupPrograms = Array.from(
+      new Set(
+        selectedGroups
+          .flatMap((group) => group.members.map((member) => member.program))
+          .filter((program): program is string => Boolean(program))
+      )
+    );
+    const resolvedProgram = selectedStudent?.program || selectedGroupPrograms[0] || formData.programs[0] || "";
+    const resolvedSubject = formData.subject || "";
 
     submitInFlightRef.current = true;
     setLoading(true);
+    showSaveFeedback("saving", editingAssignment ? "Updating assignment..." : "Creating assignment...");
     try {
       const url = editingAssignment 
         ? `/api/teacher/assignments`
         : `/api/teacher/assignments`;
       
-      const method = editingAssignment ? 'PUT' : 'POST';
+      const method = editingAssignment ? 'PATCH' : 'POST';
       
       const requestData = {
         ...formData,
+        program: resolvedProgram,
+        subject: resolvedSubject,
         teacherEmail,
         timezone: getUserTimezone(), // Include timezone for proper UTC conversion
         ...(editingAssignment && { id: editingAssignment.id }),
-        ...(formData.groupId ? { studentIds: groupStudentIds } : {})
+        studentIds: allTargetStudentIds
       };
 
       const response = await fetch(url, {
@@ -585,11 +830,17 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
       setEditingAssignment(null);
       resetForm();
 
-      // Refresh assignments
+      const savedAssignment: Assignment | null =
+        (data.assignment as Assignment | undefined) ??
+        (Array.isArray(data.assignments) && data.assignments.length > 0
+          ? (data.assignments[0] as Assignment)
+          : null);
+
+      // Update UI immediately, then revalidate in background via parent callback.
       if (editingAssignment) {
-        await Promise.resolve(onAssignmentUpdated());
+        void Promise.resolve(onAssignmentUpdated(savedAssignment));
       } else {
-        await Promise.resolve(onAssignmentCreated());
+        void Promise.resolve(onAssignmentCreated(savedAssignment));
       }
 
       toast({
@@ -597,6 +848,7 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
         description: data.message || "The assignment has been saved successfully.",
         className: "border-green-500 bg-green-50 text-green-900",
       });
+      showSaveFeedback("success", editingAssignment ? "Assignment updated." : "Assignment created.");
 
     } catch (error) {
       console.error('Error saving assignment:', error);
@@ -605,6 +857,7 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
         title: "Failed to save assignment",
         description: error instanceof Error ? error.message : "Please try again.",
       });
+      showSaveFeedback("error", error instanceof Error ? error.message : "Failed to save assignment.");
     } finally {
       setLoading(false);
       submitInFlightRef.current = false;
@@ -743,7 +996,24 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
             </div>
           </DialogContent>
         </Dialog>
+                {groupLoadError && (
+                  <p className="text-sm text-orange-600">{groupLoadError}</p>
+                )}
       </div>
+
+      {saveFeedback && (
+        <div
+          className={
+            saveFeedback.type === "saving"
+              ? "rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800"
+              : saveFeedback.type === "success"
+                ? "rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800"
+                : "rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+          }
+        >
+          {saveFeedback.message}
+        </div>
+      )}
 
       {/* Assignment List */}
       <div className="grid gap-4">
@@ -768,13 +1038,30 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
                     <CardTitle className="text-xl">{assignment.title}</CardTitle>
                     <div className="flex gap-2 mt-2">
                       <Badge variant="secondary">{assignment.subject}</Badge>
-                      {assignment.targetStudent && (
+                      {assignment.assignmentTargets && assignment.assignmentTargets.length > 0 ? (
+                        <Badge variant="default" className="bg-blue-100 text-blue-800">
+                          {assignment.assignmentTargets.length === 1
+                            ? `Assigned to: ${assignment.assignmentTargets[0].student.name}`
+                            : `Assigned to: ${assignment.assignmentTargets.length} students`}
+                        </Badge>
+                      ) : assignment.targetStudent ? (
                         <Badge variant="default" className="bg-blue-100 text-blue-800">
                           Assigned to: {assignment.targetStudent.name}
                         </Badge>
-                      )}
+                      ) : null}
                       {isOverdue(assignment.dueDate) && (
                         <Badge variant="destructive">Overdue</Badge>
+                      )}
+                      {assignment.assignmentTargets && assignment.assignmentTargets.length > 0 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 text-xs"
+                          onClick={() => toggleExpandedAssignment(assignment.id)}
+                        >
+                          {expandedAssignmentIds.has(assignment.id) ? "Hide assignees" : "View assignees"}
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -795,6 +1082,29 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 mb-4">{assignment.description}</p>
+
+                {expandedAssignmentIds.has(assignment.id) && assignment.assignmentTargets && assignment.assignmentTargets.length > 0 && (
+                  <div className="mb-4 rounded-md border bg-blue-50 p-3">
+                    <p className="text-sm font-semibold text-blue-900">Assigned students</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {assignment.assignmentTargets.map((target) => {
+                        const matchedGroups = studentGroups
+                          .filter((group) => group.members.some((member) => member.id === target.student.id))
+                          .map((group) => group.name);
+                        return (
+                          <div key={target.student.id} className="rounded-md border bg-white px-2 py-1 text-xs">
+                            <p className="font-medium text-gray-900">{target.student.name}</p>
+                            <p className="text-gray-600">
+                              {matchedGroups.length > 0
+                                ? `Groups: ${matchedGroups.join(", ")}`
+                                : "No group"}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
                 
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                   <div className="flex items-center gap-2">

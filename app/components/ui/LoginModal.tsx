@@ -25,16 +25,50 @@ export function LoginModal({ children }: LoginModalProps) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(false);
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"login" | "forgot">("login");
 
-  const handleOpenChange = (nextOpen: boolean) => {
-    setOpen(nextOpen);
+  const getDashboardPath = (role: "teacher" | "student" | "parent") =>
+    role === "teacher" ? "/teacher-dashboard" : role === "student" ? "/student-dashboard" : "/parent-dashboard";
+
+  const handleOpenChange = async (nextOpen: boolean) => {
     if (!nextOpen) {
+      setOpen(false);
       setIsLoading(false);
       setMode("login");
       setPassword("");
       setShowPassword(false);
+      return;
+    }
+
+    if (isAuthLoading || isCheckingSession) {
+      return;
+    }
+
+    if (user) {
+      window.location.href = getDashboardPath(user.role);
+      return;
+    }
+
+    setIsCheckingSession(true);
+    try {
+      const response = await fetch("/api/auth/me", {
+        credentials: "include",
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok && data?.success && data?.user?.role) {
+        window.location.href = getDashboardPath(data.user.role);
+        return;
+      }
+
+      setOpen(true);
+    } catch (error) {
+      console.error("Session pre-check failed:", error);
+      setOpen(true);
+    } finally {
+      setIsCheckingSession(false);
     }
   };
 
@@ -43,12 +77,7 @@ export function LoginModal({ children }: LoginModalProps) {
       return;
     }
 
-    const redirectTo =
-      user.role === "teacher"
-        ? "/teacher-dashboard"
-        : user.role === "student"
-          ? "/student-dashboard"
-          : "/parent-dashboard";
+    const redirectTo = getDashboardPath(user.role);
 
     setOpen(false);
     window.location.href = redirectTo;

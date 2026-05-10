@@ -242,19 +242,6 @@ export function ProgramsHero() {
       ),
     },
     {
-      title: "Greater Sacramento Math League",
-      subtitle: "Apr 25 • Sacramento • Grades 6-12",
-      description:
-        "High-energy math competition with medals and certificates for top performers and participants.",
-      cta: { label: "Register Now", href: "/events/register/math-league" },
-      imageSrc: "/program-image/greater-sacramento-math-league.png",
-      imageAlt: "Greater Sacramento Math League event poster",
-      visualStyle: "poster",
-      hideSecondaryCta: true,
-      hideContent: true,
-      showCtaWhenHidden: true,
-    },
-    {
       title: "AP Bridge Summer Program",
       cta: { label: "Register Now", href: "/events/register/ap-bridge" },
       imageSrc: "/program-image/ap-bridge-summer-program.png",
@@ -263,11 +250,21 @@ export function ProgramsHero() {
       hideContent: true,
       showCtaWhenHidden: true,
     },
+ 
     {
       title: "AES Explorers Summer Camp",
       cta: { label: "Register Now", href: "/events/register/aes-explorers" },
       imageSrc: "/program-image/aes-explorers-summer-camp.png",
       imageAlt: "AES Explorers summer camp poster",
+      visualStyle: "poster",
+      hideContent: true,
+      showCtaWhenHidden: true,
+    },
+    {
+      title: "AES Champions Math Competition Prep",
+      cta: { label: "Register Now", href: "/events/register/aes-champions" },
+      imageSrc: "/program-image/math-new-event.png",
+      imageAlt: "AES Champions Math Competition Prep poster",
       visualStyle: "poster",
       hideContent: true,
       showCtaWhenHidden: true,

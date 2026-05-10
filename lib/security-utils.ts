@@ -102,6 +102,37 @@ export function getClientIP(request: Request): string {
 
 // Check if HTTPS
 export function isSecureConnection(request: Request): boolean {
-  const protocol = request.headers.get('x-forwarded-proto');
-  return protocol === 'https' || request.url.startsWith('https://');
+  const forwardedProto = request.headers.get('x-forwarded-proto');
+  const forwardedSsl = request.headers.get('x-forwarded-ssl');
+  const frontendHttps = request.headers.get('front-end-https');
+  const urlScheme = request.headers.get('x-url-scheme');
+  const cfVisitor = request.headers.get('cf-visitor');
+
+  if (forwardedProto) {
+    const normalized = forwardedProto
+      .split(',')
+      .map((part) => part.trim().toLowerCase())
+      .filter(Boolean);
+    if (normalized.includes('https')) {
+      return true;
+    }
+  }
+
+  if ((forwardedSsl || '').toLowerCase() === 'on') {
+    return true;
+  }
+
+  if ((frontendHttps || '').toLowerCase() === 'on') {
+    return true;
+  }
+
+  if ((urlScheme || '').toLowerCase() === 'https') {
+    return true;
+  }
+
+  if (cfVisitor && /"scheme"\s*:\s*"https"/i.test(cfVisitor)) {
+    return true;
+  }
+
+  return request.url.startsWith('https://');
 }

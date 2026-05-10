@@ -117,11 +117,11 @@ export async function POST(request: NextRequest) {
       grade,
       teacherEmail: teacherEmailParam,
       isPublic = false,
-      assignmentIds = [],
-      studentIds = []
+      assignmentIds,
+      studentIds
     } = data;
 
-    if (!title || !type || !program || !subject || !grade) {
+    if (!title || !type) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields' },
         { status: 400 }
@@ -140,9 +140,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (['document', 'video', 'image'].includes(type) && !fileUrl) {
+    if (type !== 'link' && !fileUrl && !linkUrl) {
       return NextResponse.json(
-        { success: false, error: 'File URL is required for file type resources' },
+        { success: false, error: 'File URL or link URL is required for this resource type' },
         { status: 400 }
       );
     }
@@ -159,6 +159,100 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const assignmentIdsList = Array.isArray(assignmentIds)
+      ? Array.from(new Set(assignmentIds.map((id: any) => Number(id)).filter((id: number) => !Number.isNaN(id))))
+      : [];
+    let studentIdsList = Array.isArray(studentIds)
+      ? Array.from(new Set(studentIds.map((id: any) => Number(id)).filter((id: number) => !Number.isNaN(id))))
+      : [];
+    let normalizedProgram = String(program || '').trim();
+    let normalizedSubject = String(subject || '').trim();
+    let normalizedGrade = String(grade || '').trim();
+
+    if (assignmentIdsList.length > 0) {
+      const ownedAssignments = await prisma.assignment.findMany({
+        where: {
+          id: { in: assignmentIdsList },
+          teacherId: teacher.id
+        },
+        select: {
+          id: true,
+          program: true,
+          subject: true,
+          targetStudentId: true,
+          assignmentTargets: {
+            select: { studentId: true }
+          }
+        }
+      });
+
+      if (ownedAssignments.length !== assignmentIdsList.length) {
+        return NextResponse.json(
+          { success: false, error: 'One or more assignments are not owned by this teacher' },
+          { status: 403 }
+        );
+      }
+
+      if (!normalizedProgram) {
+        normalizedProgram = ownedAssignments[0]?.program || '';
+      }
+      if (!normalizedSubject) {
+        normalizedSubject = ownedAssignments[0]?.subject || '';
+      }
+
+      if (studentIdsList.length === 0) {
+        studentIdsList = Array.from(
+          new Set(
+            ownedAssignments.flatMap((assignment) => [
+              ...assignment.assignmentTargets.map((target) => target.studentId),
+              ...(assignment.targetStudentId ? [assignment.targetStudentId] : [])
+            ])
+          )
+        );
+      }
+    }
+
+    if (studentIdsList.length > 0) {
+      const linkedStudents = await prisma.teacherStudent.findMany({
+        where: {
+          teacherId: teacher.id,
+          studentId: { in: studentIdsList.map((id: any) => Number(id)) }
+        },
+        select: { studentId: true }
+      });
+
+      if (linkedStudents.length !== studentIdsList.length) {
+        return NextResponse.json(
+          { success: false, error: 'Some students are not assigned to this teacher' },
+          { status: 403 }
+        );
+      }
+    }
+
+    if (!isPublic && assignmentIdsList.length === 0 && studentIdsList.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Select at least one student or assignment for this resource' },
+        { status: 400 }
+      );
+    }
+
+    if (!normalizedGrade && studentIdsList.length > 0) {
+      const gradeRows = await prisma.student.findMany({
+        where: { id: { in: studentIdsList } },
+        select: { grade: true }
+      });
+      const uniqueGrades = Array.from(new Set(gradeRows.map((row) => row.grade).filter(Boolean)));
+      if (uniqueGrades.length === 1) {
+        normalizedGrade = uniqueGrades[0];
+      } else if (uniqueGrades.length > 1) {
+        normalizedGrade = 'Mixed';
+      }
+    }
+
+    const finalProgram = normalizedProgram || 'General';
+    const finalSubject = normalizedSubject || 'General';
+    const finalGrade = normalizedGrade || 'General';
+
     // Create resource
     const resource = await prisma.resource.create({
       data: {
@@ -169,18 +263,18 @@ export async function POST(request: NextRequest) {
         linkUrl,
         fileName,
         fileSize: fileSize ? parseInt(fileSize) : null,
-        program,
-        subject,
-        grade,
+        program: finalProgram,
+        subject: finalSubject,
+        grade: finalGrade,
         teacherId: teacher.id,
         isPublic
       }
     });
 
     // Link to assignments if provided
-    if (assignmentIds.length > 0) {
+    if (assignmentIdsList.length > 0) {
       await prisma.assignmentResource.createMany({
-        data: assignmentIds.map((assignmentId: number) => ({
+        data: assignmentIdsList.map((assignmentId: number) => ({
           assignmentId,
           resourceId: resource.id,
           isRequired: false
@@ -189,9 +283,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Assign to specific students if provided
-    if (studentIds.length > 0) {
+    if (studentIdsList.length > 0) {
       await prisma.studentResource.createMany({
-        data: studentIds.map((studentId: number) => ({
+        data: studentIdsList.map((studentId: number) => ({
           studentId,
           resourceId: resource.id
         }))
@@ -234,8 +328,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT: Update resource
-export async function PUT(request: NextRequest) {
+// PATCH: Update resource
+export async function PATCH(request: NextRequest) {
   try {
     const user = await getUserFromRequest(request);
     if (!user) {
@@ -261,8 +355,8 @@ export async function PUT(request: NextRequest) {
       grade,
       teacherEmail: teacherEmailParam,
       isPublic,
-      assignmentIds = [],
-      studentIds = []
+      assignmentIds,
+      studentIds
     } = data;
 
     if (!id) {
@@ -293,6 +387,14 @@ export async function PUT(request: NextRequest) {
       where: {
         id: parseInt(id),
         teacherId: teacher.id
+      },
+      include: {
+        assignmentLinks: {
+          select: { assignmentId: true }
+        },
+        studentAssignments: {
+          select: { studentId: true }
+        }
       }
     });
 
@@ -303,61 +405,201 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    const assignmentIdsProvided = Array.isArray(assignmentIds);
+    const studentIdsProvided = Array.isArray(studentIds);
+    const assignmentIdsList = assignmentIdsProvided
+      ? Array.from(
+          new Set(
+            assignmentIds
+              .map((item: any) => Number(item))
+              .filter((item: number) => !Number.isNaN(item))
+          )
+        )
+      : null;
+    let studentIdsList = studentIdsProvided
+      ? Array.from(
+          new Set(
+            studentIds
+              .map((item: any) => Number(item))
+              .filter((item: number) => !Number.isNaN(item))
+          )
+        )
+      : null;
+    const normalizedProgram = program !== undefined ? String(program).trim() : undefined;
+    const normalizedSubject = subject !== undefined ? String(subject).trim() : undefined;
+    const normalizedGrade = grade !== undefined ? String(grade).trim() : undefined;
+    const nextType = type !== undefined ? type : existingResource.type;
+    const nextLinkUrl = linkUrl !== undefined ? (linkUrl ? String(linkUrl).trim() : null) : existingResource.linkUrl;
+    const nextFileUrl = fileUrl !== undefined ? (fileUrl ? String(fileUrl).trim() : null) : existingResource.fileUrl;
+    const nextIsPublic = isPublic !== undefined ? Boolean(isPublic) : existingResource.isPublic;
+
+    if (nextType === 'link' && !nextLinkUrl) {
+      return NextResponse.json(
+        { success: false, error: 'Link URL is required for link type resources' },
+        { status: 400 }
+      );
+    }
+
+    if (nextType !== 'link' && !nextFileUrl && !nextLinkUrl) {
+      return NextResponse.json(
+        { success: false, error: 'File URL or link URL is required for this resource type' },
+        { status: 400 }
+      );
+    }
+
+    let ownedAssignments: Array<{
+      id: number;
+      program: string;
+      subject: string;
+      targetStudentId: number | null;
+      assignmentTargets: Array<{ studentId: number }>;
+    }> = [];
+
+    if (assignmentIdsList && assignmentIdsList.length > 0) {
+      const assignmentRows = await prisma.assignment.findMany({
+        where: {
+          id: { in: assignmentIdsList },
+          teacherId: teacher.id
+        },
+        select: {
+          id: true,
+          program: true,
+          subject: true,
+          targetStudentId: true,
+          assignmentTargets: {
+            select: { studentId: true }
+          }
+        }
+      });
+
+      if (assignmentRows.length !== assignmentIdsList.length) {
+        return NextResponse.json(
+          { success: false, error: 'One or more assignments are not owned by this teacher' },
+          { status: 403 }
+        );
+      }
+      ownedAssignments = assignmentRows;
+
+      const derivedAssignmentStudentIds = Array.from(
+        new Set(
+          assignmentRows.flatMap((assignment) => [
+            ...assignment.assignmentTargets.map((target) => target.studentId),
+            ...(assignment.targetStudentId ? [assignment.targetStudentId] : [])
+          ])
+        )
+      );
+      if (!studentIdsProvided) {
+        studentIdsList = derivedAssignmentStudentIds;
+      }
+    }
+
+    if (studentIdsList && studentIdsList.length > 0) {
+      const linkedStudents = await prisma.teacherStudent.findMany({
+        where: {
+          teacherId: teacher.id,
+          studentId: { in: studentIdsList.map((id: any) => Number(id)) }
+        },
+        select: { studentId: true }
+      });
+
+      if (linkedStudents.length !== studentIdsList.length) {
+        return NextResponse.json(
+          { success: false, error: 'Some students are not assigned to this teacher' },
+          { status: 403 }
+        );
+      }
+    }
+
+    const effectiveAssignmentCount = assignmentIdsList !== null
+      ? assignmentIdsList.length
+      : existingResource.assignmentLinks.length;
+    const effectiveStudentCount = studentIdsList !== null
+      ? studentIdsList.length
+      : existingResource.studentAssignments.length;
+
+    if (!nextIsPublic && effectiveAssignmentCount === 0 && effectiveStudentCount === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Select at least one student or assignment for this resource' },
+        { status: 400 }
+      );
+    }
+
+    let finalGradeValue = normalizedGrade;
+    if (grade !== undefined && !finalGradeValue && studentIdsList && studentIdsList.length > 0) {
+      const gradeRows = await prisma.student.findMany({
+        where: { id: { in: studentIdsList } },
+        select: { grade: true }
+      });
+      const uniqueGrades = Array.from(new Set(gradeRows.map((row) => row.grade).filter(Boolean)));
+      if (uniqueGrades.length === 1) {
+        finalGradeValue = uniqueGrades[0];
+      } else if (uniqueGrades.length > 1) {
+        finalGradeValue = 'Mixed';
+      }
+    }
+
+    const assignmentDerivedProgram = ownedAssignments.length > 0 ? ownedAssignments[0].program : null;
+    const assignmentDerivedSubject = ownedAssignments.length > 0 ? ownedAssignments[0].subject : null;
+
     // Update resource
     const updateData: any = {};
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
-    if (type !== undefined) updateData.type = type;
-    if (fileUrl !== undefined) updateData.fileUrl = fileUrl;
-    if (linkUrl !== undefined) updateData.linkUrl = linkUrl;
+    if (type !== undefined) updateData.type = nextType;
+    if (fileUrl !== undefined) updateData.fileUrl = nextFileUrl;
+    if (linkUrl !== undefined) updateData.linkUrl = nextLinkUrl;
     if (fileName !== undefined) updateData.fileName = fileName;
     if (fileSize !== undefined) updateData.fileSize = fileSize ? parseInt(fileSize) : null;
-    if (program !== undefined) updateData.program = program;
-    if (subject !== undefined) updateData.subject = subject;
-    if (grade !== undefined) updateData.grade = grade;
-    if (isPublic !== undefined) updateData.isPublic = isPublic;
+    if (program !== undefined) {
+      updateData.program = normalizedProgram || assignmentDerivedProgram || existingResource.program || 'General';
+    }
+    if (subject !== undefined) {
+      updateData.subject = normalizedSubject || assignmentDerivedSubject || existingResource.subject || 'General';
+    }
+    if (grade !== undefined) {
+      updateData.grade = finalGradeValue || existingResource.grade || 'General';
+    }
+    if (isPublic !== undefined) updateData.isPublic = nextIsPublic;
 
-    const updatedResource = await prisma.resource.update({
-      where: { id: parseInt(id) },
-      data: updateData
+    await prisma.$transaction(async (tx) => {
+      await tx.resource.update({
+        where: { id: parseInt(id) },
+        data: updateData
+      });
+
+      // Update assignment links if provided
+      if (assignmentIdsList !== null) {
+        await tx.assignmentResource.deleteMany({
+          where: { resourceId: parseInt(id) }
+        });
+
+        if (assignmentIdsList.length > 0) {
+          await tx.assignmentResource.createMany({
+            data: assignmentIdsList.map((assignmentId: number) => ({
+              assignmentId,
+              resourceId: parseInt(id),
+              isRequired: false
+            }))
+          });
+        }
+      }
+
+      // Update student assignments if provided or auto-derived from assignment links
+      if (studentIdsList !== null) {
+        await tx.studentResource.deleteMany({
+          where: { resourceId: parseInt(id) }
+        });
+
+        if (studentIdsList.length > 0) {
+          await tx.studentResource.createMany({
+            data: studentIdsList.map((studentId: number) => ({
+              studentId,
+              resourceId: parseInt(id)
+            }))
+          });
+        }
+      }
     });
-
-    // Update assignment links if provided
-    if (assignmentIds.length >= 0) {
-      // Remove existing assignment links
-      await prisma.assignmentResource.deleteMany({
-        where: { resourceId: parseInt(id) }
-      });
-
-      // Add new assignment links
-      if (assignmentIds.length > 0) {
-        await prisma.assignmentResource.createMany({
-          data: assignmentIds.map((assignmentId: number) => ({
-            assignmentId,
-            resourceId: parseInt(id),
-            isRequired: false
-          }))
-        });
-      }
-    }
-
-    // Update student assignments if provided
-    if (studentIds.length >= 0) {
-      // Remove existing student assignments
-      await prisma.studentResource.deleteMany({
-        where: { resourceId: parseInt(id) }
-      });
-
-      // Add new student assignments
-      if (studentIds.length > 0) {
-        await prisma.studentResource.createMany({
-          data: studentIds.map((studentId: number) => ({
-            studentId,
-            resourceId: parseInt(id)
-          }))
-        });
-      }
-    }
 
     // Get updated resource with relations
     const finalResource = await prisma.resource.findUnique({
@@ -393,6 +635,11 @@ export async function PUT(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Keep PUT for backwards compatibility while clients migrate to PATCH.
+export async function PUT(request: NextRequest) {
+  return PATCH(request);
 }
 
 // DELETE: Delete resource

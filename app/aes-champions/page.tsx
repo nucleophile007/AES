@@ -1543,7 +1543,7 @@ export default function AESChampionsPage() {
                                        <CardHeader className="text-center pb-6 pt-6 relative z-10">
                       <div className="w-full h-48 mx-auto mb-6 rounded-2xl overflow-hidden shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105 ring-1 ring-slate-600/20">
                         <Image 
-                          src={i === 0 ? "/learning-journey-cartoon.png" : 
+                          src={i === 0 ? "/program-image/banner-champions.png" : 
                                i === 1 ? "/progress-mountain-climb.png" : 
                                i === 2 ? "/successful-celebration.png" : 
                                "/learning-journey-cartoon.png"} 
