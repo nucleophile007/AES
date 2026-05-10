@@ -124,7 +124,7 @@ export default function EventsPage() {
               </p>
               <div className="mb-7 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto lg:mx-0 text-sm">
                 <div className="rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-slate-200">Mixed format: in-person and live online events</div>
-                <div className="rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-slate-200">Programs tailored for grades 6-12</div>
+            
               </div>
               <div className="flex flex-wrap justify-center lg:justify-start gap-3">
                 <Button asChild className="bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold">
