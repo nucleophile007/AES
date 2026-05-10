@@ -17,7 +17,6 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const teacherEmail = searchParams.get('teacherEmail');
     const program = searchParams.get('program');
-    const grade = searchParams.get('grade');
     const limitRaw = searchParams.get('limit');
     const parsedLimit = limitRaw ? Number(limitRaw) : Number.NaN;
     const limit = Number.isFinite(parsedLimit)
@@ -47,15 +46,21 @@ export async function GET(request: NextRequest) {
     };
 
     if (program) filters.program = program;
-    if (grade) filters.grade = grade;
 
     // Get assignments with related data
     const assignments = await prisma.assignment.findMany({
       where: filters,
       ...(limit ? { take: limit } : {}),
       include: {
-        targetStudent: { // Include assigned student info
+        targetStudent: {
           select: { id: true, name: true, email: true }
+        },
+        assignmentTargets: {
+          include: {
+            student: {
+              select: { id: true, name: true, email: true }
+            }
+          }
         },
         submissions: {
           include: {
@@ -85,7 +90,7 @@ export async function GET(request: NextRequest) {
       assignments
     }, {
       headers: {
-        'Cache-Control': 'private, max-age=15, stale-while-revalidate=30',
+        'Cache-Control': 'no-store',
       },
     });
 
@@ -120,8 +125,8 @@ export async function POST(request: NextRequest) {
       title,
       description,
       instructions,
-      program,
-      subject,
+      program = '',
+      subject = '',
       dueDate,
       timezone, // Client's timezone for proper UTC storage
       totalPoints = 100,
@@ -135,7 +140,7 @@ export async function POST(request: NextRequest) {
     // Default to America/Los_Angeles if no timezone provided (for backward compatibility)
     const dueDateTimezone = timezone || 'America/Los_Angeles';
 
-    if (!title || !description || !program || !subject || !dueDate) {
+    if (!title || !description || !dueDate) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields' },
         { status: 400 }
@@ -154,6 +159,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const normalizedProgram = String(program).trim();
+    const normalizedSubject = String(subject).trim();
     const parsedTotalPoints = Number.parseInt(String(totalPoints), 10);
     const normalizedTotalPoints = Number.isNaN(parsedTotalPoints) ? 100 : parsedTotalPoints;
     const normalizedInstructions = instructions?.trim() || null;
@@ -198,6 +205,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const linkedStudents = await prisma.teacherStudent.findMany({
+      where: {
+        teacherId: teacher.id,
+        studentId: { in: targetStudentIds }
+      },
+      select: { studentId: true }
+    });
+
+    if (linkedStudents.length !== targetStudentIds.length) {
+      return NextResponse.json(
+        { success: false, error: 'Some students are not assigned to this teacher' },
+        { status: 403 }
+      );
+    }
+
+    if (Array.isArray(resourceIds) && resourceIds.length > 0) {
+      const ownedResources = await prisma.resource.findMany({
+        where: {
+          id: { in: resourceIds.map((id: any) => Number(id)) },
+          teacherId: teacher.id
+        },
+        select: { id: true }
+      });
+
+      if (ownedResources.length !== resourceIds.length) {
+        return NextResponse.json(
+          { success: false, error: 'One or more resources are not owned by this teacher' },
+          { status: 403 }
+        );
+      }
+    }
+
     // Safety net for accidental double-submit:
     // if an identical assignment was created in the last 2 minutes for the same
     // teacher + target students, return that instead of creating duplicates.
@@ -205,75 +244,111 @@ export async function POST(request: NextRequest) {
     const recentlyCreatedMatches = await prisma.assignment.findMany({
       where: {
         teacherId: teacher.id,
-        targetStudentId: { in: targetStudentIds },
         title,
         description,
         instructions: normalizedInstructions,
-        program,
-        subject,
         dueDate: parsedDueDate,
         totalPoints: normalizedTotalPoints,
         allowLateSubmission,
         isActive: true,
         createdAt: { gte: dedupeWindowStart },
+      },
+      include: {
+        assignmentTargets: {
+          select: { studentId: true }
+        }
       }
     });
 
     if (recentlyCreatedMatches.length > 0) {
-      const matchedStudentIds = new Set(
-        recentlyCreatedMatches.map((assignment) => assignment.targetStudentId).filter((id): id is number => id !== null)
-      );
-      const allTargetsAlreadyCreated = targetStudentIds.every((id) => matchedStudentIds.has(id));
+      const targetSet = new Set(targetStudentIds);
+      const matchingAssignment = recentlyCreatedMatches.find((assignment) => {
+        const assignmentTargets = assignment.assignmentTargets.map((t) => t.studentId);
+        if (assignmentTargets.length !== targetSet.size) return false;
+        return assignmentTargets.every((id) => targetSet.has(id));
+      });
 
-      if (allTargetsAlreadyCreated) {
+      if (matchingAssignment) {
         return NextResponse.json({
           success: true,
-          assignments: recentlyCreatedMatches,
+          assignments: [matchingAssignment],
           deduplicated: true,
           message: 'Assignment already created. Duplicate submit ignored.'
         });
       }
     }
 
-    // We intentionally do NOT enforce that all selected students share the same
-    // program as the assignment here, to allow assigning to full groups even
-    // if they mix programs. Validation of visibility to students happens
-    // separately when fetching assignments for a given student.
+    // We intentionally derive program per target student so group assignments
+    // do not depend on manual program entry.
 
-    const createdAssignments = [];
-    for (const targetId of targetStudentIds) {
-      const assignment = await prisma.assignment.create({
-        data: {
-          title,
-          description,
-          instructions: normalizedInstructions,
-          program,
-          subject,
-          dueDate: parsedDueDate,
-          dueDateTimezone, // Store the timezone used when creating the assignment
-          totalPoints: normalizedTotalPoints,
-          allowLateSubmission,
-          teacherId: teacher.id,
-          targetStudentId: targetId
-        }
-      });
-
-      if (resourceIds.length > 0) {
-        await prisma.assignmentResource.createMany({
-          data: resourceIds.map((resourceId: number) => ({
-            assignmentId: assignment.id,
-            resourceId,
-            isRequired: true
-          }))
-        });
+    const defaultProgram = normalizedProgram || students[0]?.program || "General";
+    const defaultSubject = normalizedSubject || "General";
+    const assignment = await prisma.assignment.create({
+      data: {
+        title,
+        description,
+        instructions: normalizedInstructions,
+        program: defaultProgram,
+        subject: defaultSubject,
+        dueDate: parsedDueDate,
+        dueDateTimezone, // Store the timezone used when creating the assignment
+        totalPoints: normalizedTotalPoints,
+        allowLateSubmission,
+        teacherId: teacher.id,
+        targetStudentId: targetStudentIds.length === 1 ? targetStudentIds[0] : null
       }
+    });
 
-      createdAssignments.push(assignment);
+    await prisma.assignmentTarget.createMany({
+      data: targetStudentIds.map((studentId) => ({
+        assignmentId: assignment.id,
+        studentId
+      })),
+      skipDuplicates: true
+    });
+
+    if (resourceIds.length > 0) {
+      await prisma.assignmentResource.createMany({
+        data: resourceIds.map((resourceId: number) => ({
+          assignmentId: assignment.id,
+          resourceId,
+          isRequired: true
+        }))
+      });
     }
+
+    const finalAssignment = await prisma.assignment.findUnique({
+      where: { id: assignment.id },
+      include: {
+        targetStudent: {
+          select: { id: true, name: true, email: true }
+        },
+        assignmentTargets: {
+          include: {
+            student: {
+              select: { id: true, name: true, email: true }
+            }
+          }
+        },
+        submissions: {
+          include: {
+            student: {
+              select: { id: true, name: true, email: true }
+            }
+          }
+        },
+        resources: {
+          include: {
+            resource: true
+          }
+        },
+      }
+    });
 
     return NextResponse.json({
       success: true,
-      assignments: createdAssignments,
+      assignment: finalAssignment,
+      assignments: finalAssignment ? [finalAssignment] : [assignment],
       message: targetStudentIds.length > 1 ? 'Assignments created successfully' : 'Assignment created successfully'
     });
 
@@ -286,8 +361,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT: Update assignment
-export async function PUT(request: NextRequest) {
+// PATCH: Update assignment
+export async function PATCH(request: NextRequest) {
   try {
     const user = await getUserFromRequest(request);
     if (!user) {
@@ -306,12 +381,14 @@ export async function PUT(request: NextRequest) {
       instructions,
       program,
       subject,
-      grade,
       dueDate,
+      timezone,
       totalPoints,
       allowLateSubmission,
       isActive,
       teacherEmail: teacherEmailParam,
+      studentId,
+      studentIds,
       resourceIds = []
     } = data;
 
@@ -353,6 +430,77 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    if (Array.isArray(resourceIds) && resourceIds.length > 0) {
+      const ownedResources = await prisma.resource.findMany({
+        where: {
+          id: { in: resourceIds.map((rid: any) => Number(rid)) },
+          teacherId: teacher.id
+        },
+        select: { id: true }
+      });
+
+      if (ownedResources.length !== resourceIds.length) {
+        return NextResponse.json(
+          { success: false, error: 'One or more resources are not owned by this teacher' },
+          { status: 403 }
+        );
+      }
+    }
+
+    const hasStudentSelection = studentId !== undefined || Array.isArray(studentIds);
+    let targetStudentIds: number[] = [];
+    if (hasStudentSelection) {
+      const normalizedStudentIds = Array.isArray(studentIds)
+        ? Array.from(
+            new Set(
+              studentIds
+                .map((sid: any) => Number(sid))
+                .filter((sid: number) => !Number.isNaN(sid))
+            )
+          )
+        : [];
+      const parsedSingleStudentId = studentId ? Number(studentId) : null;
+      targetStudentIds = normalizedStudentIds.length > 0
+        ? normalizedStudentIds
+        : parsedSingleStudentId
+          ? [parsedSingleStudentId]
+          : [];
+
+      if (targetStudentIds.length === 0) {
+        return NextResponse.json(
+          { success: false, error: 'Student selection is required' },
+          { status: 400 }
+        );
+      }
+
+      const students = await prisma.student.findMany({
+        where: { id: { in: targetStudentIds } },
+        select: { id: true }
+      });
+
+      if (students.length !== targetStudentIds.length) {
+        return NextResponse.json(
+          { success: false, error: 'Student not found' },
+          { status: 404 }
+        );
+      }
+
+      const linkedStudents = await prisma.teacherStudent.findMany({
+        where: {
+          teacherId: teacher.id,
+          studentId: { in: targetStudentIds }
+        },
+        select: { studentId: true }
+      });
+
+      if (linkedStudents.length !== targetStudentIds.length) {
+        return NextResponse.json(
+          { success: false, error: 'Some students are not assigned to this teacher' },
+          { status: 403 }
+        );
+      }
+    }
+
     // Update assignment
     const updateData: any = {};
     if (title !== undefined) updateData.title = title;
@@ -360,40 +508,64 @@ export async function PUT(request: NextRequest) {
     if (instructions !== undefined) updateData.instructions = instructions;
     if (program !== undefined) updateData.program = program;
     if (subject !== undefined) updateData.subject = subject;
-    if (grade !== undefined) updateData.grade = grade;
     if (dueDate !== undefined) updateData.dueDate = new Date(dueDate);
+    if (timezone !== undefined) updateData.dueDateTimezone = timezone;
     if (totalPoints !== undefined) updateData.totalPoints = parseInt(totalPoints);
     if (allowLateSubmission !== undefined) updateData.allowLateSubmission = allowLateSubmission;
     if (isActive !== undefined) updateData.isActive = isActive;
+    if (hasStudentSelection) updateData.targetStudentId = targetStudentIds.length === 1 ? targetStudentIds[0] : null;
 
-    const updatedAssignment = await prisma.assignment.update({
-      where: { id: parseInt(id) },
-      data: updateData
-    });
-
-    // Update resource links if provided
-    if (resourceIds.length >= 0) {
-      // Remove existing resource links
-      await prisma.assignmentResource.deleteMany({
-        where: { assignmentId: parseInt(id) }
+    await prisma.$transaction(async (tx) => {
+      await tx.assignment.update({
+        where: { id: parseInt(id) },
+        data: updateData
       });
 
-      // Add new resource links
-      if (resourceIds.length > 0) {
-        await prisma.assignmentResource.createMany({
-          data: resourceIds.map((resourceId: number) => ({
+      if (hasStudentSelection) {
+        await tx.assignmentTarget.deleteMany({
+          where: { assignmentId: parseInt(id) }
+        });
+
+        await tx.assignmentTarget.createMany({
+          data: targetStudentIds.map((sid) => ({
             assignmentId: parseInt(id),
-            resourceId,
-            isRequired: true
-          }))
+            studentId: sid
+          })),
+          skipDuplicates: true
         });
       }
-    }
+
+      if (Array.isArray(resourceIds)) {
+        await tx.assignmentResource.deleteMany({
+          where: { assignmentId: parseInt(id) }
+        });
+
+        if (resourceIds.length > 0) {
+          await tx.assignmentResource.createMany({
+            data: resourceIds.map((resourceId: number) => ({
+              assignmentId: parseInt(id),
+              resourceId,
+              isRequired: true
+            }))
+          });
+        }
+      }
+    });
 
     // Get updated assignment with relations
     const finalAssignment = await prisma.assignment.findUnique({
       where: { id: parseInt(id) },
       include: {
+        targetStudent: {
+          select: { id: true, name: true, email: true }
+        },
+        assignmentTargets: {
+          include: {
+            student: {
+              select: { id: true, name: true, email: true }
+            }
+          }
+        },
         resources: {
           include: {
             resource: true
@@ -415,6 +587,11 @@ export async function PUT(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Keep PUT for backward compatibility while clients migrate to PATCH.
+export async function PUT(request: NextRequest) {
+  return PATCH(request);
 }
 
 // DELETE: Delete assignment

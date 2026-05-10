@@ -158,6 +158,63 @@ interface Assignment {
   _count?: {
     submissions: number;
   };
+  assignmentTargets?: Array<{
+    student: {
+      id: number;
+      name: string;
+      email: string;
+    };
+  }>;
+  targetStudent?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+}
+
+interface TeacherResource {
+  id: number;
+  title: string;
+  description: string | null;
+  type: string;
+  fileUrl: string | null;
+  linkUrl: string | null;
+  fileName: string | null;
+  fileSize: number | null;
+  program: string;
+  subject: string;
+  grade: string;
+  isPublic: boolean;
+  createdAt: string;
+  assignmentLinks: Array<{
+    assignment: {
+      id: number;
+      title: string;
+    };
+  }>;
+  studentAssignments: Array<{
+    student: {
+      id: number;
+      name: string;
+      email: string;
+    };
+  }>;
+}
+
+interface ResourceFormState {
+  title: string;
+  description: string;
+  type: string;
+  linkUrl: string;
+  program: string;
+  subject: string;
+  grade: string;
+  category: ResourceCategory;
+  assignmentId: number | null;
+  studentIds: number[];
+  existingFileUrl: string | null;
+  existingFileName: string | null;
+  existingFileSize: number | null;
 }
 
 export default function TeacherDashboard() {
@@ -182,35 +239,50 @@ export default function TeacherDashboard() {
   const [creatingGroup, setCreatingGroup] = useState(false);
   const createGroupInFlightRef = useRef(false);
 
-  // Resource sending state
-  const [newResource, setNewResource] = useState<{
-    title: string;
-    description: string;
-    type: string;
-    linkUrl: string;
-    program: string;
-    subject: string;
-    grade: string;
-    category: ResourceCategory;
-    assignmentId: number | null;
-    studentIds: number[];
-  }>({
+  const createEmptyResourceForm = (defaultProgram = ""): ResourceFormState => ({
     title: "",
     description: "",
     type: "document",
     linkUrl: "",
-    program: "",
+    program: defaultProgram,
     subject: "",
     grade: "",
     category: "personal",
     assignmentId: null,
-    studentIds: []
+    studentIds: [],
+    existingFileUrl: null,
+    existingFileName: null,
+    existingFileSize: null,
   });
+
+  // Resource sending state
+  const [newResource, setNewResource] = useState<ResourceFormState>(createEmptyResourceForm(""));
   const [newResourceFile, setNewResourceFile] = useState<File | null>(null);
   const [sendingResource, setSendingResource] = useState(false);
   const sendResourceInFlightRef = useRef(false);
   const [resourceError, setResourceError] = useState<string | null>(null);
-  const [resourceGroupId, setResourceGroupId] = useState<string>("");
+  const [resourceGroupIds, setResourceGroupIds] = useState<string[]>([]);
+  const [resourceSaveFeedback, setResourceSaveFeedback] = useState<{
+    type: "saving" | "success" | "error";
+    message: string;
+  } | null>(null);
+  const resourceFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [resources, setResources] = useState<TeacherResource[]>([]);
+  const [resourcesLoading, setResourcesLoading] = useState(false);
+  const [resourceListError, setResourceListError] = useState<string | null>(null);
+  const [resourceActionLoadingIds, setResourceActionLoadingIds] = useState<Set<number>>(new Set());
+  const [isEditResourceDialogOpen, setIsEditResourceDialogOpen] = useState(false);
+  const [editingResourceId, setEditingResourceId] = useState<number | null>(null);
+  const [editResource, setEditResource] = useState<ResourceFormState>(createEmptyResourceForm(""));
+  const [editResourceFile, setEditResourceFile] = useState<File | null>(null);
+  const [editResourceGroupIds, setEditResourceGroupIds] = useState<string[]>([]);
+  const [editResourceError, setEditResourceError] = useState<string | null>(null);
+  const [savingEditedResource, setSavingEditedResource] = useState(false);
+  const [editResourceSaveFeedback, setEditResourceSaveFeedback] = useState<{
+    type: "saving" | "success" | "error";
+    message: string;
+  } | null>(null);
+  const editResourceFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Student submissions state
   const [studentSubmissions, setStudentSubmissions] = useState<any[]>([]);
@@ -254,7 +326,11 @@ export default function TeacherDashboard() {
   // Fetch functions
   const fetchTeacherData = async () => {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    let didTimeout = false;
+    const timeoutId = setTimeout(() => {
+      didTimeout = true;
+      controller.abort("request-timeout");
+    }, 15000);
     try {
       setLoading(true);
       setError(null);
@@ -271,11 +347,14 @@ export default function TeacherDashboard() {
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
-        setError("Dashboard load timed out. Please retry.");
+        if (didTimeout) {
+          setError("Dashboard load timed out. Please retry.");
+        }
+        return;
       } else {
         setError('Failed to fetch teacher data');
+        console.error('Error fetching teacher data:', err);
       }
-      console.error('Error fetching teacher data:', err);
     } finally {
       clearTimeout(timeoutId);
       setLoading(false);
@@ -377,7 +456,10 @@ export default function TeacherDashboard() {
 
   const fetchAssignments = async () => {
     try {
-      const response = await fetch(`/api/teacher/assignments?teacherEmail=${encodeURIComponent(teacherEmail)}`);
+      const response = await fetch(
+        `/api/teacher/assignments?teacherEmail=${encodeURIComponent(teacherEmail)}&_=${Date.now()}`,
+        { cache: "no-store" }
+      );
       const data = await response.json();
 
       if (data.success) {
@@ -390,27 +472,209 @@ export default function TeacherDashboard() {
     }
   };
 
-  const resetResourceForm = () => {
-    setNewResource({
-      title: "",
-      description: "",
-      type: "document",
-      linkUrl: "",
-      program: teacher?.programs?.[0] || "",
-      subject: "",
-      grade: "",
-      category: "personal",
-      assignmentId: null,
-      studentIds: []
+  const fetchResources = async () => {
+    if (!teacherEmail) return;
+    try {
+      setResourcesLoading(true);
+      setResourceListError(null);
+      const response = await fetch(
+        `/api/teacher/resources?teacherEmail=${encodeURIComponent(teacherEmail)}&_=${Date.now()}`,
+        { cache: "no-store" }
+      );
+      const data = await response.json();
+      if (data.success) {
+        setResources(data.resources || []);
+      } else {
+        setResourceListError(data.error || "Failed to fetch resources");
+      }
+    } catch (err) {
+      console.error("Error fetching resources:", err);
+      setResourceListError("Failed to fetch resources");
+    } finally {
+      setResourcesLoading(false);
+    }
+  };
+
+  const getAssignmentStudentIds = (assignmentId: number | null) => {
+    if (!assignmentId) return [];
+    const assignment = assignments.find((item) => item.id === assignmentId);
+    if (!assignment) return [];
+    return Array.from(
+      new Set([
+        ...(assignment.assignmentTargets || []).map((target) => target.student.id),
+        ...(assignment.targetStudent ? [assignment.targetStudent.id] : [])
+      ])
+    );
+  };
+
+  const getStudentIdsFromGroups = (groupIds: string[]) =>
+    Array.from(
+      new Set(
+        groupIds.flatMap((groupId) => {
+          const group = studentGroups.find((item) => item.id.toString() === groupId);
+          return group ? group.members.map((member) => member.id) : [];
+        })
+      )
+    );
+
+  const inferResourceCategory = (resource: TeacherResource): ResourceCategory => {
+    if (resource.assignmentLinks.length > 0) return "assignment";
+    if (resource.isPublic) return "general";
+    return "personal";
+  };
+
+  const mergeAssignmentIntoState = (assignment?: any | null) => {
+    if (!assignment || typeof assignment.id !== "number") return;
+    setAssignments((prev) => {
+      const existingIndex = prev.findIndex((item) => item.id === assignment.id);
+      if (existingIndex >= 0) {
+        const next = [...prev];
+        next[existingIndex] = { ...next[existingIndex], ...assignment } as Assignment;
+        return next;
+      }
+      return [assignment as Assignment, ...prev];
     });
+  };
+
+  const handleAssignmentCreated = (assignment?: any | null) => {
+    mergeAssignmentIntoState(assignment);
+    void fetchAssignments();
+  };
+
+  const handleAssignmentUpdated = (assignment?: any | null) => {
+    mergeAssignmentIntoState(assignment);
+    void fetchAssignments();
+  };
+
+  const resetResourceForm = () => {
+    setNewResource(createEmptyResourceForm(teacher?.programs?.[0] || ""));
     setNewResourceFile(null);
     setResourceError(null);
-    setResourceGroupId("");
+    setResourceGroupIds([]);
+  };
+
+  const showResourceSaveFeedback = (type: "saving" | "success" | "error", message: string) => {
+    if (resourceFeedbackTimeoutRef.current) {
+      clearTimeout(resourceFeedbackTimeoutRef.current);
+      resourceFeedbackTimeoutRef.current = null;
+    }
+    setResourceSaveFeedback({ type, message });
+    if (type !== "saving") {
+      resourceFeedbackTimeoutRef.current = setTimeout(() => {
+        setResourceSaveFeedback(null);
+        resourceFeedbackTimeoutRef.current = null;
+      }, 3500);
+    }
+  };
+
+  const showEditResourceSaveFeedback = (type: "saving" | "success" | "error", message: string) => {
+    if (editResourceFeedbackTimeoutRef.current) {
+      clearTimeout(editResourceFeedbackTimeoutRef.current);
+      editResourceFeedbackTimeoutRef.current = null;
+    }
+    setEditResourceSaveFeedback({ type, message });
+    if (type !== "saving") {
+      editResourceFeedbackTimeoutRef.current = setTimeout(() => {
+        setEditResourceSaveFeedback(null);
+        editResourceFeedbackTimeoutRef.current = null;
+      }, 3500);
+    }
+  };
+
+  const openEditResourceDialog = (resource: TeacherResource) => {
+    const inferredCategory = inferResourceCategory(resource);
+    const assignmentId = inferredCategory === "assignment"
+      ? resource.assignmentLinks[0]?.assignment.id ?? null
+      : null;
+    setEditingResourceId(resource.id);
+    setEditResource({
+      title: resource.title,
+      description: resource.description || "",
+      type: resource.type,
+      linkUrl: resource.linkUrl || "",
+      program: resource.program || "",
+      subject: resource.subject || "",
+      grade: resource.grade || "",
+      category: inferredCategory,
+      assignmentId,
+      studentIds: inferredCategory === "assignment"
+        ? []
+        : resource.studentAssignments.map((item) => item.student.id),
+      existingFileUrl: resource.fileUrl,
+      existingFileName: resource.fileName,
+      existingFileSize: resource.fileSize,
+    });
+    setEditResourceFile(null);
+    setEditResourceGroupIds([]);
+    setEditResourceError(null);
+    setEditResourceSaveFeedback(null);
+    setIsEditResourceDialogOpen(true);
+  };
+
+  const handleDeleteResource = async (resourceId: number) => {
+    if (resourceActionLoadingIds.has(resourceId)) return;
+    const confirmed = window.confirm("Delete this resource?");
+    if (!confirmed) return;
+    setResourceActionLoadingIds((prev) => new Set(prev).add(resourceId));
+    try {
+      const response = await fetch(
+        `/api/teacher/resources?id=${resourceId}&teacherEmail=${encodeURIComponent(teacherEmail)}`,
+        { method: "DELETE" }
+      );
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to delete resource");
+      }
+      setResources((prev) => prev.filter((item) => item.id !== resourceId));
+      toast({
+        title: "Resource deleted",
+        description: "The resource has been removed.",
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Delete failed",
+        description: err instanceof Error ? err.message : "Failed to delete resource.",
+      });
+    } finally {
+      setResourceActionLoadingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(resourceId);
+        return next;
+      });
+    }
   };
 
   const handleSendResource = async () => {
     if (sendResourceInFlightRef.current || sendingResource) return;
     setResourceError(null);
+    setResourceSaveFeedback(null);
+
+    const isAssignmentCategory = newResource.category === "assignment";
+    const selectedAssignmentForSend = isAssignmentCategory && newResource.assignmentId
+      ? assignments.find((assignment) => assignment.id === newResource.assignmentId)
+      : null;
+    const assignmentStudentIds = selectedAssignmentForSend
+      ? Array.from(
+          new Set([
+            ...(selectedAssignmentForSend.assignmentTargets || []).map((target) => target.student.id),
+            ...(selectedAssignmentForSend.targetStudent ? [selectedAssignmentForSend.targetStudent.id] : [])
+          ])
+        )
+      : [];
+    const groupedStudentIds = Array.from(
+      new Set(
+        resourceGroupIds.flatMap((groupId) => {
+          const group = studentGroups.find((item) => item.id.toString() === groupId);
+          return group ? group.members.map((member) => member.id) : [];
+        })
+      )
+    );
+    const manuallySelectedStudentIds = Array.from(new Set(newResource.studentIds));
+    const directStudentIds = Array.from(new Set([...groupedStudentIds, ...manuallySelectedStudentIds]));
+    const targetStudentIds = isAssignmentCategory ? assignmentStudentIds : directStudentIds;
+    const normalizedLinkUrl = newResource.linkUrl.trim();
 
     if (!teacherEmail) {
       const message = "Teacher email not available.";
@@ -445,28 +709,6 @@ export default function TeacherDashboard() {
       return;
     }
 
-    if (!newResource.program || !newResource.subject || !newResource.grade) {
-      const message = "Program, subject, and grade are required.";
-      setResourceError(message);
-      toast({
-        title: "Missing details",
-        description: message,
-        className: "border-slate-300 bg-slate-100 text-slate-800",
-      });
-      return;
-    }
-
-    if (newResource.studentIds.length === 0) {
-      const message = "Select at least one student.";
-      setResourceError(message);
-      toast({
-        title: "No students selected",
-        description: message,
-        className: "border-slate-300 bg-slate-100 text-slate-800",
-      });
-      return;
-    }
-
     if (newResource.category === "assignment" && !newResource.assignmentId) {
       const message = "Select an assignment for this category.";
       setResourceError(message);
@@ -478,7 +720,29 @@ export default function TeacherDashboard() {
       return;
     }
 
-    if (newResource.type === "link" && !newResource.linkUrl) {
+    if (isAssignmentCategory && assignmentStudentIds.length === 0) {
+      const message = "Selected assignment has no assigned students.";
+      setResourceError(message);
+      toast({
+        title: "No assignment students",
+        description: message,
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+      return;
+    }
+
+    if (!isAssignmentCategory && newResource.category === "personal" && targetStudentIds.length === 0) {
+      const message = "Select at least one student or group.";
+      setResourceError(message);
+      toast({
+        title: "No students selected",
+        description: message,
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+      return;
+    }
+
+    if (newResource.type === "link" && !normalizedLinkUrl) {
       const message = "Provide a link URL for link type resources.";
       setResourceError(message);
       toast({
@@ -489,8 +753,8 @@ export default function TeacherDashboard() {
       return;
     }
 
-    if (["document", "video", "image"].includes(newResource.type) && !newResourceFile && !newResource.linkUrl) {
-      const message = "Upload a file or provide a link for this resource.";
+    if (newResource.type !== "link" && !newResourceFile && !normalizedLinkUrl) {
+      const message = "Attach a file or provide a link URL.";
       setResourceError(message);
       toast({
         title: "File or link required",
@@ -502,6 +766,7 @@ export default function TeacherDashboard() {
 
     sendResourceInFlightRef.current = true;
     setSendingResource(true);
+    showResourceSaveFeedback("saving", "Sending resource...");
     try {
       let fileUrl: string | null = null;
 
@@ -528,16 +793,16 @@ export default function TeacherDashboard() {
         description: newResource.description,
         type: newResource.type,
         fileUrl,
-        linkUrl: newResource.linkUrl || null,
+        linkUrl: normalizedLinkUrl || null,
         fileName: newResourceFile?.name,
         fileSize: newResourceFile?.size,
-        program: newResource.program,
-        subject: newResource.subject,
-        grade: newResource.grade,
+        program: newResource.program?.trim() || selectedAssignmentForSend?.program || "",
+        subject: newResource.subject?.trim() || selectedAssignmentForSend?.subject || "",
+        grade: newResource.grade?.trim() || "",
         teacherEmail,
         isPublic: newResource.category === "general",
         assignmentIds: newResource.category === "assignment" && newResource.assignmentId ? [newResource.assignmentId] : [],
-        studentIds: newResource.studentIds,
+        studentIds: targetStudentIds,
       };
 
       const createResponse = await fetch("/api/teacher/resources", {
@@ -551,12 +816,32 @@ export default function TeacherDashboard() {
         throw new Error(data.error || "Failed to send resource");
       }
 
+      if (data.resource) {
+        setResources((prev) => {
+          const rest = prev.filter((item) => item.id !== data.resource.id);
+          return [data.resource, ...rest];
+        });
+      }
+      void fetchResources();
+
       resetResourceForm();
       toast({
         title: "Resource sent",
-        description: "Your resource has been shared with the selected students.",
+        description: isAssignmentCategory
+          ? "Your resource has been linked to the selected assignment."
+          : newResource.category === "general"
+            ? "Your resource has been published."
+            : "Your resource has been shared with the selected students.",
         className: "border-slate-300 bg-slate-100 text-slate-800",
       });
+      showResourceSaveFeedback(
+        "success",
+        isAssignmentCategory
+          ? "Resource linked to assignment."
+          : newResource.category === "general"
+            ? "Resource published."
+            : "Resource shared with students."
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to send resource";
       setResourceError(message);
@@ -566,9 +851,148 @@ export default function TeacherDashboard() {
         title: "Failed to send resource",
         description: message,
       });
+      showResourceSaveFeedback("error", message);
     } finally {
       setSendingResource(false);
       sendResourceInFlightRef.current = false;
+    }
+  };
+
+  const handleUpdateResource = async () => {
+    if (!editingResourceId || savingEditedResource) return;
+    setEditResourceError(null);
+    setEditResourceSaveFeedback(null);
+
+    const isAssignmentCategory = editResource.category === "assignment";
+    const assignmentStudentIds = getAssignmentStudentIds(editResource.assignmentId);
+    const groupedStudentIds = getStudentIdsFromGroups(editResourceGroupIds);
+    const directStudentIds = Array.from(new Set([...groupedStudentIds, ...editResource.studentIds]));
+    const targetStudentIds = isAssignmentCategory ? assignmentStudentIds : directStudentIds;
+    const normalizedLinkUrl = editResource.linkUrl.trim();
+
+    if (!editResource.title.trim()) {
+      setEditResourceError("Title is required.");
+      return;
+    }
+    if (!editResource.type) {
+      setEditResourceError("Type is required.");
+      return;
+    }
+    if (isAssignmentCategory && !editResource.assignmentId) {
+      setEditResourceError("Select an assignment.");
+      return;
+    }
+    if (isAssignmentCategory && assignmentStudentIds.length === 0) {
+      setEditResourceError("Selected assignment has no assigned students.");
+      return;
+    }
+    if (!isAssignmentCategory && editResource.category === "personal" && targetStudentIds.length === 0) {
+      setEditResourceError("Select at least one student or group.");
+      return;
+    }
+    if (editResource.type === "link" && !normalizedLinkUrl) {
+      setEditResourceError("Provide a link URL for link type resources.");
+      return;
+    }
+    if (editResource.type !== "link" && !editResourceFile && !normalizedLinkUrl && !editResource.existingFileUrl) {
+      setEditResourceError("Attach a file or provide a link URL.");
+      return;
+    }
+
+    setSavingEditedResource(true);
+    showEditResourceSaveFeedback("saving", "Updating resource...");
+    try {
+      let uploadedFileUrl: string | null = null;
+      let uploadedFileName: string | null = null;
+      let uploadedFileSize: number | null = null;
+
+      if (editResourceFile) {
+        const formData = new FormData();
+        formData.append("file", editResourceFile);
+        formData.append("studentId", "0");
+        formData.append("assignmentId", editResource.assignmentId ? editResource.assignmentId.toString() : "0");
+        const uploadResponse = await fetch("/api/upload-r2", { method: "POST", body: formData });
+        const uploadData = await uploadResponse.json();
+        if (!uploadData.success) {
+          throw new Error(uploadData.error || "Upload failed");
+        }
+        uploadedFileUrl = uploadData.fileUrl;
+        uploadedFileName = editResourceFile.name;
+        uploadedFileSize = editResourceFile.size;
+      }
+
+      const selectedEditAssignment = editResource.assignmentId
+        ? assignments.find((item) => item.id === editResource.assignmentId)
+        : null;
+
+      const payload: any = {
+        id: editingResourceId,
+        title: editResource.title,
+        description: editResource.description,
+        type: editResource.type,
+        linkUrl: normalizedLinkUrl || null,
+        program: editResource.program?.trim() || selectedEditAssignment?.program || "",
+        subject: editResource.subject?.trim() || selectedEditAssignment?.subject || "",
+        grade: editResource.grade?.trim() || "",
+        teacherEmail,
+        isPublic: editResource.category === "general",
+        assignmentIds: isAssignmentCategory && editResource.assignmentId ? [editResource.assignmentId] : [],
+        studentIds: targetStudentIds,
+      };
+
+      if (uploadedFileUrl !== null) {
+        payload.fileUrl = uploadedFileUrl;
+        payload.fileName = uploadedFileName;
+        payload.fileSize = uploadedFileSize;
+      } else if (editResource.type !== "link") {
+        payload.fileUrl = editResource.existingFileUrl;
+        payload.fileName = editResource.existingFileName;
+        payload.fileSize = editResource.existingFileSize;
+      } else {
+        payload.fileUrl = null;
+        payload.fileName = null;
+        payload.fileSize = null;
+      }
+
+      const response = await fetch("/api/teacher/resources", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to update resource");
+      }
+
+      if (data.resource) {
+        setResources((prev) => {
+          const next = [...prev];
+          const index = next.findIndex((item) => item.id === data.resource.id);
+          if (index >= 0) {
+            next[index] = data.resource;
+            return next;
+          }
+          return [data.resource, ...next];
+        });
+      }
+      void fetchResources();
+      setIsEditResourceDialogOpen(false);
+      setEditingResourceId(null);
+      setEditResource(createEmptyResourceForm(teacher?.programs?.[0] || ""));
+      setEditResourceFile(null);
+      setEditResourceGroupIds([]);
+      toast({
+        title: "Resource updated",
+        description: "Changes saved successfully.",
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+      showEditResourceSaveFeedback("success", "Resource updated.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to update resource";
+      setEditResourceError(message);
+      showEditResourceSaveFeedback("error", message);
+    } finally {
+      setSavingEditedResource(false);
     }
   };
 
@@ -673,6 +1097,7 @@ export default function TeacherDashboard() {
       fetchAssignments();
       fetchTeacherData();
       fetchStudentGroups();
+      fetchResources();
     }
   }, [teacherEmail]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -700,6 +1125,19 @@ export default function TeacherDashboard() {
       fetchStudentSubmissions();
     }
   }, [teacherEmail]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    return () => {
+      if (resourceFeedbackTimeoutRef.current) {
+        clearTimeout(resourceFeedbackTimeoutRef.current);
+        resourceFeedbackTimeoutRef.current = null;
+      }
+      if (editResourceFeedbackTimeoutRef.current) {
+        clearTimeout(editResourceFeedbackTimeoutRef.current);
+        editResourceFeedbackTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (teacher?.id) {
@@ -880,6 +1318,47 @@ export default function TeacherDashboard() {
   };
 
   const currentTabMeta = tabMeta[activeTab] || tabMeta.students;
+  const selectedResourceAssignment = newResource.assignmentId
+    ? assignments.find((assignment) => assignment.id === newResource.assignmentId) || null
+    : null;
+  const assignmentAutoStudentIds = selectedResourceAssignment
+    ? Array.from(
+        new Set([
+          ...(selectedResourceAssignment.assignmentTargets || []).map((target) => target.student.id),
+          ...(selectedResourceAssignment.targetStudent ? [selectedResourceAssignment.targetStudent.id] : [])
+        ])
+      )
+    : [];
+  const groupedResourceStudentIdSet = new Set(
+    resourceGroupIds.flatMap((groupId) => {
+      const group = studentGroups.find((item) => item.id.toString() === groupId);
+      return group ? group.members.map((member) => member.id) : [];
+    })
+  );
+  const isAssignmentResourceCategory = newResource.category === "assignment";
+  const isResourceSubmitDisabled =
+    sendingResource ||
+    !newResource.title.trim() ||
+    !newResource.type ||
+    (isAssignmentResourceCategory && !newResource.assignmentId);
+  const selectedEditResourceAssignment = editResource.assignmentId
+    ? assignments.find((assignment) => assignment.id === editResource.assignmentId) || null
+    : null;
+  const editAssignmentAutoStudentIds = selectedEditResourceAssignment
+    ? Array.from(
+        new Set([
+          ...(selectedEditResourceAssignment.assignmentTargets || []).map((target) => target.student.id),
+          ...(selectedEditResourceAssignment.targetStudent ? [selectedEditResourceAssignment.targetStudent.id] : [])
+        ])
+      )
+    : [];
+  const groupedEditResourceStudentIdSet = new Set(getStudentIdsFromGroups(editResourceGroupIds));
+  const isEditAssignmentResourceCategory = editResource.category === "assignment";
+  const isEditResourceSubmitDisabled =
+    savingEditedResource ||
+    !editResource.title.trim() ||
+    !editResource.type ||
+    (isEditAssignmentResourceCategory && !editResource.assignmentId);
   const reviewPendingCount = studentSubmissions.filter((submission) => !submission.hasMyRemark).length;
   const dashboardStats = [
     { label: "Students", value: filteredStudents.length, icon: Users },
@@ -1332,8 +1811,8 @@ export default function TeacherDashboard() {
                     <AssignmentManager
                       teacherEmail={teacherEmail}
                       assignments={assignments}
-                      onAssignmentCreated={fetchAssignments}
-                      onAssignmentUpdated={fetchAssignments}
+                      onAssignmentCreated={handleAssignmentCreated}
+                      onAssignmentUpdated={handleAssignmentUpdated}
                     />
                   </CardContent>
                 </Card>
@@ -1375,7 +1854,7 @@ export default function TeacherDashboard() {
                       Send Resource to Students
                     </CardTitle>
                     <CardDescription>
-                      Choose a category (assignment / personal / general), attach a file or link, and target students.
+                      Pick a category first. Assignment resources use assignment assignees automatically, while personal/general can target groups or individual students.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -1392,7 +1871,18 @@ export default function TeacherDashboard() {
                         <Label>Category *</Label>
                         <select
                           value={newResource.category}
-                          onChange={(e) => setNewResource({ ...newResource, category: e.target.value as ResourceCategory })}
+                          onChange={(e) => {
+                            const nextCategory = e.target.value as ResourceCategory;
+                            setNewResource((prev) => ({
+                              ...prev,
+                              category: nextCategory,
+                              assignmentId: nextCategory === "assignment" ? prev.assignmentId : null,
+                              studentIds: nextCategory === "assignment" ? [] : prev.studentIds
+                            }));
+                            if (nextCategory === "assignment") {
+                              setResourceGroupIds([]);
+                            }
+                          }}
                           className="w-full px-3 py-2 border rounded-md bg-white"
                         >
                           <option value="assignment">Assignment</option>
@@ -1428,27 +1918,27 @@ export default function TeacherDashboard() {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
-                        <Label>Program *</Label>
+                        <Label>Program</Label>
                         <Input
                           value={newResource.program}
                           onChange={(e) => setNewResource({ ...newResource, program: e.target.value })}
-                          placeholder="Program"
+                          placeholder="Optional override"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Subject *</Label>
+                        <Label>Subject</Label>
                         <Input
                           value={newResource.subject}
                           onChange={(e) => setNewResource({ ...newResource, subject: e.target.value })}
-                          placeholder="Subject"
+                          placeholder="Optional override"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Grade *</Label>
+                        <Label>Grade</Label>
                         <Input
                           value={newResource.grade}
                           onChange={(e) => setNewResource({ ...newResource, grade: e.target.value })}
-                          placeholder="Grade"
+                          placeholder="Optional override"
                         />
                       </div>
                     </div>
@@ -1474,6 +1964,11 @@ export default function TeacherDashboard() {
                               </option>
                             ))}
                           </select>
+                          {selectedResourceAssignment && (
+                            <p className="text-xs text-blue-700">
+                              Auto-targeting {assignmentAutoStudentIds.length} assigned student{assignmentAutoStudentIds.length === 1 ? "" : "s"} from this assignment.
+                            </p>
+                          )}
                         </div>
                       )}
 
@@ -1497,71 +1992,107 @@ export default function TeacherDashboard() {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>Select Group</Label>
-                      <select
-                        value={resourceGroupId}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setResourceGroupId(value);
-                          if (!value) {
-                            setNewResource({ ...newResource, studentIds: [] });
-                            return;
-                          }
-                          const group = studentGroups.find((g) => g.id.toString() === value);
-                          const groupStudentIds = group ? group.members.map((member) => member.id) : [];
-                          setNewResource({ ...newResource, studentIds: groupStudentIds });
-                        }}
-                        className="w-full px-3 py-2 border rounded-md bg-white"
-                      >
-                        <option value="">Select group (optional)</option>
-                        {studentGroups.map((group) => (
-                          <option key={group.id} value={group.id}>
-                            {group.name} ({group.members.length})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    {!isAssignmentResourceCategory && (
+                      <>
+                        <div className="space-y-2">
+                          <Label>Assign to Groups (Optional)</Label>
+                          <div className="space-y-2 rounded-md border bg-gray-50 p-3">
+                            {studentGroups.length === 0 ? (
+                              <p className="text-sm text-gray-500">No groups available.</p>
+                            ) : (
+                              studentGroups.map((group) => (
+                                <div key={group.id} className="rounded-md border bg-white p-2">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <label className="flex cursor-pointer items-center gap-2 text-sm">
+                                      <input
+                                        type="checkbox"
+                                        className="rounded"
+                                        checked={resourceGroupIds.includes(group.id.toString())}
+                                        onChange={(e) => {
+                                          if (e.target.checked) {
+                                            setResourceGroupIds((prev) => [...prev, group.id.toString()]);
+                                          } else {
+                                            setResourceGroupIds((prev) => prev.filter((id) => id !== group.id.toString()));
+                                          }
+                                        }}
+                                      />
+                                      <span>{group.name} ({group.members.length} students)</span>
+                                    </label>
+                                    <details className="text-xs text-blue-700">
+                                      <summary className="cursor-pointer">View students</summary>
+                                      <p className="mt-1 max-w-[320px] text-gray-600">
+                                        {group.members.map((member) => member.name).join(", ")}
+                                      </p>
+                                    </details>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
 
-                    <div className="space-y-2">
-                      <Label>Select Students *</Label>
-                      <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
-                        {students.map((student) => (
-                          <label key={student.id} className="flex items-center gap-2 text-sm">
-                            <Checkbox
-                              checked={newResource.studentIds.includes(student.id)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setNewResource({
-                                    ...newResource,
-                                    studentIds: [...newResource.studentIds, student.id]
-                                  });
-                                } else {
-                                  setNewResource({
-                                    ...newResource,
-                                    studentIds: newResource.studentIds.filter((id) => id !== student.id)
-                                  });
-                                }
-                              }}
-                            />
-                            <span className="flex-1">
-                              {student.name} <span className="text-gray-500">({student.email})</span>
-                            </span>
-                          </label>
-                        ))}
-                        {students.length === 0 && (
-                          <p className="text-sm text-gray-500">No students found.</p>
-                        )}
-                      </div>
-                    </div>
+                        <div className="space-y-2">
+                          <Label>Select Students {newResource.category === "personal" ? "*" : "(Optional)"}</Label>
+                          <div className="max-h-56 space-y-2 overflow-y-auto rounded-md border bg-gray-50 p-3">
+                            {students.map((student) => {
+                              const lockedByGroup = groupedResourceStudentIdSet.has(student.id);
+                              const checked = lockedByGroup || newResource.studentIds.includes(student.id);
+                              return (
+                                <label key={student.id} className="flex items-center justify-between rounded-md border bg-white p-2 text-sm">
+                                  <span>
+                                    {student.name} <span className="text-gray-500">({student.email})</span>
+                                  </span>
+                                  <span className="flex items-center gap-2">
+                                    {lockedByGroup && <span className="text-xs text-blue-700">via group</span>}
+                                    <Checkbox
+                                      checked={checked}
+                                      disabled={lockedByGroup}
+                                      onCheckedChange={(value) => {
+                                        if (value) {
+                                          setNewResource({
+                                            ...newResource,
+                                            studentIds: Array.from(new Set([...newResource.studentIds, student.id]))
+                                          });
+                                        } else {
+                                          setNewResource({
+                                            ...newResource,
+                                            studentIds: newResource.studentIds.filter((id) => id !== student.id)
+                                          });
+                                        }
+                                      }}
+                                    />
+                                  </span>
+                                </label>
+                              );
+                            })}
+                            {students.length === 0 && (
+                              <p className="text-sm text-gray-500">No students found.</p>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
 
                     <div className="flex items-center justify-end gap-3">
+                      {resourceSaveFeedback && (
+                        <span
+                          className={
+                            resourceSaveFeedback.type === "saving"
+                              ? "mr-auto rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-sm text-blue-800"
+                              : resourceSaveFeedback.type === "success"
+                                ? "mr-auto rounded-md border border-green-200 bg-green-50 px-2 py-1 text-sm text-green-800"
+                                : "mr-auto rounded-md border border-red-200 bg-red-50 px-2 py-1 text-sm text-red-800"
+                          }
+                        >
+                          {resourceSaveFeedback.message}
+                        </span>
+                      )}
                       {resourceError && (
                         <span className="text-sm text-red-600 mr-auto">{resourceError}</span>
                       )}
                       <Button
                         onClick={handleSendResource}
-                        disabled={sendingResource || !newResource.title || !newResource.type || newResource.studentIds.length === 0}
+                        disabled={isResourceSubmitDisabled}
                       >
                         {sendingResource ? (
                           <>
@@ -1578,6 +2109,341 @@ export default function TeacherDashboard() {
                     </div>
                   </CardContent>
                 </Card>
+
+                <Card className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <CardTitle className="text-lg text-slate-900">Shared Resources</CardTitle>
+                        <CardDescription>Edit or delete previously shared resources.</CardDescription>
+                      </div>
+                      <Button onClick={fetchResources} variant="outline" size="sm" disabled={resourcesLoading}>
+                        <RefreshCw className={cn("h-4 w-4 mr-2", resourcesLoading && "animate-spin")} />
+                        Refresh
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {resourceListError && (
+                      <div className="mb-3 rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-700">
+                        {resourceListError}
+                      </div>
+                    )}
+                    {resourcesLoading ? (
+                      <div className="space-y-3">
+                        {Array.from({ length: 3 }).map((_, index) => (
+                          <ShimmerSkeleton key={`resource-loading-${index}`} className="h-16 w-full rounded-lg" />
+                        ))}
+                      </div>
+                    ) : resources.length === 0 ? (
+                      <p className="text-sm text-slate-600">No resources shared yet.</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {resources.map((resource) => {
+                          const isBusy = resourceActionLoadingIds.has(resource.id);
+                          const resourceCategory = inferResourceCategory(resource);
+                          return (
+                            <div key={resource.id} className="rounded-lg border border-slate-200 p-3">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <p className="truncate text-sm font-semibold text-slate-900">{resource.title}</p>
+                                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                                    <Badge variant="outline">{resource.type}</Badge>
+                                    <Badge variant="secondary">{resourceCategory}</Badge>
+                                    <span>{new Date(resource.createdAt).toLocaleDateString()}</span>
+                                    {resource.assignmentLinks.length > 0 && (
+                                      <span>
+                                        Assignment: {resource.assignmentLinks.map((item) => item.assignment.title).join(", ")}
+                                      </span>
+                                    )}
+                                    {resource.studentAssignments.length > 0 && (
+                                      <span>Students: {resource.studentAssignments.length}</span>
+                                    )}
+                                  </div>
+                                  {resource.description && (
+                                    <p className="mt-1 text-xs text-slate-600 line-clamp-2">{resource.description}</p>
+                                  )}
+                                  {(resource.fileName || resource.linkUrl) && (
+                                    <p className="mt-1 truncate text-xs text-slate-500">
+                                      {resource.fileName || resource.linkUrl}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => openEditResourceDialog(resource)}
+                                    disabled={isBusy}
+                                  >
+                                    <Edit className="h-4 w-4 mr-1" />
+                                    Edit
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => handleDeleteResource(resource.id)}
+                                    disabled={isBusy}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-1" />
+                                    {isBusy ? "Deleting..." : "Delete"}
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Dialog
+                  open={isEditResourceDialogOpen}
+                  onOpenChange={(open) => {
+                    setIsEditResourceDialogOpen(open);
+                    if (!open) {
+                      setEditingResourceId(null);
+                      setEditResource(createEmptyResourceForm(teacher?.programs?.[0] || ""));
+                      setEditResourceFile(null);
+                      setEditResourceGroupIds([]);
+                      setEditResourceError(null);
+                      setEditResourceSaveFeedback(null);
+                    }
+                  }}
+                >
+                  <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Edit Resource</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Title *</Label>
+                          <Input
+                            value={editResource.title}
+                            onChange={(e) => setEditResource({ ...editResource, title: e.target.value })}
+                            placeholder="Resource title"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Category *</Label>
+                          <select
+                            value={editResource.category}
+                            onChange={(e) => {
+                              const nextCategory = e.target.value as ResourceCategory;
+                              setEditResource((prev) => ({
+                                ...prev,
+                                category: nextCategory,
+                                assignmentId: nextCategory === "assignment" ? prev.assignmentId : null,
+                                studentIds: nextCategory === "assignment" ? [] : prev.studentIds
+                              }));
+                              if (nextCategory === "assignment") {
+                                setEditResourceGroupIds([]);
+                              }
+                            }}
+                            className="w-full px-3 py-2 border rounded-md bg-white"
+                          >
+                            <option value="assignment">Assignment</option>
+                            <option value="personal">Personal</option>
+                            <option value="general">General</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Description</Label>
+                          <Input
+                            value={editResource.description}
+                            onChange={(e) => setEditResource({ ...editResource, description: e.target.value })}
+                            placeholder="Short description (optional)"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Type *</Label>
+                          <select
+                            value={editResource.type}
+                            onChange={(e) => setEditResource({ ...editResource, type: e.target.value })}
+                            className="w-full px-3 py-2 border rounded-md bg-white"
+                          >
+                            <option value="document">Document</option>
+                            <option value="video">Video</option>
+                            <option value="image">Image</option>
+                            <option value="link">Link</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label>Program</Label>
+                          <Input
+                            value={editResource.program}
+                            onChange={(e) => setEditResource({ ...editResource, program: e.target.value })}
+                            placeholder="Optional override"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Subject</Label>
+                          <Input
+                            value={editResource.subject}
+                            onChange={(e) => setEditResource({ ...editResource, subject: e.target.value })}
+                            placeholder="Optional override"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Grade</Label>
+                          <Input
+                            value={editResource.grade}
+                            onChange={(e) => setEditResource({ ...editResource, grade: e.target.value })}
+                            placeholder="Optional override"
+                          />
+                        </div>
+                      </div>
+
+                      {editResource.category === "assignment" && (
+                        <div className="space-y-2">
+                          <Label>Link to Assignment *</Label>
+                          <select
+                            value={editResource.assignmentId ?? ""}
+                            onChange={(e) => setEditResource({ ...editResource, assignmentId: e.target.value ? Number(e.target.value) : null })}
+                            className="w-full px-3 py-2 border rounded-md bg-white"
+                          >
+                            <option value="">Select assignment</option>
+                            {assignments.map((assignment) => (
+                              <option key={assignment.id} value={assignment.id}>
+                                {assignment.title}
+                              </option>
+                            ))}
+                          </select>
+                          {selectedEditResourceAssignment && (
+                            <p className="text-xs text-blue-700">
+                              Auto-targeting {editAssignmentAutoStudentIds.length} assigned student{editAssignmentAutoStudentIds.length === 1 ? "" : "s"} from this assignment.
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Replace File (optional)</Label>
+                          <Input
+                            type="file"
+                            accept=".pdf,.doc,.docx,.txt,.jpg,.png,.ppt,.pptx,.xlsx,.mp4,.mov"
+                            onChange={(e) => setEditResourceFile(e.target.files?.[0] || null)}
+                          />
+                          {editResource.existingFileName && !editResourceFile && (
+                            <p className="text-xs text-slate-500">Current file: {editResource.existingFileName}</p>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Link URL (optional)</Label>
+                          <Input
+                            value={editResource.linkUrl}
+                            onChange={(e) => setEditResource({ ...editResource, linkUrl: e.target.value })}
+                            placeholder="https://..."
+                          />
+                        </div>
+                      </div>
+
+                      {!isEditAssignmentResourceCategory && (
+                        <>
+                          <div className="space-y-2">
+                            <Label>Assign to Groups (Optional)</Label>
+                            <div className="space-y-2 rounded-md border bg-gray-50 p-3">
+                              {studentGroups.map((group) => (
+                                <label key={group.id} className="flex items-center justify-between rounded-md border bg-white p-2 text-sm">
+                                  <span>{group.name} ({group.members.length} students)</span>
+                                  <input
+                                    type="checkbox"
+                                    className="rounded"
+                                    checked={editResourceGroupIds.includes(group.id.toString())}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setEditResourceGroupIds((prev) => [...prev, group.id.toString()]);
+                                      } else {
+                                        setEditResourceGroupIds((prev) => prev.filter((id) => id !== group.id.toString()));
+                                      }
+                                    }}
+                                  />
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Select Students {editResource.category === "personal" ? "*" : "(Optional)"}</Label>
+                            <div className="max-h-56 space-y-2 overflow-y-auto rounded-md border bg-gray-50 p-3">
+                              {students.map((student) => {
+                                const lockedByGroup = groupedEditResourceStudentIdSet.has(student.id);
+                                const checked = lockedByGroup || editResource.studentIds.includes(student.id);
+                                return (
+                                  <label key={student.id} className="flex items-center justify-between rounded-md border bg-white p-2 text-sm">
+                                    <span>
+                                      {student.name} <span className="text-gray-500">({student.email})</span>
+                                    </span>
+                                    <span className="flex items-center gap-2">
+                                      {lockedByGroup && <span className="text-xs text-blue-700">via group</span>}
+                                      <Checkbox
+                                        checked={checked}
+                                        disabled={lockedByGroup}
+                                        onCheckedChange={(value) => {
+                                          if (value) {
+                                            setEditResource({
+                                              ...editResource,
+                                              studentIds: Array.from(new Set([...editResource.studentIds, student.id]))
+                                            });
+                                          } else {
+                                            setEditResource({
+                                              ...editResource,
+                                              studentIds: editResource.studentIds.filter((id) => id !== student.id)
+                                            });
+                                          }
+                                        }}
+                                      />
+                                    </span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    <DialogFooter className="mt-4">
+                      {editResourceSaveFeedback && (
+                        <span
+                          className={
+                            editResourceSaveFeedback.type === "saving"
+                              ? "mr-auto rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-sm text-blue-800"
+                              : editResourceSaveFeedback.type === "success"
+                                ? "mr-auto rounded-md border border-green-200 bg-green-50 px-2 py-1 text-sm text-green-800"
+                                : "mr-auto rounded-md border border-red-200 bg-red-50 px-2 py-1 text-sm text-red-800"
+                          }
+                        >
+                          {editResourceSaveFeedback.message}
+                        </span>
+                      )}
+                      {editResourceError && (
+                        <span className="mr-auto text-sm text-red-600">{editResourceError}</span>
+                      )}
+                      <Button variant="outline" onClick={() => setIsEditResourceDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={handleUpdateResource} disabled={isEditResourceSubmitDisabled}>
+                        {savingEditedResource ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                            Updating...
+                          </>
+                        ) : (
+                          "Update Resource"
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
 
                 <div className="flex items-center justify-between">
                   <div>

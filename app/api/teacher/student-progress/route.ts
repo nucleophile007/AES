@@ -57,15 +57,13 @@ export async function GET(request: NextRequest) {
     const assignments = await prisma.assignment.findMany({
       where: {
         OR: [
-          // Assignment for student's program
           {
-            program: student.program,
+            assignmentTargets: {
+              some: { studentId: student.id }
+            }
           },
-          // Assignment explicitly assigned to this student
-          {
-            targetStudentId: student.id,
-          },
-        ],
+          { targetStudentId: student.id }
+        ]
       },
       orderBy: {
         createdAt: "desc",

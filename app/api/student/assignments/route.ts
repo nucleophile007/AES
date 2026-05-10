@@ -56,8 +56,14 @@ export async function GET(request: NextRequest) {
     const assignmentFilters: any = {
       teacherId: { in: teacherIds },
       isActive: true,
-      program: student.program,
-      grade: student.grade
+      OR: [
+        {
+          assignmentTargets: {
+            some: { studentId: student.id }
+          }
+        },
+        { targetStudentId: student.id }
+      ]
     };
 
     if (subject) {
