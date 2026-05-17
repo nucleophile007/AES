@@ -73,13 +73,13 @@ function Navbar({ className }: { className?: string }) {
             <ProductItem
               title="Research"
               href="/research"
-              src="/program-image/acharyaes-research-1.png"
+              src="/program-image/acharyaes-research-hero.jpg"
               description="Explore student research projects and mentorship tracks."
             />
             <ProductItem
               title="Blogs"
               href="/blog/aes-blogs"
-              src="/program-image/acharyaes-academic.png"
+              src="/program-image/acharyaes-academic-hero.jpg"
               description="Read AES blogs, updates, and student stories."
             />
           </div>
