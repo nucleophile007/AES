@@ -78,6 +78,7 @@ model Student {
   parentAccountId     Int?
   graduationYear      Int?
   assignedAssignments Assignment[]         @relation("AssignedAssignments")
+  AssignmentTarget    AssignmentTarget[]
   Blog                Blog[]
   classSchedules      ClassSchedule[]
   enrollments         Enrollment[]
@@ -147,6 +148,7 @@ model Assignment {
   dueDateTimezone     String?
   targetStudent       Student?             @relation("AssignedAssignments", fields: [targetStudentId], references: [id])
   teacher             Teacher              @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  assignmentTargets   AssignmentTarget[]
   resources           AssignmentResource[]
   submissions         Submission[]
 }
@@ -722,6 +724,18 @@ model Blog {
 
   @@index([publicationYear, publicationMonth])
   @@index([published])
+  @@index([studentId])
+}
+
+model AssignmentTarget {
+  id           Int        @id @default(autoincrement())
+  assignmentId Int
+  studentId    Int
+  createdAt    DateTime   @default(now())
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, studentId])
   @@index([studentId])
 }
 
