@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
 import { useRequireAuth } from "../../contexts/AuthContext";
@@ -618,11 +618,45 @@ const normalizeStudentMcqConfig = (value: unknown): StudentMcqConfig | null => {
   };
 };
 
+type StudentDashboardTab =
+  | "overview"
+  | "assignments"
+  | "submissions"
+  | "grades"
+  | "schedule"
+  | "progress"
+  | "resources"
+  | "messages";
+
+const createStudentTabLoadingState = (): Record<StudentDashboardTab, boolean> => ({
+  overview: false,
+  assignments: false,
+  submissions: false,
+  grades: false,
+  schedule: false,
+  progress: false,
+  resources: false,
+  messages: false,
+});
+
+const createStudentTabReadyState = (): Record<StudentDashboardTab, boolean> => ({
+  overview: false,
+  assignments: false,
+  submissions: false,
+  grades: false,
+  schedule: false,
+  progress: false,
+  resources: false,
+  messages: false,
+});
+
 export default function StudentDashboard() {
   // Authentication - require student role
   const { user: authUser, isLoading: authLoading } = useRequireAuth('student');
 
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState<StudentDashboardTab>("overview");
+  const [tabLoadingState, setTabLoadingState] = useState<Record<StudentDashboardTab, boolean>>(createStudentTabLoadingState);
+  const [tabReadyState, setTabReadyState] = useState<Record<StudentDashboardTab, boolean>>(createStudentTabReadyState);
   const [student, setStudent] = useState<Student | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -801,9 +835,18 @@ export default function StudentDashboard() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get("tab");
-    const allowedTabs = new Set(["overview", "assignments", "submissions", "grades", "schedule", "progress", "resources", "messages"]);
-    if (tab && allowedTabs.has(tab)) {
-      setActiveTab(tab);
+    const allowedTabs = new Set<StudentDashboardTab>([
+      "overview",
+      "assignments",
+      "submissions",
+      "grades",
+      "schedule",
+      "progress",
+      "resources",
+      "messages",
+    ]);
+    if (tab && allowedTabs.has(tab as StudentDashboardTab)) {
+      setActiveTab(tab as StudentDashboardTab);
     }
     setIsUrlStateReady(true);
   }, []);
@@ -818,6 +861,59 @@ export default function StudentDashboard() {
     if (nextUrl === currentUrl) return;
     router.replace(nextUrl, { scroll: false });
   }, [activeTab, isUrlStateReady, pathname, router]);
+
+  const warmTabData = useCallback(async (tab: StudentDashboardTab) => {
+    if (!studentEmail || tabReadyState[tab]) return;
+
+    setTabLoadingState((prev) => ({ ...prev, [tab]: true }));
+    try {
+      if (tab === "schedule") {
+        const scheduleResponse = await fetch(`/api/student/schedule?studentEmail=${encodeURIComponent(studentEmail)}`);
+        const scheduleData = await scheduleResponse.json();
+        if (scheduleResponse.ok && scheduleData.success && Array.isArray(scheduleData.schedules)) {
+          setScheduleEvents(scheduleData.schedules);
+        }
+      } else if (tab === "resources") {
+        await Promise.all([
+          fetch(`/api/student/resources?studentEmail=${encodeURIComponent(studentEmail)}`),
+          fetch(`/api/student/teachers?studentEmail=${encodeURIComponent(studentEmail)}`),
+          fetch(`/api/student/submissions/resources?studentEmail=${encodeURIComponent(studentEmail)}`),
+        ]);
+      } else if (tab === "messages") {
+        await fetch(`/api/student/mentors?studentEmail=${encodeURIComponent(studentEmail)}`);
+      }
+      setTabReadyState((prev) => ({ ...prev, [tab]: true }));
+    } catch (prefetchError) {
+      console.error("Error warming student tab data:", prefetchError);
+      // Keep this tab in not-ready state so the next visit retries prefetch.
+    } finally {
+      setTabLoadingState((prev) => ({ ...prev, [tab]: false }));
+    }
+  }, [studentEmail, tabReadyState]);
+
+  useEffect(() => {
+    if (!studentEmail) return;
+    setTabLoadingState(createStudentTabLoadingState());
+    setTabReadyState(createStudentTabReadyState());
+  }, [studentEmail]);
+
+  useEffect(() => {
+    if (loading || !studentEmail || Boolean(error)) return;
+    setTabReadyState((prev) => ({
+      ...prev,
+      overview: true,
+      assignments: true,
+      submissions: true,
+      grades: true,
+      schedule: true,
+      progress: true,
+    }));
+  }, [loading, studentEmail, error]);
+
+  useEffect(() => {
+    if (!isUrlStateReady || loading || !studentEmail || Boolean(error)) return;
+    void warmTabData(activeTab);
+  }, [activeTab, isUrlStateReady, loading, studentEmail, error, warmTabData]);
 
   const hasUnsavedAssignmentDraft = Boolean(submissionText.trim() || submissionFile);
 
@@ -1674,6 +1770,20 @@ export default function StudentDashboard() {
     { label: "Graded", value: gradedSubmissions.length, icon: Trophy },
     { label: "Unread Messages", value: messageUnreadCount, icon: MessageCircle },
   ];
+  const isActiveTabLoading = tabLoadingState[activeTab];
+  const renderActiveTabWireframe = () => (
+    <Card className="border border-slate-200 bg-white shadow-sm">
+      <CardHeader className="space-y-2">
+        <ShimmerSkeleton className="h-6 w-52 rounded-md" />
+        <ShimmerSkeleton className="h-4 w-80 rounded-md" />
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <ShimmerSkeleton key={`student-tab-wireframe-${index}`} className="h-14 w-full rounded-lg" />
+        ))}
+      </CardContent>
+    </Card>
+  );
   const detailAssignment = expandedAssignmentId
     ? assignments.find((assignment) => assignment.id === expandedAssignmentId) || null
     : null;
@@ -1953,6 +2063,10 @@ export default function StudentDashboard() {
                   </CardContent>
                 </Card>
 
+                {isActiveTabLoading ? (
+                  renderActiveTabWireframe()
+                ) : (
+                  <>
                 {activeTab === "overview" && (
                   <div className="space-y-6">
                     <motion.div
@@ -2983,6 +3097,8 @@ export default function StudentDashboard() {
                       </Card>
                     )}
                   </div>
+                )}
+                  </>
                 )}
               </motion.div>
             )}
