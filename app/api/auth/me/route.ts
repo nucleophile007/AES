@@ -38,7 +38,13 @@ export async function GET(request: NextRequest) {
 
     if (!resolvedUser) {
       return NextResponse.json(
-        { success: false, error: 'Not authenticated' },
+        {
+          success: false,
+          error: 'Not authenticated',
+          ...(process.env.NODE_ENV === 'development'
+            ? { debug: { reason: 'missing_access_and_refresh' } }
+            : {})
+        },
         { status: 401 }
       );
     }

@@ -14,6 +14,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const DEFAULT_REFRESH_INTERVAL_SECONDS = 240;
 const MIN_REFRESH_INTERVAL_SECONDS = 30;
 
+function isSameUser(a: AuthUser | null, b: AuthUser | null): boolean {
+  if (!a && !b) return true;
+  if (!a || !b) return false;
+  return a.id === b.id && a.email === b.email && a.role === b.role && a.name === b.name;
+}
+
 function resolveRequestUrl(input: RequestInfo | URL): URL | null {
   if (typeof window === 'undefined') {
     return null;
@@ -81,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const data = await refreshResponse.json().catch(() => null);
         if (data?.success && data?.user) {
-          setUser(data.user);
+          setUser((current) => (isSameUser(current, data.user) ? current : data.user));
         }
 
         return true;
@@ -149,7 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
-          setUser(data.user);
+          setUser((current) => (isSameUser(current, data.user) ? current : data.user));
         }
       } else {
         setUser(null);
@@ -216,7 +222,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
 
       if (data.success) {
-        setUser(data.user);
+        setUser((current) => (isSameUser(current, data.user) ? current : data.user));
         return { success: true, redirectTo: data.redirectTo };
       } else {
         return { success: false, error: data.error };

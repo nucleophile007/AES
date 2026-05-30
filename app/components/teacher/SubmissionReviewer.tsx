@@ -15,12 +15,10 @@ import {
   User, 
   Calendar, 
   Clock, 
-  Download, 
-  Eye, 
   Star,
-  CheckCircle,
-  AlertCircle,
-  ExternalLink
+  ExternalLink,
+  BarChart3,
+  Send
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getUserTimezone, formatDate as formatDateTz, formatDateTime } from "@/lib/timezone";
@@ -56,6 +54,117 @@ interface SubmissionReviewerProps {
   teacherEmail: string;
 }
 
+interface ParsedMcqSubmission {
+  testTitle: string;
+  attemptCount: number;
+  latestAttemptNumber: number;
+  answeredCount: number;
+  totalQuestions: number;
+  maxScore: number;
+  hasReport: boolean;
+  report?: {
+    generatedAt?: string;
+    attemptPolicy?: {
+      consideredAttemptNumber?: number;
+      consideredAttemptSubmittedAt?: string;
+      validAttemptsBeforeDue?: number;
+      attemptsFound?: number;
+    };
+    scoreSummary?: {
+      finalScore?: number;
+      rawScore?: number;
+      percentage?: number;
+      maxScore?: number;
+      correctCount?: number;
+      partialCount?: number;
+      wrongCount?: number;
+      answeredCount?: number;
+      unansweredCount?: number;
+    };
+    sectionStats?: Array<{
+      sectionId?: string;
+      sectionName?: string;
+      questionCount?: number;
+      answeredCount?: number;
+      correctCount?: number;
+      partialCount?: number;
+      wrongCount?: number;
+      unansweredCount?: number;
+      score?: number;
+      maxScore?: number;
+      percentage?: number;
+    }>;
+    difficultyStats?: Array<{
+      difficulty?: string;
+      questionCount?: number;
+      answeredCount?: number;
+      correctCount?: number;
+      partialCount?: number;
+      wrongCount?: number;
+      unansweredCount?: number;
+      score?: number;
+      maxScore?: number;
+      percentage?: number;
+    }>;
+    questionStats?: Array<{
+      questionId?: string;
+      questionNumber?: string;
+      sectionId?: string;
+      sectionName?: string;
+      difficulty?: string;
+      type?: string;
+      marks?: number;
+      negativeMarks?: number;
+      partialMarkingEnabled?: boolean;
+      correctAnswers?: string[];
+      selectedAnswers?: string[];
+      scoreAwarded?: number;
+      status?: string;
+    }>;
+  };
+}
+
+const parseMcqSubmission = (content: string | null): ParsedMcqSubmission | null => {
+  if (!content) return null;
+  try {
+    const parsed = JSON.parse(content) as {
+      submissionType?: string;
+      testTitle?: string;
+      summary?: {
+        answeredCount?: number;
+        totalQuestions?: number;
+        maxScore?: number;
+      };
+      attempts?: Array<{
+        attemptNumber?: number;
+        summary?: {
+          answeredCount?: number;
+          totalQuestions?: number;
+          maxScore?: number;
+        };
+      }>;
+      latestAttemptNumber?: number;
+      report?: ParsedMcqSubmission["report"];
+    };
+    if (parsed.submissionType !== "mcq_test_attempt") return null;
+    const attempts = Array.isArray(parsed.attempts) ? parsed.attempts : [];
+    const latestAttempt = attempts.length > 0 ? attempts[attempts.length - 1] : null;
+    const latestSummary = latestAttempt?.summary || parsed.summary || {};
+    return {
+      testTitle: parsed.testTitle || "MCQ Test",
+      attemptCount: attempts.length > 0 ? attempts.length : 1,
+      latestAttemptNumber: Number(parsed.latestAttemptNumber) || Number(latestAttempt?.attemptNumber) || 1,
+      answeredCount: Number(latestSummary.answeredCount) || 0,
+      totalQuestions: Number(latestSummary.totalQuestions) || 0,
+      maxScore: Number(latestSummary.maxScore) || 0,
+      hasReport: Boolean(parsed.report),
+      report: parsed.report,
+    };
+  } catch {
+    return null;
+  }
+};
+
 export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerProps) {
   const { toast } = useToast();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -64,8 +173,12 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [isGradeDialogOpen, setIsGradeDialogOpen] = useState(false);
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [selectedReportSubmission, setSelectedReportSubmission] = useState<Submission | null>(null);
+  const [selectedReportData, setSelectedReportData] = useState<ParsedMcqSubmission | null>(null);
   const [gradeData, setGradeData] = useState({ grade: '', feedback: '' });
   const [isSavingGrade, setIsSavingGrade] = useState(false);
+  const [reportActionSubmissionId, setReportActionSubmissionId] = useState<number | null>(null);
   const gradeSubmitInFlightRef = useRef(false);
   const [filters, setFilters] = useState({
     status: 'all',
@@ -200,6 +313,68 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
       setIsSavingGrade(false);
       gradeSubmitInFlightRef.current = false;
     }
+  };
+
+  const handleGenerateReport = async (submission: Submission, sendToStudent: boolean) => {
+    if (reportActionSubmissionId !== null) return;
+    try {
+      setReportActionSubmissionId(submission.id);
+      const response = await fetch('/api/teacher/submissions/mcq-report', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          submissionId: submission.id,
+          teacherEmail,
+          sendToStudent,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to generate MCQ report');
+      }
+
+      setSubmissions((prev) => prev.map((item) => (
+        item.id === submission.id ? data.submission : item
+      )));
+      if (selectedReportSubmission?.id === submission.id) {
+        const refreshedReport = parseMcqSubmission(data.submission?.content || null);
+        setSelectedReportSubmission(data.submission);
+        setSelectedReportData(refreshedReport);
+      }
+
+      toast({
+        title: sendToStudent ? "Report sent to student" : "Report generated",
+        description: sendToStudent
+          ? "MCQ report has been added to student feedback."
+          : "Auto-check completed with section and difficulty analytics.",
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Report action failed",
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    } finally {
+      setReportActionSubmissionId(null);
+    }
+  };
+
+  const openReportDialog = (submission: Submission) => {
+    const parsed = parseMcqSubmission(submission.content);
+    if (!parsed?.hasReport || !parsed.report) {
+      toast({
+        title: "No report yet",
+        description: "Run Check Marks first to generate a report.",
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+      return;
+    }
+    setSelectedReportSubmission(submission);
+    setSelectedReportData(parsed);
+    setIsReportDialogOpen(true);
   };
 
   const formatDate = (dateString: string) => {
@@ -340,7 +515,11 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
             </CardContent>
           </Card>
         ) : (
-          filteredSubmissions.map((submission) => (
+          filteredSubmissions.map((submission) => {
+            const parsedMcqSubmission = parseMcqSubmission(submission.content);
+            const isMcqSubmission = Boolean(parsedMcqSubmission);
+            const reportBusy = reportActionSubmissionId === submission.id;
+            return (
             <Card key={submission.id} className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <div className="flex justify-between items-start">
@@ -399,14 +578,46 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
 
                 {/* Submission Content */}
                 <div className="space-y-3">
-                  {submission.content && (
+                  {isMcqSubmission ? (
+                    <div className="rounded border bg-slate-50 p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-medium text-slate-800">{parsedMcqSubmission?.testTitle}</p>
+                        <Badge variant="outline">MCQ Attempt</Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-600">
+                        Attempt #{parsedMcqSubmission?.latestAttemptNumber} of {parsedMcqSubmission?.attemptCount} •{" "}
+                        {parsedMcqSubmission?.answeredCount}/{parsedMcqSubmission?.totalQuestions} answered
+                      </p>
+                      <p className="text-xs text-slate-600">
+                        Max score: {parsedMcqSubmission?.maxScore}
+                      </p>
+                      {parsedMcqSubmission?.hasReport && (
+                        <div className="mt-2 space-y-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-700">
+                          <p>
+                            Checked: {parsedMcqSubmission?.report?.scoreSummary?.finalScore ?? 0}/{parsedMcqSubmission?.maxScore}
+                            {" "}({parsedMcqSubmission?.report?.scoreSummary?.percentage ?? 0}%)
+                          </p>
+                          <p>
+                            Correct {parsedMcqSubmission?.report?.scoreSummary?.correctCount ?? 0} •
+                            Partial {parsedMcqSubmission?.report?.scoreSummary?.partialCount ?? 0} •
+                            Wrong {parsedMcqSubmission?.report?.scoreSummary?.wrongCount ?? 0}
+                          </p>
+                          {(parsedMcqSubmission?.report?.sectionStats || []).slice(0, 3).map((section, index) => (
+                            <p key={`section-stat-${submission.id}-${index}`}>
+                              {section.sectionName || "Section"}: {section.score ?? 0}/{section.maxScore ?? 0} ({section.percentage ?? 0}%)
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : submission.content ? (
                     <div>
                       <p className="text-sm font-medium text-gray-600 mb-1">Text Submission:</p>
                       <div className="bg-gray-50 p-3 rounded border">
                         <p className="text-sm whitespace-pre-wrap">{submission.content}</p>
                       </div>
                     </div>
-                  )}
+                  ) : null}
 
                   {submission.fileUrl && (
                     <div>
@@ -438,16 +649,229 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                 </div>
 
                 {/* Actions */}
-                <div className="flex justify-end mt-4">
-                  <Button onClick={() => handleGrade(submission)} disabled={isSavingGrade}>
+                <div className="mt-4 flex flex-wrap justify-end gap-2">
+                  {isMcqSubmission && (
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleGenerateReport(submission, false)}
+                        disabled={reportActionSubmissionId !== null || isSavingGrade}
+                      >
+                        <BarChart3 className="mr-2 h-4 w-4" />
+                        {reportBusy ? "Checking..." : "Check Marks"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleGenerateReport(submission, true)}
+                        disabled={reportActionSubmissionId !== null || isSavingGrade}
+                      >
+                        <Send className="mr-2 h-4 w-4" />
+                        {reportBusy ? "Sending..." : "Send Report"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => openReportDialog(submission)}
+                        disabled={reportActionSubmissionId !== null}
+                      >
+                        <BarChart3 className="mr-2 h-4 w-4" />
+                        View Report
+                      </Button>
+                    </>
+                  )}
+                  <Button onClick={() => handleGrade(submission)} disabled={isSavingGrade || reportBusy}>
                     {submission.grade !== null ? 'Update Grade' : 'Grade Submission'}
                   </Button>
                 </div>
               </CardContent>
             </Card>
-          ))
+          );
+          })
         )}
       </div>
+
+      <Dialog
+        open={isReportDialogOpen}
+        onOpenChange={(nextOpen) => {
+          setIsReportDialogOpen(nextOpen);
+          if (!nextOpen) {
+            setSelectedReportSubmission(null);
+            setSelectedReportData(null);
+          }
+        }}
+      >
+        <DialogContent className="max-h-[90vh] max-w-6xl overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>
+              MCQ Report: {selectedReportSubmission?.assignment.title || "Submission"}
+            </DialogTitle>
+            <p className="text-sm text-gray-600">
+              Student: {selectedReportSubmission?.student.name || "N/A"} • Test: {selectedReportData?.testTitle || "MCQ Test"}
+            </p>
+          </DialogHeader>
+
+          {!selectedReportData?.report ? (
+            <div className="py-8 text-center text-sm text-slate-600">
+              No report data available.
+            </div>
+          ) : (
+            <div className="space-y-4 overflow-y-auto pr-1">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+                <div className="rounded border bg-slate-50 p-3">
+                  <p className="text-xs text-slate-500">Score</p>
+                  <p className="text-lg font-semibold text-slate-900">
+                    {selectedReportData.report.scoreSummary?.finalScore ?? 0}/{selectedReportData.report.scoreSummary?.maxScore ?? selectedReportData.maxScore}
+                  </p>
+                </div>
+                <div className="rounded border bg-slate-50 p-3">
+                  <p className="text-xs text-slate-500">Percentage</p>
+                  <p className="text-lg font-semibold text-slate-900">
+                    {selectedReportData.report.scoreSummary?.percentage ?? 0}%
+                  </p>
+                </div>
+                <div className="rounded border bg-slate-50 p-3">
+                  <p className="text-xs text-slate-500">Attempts</p>
+                  <p className="text-lg font-semibold text-slate-900">
+                    {selectedReportData.attemptCount} (latest #{selectedReportData.latestAttemptNumber})
+                  </p>
+                </div>
+                <div className="rounded border bg-slate-50 p-3">
+                  <p className="text-xs text-slate-500">Considered Attempt</p>
+                  <p className="text-lg font-semibold text-slate-900">
+                    #{selectedReportData.report.attemptPolicy?.consideredAttemptNumber ?? selectedReportData.latestAttemptNumber}
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded border">
+                <div className="border-b bg-slate-50 px-3 py-2">
+                  <p className="text-sm font-semibold text-slate-900">Section Statistics</p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[720px] text-sm">
+                    <thead className="bg-white text-left text-xs uppercase text-slate-500">
+                      <tr>
+                        <th className="px-3 py-2">Section</th>
+                        <th className="px-3 py-2">Questions</th>
+                        <th className="px-3 py-2">Answered</th>
+                        <th className="px-3 py-2">Correct</th>
+                        <th className="px-3 py-2">Partial</th>
+                        <th className="px-3 py-2">Wrong</th>
+                        <th className="px-3 py-2">Score</th>
+                        <th className="px-3 py-2">%</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(selectedReportData.report.sectionStats || []).map((section, index) => (
+                        <tr key={`report-section-${index}`} className="border-t">
+                          <td className="px-3 py-2">{section.sectionName || "Section"}</td>
+                          <td className="px-3 py-2">{section.questionCount ?? 0}</td>
+                          <td className="px-3 py-2">{section.answeredCount ?? 0}</td>
+                          <td className="px-3 py-2">{section.correctCount ?? 0}</td>
+                          <td className="px-3 py-2">{section.partialCount ?? 0}</td>
+                          <td className="px-3 py-2">{section.wrongCount ?? 0}</td>
+                          <td className="px-3 py-2">{section.score ?? 0}/{section.maxScore ?? 0}</td>
+                          <td className="px-3 py-2">{section.percentage ?? 0}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="rounded border">
+                <div className="border-b bg-slate-50 px-3 py-2">
+                  <p className="text-sm font-semibold text-slate-900">Difficulty Statistics</p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[700px] text-sm">
+                    <thead className="bg-white text-left text-xs uppercase text-slate-500">
+                      <tr>
+                        <th className="px-3 py-2">Difficulty</th>
+                        <th className="px-3 py-2">Questions</th>
+                        <th className="px-3 py-2">Answered</th>
+                        <th className="px-3 py-2">Correct</th>
+                        <th className="px-3 py-2">Partial</th>
+                        <th className="px-3 py-2">Wrong</th>
+                        <th className="px-3 py-2">Score</th>
+                        <th className="px-3 py-2">%</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(selectedReportData.report.difficultyStats || []).map((difficulty, index) => (
+                        <tr key={`report-difficulty-${index}`} className="border-t">
+                          <td className="px-3 py-2 capitalize">{difficulty.difficulty || "medium"}</td>
+                          <td className="px-3 py-2">{difficulty.questionCount ?? 0}</td>
+                          <td className="px-3 py-2">{difficulty.answeredCount ?? 0}</td>
+                          <td className="px-3 py-2">{difficulty.correctCount ?? 0}</td>
+                          <td className="px-3 py-2">{difficulty.partialCount ?? 0}</td>
+                          <td className="px-3 py-2">{difficulty.wrongCount ?? 0}</td>
+                          <td className="px-3 py-2">{difficulty.score ?? 0}/{difficulty.maxScore ?? 0}</td>
+                          <td className="px-3 py-2">{difficulty.percentage ?? 0}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="rounded border">
+                <div className="border-b bg-slate-50 px-3 py-2">
+                  <p className="text-sm font-semibold text-slate-900">Per-Question Evaluation</p>
+                </div>
+                <div className="max-h-[320px] overflow-auto">
+                  <table className="w-full min-w-[980px] text-sm">
+                    <thead className="sticky top-0 bg-white text-left text-xs uppercase text-slate-500">
+                      <tr>
+                        <th className="px-3 py-2">Q No.</th>
+                        <th className="px-3 py-2">Section</th>
+                        <th className="px-3 py-2">Difficulty</th>
+                        <th className="px-3 py-2">Type</th>
+                        <th className="px-3 py-2">Correct Answers</th>
+                        <th className="px-3 py-2">Student Answers</th>
+                        <th className="px-3 py-2">Score</th>
+                        <th className="px-3 py-2">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(selectedReportData.report.questionStats || []).map((question, index) => (
+                        <tr key={`report-question-${index}`} className="border-t align-top">
+                          <td className="px-3 py-2 font-medium">{question.questionNumber || index + 1}</td>
+                          <td className="px-3 py-2">{question.sectionName || "Section"}</td>
+                          <td className="px-3 py-2 capitalize">{question.difficulty || "medium"}</td>
+                          <td className="px-3 py-2 capitalize">{question.type || "single"}</td>
+                          <td className="px-3 py-2">{(question.correctAnswers || []).join(", ") || "-"}</td>
+                          <td className="px-3 py-2">{(question.selectedAnswers || []).join(", ") || "-"}</td>
+                          <td className="px-3 py-2">{question.scoreAwarded ?? 0}</td>
+                          <td className="px-3 py-2 capitalize">{question.status || "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsReportDialogOpen(false)}
+              disabled={reportActionSubmissionId !== null}
+            >
+              Close
+            </Button>
+            {selectedReportSubmission && (
+              <Button
+                onClick={() => handleGenerateReport(selectedReportSubmission, true)}
+                disabled={reportActionSubmissionId !== null}
+              >
+                <Send className="mr-2 h-4 w-4" />
+                {reportActionSubmissionId === selectedReportSubmission.id ? "Sending..." : "Send Report to Student"}
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Grade Dialog */}
       <Dialog open={isGradeDialogOpen} onOpenChange={setIsGradeDialogOpen}>

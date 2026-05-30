@@ -9,7 +9,7 @@ declare global {
 // Error handling and initialization check
 function createPrismaClient() {
   try {
-    const client = new PrismaClient({
+    return new PrismaClient({
       log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
       // Add connection pool settings for better performance
       datasources: {
@@ -18,13 +18,6 @@ function createPrismaClient() {
         },
       },
     });
-    
-    // Test the connection
-    client.$connect()
-      .then(() => console.log('Prisma Client connected successfully'))
-      .catch(e => console.error('Failed to connect Prisma Client:', e));
-      
-    return client;
   } catch (error) {
     console.error('Error initializing Prisma Client:', error);
     throw new Error('Failed to initialize Prisma Client. Make sure you ran "prisma generate"');

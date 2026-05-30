@@ -150,10 +150,14 @@ interface Assignment {
     };
   }>;
   resources: Array<{
-    id: number;
-    name: string;
-    url: string;
-    resource?: any;
+    resource: {
+      id: number;
+      title: string;
+      type: string;
+      fileUrl?: string | null;
+      linkUrl?: string | null;
+      fileName?: string | null;
+    };
   }>;
   _count?: {
     submissions: number;
@@ -346,15 +350,21 @@ export default function TeacherDashboard() {
         setError(data.error || 'Failed to fetch teacher data');
       }
     } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") {
+      const isAbortError =
+        (err instanceof DOMException && err.name === "AbortError") ||
+        (err instanceof Error && err.name === "AbortError") ||
+        err === "request-timeout" ||
+        (typeof err === "string" && err.includes("request-timeout"));
+
+      if (isAbortError) {
         if (didTimeout) {
           setError("Dashboard load timed out. Please retry.");
         }
         return;
-      } else {
-        setError('Failed to fetch teacher data');
-        console.error('Error fetching teacher data:', err);
       }
+
+      setError('Failed to fetch teacher data');
+      console.error('Error fetching teacher data:', err);
     } finally {
       clearTimeout(timeoutId);
       setLoading(false);
@@ -1876,16 +1886,13 @@ export default function TeacherDashboard() {
                             setNewResource((prev) => ({
                               ...prev,
                               category: nextCategory,
-                              assignmentId: nextCategory === "assignment" ? prev.assignmentId : null,
-                              studentIds: nextCategory === "assignment" ? [] : prev.studentIds
+                              assignmentId: null,
+                              studentIds: nextCategory === "personal" ? [] : prev.studentIds
                             }));
-                            if (nextCategory === "assignment") {
-                              setResourceGroupIds([]);
-                            }
+                            // keep groups as-is for personal/general
                           }}
                           className="w-full px-3 py-2 border rounded-md bg-white"
                         >
-                          <option value="assignment">Assignment</option>
                           <option value="personal">Personal</option>
                           <option value="general">General</option>
                         </select>
@@ -1944,33 +1951,7 @@ export default function TeacherDashboard() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {newResource.category === "assignment" && (
-                        <div className="space-y-2">
-                          <Label>Link to Assignment *</Label>
-                          <select
-                            value={newResource.assignmentId ?? ""}
-                            onChange={(e) =>
-                              setNewResource({
-                                ...newResource,
-                                assignmentId: e.target.value ? Number(e.target.value) : null
-                              })
-                            }
-                            className="w-full px-3 py-2 border rounded-md bg-white"
-                          >
-                            <option value="">Select assignment</option>
-                            {assignments.map((a) => (
-                              <option key={a.id} value={a.id}>
-                                {a.title}
-                              </option>
-                            ))}
-                          </select>
-                          {selectedResourceAssignment && (
-                            <p className="text-xs text-blue-700">
-                              Auto-targeting {assignmentAutoStudentIds.length} assigned student{assignmentAutoStudentIds.length === 1 ? "" : "s"} from this assignment.
-                            </p>
-                          )}
-                        </div>
-                      )}
+                      {/* Assignment linking removed from Resources tab; only Personal and General categories supported here. */}
 
                       <div className="space-y-2">
                         <Label>Attach File (optional)</Label>
@@ -2235,16 +2216,12 @@ export default function TeacherDashboard() {
                               setEditResource((prev) => ({
                                 ...prev,
                                 category: nextCategory,
-                                assignmentId: nextCategory === "assignment" ? prev.assignmentId : null,
-                                studentIds: nextCategory === "assignment" ? [] : prev.studentIds
+                                assignmentId: null,
+                                studentIds: nextCategory === "personal" ? [] : prev.studentIds
                               }));
-                              if (nextCategory === "assignment") {
-                                setEditResourceGroupIds([]);
-                              }
                             }}
                             className="w-full px-3 py-2 border rounded-md bg-white"
                           >
-                            <option value="assignment">Assignment</option>
                             <option value="personal">Personal</option>
                             <option value="general">General</option>
                           </select>
@@ -2302,28 +2279,7 @@ export default function TeacherDashboard() {
                         </div>
                       </div>
 
-                      {editResource.category === "assignment" && (
-                        <div className="space-y-2">
-                          <Label>Link to Assignment *</Label>
-                          <select
-                            value={editResource.assignmentId ?? ""}
-                            onChange={(e) => setEditResource({ ...editResource, assignmentId: e.target.value ? Number(e.target.value) : null })}
-                            className="w-full px-3 py-2 border rounded-md bg-white"
-                          >
-                            <option value="">Select assignment</option>
-                            {assignments.map((assignment) => (
-                              <option key={assignment.id} value={assignment.id}>
-                                {assignment.title}
-                              </option>
-                            ))}
-                          </select>
-                          {selectedEditResourceAssignment && (
-                            <p className="text-xs text-blue-700">
-                              Auto-targeting {editAssignmentAutoStudentIds.length} assigned student{editAssignmentAutoStudentIds.length === 1 ? "" : "s"} from this assignment.
-                            </p>
-                          )}
-                        </div>
-                      )}
+                      {/* Assignment linking removed from Resources tab; only Personal and General categories supported here. */}
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">

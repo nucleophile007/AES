@@ -2,6 +2,68 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUserFromRequest, hasRole } from '../../../../lib/auth';
 
+const TEST_CONFIG_START = '[MCQ_TEST_CONFIG_V1]';
+const TEST_CONFIG_END = '[/MCQ_TEST_CONFIG_V1]';
+const LEGACY_TEMPLATE_START = '[MCQ_TEMPLATE_CONFIG_V1]';
+const LEGACY_TEMPLATE_END = '[/MCQ_TEMPLATE_CONFIG_V1]';
+
+const decodeMcqTemplateDescription = (description: string | null) => {
+  const value = description || '';
+  const candidates: Array<[string, string]> = [
+    [TEST_CONFIG_START, TEST_CONFIG_END],
+    [LEGACY_TEMPLATE_START, LEGACY_TEMPLATE_END],
+  ];
+
+  for (const [startMarker, endMarker] of candidates) {
+    const start = value.indexOf(startMarker);
+    const end = value.indexOf(endMarker);
+    if (start === -1 || end === -1 || end <= start) continue;
+    const summary = value.slice(0, start).trim();
+    const encoded = value.slice(start + startMarker.length, end).trim();
+    try {
+      const json = Buffer.from(encoded, 'base64').toString('utf8');
+      return {
+        summary,
+        config: JSON.parse(json),
+      };
+    } catch {
+      return { summary, config: null as unknown };
+    }
+  }
+
+  return {
+    summary: value.trim(),
+    config: null as unknown,
+  };
+};
+
+const sanitizeMcqConfigForStudent = (config: unknown) => {
+  if (!config || typeof config !== 'object') return null;
+  const raw = config as Record<string, unknown>;
+  const rawQuestions = Array.isArray(raw.questions) ? raw.questions : [];
+  const sanitizedQuestions = rawQuestions.map((question) => {
+    const current = (question || {}) as Record<string, unknown>;
+    const { correctAnswers: _correctAnswers, ...safeQuestion } = current;
+    return safeQuestion;
+  });
+
+  return {
+    ...raw,
+    questions: sanitizedQuestions,
+  };
+};
+
+const toStudentSafeResource = (resource: any) => {
+  if (resource.type !== 'mcq_template') return resource;
+  const parsed = decodeMcqTemplateDescription(resource.description || null);
+  return {
+    ...resource,
+    description: parsed.summary,
+    mcqSummary: parsed.summary,
+    mcqConfig: sanitizeMcqConfigForStudent(parsed.config),
+  };
+};
+
 // GET: Get resources available to a student
 export async function GET(request: NextRequest) {
   try {
@@ -17,6 +79,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const studentEmail = searchParams.get('studentEmail');
     const assignmentId = searchParams.get('assignmentId');
+    const includeAssignmentResources = searchParams.get('includeAssignmentResources') === 'true';
 
     if (studentEmail && studentEmail.toLowerCase() !== user.email.toLowerCase()) {
       return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
@@ -73,7 +136,7 @@ export async function GET(request: NextRequest) {
       // Combine general assignment resources and potentially related student-specific resources
       const allResources = [
         ...assignment.resources.map(ar => ({
-          ...ar.resource,
+          ...toStudentSafeResource(ar.resource),
           isStudentSpecific: false,
           isRequired: ar.isRequired,
           assignmentTitle: assignment.title
@@ -81,7 +144,7 @@ export async function GET(request: NextRequest) {
         ...studentResources.map(sr => {
           const isPersonal = !sr.resource.isPublic;
           return {
-            ...sr.resource,
+            ...toStudentSafeResource(sr.resource),
             isStudentSpecific: isPersonal,
             isRequired: false,
             assignmentTitle: assignment.title,
@@ -118,20 +181,22 @@ export async function GET(request: NextRequest) {
         });
       }
 
-      // Get assignments for this student
-      const studentAssignments = await prisma.assignment.findMany({
-        where: {
-          teacherId: { in: teacherIds },
-          isActive: true
-        },
-        include: {
-          resources: {
-            include: {
-              resource: true
+      // Get assignments for this student only when explicitly requested.
+      const studentAssignments = includeAssignmentResources
+        ? await prisma.assignment.findMany({
+          where: {
+            teacherId: { in: teacherIds },
+            isActive: true
+          },
+          include: {
+            resources: {
+              include: {
+                resource: true
+              }
             }
           }
-        }
-      });
+        })
+        : [];
 
       // Get student-specific resources
       const studentSpecificResources = await prisma.studentResource.findMany({
@@ -144,25 +209,27 @@ export async function GET(request: NextRequest) {
       // Collect all resources
       const allResources: any[] = [];
       
-      // General assignment resources
-      studentAssignments.forEach(assignment => {
-        assignment.resources.forEach(ar => {
-          allResources.push({
-            ...ar.resource,
-            isStudentSpecific: false,
-            isRequired: ar.isRequired,
-            assignmentId: assignment.id,
-            assignmentTitle: assignment.title,
-            assignmentSubject: assignment.subject
+      // General assignment resources (optional by query param)
+      if (includeAssignmentResources) {
+        studentAssignments.forEach(assignment => {
+          assignment.resources.forEach(ar => {
+            allResources.push({
+              ...toStudentSafeResource(ar.resource),
+              isStudentSpecific: false,
+              isRequired: ar.isRequired,
+              assignmentId: assignment.id,
+              assignmentTitle: assignment.title,
+              assignmentSubject: assignment.subject
+            });
           });
         });
-      });
+      }
 
       // Student-specific resources
       studentSpecificResources.forEach(sr => {
         const isPersonal = !sr.resource.isPublic;
         allResources.push({
-          ...sr.resource,
+          ...toStudentSafeResource(sr.resource),
           isStudentSpecific: isPersonal,
           isRequired: false,
           assignedAt: sr.assignedAt,

@@ -20,7 +20,13 @@ export async function POST(request: NextRequest) {
     if (!refreshToken) {
       await timingSafeDelay();
       return NextResponse.json(
-        { success: false, error: 'Not authenticated' },
+        {
+          success: false,
+          error: 'Not authenticated',
+          ...(process.env.NODE_ENV === 'development'
+            ? { debug: { reason: 'missing_refresh_cookie' } }
+            : {})
+        },
         { status: 401 }
       );
     }
@@ -29,7 +35,13 @@ export async function POST(request: NextRequest) {
     if (!rotatedSession) {
       await timingSafeDelay();
       return NextResponse.json(
-        { success: false, error: 'Not authenticated' },
+        {
+          success: false,
+          error: 'Not authenticated',
+          ...(process.env.NODE_ENV === 'development'
+            ? { debug: { reason: 'invalid_or_expired_refresh' } }
+            : {})
+        },
         { status: 401 }
       );
     }

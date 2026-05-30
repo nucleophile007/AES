@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 // Enable caching for 5 minutes (revalidate every 5 minutes)
-export const revalidate = 300; // 5 minutes in seconds
-export const dynamic = 'force-static';
+export const dynamic = 'force-dynamic';
 
 // API endpoint to fetch the latest upcoming published event
 export async function GET() {

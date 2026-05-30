@@ -883,15 +883,91 @@ const highlights = [
   },
 ];
 
-const colleges = [
-  { name: "UWash Seattle", logo: "/college-logos/uwash.png" },
-  { name: "UC Davis", logo: "/college-logos/ucdavis.png" },
-  { name: "UC Santa Cruz", logo: "/college-logos/ucsc.png" },
-  { name: "UC Irvine", logo: "/college-logos/uci.png" },
-  { name: "UC Riverside", logo: "/college-logos/ucr.png" },
-  { name: "UC Santa Barbara", logo: "/college-logos/ucsb.png" },
-  { name: "UC Merced", logo: "/college-logos/ucm.png" },
-  { name: "UC Boulder", logo: "/college-logos/ucb.png" },
+type AdmissionsCollege = {
+  name: string;
+  logo?: string;
+};
+
+type AdmissionsSection = {
+  title?: string;
+  colleges: AdmissionsCollege[];
+};
+
+type AdmissionsSlide = {
+  category: string;
+  sections: AdmissionsSection[];
+};
+
+const admissionsSlides: AdmissionsSlide[] = [
+  {
+    category: "Pre-med Admissions",
+    sections: [
+      {
+        title: "Tier 1 - Elite Medical Feeder Schools",
+        colleges: [
+          { name: "Washington University, St. Louis", logo: "/college-logos/washi.png" },
+          { name: "University of North Carolina, Chapel Hill", logo: "/college-logos/north.png" },
+          { name: "UC San Diego", logo: "/college-logos/ucsand.png" },
+          { name: "University of Washington-Seattle", logo: "/college-logos/uwash.png" },
+          { name: "Pomona College", logo: "/college-logos/pomona1.png" },
+        ],
+      },
+      {
+        title: "Tier 2 - High Success Medical Feeder Schools",
+        colleges: [
+          { name: "University of Rochester" },
+          { name: "Carleton College" },
+          { name: "University of Southern California" },
+          { name: "UC Santa Barbara", logo: "/college-logos/ucsb.png" },
+        ],
+      },
+      {
+        title: "Tier 3 - Solid Regional Feeders",
+        colleges: [
+          { name: "UC Riverside", logo: "/college-logos/ucr.png" },
+          { name: "University of Colorado, Boulder", logo: "/college-logos/ucb.png" },
+          { name: "University of Massachusetts Amherst" },
+          { name: "UC Santa Cruz", logo: "/college-logos/ucsc.png" },
+        ],
+      },
+      {
+        title: "Tier 4 - Specialized Feeders",
+        colleges: [
+          { name: "NJIT" },
+          { name: "UC Merced", logo: "/college-logos/ucm.png" },
+          { name: "CSU Long Beach" },
+          { name: "University of Colorado, Colorado Springs" },
+        ],
+      },
+    ],
+  },
+  {
+    category: "Political Science",
+    sections: [
+      {
+        title: "",
+        colleges: [
+          { name: "Fordham University" },
+          { name: "Northeastern" },
+          { name: "UC Santa Cruz", logo: "/college-logos/ucsc.png" },
+          { name: "UC Riverside", logo: "/college-logos/ucr.png" },
+          { name: "UC Merced", logo: "/college-logos/ucm.png" },
+        ],
+      },
+    ],
+  },
+  {
+    category: "Engineering (Mechanical/Aerospace/CS/Electrical)",
+    sections: [
+      {
+        title: "",
+        colleges: [
+          { name: "UC Santa Cruz", logo: "/college-logos/ucsc.png" },
+          { name: "UC Riverside", logo: "/college-logos/ucr.png" },
+        ],
+      },
+    ],
+  },
 ];
 
 // Helper function to generate initials from name
@@ -902,6 +978,19 @@ const getInitials = (name: string) => {
     .join('')
     .toUpperCase()
     .slice(0, 2); // Take max 2 initials
+}
+
+const chunkColleges = <T,>(items: T[], size: number) => {
+  const chunks: T[][] = []
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size))
+  }
+  return chunks
+}
+
+const getLogoWrapClass = (count: number) => {
+  if (count === 5) return "flex w-full items-start justify-between gap-y-8"
+  return "flex w-full flex-wrap items-start justify-center gap-y-8 gap-x-10 md:gap-x-12"
 }
 
 // Fallback testimonials (static data to show when API fails or no data)
@@ -968,6 +1057,9 @@ const fallbackTestimonials = [
 export default function CollegePrepPage() {
   const [roadProgress, setRoadProgress] = React.useState(0)
   const [selectedMilestone, setSelectedMilestone] = React.useState<number | null>(null)
+  const [admissionsSlideIndex, setAdmissionsSlideIndex] = React.useState(0)
+  const [preMedPageIndex, setPreMedPageIndex] = React.useState(0)
+  const [logoSlideDirection, setLogoSlideDirection] = React.useState<1 | -1>(1)
 
   React.useEffect(() => {
     const roadTimer = setInterval(() => {
@@ -997,12 +1089,226 @@ export default function CollegePrepPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  React.useEffect(() => {
+    const intervalId = setInterval(() => {
+      setLogoSlideDirection(1)
+      setAdmissionsSlideIndex((prev) => (prev + 1) % admissionsSlides.length)
+    }, 5500)
+
+    return () => clearInterval(intervalId)
+  }, [])
+
+  const goToPreviousAdmissionsSlide = () => {
+    setLogoSlideDirection(-1)
+    setAdmissionsSlideIndex((prev) => (prev - 1 + admissionsSlides.length) % admissionsSlides.length)
+  }
+
+  const goToNextAdmissionsSlide = () => {
+    setLogoSlideDirection(1)
+    setAdmissionsSlideIndex((prev) => (prev + 1) % admissionsSlides.length)
+  }
+
+  const activeAdmissionsSlide = admissionsSlides[admissionsSlideIndex]
+  const isPreMedSlide = activeAdmissionsSlide.category === "Pre-med Admissions"
+  const preMedColleges = React.useMemo(() => {
+    if (!isPreMedSlide) return []
+    return activeAdmissionsSlide.sections.flatMap((section) => section.colleges)
+  }, [activeAdmissionsSlide, isPreMedSlide])
+
+  const preMedPages = React.useMemo(
+    () => chunkColleges(preMedColleges, 5),
+    [preMedColleges]
+  )
+
+  React.useEffect(() => {
+    setPreMedPageIndex(0)
+  }, [admissionsSlideIndex])
+
+  React.useEffect(() => {
+    if (!isPreMedSlide || preMedPages.length <= 1) return
+
+    const pageTimer = setInterval(() => {
+      setLogoSlideDirection(1)
+      setPreMedPageIndex((prev) => (prev + 1) % preMedPages.length)
+    }, 3800)
+
+    return () => clearInterval(pageTimer)
+  }, [isPreMedSlide, preMedPages.length])
+
   return (
     <main className="min-h-screen theme-bg-dark flex flex-col">
       <Header />
+
+      {/* College Admissions 2026 Section */}
+      <section className="pt-24 md:pt-28 pb-8 md:pb-10 theme-bg-dark relative overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-10 left-16 w-20 h-20 bg-yellow-400 rounded-full opacity-5 animate-float" />
+          <div className="absolute bottom-10 right-20 w-24 h-24 bg-blue-400 rounded-full opacity-5 animate-float-reverse" />
+        </div>
+
+        <div className="w-full px-2 md:px-4 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="text-center w-full mb-6"
+          >
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">College Admissions</Badge>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold theme-text-light mb-3">Where ACHARYA Students Got Admitted</h2>
+            <p className="text-base lg:text-lg theme-text-muted">
+              A proud showcase of universities and colleges our students earned admission to.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 25 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="w-full"
+          >
+            <div className="w-full min-h-[30vh] md:min-h-[32vh] py-2 md:py-3">
+              <div className="flex items-center justify-between gap-4 mb-6">
+                <button
+                  onClick={goToPreviousAdmissionsSlide}
+                  className="w-10 h-10 md:w-12 md:h-12 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg ring-2 ring-yellow-300/20 hover:bg-yellow-500 transition-all duration-200 hover:scale-105 active:scale-95"
+                  aria-label="Previous admissions category"
+                >
+                  <ChevronLeft className="w-5 h-5 text-[#1a2236]" />
+                </button>
+
+                <h3 className="text-xl md:text-3xl font-bold text-yellow-400 text-center">
+                  {activeAdmissionsSlide.category}
+                </h3>
+
+                <button
+                  onClick={goToNextAdmissionsSlide}
+                  className="w-10 h-10 md:w-12 md:h-12 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg ring-2 ring-yellow-300/20 hover:bg-yellow-500 transition-all duration-200 hover:scale-105 active:scale-95"
+                  aria-label="Next admissions category"
+                >
+                  <ChevronRight className="w-5 h-5 text-[#1a2236]" />
+                </button>
+              </div>
+
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`${activeAdmissionsSlide.category}-${preMedPageIndex}`}
+                  custom={logoSlideDirection}
+                  initial={{ opacity: 0, x: logoSlideDirection > 0 ? 90 : -90 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: logoSlideDirection > 0 ? -90 : 90 }}
+                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  className="space-y-8"
+                >
+                  {isPreMedSlide ? (
+                    <>
+                      <div className={getLogoWrapClass((preMedPages[preMedPageIndex] || []).length)}>
+                        {(preMedPages[preMedPageIndex] || []).map((college) => (
+                          <div
+                            key={college.name}
+                            className={`flex flex-col items-center text-center ${
+                              (preMedPages[preMedPageIndex] || []).length === 5 ? "w-[205px]" : "w-[195px] md:w-[220px]"
+                            }`}
+                          >
+                            <div className="w-32 h-32 md:w-36 md:h-36 rounded-full bg-white flex items-center justify-center overflow-hidden border-2 border-white/80 shadow-lg transition-transform duration-500">
+                              {college.logo ? (
+                                <Image
+                                  src={college.logo}
+                                  alt={`${college.name} logo`}
+                                  width={116}
+                                  height={116}
+                                  className="object-contain"
+                                />
+                              ) : (
+                                <div className="w-full h-full rounded-full bg-gradient-to-br from-[#22325a] to-[#35518a] flex items-center justify-center">
+                                  <span className="text-base font-bold text-yellow-300 tracking-wide">{getInitials(college.name)}</span>
+                                </div>
+                              )}
+                            </div>
+                            <p className="text-xs md:text-sm text-slate-100 leading-snug mt-2 max-w-[165px]">{college.name}</p>
+                          </div>
+                        ))}
+                      </div>
+                      {preMedPages.length > 1 ? (
+                        <div className="flex justify-center gap-2">
+                          {preMedPages.map((_, index) => (
+                            <button
+                              key={`pre-med-page-${index}`}
+                              onClick={() => {
+                                setLogoSlideDirection(index > preMedPageIndex ? 1 : -1)
+                                setPreMedPageIndex(index)
+                              }}
+                              className={`h-2.5 rounded-full transition-all ${
+                                preMedPageIndex === index ? "w-8 bg-yellow-400" : "w-2.5 bg-white/40 hover:bg-white/70"
+                              }`}
+                              aria-label={`Show pre-med colleges page ${index + 1}`}
+                            />
+                          ))}
+                        </div>
+                      ) : null}
+                    </>
+                  ) : (
+                    activeAdmissionsSlide.sections.map((section, sectionIndex) => (
+                      <div key={`${activeAdmissionsSlide.category}-section-${sectionIndex}`} className="space-y-3">
+                        {section.title && section.title.trim() ? (
+                          <h4 className="text-base md:text-lg font-semibold text-white">{section.title}</h4>
+                        ) : null}
+                        <div className={getLogoWrapClass(section.colleges.length)}>
+                          {section.colleges.map((college) => (
+                            <div
+                              key={college.name}
+                              className={`flex flex-col items-center text-center ${
+                                section.colleges.length === 5 ? "w-[205px]" : "w-[195px] md:w-[220px]"
+                              }`}
+                            >
+                              <div className="w-32 h-32 md:w-36 md:h-36 rounded-full bg-white flex items-center justify-center overflow-hidden border-2 border-white/80 shadow-lg transition-transform duration-500">
+                                {college.logo ? (
+                                  <Image
+                                    src={college.logo}
+                                    alt={`${college.name} logo`}
+                                    width={116}
+                                    height={116}
+                                    className="object-contain"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full rounded-full bg-gradient-to-br from-[#22325a] to-[#35518a] flex items-center justify-center">
+                                    <span className="text-base font-bold text-yellow-300 tracking-wide">{getInitials(college.name)}</span>
+                                  </div>
+                                )}
+                              </div>
+                              <p className="text-xs md:text-sm text-slate-100 leading-snug mt-2 max-w-[165px]">{college.name}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </motion.div>
+              </AnimatePresence>
+
+              {!isPreMedSlide ? (
+                <div className="flex justify-center gap-2 mt-6">
+                  {admissionsSlides.map((slide, index) => (
+                    <button
+                      key={slide.category}
+                      onClick={() => {
+                        setLogoSlideDirection(index > admissionsSlideIndex ? 1 : -1)
+                        setAdmissionsSlideIndex(index)
+                      }}
+                      className={`h-2.5 rounded-full transition-all ${
+                        admissionsSlideIndex === index ? "w-8 bg-yellow-400" : "w-2.5 bg-white/40 hover:bg-white/70"
+                      }`}
+                      aria-label={`Go to ${slide.category}`}
+                    />
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </motion.div>
+        </div>
+        <div className="mx-auto mt-4 h-px w-full max-w-[95%] bg-gradient-to-r from-transparent via-yellow-400/30 to-transparent" />
+      </section>
       
       {/* Hero/Intro Section */}
-      <section className="theme-bg-dark py-16 lg:py-24 relative overflow-hidden">
+      <section className="theme-bg-dark py-10 lg:py-14 relative overflow-hidden">
         {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-20 left-10 w-20 h-20 bg-yellow-400 rounded-full opacity-10 animate-float"></div>
@@ -1010,15 +1316,15 @@ export default function CollegePrepPage() {
           <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-purple-400 rounded-full opacity-10 animate-float"></div>
           <div className="absolute top-1/3 right-1/3 w-8 h-8 bg-green-400 rounded-full opacity-10 animate-float-reverse"></div>
         </div>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-8 sm:pt-12">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-0">
           <div className="text-center mb-12 animate-slide-in-bottom">
             <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
               🎓 College Prep
             </Badge>
-            <h1 className="text-6xl lg:text-7xl font-black bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent mb-4 animate-slide-in-bottom">
+            <h1 className="text-5xl lg:text-6xl font-black bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent mb-3 animate-slide-in-bottom">
               UACHIEVE
             </h1>
-            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">
+            <h2 className="text-3xl lg:text-4xl font-bold theme-text-light mb-5">
               Empowering Students to Achieve Their College Dreams
             </h2>
             <p className="text-lg theme-text-muted max-w-4xl mx-auto animate-slide-in-bottom" style={{ animationDelay: '0.2s' }}>
@@ -2015,51 +2321,6 @@ export default function CollegePrepPage() {
           >
             <EffortLevelInfographic />
           </motion.div>
-        </div>
-      </section>
-
-      {/* College Acceptances Section */}
-      <section className="py-20 theme-bg-dark relative overflow-hidden">
-        {/* Enhanced Background Elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-32 right-10 w-24 h-24 bg-blue-400 rounded-full opacity-5 animate-float-reverse"></div>
-          <div className="absolute bottom-32 left-20 w-20 h-20 bg-purple-400 rounded-full opacity-5 animate-float"></div>
-          <div className="absolute top-1/2 right-1/3 w-16 h-16 bg-green-400 rounded-full opacity-5 animate-float-reverse"></div>
-        </div>
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="text-center mb-16"
-          >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">College Acceptances</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Where Our Students Have Been Accepted</h2>
-            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Our students have gained admission to top colleges and universities across the country.</p>
-          </motion.div>
-          
-          {/* Infinite Carousel */}
-          <div className="relative overflow-hidden group py-8">
-            <div className="flex animate-scroll group-hover:pause-animation">
-              {[...colleges, ...colleges].map((college, index) => (
-                <div
-                  key={`${college.name}-${index}`}
-                  className="flex-shrink-0 mx-6 md:mx-8 flex flex-col items-center justify-center"
-                >
-                  <div className="w-32 h-32 bg-white rounded-full shadow-lg flex items-center justify-center mb-3 border-2 border-yellow-400/20 hover:scale-110 hover:shadow-xl transition-transform duration-300 overflow-hidden">
-                    <Image
-                      src={college.logo}
-                      alt={college.name}
-                      width={110}
-                      height={110}
-                      className="object-contain transition-all duration-300"
-                    />
-                  </div>
-                  <span className="text-sm font-semibold theme-text-light text-center whitespace-nowrap">{college.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
 

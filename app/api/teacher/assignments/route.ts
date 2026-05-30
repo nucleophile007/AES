@@ -134,7 +134,8 @@ export async function POST(request: NextRequest) {
       teacherEmail: teacherEmailParam,
       studentId, // Add studentId parameter
       studentIds = [],
-      resourceIds = []
+      resourceIds = [],
+      resourceUploads = []
     } = data;
     
     // Default to America/Los_Angeles if no timezone provided (for backward compatibility)
@@ -237,6 +238,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    let resolvedGrade = "General";
+
     // Safety net for accidental double-submit:
     // if an identical assignment was created in the last 2 minutes for the same
     // teacher + target students, return that instead of creating duplicates.
@@ -283,6 +286,7 @@ export async function POST(request: NextRequest) {
 
     const defaultProgram = normalizedProgram || students[0]?.program || "General";
     const defaultSubject = normalizedSubject || "General";
+    const defaultGrade = students[0]?.grade || "General";
     const assignment = await prisma.assignment.create({
       data: {
         title,
@@ -307,9 +311,41 @@ export async function POST(request: NextRequest) {
       skipDuplicates: true
     });
 
-    if (resourceIds.length > 0) {
+    const normalizedUploads = Array.isArray(resourceUploads)
+      ? resourceUploads.filter((upload: any) => upload && (upload.fileUrl || upload.linkUrl))
+      : [];
+
+    const createdResourceIds: number[] = [];
+    if (normalizedUploads.length > 0) {
+      for (const upload of normalizedUploads) {
+        const created = await prisma.resource.create({
+          data: {
+            title: upload.title || upload.fileName || 'Assignment resource',
+            description: null,
+            type: upload.type || (upload.linkUrl ? 'link' : 'document'),
+            fileUrl: upload.fileUrl || null,
+            linkUrl: upload.linkUrl || null,
+            fileName: upload.fileName || null,
+            fileSize: upload.fileSize ? Number(upload.fileSize) : null,
+            program: defaultProgram,
+            subject: defaultSubject,
+            grade: defaultGrade,
+            teacherId: teacher.id,
+            isPublic: false
+          }
+        });
+        createdResourceIds.push(created.id);
+      }
+    }
+
+    const normalizedResourceIds = Array.isArray(resourceIds)
+      ? resourceIds.map((rid: any) => Number(rid)).filter((rid: number) => !Number.isNaN(rid))
+      : [];
+    const combinedResourceIds = Array.from(new Set([...normalizedResourceIds, ...createdResourceIds]));
+
+    if (combinedResourceIds.length > 0) {
       await prisma.assignmentResource.createMany({
-        data: resourceIds.map((resourceId: number) => ({
+        data: combinedResourceIds.map((resourceId: number) => ({
           assignmentId: assignment.id,
           resourceId,
           isRequired: true
@@ -389,8 +425,13 @@ export async function PATCH(request: NextRequest) {
       teacherEmail: teacherEmailParam,
       studentId,
       studentIds,
-      resourceIds = []
+      resourceIds = [],
+      resourceUploads = []
     } = data;
+
+    const normalizedUploads = Array.isArray(resourceUploads)
+      ? resourceUploads.filter((upload: any) => upload && (upload.fileUrl || upload.linkUrl))
+      : [];
 
     if (!id) {
       return NextResponse.json(
@@ -448,6 +489,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const hasStudentSelection = studentId !== undefined || Array.isArray(studentIds);
+    let resolvedGrade = "General";
     let targetStudentIds: number[] = [];
     if (hasStudentSelection) {
       const normalizedStudentIds = Array.isArray(studentIds)
@@ -475,7 +517,7 @@ export async function PATCH(request: NextRequest) {
 
       const students = await prisma.student.findMany({
         where: { id: { in: targetStudentIds } },
-        select: { id: true }
+        select: { id: true, grade: true }
       });
 
       if (students.length !== targetStudentIds.length) {
@@ -484,6 +526,8 @@ export async function PATCH(request: NextRequest) {
           { status: 404 }
         );
       }
+
+      resolvedGrade = students[0]?.grade || resolvedGrade;
 
       const linkedStudents = await prisma.teacherStudent.findMany({
         where: {
@@ -499,6 +543,14 @@ export async function PATCH(request: NextRequest) {
           { status: 403 }
         );
       }
+    }
+
+    if (!hasStudentSelection && normalizedUploads.length > 0) {
+      const existingTarget = await prisma.assignmentTarget.findFirst({
+        where: { assignmentId: parseInt(id) },
+        include: { student: { select: { grade: true } } }
+      });
+      resolvedGrade = existingTarget?.student?.grade || resolvedGrade;
     }
 
     // Update assignment
@@ -535,14 +587,44 @@ export async function PATCH(request: NextRequest) {
         });
       }
 
-      if (Array.isArray(resourceIds)) {
+      const createdResourceIds: number[] = [];
+      if (normalizedUploads.length > 0) {
+        const effectiveProgram = updateData.program ?? existingAssignment.program;
+        const effectiveSubject = updateData.subject ?? existingAssignment.subject;
+        for (const upload of normalizedUploads) {
+          const created = await tx.resource.create({
+            data: {
+              title: upload.title || upload.fileName || 'Assignment resource',
+              description: null,
+              type: upload.type || (upload.linkUrl ? 'link' : 'document'),
+              fileUrl: upload.fileUrl || null,
+              linkUrl: upload.linkUrl || null,
+              fileName: upload.fileName || null,
+              fileSize: upload.fileSize ? Number(upload.fileSize) : null,
+              program: effectiveProgram,
+              subject: effectiveSubject,
+              grade: resolvedGrade,
+              teacherId: teacher.id,
+              isPublic: false
+            }
+          });
+          createdResourceIds.push(created.id);
+        }
+      }
+
+      const normalizedResourceIds = Array.isArray(resourceIds)
+        ? resourceIds.map((rid: any) => Number(rid)).filter((rid: number) => !Number.isNaN(rid))
+        : [];
+      const combinedResourceIds = Array.from(new Set([...normalizedResourceIds, ...createdResourceIds]));
+
+      if (Array.isArray(resourceIds) || normalizedUploads.length > 0) {
         await tx.assignmentResource.deleteMany({
           where: { assignmentId: parseInt(id) }
         });
 
-        if (resourceIds.length > 0) {
+        if (combinedResourceIds.length > 0) {
           await tx.assignmentResource.createMany({
-            data: resourceIds.map((resourceId: number) => ({
+            data: combinedResourceIds.map((resourceId: number) => ({
               assignmentId: parseInt(id),
               resourceId,
               isRequired: true
@@ -550,7 +632,7 @@ export async function PATCH(request: NextRequest) {
           });
         }
       }
-    });
+    }, { maxWait: 5000, timeout: 15000 });
 
     // Get updated assignment with relations
     const finalAssignment = await prisma.assignment.findUnique({

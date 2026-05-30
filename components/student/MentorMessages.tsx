@@ -95,111 +95,31 @@ export default function MentorMessages({ studentId, studentEmail, studentName, o
     const fetchMentors = async () => {
       try {
         setIsLoading(true);
+        setError(null);
         const response = await fetch(`/api/student/mentors?studentEmail=${encodeURIComponent(studentEmail)}`);
-        
+
         if (!response.ok) {
-          console.warn(`Failed to fetch mentors: ${response.status}`);
-          
-          // Fallback: Use demo data if API fails
-          console.log('Using fallback demo mentors data');
-          const fallbackMentors = [
-            {
-              id: 18, // Use the ID from your error logs
-              name: "Dr. Sarah Wilson",
-              email: "sarah.wilson@example.com",
-              program: "Science"
-            },
-            {
-              id: 19,
-              name: "Mr. John Davis",
-              email: "john.davis@example.com",
-              program: "Mathematics"
-            },
-            {
-              id: 20,
-              name: "Academic Support",
-              email: "support@aes.edu",
-              program: "General"
-            }
-          ];
-          
-          setMentors(fallbackMentors);
-          if (fallbackMentors.length > 0 && !selectedMentor) {
-            setSelectedMentor(fallbackMentors[0]);
-          }
-          setError(null); // Clear error since we're using fallback data
+          const fallbackMessage = `Failed to fetch mentors (${response.status})`;
+          setMentors([]);
+          setSelectedMentor(null);
+          setError(fallbackMessage);
           return;
         }
-        
+
         const data = await response.json();
-        
-        if (data.success && data.mentors) {
+        if (data.success && Array.isArray(data.mentors)) {
           setMentors(data.mentors);
-          // Auto-select first mentor if available
-          if (data.mentors.length > 0 && !selectedMentor) {
-            setSelectedMentor(data.mentors[0]);
-          }
-        } else {
-          console.warn('API returned success=false:', data.error);
-          setError(data.error || 'Failed to load mentors');
-          
-          // Use fallback data in this case as well
-          const fallbackMentors = [
-            {
-              id: 18,
-              name: "Dr. Sarah Wilson",
-              email: "sarah.wilson@example.com",
-              program: "Science"
-            },
-            {
-              id: 19,
-              name: "Mr. John Davis",
-              email: "john.davis@example.com",
-              program: "Mathematics"
-            },
-            {
-              id: 20,
-              name: "Academic Support",
-              email: "support@aes.edu",
-              program: "General"
-            }
-          ];
-          
-          setMentors(fallbackMentors);
-          if (fallbackMentors.length > 0 && !selectedMentor) {
-            setSelectedMentor(fallbackMentors[0]);
-          }
+          return;
         }
+
+        setMentors([]);
+        setSelectedMentor(null);
+        setError(data.error || 'No mentors available right now');
       } catch (err) {
+        setMentors([]);
+        setSelectedMentor(null);
         setError(err instanceof Error ? err.message : 'Failed to load mentors');
         console.error("Error fetching mentors:", err);
-        
-        // Provide fallback data even if there's an exception
-        const fallbackMentors = [
-          {
-            id: 18,
-            name: "Dr. Sarah Wilson",
-            email: "sarah.wilson@example.com",
-            program: "Science"
-          },
-          {
-            id: 19,
-            name: "Mr. John Davis",
-            email: "john.davis@example.com",
-            program: "Mathematics"
-          },
-          {
-            id: 20,
-            name: "Academic Support",
-            email: "support@aes.edu",
-            program: "General"
-          }
-        ];
-        
-        setMentors(fallbackMentors);
-        if (fallbackMentors.length > 0 && !selectedMentor) {
-          setSelectedMentor(fallbackMentors[0]);
-        }
       } finally {
         setIsLoading(false);
       }
@@ -208,7 +128,15 @@ export default function MentorMessages({ studentId, studentEmail, studentName, o
     if (studentEmail) {
       fetchMentors();
     }
-  }, [studentEmail, selectedMentor]); // Add selectedMentor dependency
+  }, [studentEmail]);
+
+  useEffect(() => {
+    setSelectedMentor((current) => {
+      if (!mentors.length) return null;
+      if (current && mentors.some((mentor) => mentor.id === current.id)) return current;
+      return mentors[0];
+    });
+  }, [mentors]);
 
   // Fetch messages when a mentor is selected (one-time fetch, real-time updates via Pusher)
   useEffect(() => {
