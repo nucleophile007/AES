@@ -67,6 +67,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const baseFetchRef = useRef<typeof window.fetch | null>(null);
   const refreshInFlightRef = useRef<Promise<boolean> | null>(null);
 
+  const hydrateUserFromMe = useCallback(async (fetchImpl: typeof window.fetch): Promise<boolean> => {
+    try {
+      const meResponse = await fetchImpl('/api/auth/me', {
+        credentials: 'include'
+      });
+
+      if (!meResponse.ok) {
+        return false;
+      }
+
+      const data = await meResponse.json().catch(() => null);
+      if (data?.success && data?.user) {
+        setUser((current) => (isSameUser(current, data.user) ? current : data.user));
+        return true;
+      }
+    } catch (error) {
+      console.error('Session hydration via /api/auth/me failed:', error);
+    }
+
+    return false;
+  }, []);
+
   const tryRefreshSession = useCallback(async () => {
     if (refreshInFlightRef.current) {
       return refreshInFlightRef.current;
@@ -81,16 +103,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           credentials: 'include'
         });
 
-        if (!refreshResponse.ok) {
-          return false;
+        if (refreshResponse.ok) {
+          const data = await refreshResponse.json().catch(() => null);
+          if (data?.success && data?.user) {
+            setUser((current) => (isSameUser(current, data.user) ? current : data.user));
+            return true;
+          }
+
+          return hydrateUserFromMe(fetchImpl);
         }
 
-        const data = await refreshResponse.json().catch(() => null);
-        if (data?.success && data?.user) {
-          setUser((current) => (isSameUser(current, data.user) ? current : data.user));
-        }
-
-        return true;
+        // If refresh failed due a race/rotation collision, /api/auth/me may still recover.
+        return hydrateUserFromMe(fetchImpl);
       } catch (error) {
         console.error('Session refresh failed:', error);
         return false;
@@ -101,7 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     refreshInFlightRef.current = refreshPromise;
     return refreshPromise;
-  }, []);
+  }, [hydrateUserFromMe]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -139,25 +163,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = useCallback(async () => {
     try {
-      let response = await fetch('/api/auth/me', {
-        credentials: 'include'
-      });
+      const fetchImpl = baseFetchRef.current ?? window.fetch.bind(window);
+      const hasSession = await hydrateUserFromMe(fetchImpl);
 
-      if (response.status === 401) {
+      if (!hasSession) {
         const refreshed = await tryRefreshSession();
         if (refreshed) {
-          response = await fetch('/api/auth/me', {
-            credentials: 'include'
-          });
+          const recovered = await hydrateUserFromMe(fetchImpl);
+          if (recovered) {
+            return;
+          }
         }
-      }
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setUser((current) => (isSameUser(current, data.user) ? current : data.user));
-        }
-      } else {
+
         setUser(null);
       }
     } catch (error) {
@@ -166,7 +183,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [tryRefreshSession]);
+  }, [hydrateUserFromMe, tryRefreshSession]);
 
   useEffect(() => {
     if (!user) {

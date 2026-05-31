@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useRequireAuth } from "../../contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -62,6 +62,7 @@ import {
   Calendar,
 } from "lucide-react";
 import ProgressReportList from "@/components/common/ProgressReportList";
+import { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
 
 interface StudentProgress {
   studentName: string;
@@ -86,6 +87,32 @@ interface ParentChatMessage {
   content: string;
   timestamp: string;
 }
+
+type ParentDashboardTab =
+  | "progress"
+  | "payments"
+  | "profile-building"
+  | "testimonial"
+  | "chat"
+  | "calendar";
+
+const createParentTabLoadingState = (): Record<ParentDashboardTab, boolean> => ({
+  progress: false,
+  payments: false,
+  "profile-building": false,
+  testimonial: false,
+  chat: false,
+  calendar: false,
+});
+
+const createParentTabReadyState = (): Record<ParentDashboardTab, boolean> => ({
+  progress: false,
+  payments: true,
+  "profile-building": false,
+  testimonial: true,
+  chat: false,
+  calendar: true,
+});
 
 // Admin Meet Calendar Component
 interface AdminMeetCalendarProps {
@@ -270,7 +297,9 @@ export default function ParentDashboard() {
   const { toast } = useToast();
 
   const parentEmail = authUser?.email || "";
-  const [activeTab, setActiveTab] = useState("progress");
+  const [activeTab, setActiveTab] = useState<ParentDashboardTab>("progress");
+  const [tabLoadingState, setTabLoadingState] = useState<Record<ParentDashboardTab, boolean>>(createParentTabLoadingState);
+  const [tabReadyState, setTabReadyState] = useState<Record<ParentDashboardTab, boolean>>(createParentTabReadyState);
 
   // Overview / Progress
   const [progress, setProgress] = useState<StudentProgress[]>([]);
@@ -325,151 +354,263 @@ export default function ParentDashboard() {
       : "bg-amber-50 text-amber-700 border-amber-100";
 
   // Progress
-  const loadProgress = async () => {
+  const loadProgress = useCallback(async () => {
+    if (!parentEmail) return;
     try {
       setProgressLoading(true);
-      const response = await fetch('/api/parent/student-progress', {
-        credentials: 'include'
+      const response = await fetch("/api/parent/student-progress", {
+        credentials: "include",
       });
       const data = await response.json();
 
       if (data.success) {
         setProgress(data.progress);
       } else {
-        console.error('Failed to load progress:', data.error);
+        console.error("Failed to load progress:", data.error);
         setProgress([]);
       }
     } catch (error) {
-      console.error('Error loading progress:', error);
+      console.error("Error loading progress:", error);
       setProgress([]);
     } finally {
       setProgressLoading(false);
     }
-  };
-
-  useEffect(() => {
-    if (parentEmail) {
-      loadProgress();
-    }
   }, [parentEmail]);
 
-  // Fetch Progress Reports
-  useEffect(() => {
-    const fetchAllReports = async () => {
-      // @ts-ignore - students property exists on parent user object
-      if (!authUser || !authUser.students) return;
+  const loadProgressReports = useCallback(async () => {
+    // @ts-ignore - students property exists on parent user object
+    if (!authUser || !authUser.students) return;
 
-      const allReports = [];
-      // @ts-ignore
-      for (const student of authUser.students) {
-        try {
-          const res = await fetch(`/api/parent/progress-report?studentId=${student.id}`);
-          const data = await res.json();
-          if (data.success) {
-            allReports.push(...data.reports);
-          }
-        } catch (e) { console.error(e); }
-      }
-      // Sort by date desc
-      allReports.sort((a: any, b: any) => new Date(b.reportDate).getTime() - new Date(a.reportDate).getTime());
-      setProgressReports(allReports);
-    };
-
-    if (authUser && activeTab === "progress") {
-      fetchAllReports();
-    }
-  }, [authUser, activeTab]);
-
-  // Fetch students when Admin Meet tab becomes active
-  useEffect(() => {
-    const fetchStudents = async () => {
-      if (activeTab !== "profile-building") return;
-
+    const allReports = [];
+    // @ts-ignore
+    for (const student of authUser.students) {
       try {
-        setProfileStudentsLoading(true);
-        const response = await fetch('/api/parent/students', {
-          credentials: 'include'
-        });
-        const data = await response.json();
-
-        if (data.success && data.students) {
-          setProfileStudents(data.students);
-
-          console.log('✅ Loaded students:', data.students.length);
-          console.log('Student data:', data.students);
-
-          // Auto-select first student if only one exists
-          if (data.students.length === 1) {
-            const student = data.students[0];
-            console.log('Auto-filling with student:', student);
-            console.log('Student grade:', student.grade, 'Type:', typeof student.grade);
-            setSelectedStudentId(student.id.toString());
-            setProfileFormData(prev => ({
-              ...prev,
-              studentName: student.name || "",
-              grade: student.grade || "",
-              schoolName: student.schoolName || "",
-              parentPhone: student.parentPhone || "",
-            }));
-          }
-
-        } else {
-          console.error('Failed to load students:', data.error);
-          setProfileStudents([]);
-        }
-      } catch (error) {
-        console.error('Error loading students:', error);
-        setProfileStudents([]);
-      } finally {
-        setProfileStudentsLoading(false);
-      }
-    };
-
-    fetchStudents();
-  }, [activeTab]);
-
-  // Fetch admin meet availability when tab is active
-  useEffect(() => {
-    const fetchProfileAvailability = async () => {
-      if (activeTab !== "profile-building") return;
-
-      try {
-        setProfileSlotsLoading(true);
-        const response = await fetch('/api/availability?program=Parent%20Meet', {
-          credentials: 'include'
-        });
-        const data = await response.json();
-
+        const res = await fetch(`/api/parent/progress-report?studentId=${student.id}`);
+        const data = await res.json();
         if (data.success) {
-          const availabilityMap: Record<string, string[]> = {};
-
-          data.data.forEach((item: any) => {
-            const isParentMeetRow = item.program ? item.program === "Parent Meet" : true;
-            if (isParentMeetRow && item.date && Array.isArray(item.times)) {
-              availabilityMap[item.date] = item.times;
-            }
-          });
-
-          console.log('✅ Loaded Admin Meet availability:', {
-            totalRows: data.totalRows,
-            availableDates: Object.keys(availabilityMap).length,
-          });
-
-          setProfileAvailability(availabilityMap);
-        } else {
-          console.error('Failed to load admin meet availability:', data.error);
-          setProfileAvailability({});
+          allReports.push(...data.reports);
         }
       } catch (error) {
-        console.error('Error loading admin meet availability:', error);
-        setProfileAvailability({});
-      } finally {
-        setProfileSlotsLoading(false);
+        console.error(error);
       }
-    };
+    }
+    allReports.sort((a: any, b: any) => new Date(b.reportDate).getTime() - new Date(a.reportDate).getTime());
+    setProgressReports(allReports);
+  }, [authUser]);
 
-    fetchProfileAvailability();
-  }, [activeTab]);
+  const loadProfileStudents = useCallback(async () => {
+    try {
+      setProfileStudentsLoading(true);
+      const response = await fetch("/api/parent/students", {
+        credentials: "include",
+      });
+      const data = await response.json();
+
+      if (data.success && data.students) {
+        setProfileStudents(data.students);
+
+        if (data.students.length === 1) {
+          const student = data.students[0];
+          setSelectedStudentId(student.id.toString());
+          setProfileFormData((prev) => ({
+            ...prev,
+            studentName: student.name || "",
+            grade: student.grade || "",
+            schoolName: student.schoolName || "",
+            parentPhone: student.parentPhone || "",
+          }));
+        }
+      } else {
+        console.error("Failed to load students:", data.error);
+        setProfileStudents([]);
+      }
+    } catch (error) {
+      console.error("Error loading students:", error);
+      setProfileStudents([]);
+    } finally {
+      setProfileStudentsLoading(false);
+    }
+  }, []);
+
+  const loadProfileAvailability = useCallback(async () => {
+    try {
+      setProfileSlotsLoading(true);
+      const response = await fetch("/api/availability?program=Parent%20Meet", {
+        credentials: "include",
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        const availabilityMap: Record<string, string[]> = {};
+        data.data.forEach((item: any) => {
+          const isParentMeetRow = item.program ? item.program === "Parent Meet" : true;
+          if (isParentMeetRow && item.date && Array.isArray(item.times)) {
+            availabilityMap[item.date] = item.times;
+          }
+        });
+        setProfileAvailability(availabilityMap);
+      } else {
+        console.error("Failed to load admin meet availability:", data.error);
+        setProfileAvailability({});
+      }
+    } catch (error) {
+      console.error("Error loading admin meet availability:", error);
+      setProfileAvailability({});
+    } finally {
+      setProfileSlotsLoading(false);
+    }
+  }, []);
+
+  const loadChatContacts = useCallback(async (): Promise<ParentChatContact[]> => {
+    if (!parentEmail) return [];
+    try {
+      const response = await fetch("/api/parent/mentors", {
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch mentors");
+      }
+
+      const data = await response.json();
+      if (data.success && data.mentors) {
+        const mentorContacts: ParentChatContact[] = data.mentors.map((mentor: any) => ({
+          id: mentor.id,
+          name: mentor.name,
+          role: "mentor" as ParentChatRole,
+          subtitle: mentor.subtitle,
+          status: "online" as "online" | "away" | "offline",
+        }));
+
+        const adminContact: ParentChatContact = {
+          id: "admin-support",
+          name: "AES Admin Team",
+          role: "admin",
+          subtitle: "Administration",
+          status: "away",
+        };
+
+        const allContacts = [...mentorContacts, adminContact];
+        setChatContacts(allContacts);
+        setSelectedChatContact((prev) => prev ?? allContacts[0] ?? null);
+        return allContacts;
+      } else {
+        const fallbackContacts: ParentChatContact[] = [
+          {
+            id: "admin-support",
+            name: "AES Admin Team",
+            role: "admin",
+            subtitle: "Administration",
+            status: "away",
+          },
+        ];
+        setChatContacts(fallbackContacts);
+        setSelectedChatContact((prev) => prev ?? fallbackContacts[0] ?? null);
+        return fallbackContacts;
+      }
+    } catch (error) {
+      console.error("Error fetching mentors:", error);
+      const fallbackContacts: ParentChatContact[] = [
+        {
+          id: "admin-support",
+          name: "AES Admin Team",
+          role: "admin",
+          subtitle: "Administration",
+          status: "away",
+        },
+      ];
+      setChatContacts(fallbackContacts);
+      setSelectedChatContact((prev) => prev ?? fallbackContacts[0] ?? null);
+      return fallbackContacts;
+    }
+    return [];
+  }, [parentEmail]);
+
+  const loadChatMessagesForContact = useCallback(async (contact: ParentChatContact | null) => {
+    if (!contact || !authUser) return;
+    setChatLoading(true);
+    try {
+      if (contact.role === "admin") {
+        setChatMessages([]);
+        return;
+      }
+
+      const teacherIdMatch = contact.id.match(/mentor-(\d+)/);
+      if (!teacherIdMatch) {
+        console.error("Invalid mentor contact ID format");
+        setChatMessages([]);
+        return;
+      }
+
+      const teacherId = parseInt(teacherIdMatch[1], 10);
+      const parentId = authUser.id;
+
+      const response = await fetch(
+        `/api/messages/parent?parentId=${parentId}&teacherId=${teacherId}`,
+        { credentials: "include" }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch messages");
+      }
+
+      const data = await response.json();
+      if (data.success && data.messages) {
+        const formattedMessages: ParentChatMessage[] = data.messages.map((msg: any) => ({
+          id: msg.id,
+          sender: msg.senderRole === "teacher" ? "mentor" : "parent",
+          content: msg.content,
+          timestamp: msg.timestamp,
+        }));
+        setChatMessages(formattedMessages);
+      } else {
+        setChatMessages([]);
+      }
+    } catch (error) {
+      console.error("Error loading chat messages:", error);
+      setChatMessages([]);
+    } finally {
+      setChatLoading(false);
+    }
+  }, [authUser]);
+
+  const loadChatMessages = useCallback(async () => {
+    await loadChatMessagesForContact(selectedChatContact);
+  }, [selectedChatContact, loadChatMessagesForContact]);
+
+  const warmTabData = useCallback(async (tab: ParentDashboardTab) => {
+    if (tabReadyState[tab]) return;
+
+    if (tab === "payments" || tab === "testimonial" || tab === "calendar") {
+      setTabReadyState((prev) => ({ ...prev, [tab]: true }));
+      return;
+    }
+
+    setTabLoadingState((prev) => ({ ...prev, [tab]: true }));
+    try {
+      if (tab === "progress") {
+        await Promise.all([loadProgress(), loadProgressReports()]);
+      } else if (tab === "profile-building") {
+        await Promise.all([loadProfileStudents(), loadProfileAvailability()]);
+      } else if (tab === "chat") {
+        const contacts = await loadChatContacts();
+        const primaryContact = selectedChatContact ?? contacts[0] ?? null;
+        await loadChatMessagesForContact(primaryContact);
+      }
+      setTabReadyState((prev) => ({ ...prev, [tab]: true }));
+    } finally {
+      setTabLoadingState((prev) => ({ ...prev, [tab]: false }));
+    }
+  }, [
+    tabReadyState,
+    loadProgress,
+    loadProgressReports,
+    loadProfileStudents,
+    loadProfileAvailability,
+    loadChatContacts,
+    loadChatMessagesForContact,
+    selectedChatContact,
+  ]);
 
   // Handle student selection change
   const handleStudentSelection = (studentId: string) => {
@@ -488,137 +629,21 @@ export default function ParentDashboard() {
     }
   };
 
-  // Fetch chat contacts (mentors from database and admin)
   useEffect(() => {
-    const fetchMentors = async () => {
-      try {
-        const response = await fetch("/api/parent/mentors", {
-          credentials: "include",
-        });
+    if (!parentEmail) return;
+    setTabLoadingState(createParentTabLoadingState());
+    setTabReadyState(createParentTabReadyState());
+  }, [parentEmail]);
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch mentors");
-        }
-
-        const data = await response.json();
-
-        if (data.success && data.mentors) {
-          const mentorContacts: ParentChatContact[] = data.mentors.map((mentor: any) => ({
-            id: mentor.id,
-            name: mentor.name,
-            role: "mentor" as ParentChatRole,
-            subtitle: mentor.subtitle,
-            status: "online" as "online" | "away" | "offline",
-          }));
-
-          const adminContact: ParentChatContact = {
-            id: "admin-support",
-            name: "AES Admin Team",
-            role: "admin",
-            subtitle: "Administration",
-            status: "away",
-          };
-
-          const allContacts = [...mentorContacts, adminContact];
-          setChatContacts(allContacts);
-
-          if (!selectedChatContact && allContacts.length > 0) {
-            setSelectedChatContact(allContacts[0]);
-          }
-        } else {
-          const fallbackContacts: ParentChatContact[] = [
-            {
-              id: "admin-support",
-              name: "AES Admin Team",
-              role: "admin",
-              subtitle: "Administration",
-              status: "away",
-            },
-          ];
-          setChatContacts(fallbackContacts);
-          if (!selectedChatContact) {
-            setSelectedChatContact(fallbackContacts[0]);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching mentors:", error);
-        const fallbackContacts: ParentChatContact[] = [
-          {
-            id: "admin-support",
-            name: "AES Admin Team",
-            role: "admin",
-            subtitle: "Administration",
-            status: "away",
-          },
-        ];
-        setChatContacts(fallbackContacts);
-        if (!selectedChatContact) {
-          setSelectedChatContact(fallbackContacts[0]);
-        }
-      }
-    };
-
-    if (parentEmail) {
-      fetchMentors();
-    }
-  }, [parentEmail, selectedChatContact]);
-
-  // Load messages for selected contact
   useEffect(() => {
-    if (!selectedChatContact || !authUser) return;
+    if (!authUser || !parentEmail) return;
+    void warmTabData(activeTab);
+  }, [activeTab, authUser, parentEmail, warmTabData]);
 
-    const loadChat = async () => {
-      setChatLoading(true);
-      try {
-        if (selectedChatContact.role === "admin") {
-          setChatMessages([]);
-          setChatLoading(false);
-          return;
-        }
-
-        const teacherIdMatch = selectedChatContact.id.match(/mentor-(\d+)/);
-        if (!teacherIdMatch) {
-          console.error("Invalid mentor contact ID format");
-          setChatMessages([]);
-          return;
-        }
-
-        const teacherId = parseInt(teacherIdMatch[1]);
-        const parentId = authUser.id;
-
-        const response = await fetch(
-          `/api/messages/parent?parentId=${parentId}&teacherId=${teacherId}`,
-          { credentials: "include" }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch messages");
-        }
-
-        const data = await response.json();
-
-        if (data.success && data.messages) {
-          const formattedMessages: ParentChatMessage[] = data.messages.map((msg: any) => ({
-            id: msg.id,
-            sender: msg.senderRole === "teacher" ? "mentor" : "parent",
-            content: msg.content,
-            timestamp: msg.timestamp,
-          }));
-
-          setChatMessages(formattedMessages);
-        } else {
-          setChatMessages([]);
-        }
-      } catch (error) {
-        console.error("Error loading chat messages:", error);
-        setChatMessages([]);
-      } finally {
-        setChatLoading(false);
-      }
-    };
-
-    loadChat();
-  }, [selectedChatContact, authUser]);
+  useEffect(() => {
+    if (activeTab !== "chat" || !selectedChatContact || !authUser) return;
+    void loadChatMessages();
+  }, [activeTab, selectedChatContact, authUser, loadChatMessages]);
 
   // Auto-scroll chat window
   useEffect(() => {
@@ -836,6 +861,21 @@ export default function ParentDashboard() {
     },
   ];
 
+  const isActiveTabLoading = tabLoadingState[activeTab];
+  const renderActiveTabWireframe = () => (
+    <Card className="border border-slate-200 bg-white shadow-sm">
+      <CardHeader className="space-y-2">
+        <ShimmerSkeleton className="h-6 w-56 rounded-md" />
+        <ShimmerSkeleton className="h-4 w-80 rounded-md" />
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <ShimmerSkeleton key={`parent-tab-wireframe-${index}`} className="h-14 w-full rounded-lg" />
+        ))}
+      </CardContent>
+    </Card>
+  );
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-slate-50">
@@ -912,6 +952,10 @@ export default function ParentDashboard() {
           </header>
 
           <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
+            {isActiveTabLoading ? (
+              renderActiveTabWireframe()
+            ) : (
+              <>
             {/* Student Progress Tab */}
             {activeTab === "progress" && (
               <motion.div
@@ -1355,7 +1399,7 @@ export default function ParentDashboard() {
                           </p>
                         </div>
                         <Button
-                          onClick={() => {
+                          onClick={async () => {
                             setShowProfileSuccess(false);
                             setSelectedStudentId("");
                             setProfileFormData({
@@ -1366,9 +1410,8 @@ export default function ParentDashboard() {
                               selectedDate: "",
                               selectedTime: "",
                             });
-                            // Re-fetch students to refresh the list
-                            setActiveTab("progress");
-                            setTimeout(() => setActiveTab("profile-building"), 100);
+                            await Promise.all([loadProfileStudents(), loadProfileAvailability()]);
+                            setTabReadyState((prev) => ({ ...prev, "profile-building": true }));
                           }}
                         >
                           Book Another Session
@@ -1643,6 +1686,8 @@ export default function ParentDashboard() {
                   </CardContent>
                 </Card>
               </motion.div>
+            )}
+              </>
             )}
           </div>
         </SidebarInset>

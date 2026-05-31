@@ -45,7 +45,12 @@ export async function GET(request: NextRequest) {
             ? { debug: { reason: 'missing_access_and_refresh' } }
             : {})
         },
-        { status: 401 }
+        {
+          status: 401,
+          headers: {
+            'Cache-Control': 'no-store',
+          },
+        }
       );
     }
 
@@ -57,6 +62,10 @@ export async function GET(request: NextRequest) {
         name: resolvedUser.name,
         role: resolvedUser.role
       }
+    }, {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
     });
 
     if (rotatedSession) {
@@ -81,7 +90,12 @@ export async function GET(request: NextRequest) {
     console.error('Get user error:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          'Cache-Control': 'no-store',
+        },
+      }
     );
   }
 }
