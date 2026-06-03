@@ -71,6 +71,22 @@ interface StudentProgress {
   recentMilestones: { title: string; date: string }[];
 }
 
+interface DiagnosticReport {
+  id: number;
+  studentName: string;
+  studentGrade?: string;
+  assignmentTitle: string;
+  subject?: string;
+  program?: string;
+  testTitle: string;
+  finalScore: number | null;
+  maxScore: number | null;
+  percentage: number | null;
+  generatedAt?: string;
+  sentAt?: string | null;
+  reportUrl: string;
+}
+
 type ParentChatRole = "mentor" | "admin";
 
 interface ParentChatContact {
@@ -305,6 +321,7 @@ export default function ParentDashboard() {
   const [progress, setProgress] = useState<StudentProgress[]>([]);
   const [progressLoading, setProgressLoading] = useState(true);
   const [progressReports, setProgressReports] = useState<any[]>([]);
+  const [diagnosticReports, setDiagnosticReports] = useState<DiagnosticReport[]>([]);
 
   // Admin Meet
   const [profileAvailability, setProfileAvailability] = useState<Record<string, string[]>>({});
@@ -397,6 +414,27 @@ export default function ParentDashboard() {
     allReports.sort((a: any, b: any) => new Date(b.reportDate).getTime() - new Date(a.reportDate).getTime());
     setProgressReports(allReports);
   }, [authUser]);
+
+  const loadDiagnosticReports = useCallback(async () => {
+    if (!parentEmail) return;
+
+    try {
+      const response = await fetch("/api/parent/mcq-report", {
+        credentials: "include",
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        setDiagnosticReports(data.reports || []);
+      } else {
+        console.error("Failed to load diagnostic reports:", data.error);
+        setDiagnosticReports([]);
+      }
+    } catch (error) {
+      console.error("Error loading diagnostic reports:", error);
+      setDiagnosticReports([]);
+    }
+  }, [parentEmail]);
 
   const loadProfileStudents = useCallback(async () => {
     try {
@@ -589,7 +627,7 @@ export default function ParentDashboard() {
     setTabLoadingState((prev) => ({ ...prev, [tab]: true }));
     try {
       if (tab === "progress") {
-        await Promise.all([loadProgress(), loadProgressReports()]);
+        await Promise.all([loadProgress(), loadProgressReports(), loadDiagnosticReports()]);
       } else if (tab === "profile-building") {
         await Promise.all([loadProfileStudents(), loadProfileAvailability()]);
       } else if (tab === "chat") {
@@ -605,6 +643,7 @@ export default function ParentDashboard() {
     tabReadyState,
     loadProgress,
     loadProgressReports,
+    loadDiagnosticReports,
     loadProfileStudents,
     loadProfileAvailability,
     loadChatContacts,
@@ -1030,6 +1069,42 @@ export default function ParentDashboard() {
                     <FileText className="h-5 w-5 text-purple-600" />
                     Detailed Evaluation Reports
                   </h3>
+                  {diagnosticReports.length > 0 && (
+                    <div className="mb-6 grid gap-3">
+                      {diagnosticReports.map((report) => (
+                        <Card key={report.id} className="border-slate-200">
+                          <CardContent className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
+                            <div className="min-w-0 space-y-2">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Badge className="bg-blue-100 text-blue-800">Diagnostic</Badge>
+                                {report.subject && <Badge variant="outline">{report.subject}</Badge>}
+                                {report.program && <Badge variant="outline">{report.program}</Badge>}
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-slate-900">{report.assignmentTitle}</h4>
+                                <p className="text-sm text-muted-foreground">
+                                  {report.studentName} {report.studentGrade ? `Grade ${report.studentGrade}` : ""} • {report.testTitle}
+                                </p>
+                              </div>
+                              {report.percentage !== null && (
+                                <p className="text-sm text-slate-700">
+                                  Score: {report.finalScore ?? "-"} / {report.maxScore ?? "-"} ({report.percentage}%)
+                                </p>
+                              )}
+                            </div>
+                            <Button
+                              variant="outline"
+                              onClick={() => window.open(report.reportUrl, "_blank")}
+                              className="shrink-0"
+                            >
+                              <ArrowUpRight className="mr-2 h-4 w-4" />
+                              View Report
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
                   <ProgressReportList reports={progressReports} />
                 </div>
               </motion.div>

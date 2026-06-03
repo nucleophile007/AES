@@ -49,6 +49,7 @@ interface QuestionStat {
 
 interface PremiumMcqReportProps {
   report: {
+    assessmentType?: string;
     scoreSummary?: ScoreSummary;
     sectionStats?: SectionStat[];
     difficultyStats?: DifficultyStat[];
@@ -149,6 +150,8 @@ export default function PremiumMcqReport({
   const strengths = toBulletList(presentation.strengths);
   const weaknesses = toBulletList(presentation.weaknesses);
   const narrativeTitle = presentation.sectionTitleNarrative === "AI Performance Narrative" ? "Performance Narrative" : presentation.sectionTitleNarrative;
+  const showGapAnalysis = report.assessmentType === "simple-assignment";
+  const totalPages = showGapAnalysis ? 3 : 2;
 
   const excellent = sectionStats.filter((section) => pct(section.percentage) >= 75);
   const developing = sectionStats.filter((section) => pct(section.percentage) >= 50 && pct(section.percentage) < 75);
@@ -156,7 +159,7 @@ export default function PremiumMcqReport({
 
   return (
     <div className={cn("w-full", className)}>
-      <PageFrame presentation={presentation} studentName={studentName} testTitle={testTitle} pageNumber={1} totalPages={2}>
+      <PageFrame presentation={presentation} studentName={studentName} testTitle={testTitle} pageNumber={1} totalPages={totalPages}>
         <div className="text-center mt-8 mb-10">
           <h1 className="serif-display text-[2.6rem] leading-tight text-[var(--ink)]">{presentation.reportTitle}</h1>
           <p className="serif-display italic text-[1.05rem] text-[var(--ink)] mt-2">{presentation.reportType}</p>
@@ -370,7 +373,55 @@ export default function PremiumMcqReport({
         </div>
       </PageFrame>
 
-      <PageFrame presentation={presentation} studentName={studentName} testTitle={testTitle} pageNumber={2} totalPages={2}>
+      {showGapAnalysis && (
+        <PageFrame presentation={presentation} studentName={studentName} testTitle={testTitle} pageNumber={2} totalPages={totalPages}>
+          <h2 className="section-heading serif-display mt-2">6. Gap Analysis and Next Steps</h2>
+          <div className="mt-6 grid gap-5">
+            {[
+              {
+                title: "Conceptual Gaps",
+                value: presentation.conceptualGaps,
+                accent: "rgb(220, 38, 38)",
+                bg: "rgba(220, 38, 38, 0.06)",
+                border: "rgba(220, 38, 38, 0.28)",
+              },
+              {
+                title: "Recommendations",
+                value: presentation.recommendations,
+                accent: "rgb(37, 99, 235)",
+                bg: "rgba(37, 99, 235, 0.06)",
+                border: "rgba(37, 99, 235, 0.28)",
+              },
+              {
+                title: "Next Action",
+                value: presentation.nextAction,
+                accent: "rgb(5, 150, 105)",
+                bg: "rgba(5, 150, 105, 0.06)",
+                border: "rgba(5, 150, 105, 0.28)",
+              },
+            ].map((item, index) => (
+              <div
+                key={item.title}
+                className="rounded-2xl border p-6"
+                style={{ backgroundColor: item.bg, borderColor: item.border }}
+              >
+                <div className="mb-3 flex items-center gap-3">
+                  <span
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white"
+                    style={{ backgroundColor: item.accent }}
+                  >
+                    {index + 1}
+                  </span>
+                  <h3 className="serif-display text-[1.2rem] font-bold text-[var(--ink)]">{item.title}</h3>
+                </div>
+                <p className="text-[15px] leading-7 text-slate-700 whitespace-pre-wrap">{item.value}</p>
+              </div>
+            ))}
+          </div>
+        </PageFrame>
+      )}
+
+      <PageFrame presentation={presentation} studentName={studentName} testTitle={testTitle} pageNumber={showGapAnalysis ? 3 : 2} totalPages={totalPages}>
         <h2 className="section-heading serif-display mt-2">Detailed Item Analysis</h2>
         <table className="item-table serif-display">
           <thead>

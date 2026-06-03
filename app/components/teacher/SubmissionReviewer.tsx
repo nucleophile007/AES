@@ -65,6 +65,7 @@ interface SubmissionReviewerProps {
 
 interface ParsedMcqSubmission {
   testTitle: string;
+  assessmentType: "mock-test" | "simple-assignment";
   attemptCount: number;
   latestAttemptNumber: number;
   answeredCount: number;
@@ -79,6 +80,7 @@ interface ParsedMcqSubmission {
   };
   reportPresentation?: McqReportPresentation;
   report?: {
+    assessmentType?: "mock-test" | "simple-assignment";
     generatedAt?: string;
     attemptPolicy?: {
       consideredAttemptNumber?: number;
@@ -161,6 +163,7 @@ const parseMcqSubmission = (content: string | null): ParsedMcqSubmission | null 
       }>;
       latestAttemptNumber?: number;
       report?: ParsedMcqSubmission["report"];
+      assessmentType?: "mock-test" | "simple-assignment";
       reportPresentation?: unknown;
       reportPdf?: ParsedMcqSubmission["reportPdf"];
     };
@@ -178,6 +181,7 @@ const parseMcqSubmission = (content: string | null): ParsedMcqSubmission | null 
 
     return {
       testTitle: parsed.testTitle || "MCQ Test",
+      assessmentType: parsed.assessmentType === "simple-assignment" || parsed.report?.assessmentType === "simple-assignment" ? "simple-assignment" : "mock-test",
       attemptCount: attempts.length > 0 ? attempts.length : 1,
       latestAttemptNumber: Number(parsed.latestAttemptNumber) || Number(latestAttempt?.attemptNumber) || 1,
       answeredCount: Number(latestSummary.answeredCount) || 0,
@@ -384,14 +388,14 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
             ? "Draft saved"
             : action === "confirm"
               ? "Report confirmed"
-              : "Report sent to student",
+              : "Report sent",
         description: action === "generate"
           ? "Auto-check completed. Open mentor workspace to refine the narrative."
           : action === "saveDraft"
             ? "Mentor draft updated successfully."
             : action === "confirm"
               ? "Final version confirmed. PDF is ready for review and sending."
-              : "Final report PDF has been sent to the student workspace.",
+              : "Final report PDF has been shared with the student and parent dashboards.",
         className: "border-slate-300 bg-slate-100 text-slate-800",
       });
     } catch (error) {
@@ -856,6 +860,41 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                         rows={3}
                       />
                     </div>
+                    {selectedReportData.assessmentType === "simple-assignment" && (
+                      <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Gap Analysis and Next Steps</p>
+                        <div>
+                          <Label htmlFor="concept-gaps">Conceptual Gaps</Label>
+                          <Textarea
+                            id="concept-gaps"
+                            value={selectedReportPresentation.conceptualGaps}
+                            onChange={(e) => updatePresentationField("conceptualGaps", e.target.value)}
+                            rows={3}
+                            placeholder="Gemini-generated conceptual gap summary"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="recommendations">Recommendations</Label>
+                          <Textarea
+                            id="recommendations"
+                            value={selectedReportPresentation.recommendations}
+                            onChange={(e) => updatePresentationField("recommendations", e.target.value)}
+                            rows={3}
+                            placeholder="Gemini-generated recommendations"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="next-action">Next Action</Label>
+                          <Textarea
+                            id="next-action"
+                            value={selectedReportPresentation.nextAction}
+                            onChange={(e) => updatePresentationField("nextAction", e.target.value)}
+                            rows={2}
+                            placeholder="Gemini-generated next action"
+                          />
+                        </div>
+                      </div>
+                    )}
                     <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Topic Insights</p>
                       {(selectedReportData.report.sectionStats || []).map((section, index) => {
@@ -1008,7 +1047,7 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
 
                 <div className="h-full min-h-0 overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white p-4">
                   <PremiumMcqReport
-                    report={selectedReportData.report}
+                    report={{ ...selectedReportData.report, assessmentType: selectedReportData.assessmentType }}
                     presentation={selectedReportPresentation}
                     studentName={selectedReportSubmission.student.name}
                     assignmentTitle={selectedReportSubmission.assignment.title}
@@ -1056,7 +1095,7 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                   }
                 >
                   <Send className="mr-2 h-4 w-4" />
-                  {reportActionSubmissionId === selectedReportSubmission.id ? "Sending..." : "Send Report to Student"}
+                  {reportActionSubmissionId === selectedReportSubmission.id ? "Sending..." : "Send Report"}
                 </Button>
               </>
             )}
