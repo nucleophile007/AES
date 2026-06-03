@@ -70,6 +70,17 @@ interface ParsedMcqSubmission {
   answeredCount: number;
   totalQuestions: number;
   maxScore: number;
+  attempts: Array<{
+    attemptNumber: number;
+    submittedAt: string;
+    answeredCount: number;
+    totalQuestions: number;
+    maxScore: number;
+    elapsedMs: number;
+    timerMode: "timed" | "untimed";
+    recommendedMinutes: number | null;
+    chosenMinutes: number | null;
+  }>;
   hasReport: boolean;
   reportPdf?: {
     fileKey?: string;
@@ -146,6 +157,7 @@ const parseMcqSubmission = (content: string | null): ParsedMcqSubmission | null 
     const parsed = JSON.parse(content) as {
       submissionType?: string;
       testTitle?: string;
+      submittedAt?: string;
       summary?: {
         answeredCount?: number;
         totalQuestions?: number;
@@ -153,6 +165,11 @@ const parseMcqSubmission = (content: string | null): ParsedMcqSubmission | null 
       };
       attempts?: Array<{
         attemptNumber?: number;
+        submittedAt?: string;
+        elapsedMs?: number;
+        timerMode?: string;
+        recommendedMinutes?: number | null;
+        chosenMinutes?: number | null;
         summary?: {
           answeredCount?: number;
           totalQuestions?: number;
@@ -168,8 +185,41 @@ const parseMcqSubmission = (content: string | null): ParsedMcqSubmission | null 
     const attempts = Array.isArray(parsed.attempts) ? parsed.attempts : [];
     const latestAttempt = attempts.length > 0 ? attempts[attempts.length - 1] : null;
     const latestSummary = latestAttempt?.summary || parsed.summary || {};
+    const normalizedAttempts: ParsedMcqSubmission["attempts"] = attempts.length > 0
+      ? attempts.map((attempt, index) => {
+          const summary = attempt.summary || {};
+          const timerMode: "timed" | "untimed" = attempt.timerMode === "timed" ? "timed" : "untimed";
+          return {
+            attemptNumber: Number(attempt.attemptNumber) || index + 1,
+            submittedAt: typeof attempt.submittedAt === "string" ? attempt.submittedAt : "",
+            answeredCount: Number(summary.answeredCount) || 0,
+            totalQuestions: Number(summary.totalQuestions) || 0,
+            maxScore: Number(summary.maxScore) || 0,
+            elapsedMs: Math.max(0, Number(attempt.elapsedMs) || 0),
+            timerMode,
+            recommendedMinutes: Number.isFinite(Number(attempt.recommendedMinutes))
+              ? Math.max(1, Number(attempt.recommendedMinutes))
+              : null,
+            chosenMinutes: Number.isFinite(Number(attempt.chosenMinutes))
+              ? Math.max(1, Number(attempt.chosenMinutes))
+              : null,
+          };
+        })
+      : [
+          {
+            attemptNumber: 1,
+            submittedAt: typeof parsed.submittedAt === "string" ? parsed.submittedAt : "",
+            answeredCount: Number((parsed.summary || {}).answeredCount) || 0,
+            totalQuestions: Number((parsed.summary || {}).totalQuestions) || 0,
+            maxScore: Number((parsed.summary || {}).maxScore) || 0,
+            elapsedMs: 0,
+            timerMode: "untimed" as const,
+            recommendedMinutes: null,
+            chosenMinutes: null,
+          },
+        ];
     const fallbackPresentation = createDefaultReportPresentation({
-      testTitle: parsed.testTitle || "MCQ Test",
+      testTitle: parsed.testTitle || "MCQ + PDF Assessment",
       sectionStats: parsed.report?.sectionStats || [],
     });
     const reportPresentation = parsed.report
@@ -177,12 +227,13 @@ const parseMcqSubmission = (content: string | null): ParsedMcqSubmission | null 
       : undefined;
 
     return {
-      testTitle: parsed.testTitle || "MCQ Test",
+      testTitle: parsed.testTitle || "MCQ + PDF Assessment",
       attemptCount: attempts.length > 0 ? attempts.length : 1,
       latestAttemptNumber: Number(parsed.latestAttemptNumber) || Number(latestAttempt?.attemptNumber) || 1,
       answeredCount: Number(latestSummary.answeredCount) || 0,
       totalQuestions: Number(latestSummary.totalQuestions) || 0,
       maxScore: Number(latestSummary.maxScore) || 0,
+      attempts: normalizedAttempts,
       hasReport: Boolean(parsed.report),
       reportPdf: parsed.reportPdf,
       report: parsed.report,
@@ -205,6 +256,7 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
   const [selectedReportSubmission, setSelectedReportSubmission] = useState<Submission | null>(null);
   const [selectedReportData, setSelectedReportData] = useState<ParsedMcqSubmission | null>(null);
   const [selectedReportPresentation, setSelectedReportPresentation] = useState<McqReportPresentation | null>(null);
+  const [attemptSelectionBySubmissionId, setAttemptSelectionBySubmissionId] = useState<Record<number, string>>({});
   const [gradeData, setGradeData] = useState({ grade: '' });
   const [isSavingGrade, setIsSavingGrade] = useState(false);
   const [reportActionSubmissionId, setReportActionSubmissionId] = useState<number | null>(null);
@@ -345,7 +397,8 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
   const handleReportAction = async (
     submission: Submission,
     action: "generate" | "saveDraft" | "confirm" | "send",
-    presentation?: McqReportPresentation
+    presentation?: McqReportPresentation,
+    attemptNumber?: number
   ) => {
     if (reportActionSubmissionId !== null) return;
     try {
@@ -360,6 +413,7 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
           teacherEmail,
           action,
           presentation,
+          attemptNumber: action === "generate" ? attemptNumber : undefined,
         }),
       });
       const data = await response.json();
@@ -428,6 +482,12 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
     setSelectedReportSubmission(submission);
     setSelectedReportData(parsed);
     setSelectedReportPresentation(createPresentationSeed(submission, parsed));
+    if (!attemptSelectionBySubmissionId[submission.id]) {
+      setAttemptSelectionBySubmissionId((prev) => ({
+        ...prev,
+        [submission.id]: String(parsed.latestAttemptNumber || 1),
+      }));
+    }
     setIsReportDialogOpen(true);
   };
 
@@ -470,6 +530,13 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
     return formatDateTime(new Date(dateString), getUserTimezone());
   };
 
+  const formatDurationMs = (ms: number) => {
+    const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
+
   const isLate = (submittedAt: string, dueDate: string) => {
     return new Date(submittedAt) > new Date(dueDate);
   };
@@ -490,6 +557,12 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
     if (percentage >= 80) return 'text-blue-600';
     if (percentage >= 70) return 'text-yellow-600';
     return 'text-red-600';
+  };
+
+  const getGradeMaxPoints = (submission: Submission | null) => {
+    if (!submission) return 100;
+    const parsed = parseMcqSubmission(submission.content);
+    return parsed ? 100 : submission.assignment.totalPoints;
   };
 
   // Get unique assignments for filter
@@ -604,6 +677,10 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
             const parsedMcqSubmission = parseMcqSubmission(submission.content);
             const isMcqSubmission = Boolean(parsedMcqSubmission);
             const reportBusy = reportActionSubmissionId === submission.id;
+            const gradeMaxPoints = isMcqSubmission ? 100 : submission.assignment.totalPoints;
+            const attemptOptions = parsedMcqSubmission?.attempts || [];
+            const selectedAttemptValue = attemptSelectionBySubmissionId[submission.id]
+              || String(parsedMcqSubmission?.latestAttemptNumber || 1);
             return (
             <Card key={submission.id} className="hover:shadow-md transition-shadow">
               <CardHeader>
@@ -651,8 +728,8 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                     <div>
                       <p className="text-sm text-gray-600">Grade</p>
                       {submission.grade !== null ? (
-                        <p className={`font-medium text-lg ${getGradeColor(submission.grade, submission.assignment.totalPoints)}`}>
-                          {submission.grade}/{submission.assignment.totalPoints}
+                        <p className={`font-medium text-lg ${getGradeColor(submission.grade, gradeMaxPoints)}`}>
+                          {submission.grade}/{gradeMaxPoints}
                         </p>
                       ) : (
                         <p className="text-gray-400">Not graded</p>
@@ -740,9 +817,31 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                 <div className="mt-4 flex flex-wrap justify-end gap-2">
                   {isMcqSubmission && (
                     <>
+                      {attemptOptions.length > 1 && (
+                        <Select
+                          value={selectedAttemptValue}
+                          onValueChange={(value) =>
+                            setAttemptSelectionBySubmissionId((prev) => ({
+                              ...prev,
+                              [submission.id]: value,
+                            }))
+                          }
+                        >
+                          <SelectTrigger className="w-[200px]">
+                            <SelectValue placeholder="Select attempt" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {attemptOptions.map((attempt) => (
+                              <SelectItem key={`attempt-${submission.id}-${attempt.attemptNumber}`} value={String(attempt.attemptNumber)}>
+                                Attempt #{attempt.attemptNumber} • {attempt.answeredCount}/{attempt.totalQuestions}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                       <Button
                         variant="outline"
-                        onClick={() => handleReportAction(submission, "generate")}
+                        onClick={() => handleReportAction(submission, "generate", undefined, Number(selectedAttemptValue))}
                         disabled={reportActionSubmissionId !== null || isSavingGrade}
                       >
                         <BarChart3 className="mr-2 h-4 w-4" />
@@ -786,7 +885,7 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
               Mentor Report Workspace: {selectedReportSubmission?.assignment.title || "Submission"}
             </DialogTitle>
             <p className="text-sm text-gray-600">
-              Student: {selectedReportSubmission?.student.name || "N/A"} • Test: {selectedReportData?.testTitle || "MCQ Test"} • Edit live preview before confirmation
+              Student: {selectedReportSubmission?.student.name || "N/A"} • Assessment: {selectedReportData?.testTitle || "MCQ + PDF Assessment"} • Edit live preview before confirmation
             </p>
           </DialogHeader>
 
@@ -809,6 +908,75 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                   </div>
 
                   <div className="space-y-3">
+                    <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Attempt History</p>
+                        {selectedReportSubmission && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              handleReportAction(
+                                selectedReportSubmission,
+                                "generate",
+                                undefined,
+                                Number(attemptSelectionBySubmissionId[selectedReportSubmission.id] || selectedReportData.latestAttemptNumber)
+                              )
+                            }
+                            disabled={reportActionSubmissionId !== null}
+                          >
+                            {reportActionSubmissionId === selectedReportSubmission.id ? "Generating..." : "Generate for Attempt"}
+                          </Button>
+                        )}
+                      </div>
+                      <Select
+                        value={
+                          selectedReportSubmission
+                            ? (attemptSelectionBySubmissionId[selectedReportSubmission.id]
+                              || String(selectedReportData.latestAttemptNumber))
+                            : ""
+                        }
+                        onValueChange={(value) => {
+                          if (!selectedReportSubmission) return;
+                          setAttemptSelectionBySubmissionId((prev) => ({
+                            ...prev,
+                            [selectedReportSubmission.id]: value,
+                          }));
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select attempt" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {selectedReportData.attempts.map((attempt) => (
+                            <SelectItem key={`attempt-select-${attempt.attemptNumber}`} value={String(attempt.attemptNumber)}>
+                              Attempt #{attempt.attemptNumber} • {attempt.answeredCount}/{attempt.totalQuestions}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <div className="space-y-2">
+                        {selectedReportData.attempts.map((attempt) => {
+                          const isReported =
+                            attempt.attemptNumber === (selectedReportData.report?.attemptPolicy?.consideredAttemptNumber || 0);
+                          return (
+                            <div key={`attempt-row-${attempt.attemptNumber}`} className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                              <div className="space-y-0.5">
+                                <div className="font-semibold">Attempt #{attempt.attemptNumber}</div>
+                                <div>{attempt.answeredCount}/{attempt.totalQuestions} answered • {formatDurationMs(attempt.elapsedMs)} elapsed</div>
+                                <div>
+                                  {attempt.submittedAt ? formatTime(attempt.submittedAt) : "Draft"} • {attempt.timerMode}
+                                </div>
+                              </div>
+                              {isReported && (
+                                <Badge className="border-emerald-200 bg-emerald-100 text-emerald-800">Reported</Badge>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                     <div>
                       <Label htmlFor="report-title">Report Title</Label>
                       <Input
@@ -1078,12 +1246,12 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
           
           <div className="space-y-4">
             <div>
-              <Label htmlFor="grade">Grade (out of {selectedSubmission?.assignment.totalPoints})</Label>
+              <Label htmlFor="grade">Grade (out of {getGradeMaxPoints(selectedSubmission)})</Label>
               <Input
                 id="grade"
                 type="number"
                 min="0"
-                max={selectedSubmission?.assignment.totalPoints}
+                max={getGradeMaxPoints(selectedSubmission)}
                 value={gradeData.grade}
                 onChange={(e) => setGradeData({...gradeData, grade: e.target.value})}
                 placeholder="Enter grade"

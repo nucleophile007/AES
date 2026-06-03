@@ -315,7 +315,17 @@ export async function PUT(request: NextRequest) {
     }
 
     // Check if already graded
-    if (existingSubmission.grade !== null) {
+    let isMockTestAttempt = false;
+    if (typeof content === 'string') {
+      try {
+        const parsed = JSON.parse(content) as { submissionType?: string; assessmentType?: string };
+        isMockTestAttempt = parsed.submissionType === 'mcq_test_attempt' && parsed.assessmentType === 'mock-test';
+      } catch {
+        isMockTestAttempt = false;
+      }
+    }
+
+    if (existingSubmission.grade !== null && !isMockTestAttempt) {
       return NextResponse.json(
         { success: false, error: 'Cannot resubmit graded assignment' },
         { status: 400 }

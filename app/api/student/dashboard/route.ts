@@ -53,6 +53,16 @@ const sanitizeMcqConfigForStudent = (config: unknown) => {
   };
 };
 
+const isMcqSubmissionContent = (content: string | null) => {
+  if (!content) return false;
+  try {
+    const parsed = JSON.parse(content) as { submissionType?: string };
+    return parsed.submissionType === 'mcq_test_attempt';
+  } catch {
+    return false;
+  }
+};
+
 export async function GET(request: NextRequest) {
   try {
     const user = await getUserFromRequest(request);
@@ -159,7 +169,7 @@ export async function GET(request: NextRequest) {
         return {
           id: resource.id,
           title: resource.title,
-          description: resource.description,
+          description: resource.type === 'mcq_template' ? parsedTemplate.summary : resource.description,
           type: resource.type,
           isRequired,
           fileUrl: resource.fileUrl,
@@ -195,7 +205,9 @@ export async function GET(request: NextRequest) {
     });
 
     // Transform submissions for display
-    const submissionsWithDetails = student.submissions.map(submission => ({
+    const submissionsWithDetails = student.submissions.map(submission => {
+      const isMcq = isMcqSubmissionContent(submission.content);
+      return {
       id: submission.id,
       assignmentId: submission.assignmentId,
       assignmentTitle: submission.assignment.title,
@@ -204,10 +216,11 @@ export async function GET(request: NextRequest) {
       fileUrl: submission.fileUrl,
       submittedAt: submission.submittedAt.toISOString(),
       grade: submission.grade,
-      totalPoints: submission.assignment.totalPoints,
+        totalPoints: isMcq ? 100 : submission.assignment.totalPoints,
       feedback: submission.feedback,
       status: submission.status
-    }));
+      };
+    });
 
     // Calculate student statistics
     const totalSubmissions = submissionsWithDetails.length;

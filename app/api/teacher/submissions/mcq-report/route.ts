@@ -46,17 +46,43 @@ interface StudentMcqAttempt {
   attemptId: string;
   attemptNumber: number;
   resourceId: number | null;
+  startedAt?: string;
   submittedAt: string;
   timerMode: "timed" | "untimed";
+  recommendedMinutes?: number | null;
+  chosenMinutes?: number | null;
+  elapsedMs?: number;
   summary: {
     answeredCount: number;
     totalQuestions: number;
     maxScore: number;
   };
   answersByQuestionId: Record<string, string[]>;
+  questions?: Array<{
+    questionId: string;
+    selectedAnswers: string[];
+    timeSpentMs?: number;
+    visitCount?: number;
+    firstViewedAt?: string | null;
+    lastViewedAt?: string | null;
+    lastAnsweredAt?: string | null;
+  }>;
 }
 
 const round2 = (value: number) => Math.round(value * 100) / 100;
+const formatDurationLabel = (ms: number) => {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  if (hours > 0) {
+    return `${hours}h ${minutes}m ${seconds}s`;
+  }
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`;
+  }
+  return `${seconds}s`;
+};
 
 const normalizeAnswerArray = (value: unknown) => {
   if (!Array.isArray(value)) return [];
@@ -143,7 +169,7 @@ const normalizeMcqConfig = (config: unknown): McqConfigStored | null => {
 
   if (questions.length === 0) return null;
   return {
-    title: typeof raw.title === "string" ? raw.title : "MCQ Test",
+    title: typeof raw.title === "string" ? raw.title : "MCQ + PDF Assessment",
     numberingStyle: typeof raw.numberingStyle === "string" ? raw.numberingStyle : "numeric",
     sections,
     questions,
@@ -181,18 +207,35 @@ const parseSubmissionAttempts = (content: string | null): {
     const attemptsRaw = Array.isArray(parsed.attempts) ? parsed.attempts : [];
     const attemptsFromHistory = attemptsRaw.map((attempt, index) => {
       const current = (attempt || {}) as Record<string, unknown>;
+      const questionsRaw = Array.isArray(current.questions) ? current.questions : [];
       return {
         attemptId: typeof current.attemptId === "string" ? current.attemptId : `attempt-${index + 1}`,
         attemptNumber: Number(current.attemptNumber) || index + 1,
         resourceId: Number.isFinite(Number(current.resourceId)) ? Number(current.resourceId) : resourceId,
+        startedAt: typeof current.startedAt === "string" ? current.startedAt : "",
         submittedAt: typeof current.submittedAt === "string" ? current.submittedAt : "",
         timerMode: current.timerMode === "timed" ? "timed" : "untimed",
+        recommendedMinutes: Number.isFinite(Number(current.recommendedMinutes)) ? Math.max(1, Number(current.recommendedMinutes)) : null,
+        chosenMinutes: Number.isFinite(Number(current.chosenMinutes)) ? Math.max(1, Number(current.chosenMinutes)) : null,
+        elapsedMs: Math.max(0, Number(current.elapsedMs) || 0),
         summary: {
           answeredCount: Number((current.summary as Record<string, unknown> | undefined)?.answeredCount) || 0,
           totalQuestions: Number((current.summary as Record<string, unknown> | undefined)?.totalQuestions) || 0,
           maxScore: Number((current.summary as Record<string, unknown> | undefined)?.maxScore) || 0,
         },
         answersByQuestionId: normalizeAnswersByQuestion(current.answersByQuestionId),
+        questions: questionsRaw.map((question, questionIndex) => {
+          const currentQuestion = (question || {}) as Record<string, unknown>;
+          return {
+            questionId: typeof currentQuestion.questionId === "string" ? currentQuestion.questionId : `q-${questionIndex + 1}`,
+            selectedAnswers: normalizeAnswerArray(currentQuestion.selectedAnswers),
+            timeSpentMs: Math.max(0, Number(currentQuestion.timeSpentMs) || 0),
+            visitCount: Math.max(0, Number(currentQuestion.visitCount) || 0),
+            firstViewedAt: typeof currentQuestion.firstViewedAt === "string" ? currentQuestion.firstViewedAt : null,
+            lastViewedAt: typeof currentQuestion.lastViewedAt === "string" ? currentQuestion.lastViewedAt : null,
+            lastAnsweredAt: typeof currentQuestion.lastAnsweredAt === "string" ? currentQuestion.lastAnsweredAt : null,
+          };
+        }),
       } satisfies StudentMcqAttempt;
     }).filter((attempt) => attempt.submittedAt || Object.keys(attempt.answersByQuestionId).length > 0);
 
@@ -205,14 +248,32 @@ const parseSubmissionAttempts = (content: string | null): {
       attemptId: "attempt-1",
       attemptNumber: 1,
       resourceId,
+      startedAt: typeof parsed.startedAt === "string" ? parsed.startedAt : typeof parsed.submittedAt === "string" ? parsed.submittedAt : "",
       submittedAt: typeof parsed.submittedAt === "string" ? parsed.submittedAt : "",
       timerMode: parsed.timerMode === "timed" ? "timed" : "untimed",
+      recommendedMinutes: Number.isFinite(Number(parsed.recommendedMinutes)) ? Math.max(1, Number(parsed.recommendedMinutes)) : null,
+      chosenMinutes: Number.isFinite(Number(parsed.timerMinutes)) ? Math.max(1, Number(parsed.timerMinutes)) : null,
+      elapsedMs: Math.max(0, Number(parsed.elapsedMs) || 0),
       summary: {
         answeredCount: Number((parsed.summary as Record<string, unknown> | undefined)?.answeredCount) || 0,
         totalQuestions: Number((parsed.summary as Record<string, unknown> | undefined)?.totalQuestions) || 0,
         maxScore: Number((parsed.summary as Record<string, unknown> | undefined)?.maxScore) || 0,
       },
       answersByQuestionId: normalizeAnswersByQuestion(parsed.answersByQuestionId),
+      questions: Array.isArray(parsed.questions)
+        ? parsed.questions.map((question, questionIndex) => {
+            const currentQuestion = (question || {}) as Record<string, unknown>;
+            return {
+              questionId: typeof currentQuestion.questionId === "string" ? currentQuestion.questionId : `q-${questionIndex + 1}`,
+              selectedAnswers: normalizeAnswerArray(currentQuestion.selectedAnswers),
+              timeSpentMs: Math.max(0, Number(currentQuestion.timeSpentMs) || 0),
+              visitCount: Math.max(0, Number(currentQuestion.visitCount) || 0),
+              firstViewedAt: typeof currentQuestion.firstViewedAt === "string" ? currentQuestion.firstViewedAt : null,
+              lastViewedAt: typeof currentQuestion.lastViewedAt === "string" ? currentQuestion.lastViewedAt : null,
+              lastAnsweredAt: typeof currentQuestion.lastAnsweredAt === "string" ? currentQuestion.lastAnsweredAt : null,
+            };
+          })
+        : [],
     };
     return { parsed, attempts: [fallbackAttempt], resourceId };
   } catch {
@@ -298,6 +359,9 @@ const buildFeedbackReportText = (report: any, presentation?: McqReportPresentati
   lines.push(`Score: ${report.scoreSummary.finalScore}/${report.scoreSummary.maxScore} (${report.scoreSummary.percentage}%)`);
   lines.push(`Raw score (with negatives): ${report.scoreSummary.rawScore}`);
   lines.push(`Considered attempt: #${report.attemptPolicy.consideredAttemptNumber} on ${report.attemptPolicy.consideredAttemptSubmittedAt || "N/A"}`);
+  if (report.timingSummary?.elapsedMs) {
+    lines.push(`Time spent: ${formatDurationLabel(Number(report.timingSummary.elapsedMs) || 0)}`);
+  }
   lines.push("");
 
   if (presentation) {
@@ -339,6 +403,9 @@ export async function POST(request: NextRequest) {
     const submissionId = Number(data.submissionId);
     const action = String(data.action || (data.sendToStudent ? "send" : "generate"));
     const incomingPresentation = data.presentation as unknown;
+    const requestedAttemptNumber = Number.isFinite(Number(data.attemptNumber))
+      ? Number(data.attemptNumber)
+      : null;
     const teacherEmailParam = String(data.teacherEmail || "").toLowerCase();
 
     if (!Number.isFinite(submissionId)) {
@@ -390,7 +457,7 @@ export async function POST(request: NextRequest) {
       const fallbackPresentation = createDefaultReportPresentation({
         studentName: submission.student.name,
         assignmentTitle: submission.assignment.title,
-        testTitle: String(parsedContent.testTitle || "MCQ Test"),
+        testTitle: String(parsedContent.testTitle || "MCQ + PDF Assessment"),
         sectionStats: Array.isArray(existingReport.sectionStats) ? (existingReport.sectionStats as any[]) : [],
       });
       const currentPresentation = normalizeReportPresentation(
@@ -407,14 +474,14 @@ export async function POST(request: NextRequest) {
       const aiDifficultyReviews = await generateGeminiDifficultyReviews({
         studentName: submission.student.name,
         assignmentTitle: submission.assignment.title,
-        testTitle: String(parsedContent.testTitle || "MCQ Test"),
+        testTitle: String(parsedContent.testTitle || "MCQ + PDF Assessment"),
         difficultyStats: Array.isArray(existingReport.difficultyStats) ? (existingReport.difficultyStats as any[]) : [],
       });
 
       const aiTopicInsights = await generateGeminiTopicInsights({
         studentName: submission.student.name,
         assignmentTitle: submission.assignment.title,
-        testTitle: String(parsedContent.testTitle || "MCQ Test"),
+        testTitle: String(parsedContent.testTitle || "MCQ + PDF Assessment"),
         sections: Array.isArray(existingReport.sectionStats) ? (existingReport.sectionStats as any[]) : [],
       });
 
@@ -537,13 +604,33 @@ export async function POST(request: NextRequest) {
           return Number.isFinite(submittedAtMs) && submittedAtMs <= dueDate.getTime();
         })
       : attemptsSorted;
-    const consideredAttempt = (validAttempts.length > 0 ? validAttempts[validAttempts.length - 1] : attemptsSorted[attemptsSorted.length - 1]) || attemptsSorted[attemptsSorted.length - 1];
+    const policyAttempt = (validAttempts.length > 0 ? validAttempts[validAttempts.length - 1] : attemptsSorted[attemptsSorted.length - 1])
+      || attemptsSorted[attemptsSorted.length - 1];
+    const requestedAttempt = requestedAttemptNumber
+      ? attemptsSorted.find((attempt) => attempt.attemptNumber === requestedAttemptNumber)
+      : null;
+    const consideredAttempt = requestedAttempt || policyAttempt;
 
     if (!consideredAttempt) {
       return NextResponse.json({ success: false, error: "No attempt found to evaluate." }, { status: 400 });
     }
+    if (requestedAttemptNumber && !requestedAttempt) {
+      return NextResponse.json({ success: false, error: "Requested attempt not found." }, { status: 400 });
+    }
 
     const sectionNameById = new Map(mcqConfig.sections.map((section) => [section.id, section.name]));
+    const questionTimingById = new Map(
+      (consideredAttempt.questions || []).map((question) => [
+        question.questionId,
+        {
+          timeSpentMs: Math.max(0, Number(question.timeSpentMs) || 0),
+          visitCount: Math.max(0, Number(question.visitCount) || 0),
+          firstViewedAt: question.firstViewedAt || null,
+          lastViewedAt: question.lastViewedAt || null,
+          lastAnsweredAt: question.lastAnsweredAt || null,
+        },
+      ])
+    );
     const sectionStatsMap = new Map<string, {
       sectionId: string;
       sectionName: string;
@@ -555,6 +642,7 @@ export async function POST(request: NextRequest) {
       unansweredCount: number;
       score: number;
       maxScore: number;
+      timeSpentMs: number;
     }>();
     const difficultyStatsMap = new Map<Difficulty, {
       difficulty: Difficulty;
@@ -582,6 +670,13 @@ export async function POST(request: NextRequest) {
       const difficulty: Difficulty = question.difficulty || "medium";
       const sectionName = sectionNameById.get(question.sectionId) || "Section";
       const questionMax = Math.max(0, question.marks);
+      const questionTiming = questionTimingById.get(question.id) || {
+        timeSpentMs: 0,
+        visitCount: 0,
+        firstViewedAt: null,
+        lastViewedAt: null,
+        lastAnsweredAt: null,
+      };
       maxScore += questionMax;
       rawScore += result.score;
 
@@ -596,10 +691,12 @@ export async function POST(request: NextRequest) {
         unansweredCount: 0,
         score: 0,
         maxScore: 0,
+        timeSpentMs: 0,
       };
       sectionStat.questionCount += 1;
       sectionStat.score = round2(sectionStat.score + result.score);
       sectionStat.maxScore = round2(sectionStat.maxScore + questionMax);
+      sectionStat.timeSpentMs += questionTiming.timeSpentMs;
 
       const difficultyStat = difficultyStatsMap.get(difficulty) || {
         difficulty,
@@ -656,13 +753,22 @@ export async function POST(request: NextRequest) {
         selectedAnswers: result.selected,
         scoreAwarded: round2(result.score),
         status: result.status,
+        timeSpentMs: questionTiming.timeSpentMs,
+        visitCount: questionTiming.visitCount,
+        firstViewedAt: questionTiming.firstViewedAt,
+        lastViewedAt: questionTiming.lastViewedAt,
+        lastAnsweredAt: questionTiming.lastAnsweredAt,
       };
     });
 
     const roundedRawScore = round2(rawScore);
     const finalScore = round2(Math.max(0, roundedRawScore));
     const percentage = maxScore > 0 ? round2((finalScore / maxScore) * 100) : 0;
-    const gradeToStore = Math.round(Math.max(0, Math.min(submission.assignment.totalPoints, finalScore)));
+    const gradeToStore = Math.round(Math.max(0, Math.min(100, percentage)));
+    const totalTrackedQuestionTimeMs = questionStats.reduce(
+      (sum, question) => sum + Math.max(0, Number(question.timeSpentMs) || 0),
+      0
+    );
 
     const sectionStats = Array.from(sectionStatsMap.values()).map((section) => ({
       ...section,
@@ -686,7 +792,11 @@ export async function POST(request: NextRequest) {
         title: targetResource.title,
       },
       attemptPolicy: {
-        rule: hasValidDueDate ? "latest_before_due_date_else_latest" : "latest_attempt",
+        rule: requestedAttemptNumber
+          ? "manual_attempt_select"
+          : hasValidDueDate
+            ? "latest_before_due_date_else_latest"
+            : "latest_attempt",
         assignmentDueDate: hasValidDueDate ? dueDate.toISOString() : null,
         attemptsFound: attemptsSorted.length,
         validAttemptsBeforeDue: validAttempts.length,
@@ -694,6 +804,20 @@ export async function POST(request: NextRequest) {
         consideredAttemptNumber: consideredAttempt.attemptNumber,
         consideredAttemptSubmittedAt: consideredAttempt.submittedAt,
         usedLateFallback: hasValidDueDate && validAttempts.length === 0,
+        usedManualOverride: Boolean(requestedAttemptNumber),
+      },
+      timingSummary: {
+        timerMode: consideredAttempt.timerMode,
+        recommendedMinutes: consideredAttempt.recommendedMinutes ?? null,
+        chosenMinutes: consideredAttempt.chosenMinutes ?? null,
+        elapsedMs: Math.max(0, Number(consideredAttempt.elapsedMs) || 0),
+        trackedQuestionTimeMs: totalTrackedQuestionTimeMs,
+        averageTimePerQuestionMs: mcqConfig.questions.length > 0
+          ? round2((totalTrackedQuestionTimeMs / mcqConfig.questions.length))
+          : 0,
+        averageTimePerAnsweredQuestionMs: answeredCount > 0
+          ? round2((totalTrackedQuestionTimeMs / answeredCount))
+          : 0,
       },
       scoreSummary: {
         maxScore: round2(maxScore),
@@ -715,7 +839,7 @@ export async function POST(request: NextRequest) {
     const fallbackPresentation = createDefaultReportPresentation({
       studentName: submission.student.name,
       assignmentTitle: submission.assignment.title,
-      testTitle: String(parsed.testTitle || "MCQ Test"),
+      testTitle: String(parsed.testTitle || "MCQ + PDF Assessment"),
       sectionStats,
     });
     const reportPresentation = normalizeReportPresentation(
@@ -726,13 +850,13 @@ export async function POST(request: NextRequest) {
     const aiDifficultyReviews = await generateGeminiDifficultyReviews({
       studentName: submission.student.name,
       assignmentTitle: submission.assignment.title,
-      testTitle: String(parsed.testTitle || "MCQ Test"),
+      testTitle: String(parsed.testTitle || "MCQ + PDF Assessment"),
       difficultyStats,
     });
     const aiTopicInsights = await generateGeminiTopicInsights({
       studentName: submission.student.name,
       assignmentTitle: submission.assignment.title,
-      testTitle: String(parsed.testTitle || "MCQ Test"),
+      testTitle: String(parsed.testTitle || "MCQ + PDF Assessment"),
       sections: sectionStats,
     });
     const normalizedReportPresentation: McqReportPresentation = {

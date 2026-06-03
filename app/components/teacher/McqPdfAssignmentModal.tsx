@@ -139,7 +139,8 @@ const DEFAULT_DIFFICULTY_MINUTES: Record<Difficulty, number> = {
   hard: 2.5,
 };
 const SECTION_COLORS = ["#60a5fa", "#f87171", "#34d399", "#fbbf24", "#a78bfa", "#fb7185", "#22d3ee", "#4ade80"] as const;
-const getAssessmentTypeLabel = (value: AssessmentType) => (value === "simple-assignment" ? "Simple Assignment" : "Mock Test");
+const getAssessmentTypeShortLabel = (value: AssessmentType) => (value === "simple-assignment" ? "Assignment" : "Mock Test");
+const getAssessmentTypeLabel = (value: AssessmentType) => (value === "simple-assignment" ? "MCQ + PDF Assignment" : "MCQ + PDF Mock Test");
 const NO_TOPIC_VALUE = "__no_topic__";
 const NO_SUBTOPIC_VALUE = "__no_subtopic__";
 
@@ -264,8 +265,8 @@ const createDefaultConfig = (): McqPdfConfig => {
     version: 1,
     status: "draft",
     assessmentType: "mock-test",
-    title: "MCQ Test",
-    description: "MCQ test linked to uploaded PDF",
+    title: "MCQ + PDF Mock Test",
+    description: "MCQ + PDF mock test linked to the uploaded PDF",
     numberingStyle: "numeric",
     recommendedTimeMode: "auto",
     recommendedTimeMinutes: getAutoRecommendedTimeMinutes(questions, autoTimeFormula),
@@ -626,7 +627,8 @@ export default function McqPdfAssignmentModal({
     : autoRecommendedTimeMinutes;
   const isMockTestType = config.assessmentType === "mock-test";
   const assessmentTypeLabel = getAssessmentTypeLabel(config.assessmentType);
-  const assessmentNounLower = isMockTestType ? "test" : "assignment";
+  const assessmentTypeShortLabel = getAssessmentTypeShortLabel(config.assessmentType);
+  const assessmentNounLower = assessmentTypeShortLabel.toLowerCase();
   const autoFormulaSummary = useMemo(() => {
     const formula = config.autoTimeFormula;
     if (formula.mode === "section") {
@@ -701,7 +703,7 @@ export default function McqPdfAssignmentModal({
     setPreviewCursor(0);
     setPreviewState({});
     setPreviewStarted(false);
-    setPreviewTimerDecision("pending");
+    setPreviewTimerDecision(nextDefault.assessmentType === "mock-test" ? "timed" : "untimed");
     setPreviewTimerMinutes(nextDefault.recommendedTimeMinutes);
     setTimerRunning(false);
     setTimerEndAtMs(null);
@@ -761,6 +763,20 @@ export default function McqPdfAssignmentModal({
     if (timerEndAtMs !== null) setTimerEndAtMs(null);
     if (timerRemainingMs !== 0) setTimerRemainingMs(0);
   }, [open, config.assessmentType, previewTimerDecision, timerRunning, timerEndAtMs, timerRemainingMs]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (config.assessmentType !== "mock-test") return;
+    if (previewTimerDecision !== "timed") {
+      setPreviewTimerDecision("timed");
+    }
+    if (previewTimerMinutes !== recommendedTimeMinutes) {
+      setPreviewTimerMinutes(recommendedTimeMinutes);
+    }
+    if (!previewStarted && timerRemainingMs !== recommendedTimeMinutes * 60 * 1000) {
+      setTimerRemainingMs(recommendedTimeMinutes * 60 * 1000);
+    }
+  }, [open, config.assessmentType, previewStarted, previewTimerDecision, previewTimerMinutes, recommendedTimeMinutes, timerRemainingMs]);
 
   useEffect(() => {
     setBulkTypeSectionIds((prev) => pruneSectionSelections(prev));
@@ -1456,7 +1472,7 @@ export default function McqPdfAssignmentModal({
     setManualQuestionCount(nextDefault.questions.length);
 
     setPreviewStarted(false);
-    setPreviewTimerDecision("pending");
+    setPreviewTimerDecision(nextDefault.assessmentType === "mock-test" ? "timed" : "untimed");
     setPreviewTimerMinutes(nextDefault.recommendedTimeMinutes);
     setTimerRunning(false);
     setTimerEndAtMs(null);
@@ -1666,7 +1682,7 @@ export default function McqPdfAssignmentModal({
 
       toast({
         title: `${assessmentTypeLabel} saved`,
-        description: `MCQ ${assessmentNounLower} is saved and reusable in assignments.`,
+        description: `${assessmentTypeLabel} is saved and reusable in assignments.`,
         className: 'border-green-500 bg-green-50 text-green-900',
       });
     } catch (error) {
@@ -1784,21 +1800,21 @@ export default function McqPdfAssignmentModal({
   };
 
   const startPreview = () => {
-    const requiresTimerChoice = config.assessmentType === "mock-test";
-    if (requiresTimerChoice && previewTimerDecision === "pending") {
-      toast({ title: "Select timer preference", description: "Choose timed or untimed mode before starting preview." });
-      return;
-    }
-    const effectiveDecision = requiresTimerChoice ? previewTimerDecision : "untimed";
+    const effectiveDecision = config.assessmentType === "mock-test" ? "timed" : "untimed";
+    const now = Date.now();
 
     setPreviewStarted(true);
     setPreviewCursor(0);
     if (effectiveDecision === "timed") {
-      const ms = Math.max(1, previewTimerMinutes) * 60 * 1000;
+      const boundedMinutes = Math.max(1, recommendedTimeMinutes);
+      const ms = boundedMinutes * 60 * 1000;
+      setPreviewTimerDecision("timed");
+      setPreviewTimerMinutes(boundedMinutes);
       setTimerRemainingMs(ms);
-      setTimerEndAtMs(null);
-      setTimerRunning(false);
+      setTimerEndAtMs(now + ms);
+      setTimerRunning(true);
     } else {
+      setPreviewTimerDecision("untimed");
       setTimerRemainingMs(0);
       setTimerEndAtMs(null);
       setTimerRunning(false);
@@ -1810,7 +1826,7 @@ export default function McqPdfAssignmentModal({
     setPreviewCursor(0);
     setTimerRunning(false);
     setTimerEndAtMs(null);
-    setTimerRemainingMs(previewTimerDecision === "timed" ? Math.max(1, previewTimerMinutes) * 60 * 1000 : 0);
+    setTimerRemainingMs(config.assessmentType === "mock-test" ? recommendedTimeMinutes * 60 * 1000 : 0);
   };
 
   return (
@@ -1820,12 +1836,12 @@ export default function McqPdfAssignmentModal({
           <DialogHeader className="shrink-0 border-b border-slate-700/80 bg-slate-900/70 px-6 py-4 text-left">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <DialogTitle className="text-2xl font-semibold tracking-tight text-white">MCQ + PDF {assessmentTypeLabel} Builder</DialogTitle>
-                <p className="mt-1 text-sm text-slate-300">Create reusable MCQ + PDF {isMockTestType ? "mock tests" : "simple assignments"} and attach them to assignments later.</p>
+                <DialogTitle className="text-2xl font-semibold tracking-tight text-white">{assessmentTypeLabel} Builder</DialogTitle>
+                <p className="mt-1 text-sm text-slate-300">Create reusable {isMockTestType ? "mock tests" : "assignments"} linked to a PDF and attach them to assignments later.</p>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <Badge className="bg-blue-600/90 text-white hover:bg-blue-600">Draft {assessmentTypeLabel}</Badge>
+                <Badge className="bg-blue-600/90 text-white hover:bg-blue-600">Draft {assessmentTypeShortLabel}</Badge>
                 <Badge variant="secondary" className="bg-slate-700 text-slate-100">{config.questions.length} Questions</Badge>
                 <Badge variant="secondary" className="bg-slate-700 text-slate-100">{totalPoints} Marks</Badge>
                 {lastAutoSavedAt && <span className="text-xs text-slate-300">Auto-saved {new Date(lastAutoSavedAt).toLocaleTimeString()}</span>}
@@ -1864,7 +1880,7 @@ export default function McqPdfAssignmentModal({
                   ) : (
                     <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-slate-400">
                       <FileQuestion className="h-10 w-10" />
-                      <p className="max-w-sm text-sm">Upload a PDF to build a linked OMR-style MCQ {assessmentNounLower}.</p>
+                      <p className="max-w-sm text-sm">Upload a PDF to build a linked OMR-style {assessmentNounLower}.</p>
                     </div>
                   )}
                 </div>
@@ -1887,7 +1903,7 @@ export default function McqPdfAssignmentModal({
                           <CardContent className="space-y-3 p-4">
                             <div className="grid gap-3 md:grid-cols-3">
                               <div>
-                                <Label htmlFor="mcq-title" className="text-slate-200">Test Title</Label>
+                                <Label htmlFor="mcq-title" className="text-slate-200">Title</Label>
                                 <Input id="mcq-title" value={config.title} onChange={(e) => setConfig((p) => ({ ...p, title: e.target.value, updatedAt: new Date().toISOString() }))} className="border-slate-700 bg-slate-950 text-slate-100" />
                               </div>
                               <div>
@@ -1901,7 +1917,7 @@ export default function McqPdfAssignmentModal({
                                   <SelectTrigger className="border-slate-700 bg-slate-950 text-slate-100"><SelectValue /></SelectTrigger>
                                   <SelectContent>
                                     <SelectItem value="mock-test">Mock Test</SelectItem>
-                                    <SelectItem value="simple-assignment">Simple Assignment</SelectItem>
+                                    <SelectItem value="simple-assignment">Assignment</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -1920,7 +1936,7 @@ export default function McqPdfAssignmentModal({
                             </div>
 
                             <div>
-                              <Label htmlFor="template-summary" className="text-slate-200">Test Notes</Label>
+                              <Label htmlFor="template-summary" className="text-slate-200">Notes</Label>
                               <Input id="template-summary" value={templateSummary} onChange={(e) => setTemplateSummary(e.target.value)} className="border-slate-700 bg-slate-950 text-slate-100" />
                             </div>
 
@@ -1931,7 +1947,7 @@ export default function McqPdfAssignmentModal({
 
                             <div className="grid gap-3 md:grid-cols-2">
                               <div className="space-y-2 rounded-md border border-blue-500/30 bg-blue-500/10 px-3 py-2 text-sm text-blue-100">
-                                <div>Recommended time: <strong>{recommendedTimeMinutes} min</strong></div>
+                                <div>{isMockTestType ? "Time limit" : "Recommended time"}: <strong>{recommendedTimeMinutes} min</strong></div>
                                 <div className="flex flex-wrap items-end gap-2">
                                   <div className="w-28">
                                     <Label className="text-[11px] text-blue-100/90">Minutes</Label>
@@ -2798,23 +2814,20 @@ export default function McqPdfAssignmentModal({
                             <h4 className="text-base font-semibold text-slate-100">Preview Setup</h4>
                             <p className="text-sm text-slate-300">
                               {isMockTestType
-                                ? `This preview has ${config.questions.length} questions. Would you like to use a timer?`
-                                : `This preview has ${config.questions.length} questions. Simple assignments are untimed by default.`}
+                                ? `This mock test has ${config.questions.length} questions and will start with the configured time limit.`
+                                : `This assignment has ${config.questions.length} questions and remains untimed by default.`}
                             </p>
-                            <p className="text-xs text-slate-400">Recommended time: {recommendedTimeMinutes} min (editable if enabled)</p>
+                            <p className="text-xs text-slate-400">
+                              {isMockTestType ? "Configured time limit" : "Recommended time"}: {recommendedTimeMinutes} min
+                            </p>
                             {isMockTestType && (
-                              <div className="flex flex-wrap items-center gap-2">
-                                <Button type="button" variant={previewTimerDecision === "timed" ? "default" : "outline"} className={previewTimerDecision === "timed" ? "bg-blue-600 hover:bg-blue-500" : "border-slate-600 bg-slate-950 text-slate-100 hover:bg-slate-800"} onClick={() => { setPreviewTimerDecision("timed"); setPreviewTimerMinutes(recommendedTimeMinutes); setTimerRemainingMs(recommendedTimeMinutes * 60 * 1000); }}>Yes, use timer</Button>
-                                <Button type="button" variant={previewTimerDecision === "untimed" ? "default" : "outline"} className={previewTimerDecision === "untimed" ? "bg-blue-600 hover:bg-blue-500" : "border-slate-600 bg-slate-950 text-slate-100 hover:bg-slate-800"} onClick={() => { setPreviewTimerDecision("untimed"); setTimerRemainingMs(0); }}>No, untimed</Button>
+                              <div className="rounded-md border border-blue-400/30 bg-blue-500/10 px-3 py-2 text-xs text-blue-100">
+                                Mock tests always run as timed attempts using the value set in Configure.
                               </div>
                             )}
-                            {isMockTestType && previewTimerDecision === "timed" && (
-                              <div className="max-w-xs">
-                                <Label className="text-xs text-slate-300">Timer minutes</Label>
-                                <Input type="number" min={1} max={600} value={previewTimerMinutes} onChange={(e) => setPreviewTimerMinutes(Math.max(1, Math.min(600, Number(e.target.value) || 1)))} className="border-slate-700 bg-slate-900 text-slate-100" />
-                              </div>
-                            )}
-                            <Button type="button" className="bg-blue-600 hover:bg-blue-500" onClick={startPreview}>Start Preview {isMockTestType ? "Test" : "Assignment"}</Button>
+                            <Button type="button" className="bg-blue-600 hover:bg-blue-500" onClick={startPreview}>
+                              Start Preview {assessmentTypeShortLabel}
+                            </Button>
                           </CardContent>
                         </Card>
                       ) : (
@@ -2825,7 +2838,6 @@ export default function McqPdfAssignmentModal({
                                 {previewTimerDecision === "timed" ? (
                                   <>
                                     <div className="rounded-md bg-slate-950 px-3 py-2 text-sm font-mono text-slate-100"><span className="mr-2 inline-flex items-center gap-1 text-slate-300"><Timer className="h-3.5 w-3.5" />Timer</span>{formatMs(timerRemainingMs)}</div>
-                                    <div className="w-28"><Input type="number" min={1} max={600} value={previewTimerMinutes} onChange={(e) => setPreviewTimerMinutes(Math.max(1, Math.min(600, Number(e.target.value) || 1)))} className="h-8 border-slate-700 bg-slate-950 text-slate-100" /></div>
                                   </>
                                 ) : (
                                   <div className="rounded-md bg-slate-950 px-3 py-2 text-sm text-slate-100">Untimed preview mode</div>
@@ -2833,7 +2845,7 @@ export default function McqPdfAssignmentModal({
                               </div>
 
                               <div className="flex items-center gap-2">
-                                {previewTimerDecision === "timed" && (
+                                {previewTimerDecision === "timed" && !isMockTestType && (
                                   <>
                                     {!timerRunning ? <Button type="button" size="sm" onClick={startTimer} className="bg-blue-600 hover:bg-blue-500">Start</Button> : <Button type="button" size="sm" variant="outline" className="border-slate-600 bg-slate-950 text-slate-100 hover:bg-slate-800" onClick={pauseTimer}>Pause</Button>}
                                     <Button type="button" size="sm" variant="outline" className="border-slate-600 bg-slate-950 text-slate-100 hover:bg-slate-800" onClick={resetTimer}>Reset</Button>
