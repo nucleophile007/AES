@@ -1535,7 +1535,7 @@ export default function StudentDashboard() {
   const mcqAttemptActionLabel = getMcqAttemptActionLabel(mcqAssessmentType, mcqAttemptHistory.length > 0);
   const mcqStartActionLabel = mcqAttemptHistory.length > 0 ? mcqAttemptActionLabel : `Start ${mcqTypeShortLabel}`;
 
-  const updateMcqQuestionTiming = (questionId: string, updater: (current: StudentMcqQuestionTiming) => StudentMcqQuestionTiming) => {
+  const updateMcqQuestionTiming = useCallback((questionId: string, updater: (current: StudentMcqQuestionTiming) => StudentMcqQuestionTiming) => {
     const current = mcqQuestionTimingRef.current[questionId] || createDefaultMcqQuestionTiming();
     const next = updater(current);
     mcqQuestionTimingRef.current = {
@@ -1543,9 +1543,9 @@ export default function StudentDashboard() {
       [questionId]: next,
     };
     setMcqQuestionTiming(mcqQuestionTimingRef.current);
-  };
+  }, []);
 
-  const flushCurrentMcqQuestionTiming = (nowMs = Date.now()) => {
+  const flushCurrentMcqQuestionTiming = useCallback((nowMs = Date.now()) => {
     const questionId = mcqActiveQuestionIdRef.current;
     const enteredAtMs = mcqQuestionEnteredAtMsRef.current;
     if (!questionId || enteredAtMs === null) return;
@@ -1558,7 +1558,7 @@ export default function StudentDashboard() {
       }));
     }
     mcqQuestionEnteredAtMsRef.current = nowMs;
-  };
+  }, [updateMcqQuestionTiming]);
 
   const handleMcqTemplateChange = (nextTemplateId: string) => {
     if (!mcqAssignment) return;
@@ -1656,7 +1656,7 @@ export default function StudentDashboard() {
       mcqActiveQuestionIdRef.current = nextQuestionId;
       mcqQuestionEnteredAtMsRef.current = nowMs;
     }
-  }, [mcqStarted, activeMcqQuestion]);
+  }, [mcqStarted, activeMcqQuestion, flushCurrentMcqQuestionTiming, updateMcqQuestionTiming]);
 
   // Early return for authentication loading
   if (authLoading && !authTimedOut) {

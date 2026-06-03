@@ -159,6 +159,7 @@ const parseMcqSubmission = (content: string | null): ParsedMcqSubmission | null 
     const parsed = JSON.parse(content) as {
       submissionType?: string;
       testTitle?: string;
+      assessmentType?: string;
       submittedAt?: string;
       summary?: {
         answeredCount?: number;
@@ -231,6 +232,7 @@ const parseMcqSubmission = (content: string | null): ParsedMcqSubmission | null 
 
     return {
       testTitle: parsed.testTitle || "MCQ + PDF Assessment",
+      assessmentType: parsed.assessmentType === "simple-assignment" ? "simple-assignment" : "mock-test",
       attemptCount: attempts.length > 0 ? attempts.length : 1,
       latestAttemptNumber: Number(parsed.latestAttemptNumber) || Number(latestAttempt?.attemptNumber) || 1,
       answeredCount: Number(latestSummary.answeredCount) || 0,
