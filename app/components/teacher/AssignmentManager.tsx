@@ -158,7 +158,7 @@ const SUBJECTS = [
 ];
 
 const getMcqTemplateTypeLabel = (assessmentType: McqAssessmentType) =>
-  assessmentType === "simple-assignment" ? "Simple Assignment" : "Mock Test";
+  assessmentType === "simple-assignment" ? "MCQ + PDF Assignment" : "MCQ + PDF Mock Test";
 
 // Separate AssignmentForm component to prevent recreation on every render
 const AssignmentForm = ({ 

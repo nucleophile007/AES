@@ -73,6 +73,8 @@ import {
   Bookmark,
   RefreshCw,
   LogOut,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ResourceLibrary from "@/components/student/ResourceLibrary";
@@ -263,7 +265,20 @@ interface StudentMcqAttemptRecord {
     negativeMarks: number;
     partialMarkingEnabled: boolean;
     selectedAnswers: string[];
+    timeSpentMs?: number;
+    visitCount?: number;
+    firstViewedAt?: string | null;
+    lastViewedAt?: string | null;
+    lastAnsweredAt?: string | null;
   }>;
+}
+
+interface StudentMcqQuestionTiming {
+  timeSpentMs: number;
+  visitCount: number;
+  firstViewedAt: string | null;
+  lastViewedAt: string | null;
+  lastAnsweredAt: string | null;
 }
 
 const clampPercentage = (value: number) => {
@@ -309,6 +324,16 @@ const formatDuration = (ms: number) => {
   return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 };
 
+const createDefaultMcqQuestionTiming = (): StudentMcqQuestionTiming => ({
+  timeSpentMs: 0,
+  visitCount: 0,
+  firstViewedAt: null,
+  lastViewedAt: null,
+  lastAnsweredAt: null,
+});
+
+const ALL_MCQ_SECTIONS_VALUE = "__all_sections__";
+
 const parseStudentMcqAttemptHistory = (content: string | undefined): StudentMcqAttemptRecord[] => {
   if (!content) return [];
   try {
@@ -325,6 +350,11 @@ const parseStudentMcqAttemptHistory = (content: string | undefined): StudentMcqA
         negativeMarks?: number;
         partialMarkingEnabled?: boolean;
         selectedAnswers?: string[];
+        timeSpentMs?: number;
+        visitCount?: number;
+        firstViewedAt?: string | null;
+        lastViewedAt?: string | null;
+        lastAnsweredAt?: string | null;
       }>;
       summary?: {
         answeredCount?: number;
@@ -382,6 +412,11 @@ const parseStudentMcqAttemptHistory = (content: string | undefined): StudentMcqA
                     selectedAnswers: Array.isArray(currentQuestion.selectedAnswers)
                       ? currentQuestion.selectedAnswers.map((value) => String(value))
                       : [],
+                    timeSpentMs: Math.max(0, Number(currentQuestion.timeSpentMs) || 0),
+                    visitCount: Math.max(0, Number(currentQuestion.visitCount) || 0),
+                    firstViewedAt: typeof currentQuestion.firstViewedAt === "string" ? currentQuestion.firstViewedAt : null,
+                    lastViewedAt: typeof currentQuestion.lastViewedAt === "string" ? currentQuestion.lastViewedAt : null,
+                    lastAnsweredAt: typeof currentQuestion.lastAnsweredAt === "string" ? currentQuestion.lastAnsweredAt : null,
                   };
                 })
               : [],
@@ -422,6 +457,11 @@ const parseStudentMcqAttemptHistory = (content: string | undefined): StudentMcqA
         selectedAnswers: Array.isArray(question.selectedAnswers)
           ? question.selectedAnswers.map((value) => String(value))
           : [],
+        timeSpentMs: Math.max(0, Number(question.timeSpentMs) || 0),
+        visitCount: Math.max(0, Number(question.visitCount) || 0),
+        firstViewedAt: typeof question.firstViewedAt === "string" ? question.firstViewedAt : null,
+        lastViewedAt: typeof question.lastViewedAt === "string" ? question.lastViewedAt : null,
+        lastAnsweredAt: typeof question.lastAnsweredAt === "string" ? question.lastAnsweredAt : null,
       })) : [],
     }];
   } catch {
@@ -456,7 +496,7 @@ const parseMcqSubmissionSummary = (content: string | undefined): ParsedMcqSubmis
     const effectiveSummary = latestAttemptSummary || parsed.summary || {};
     const reportScore = Number(parsed.report?.scoreSummary?.finalScore);
     return {
-      testTitle: parsed.testTitle || "MCQ Test",
+      testTitle: parsed.testTitle || "MCQ + PDF Assessment",
       answeredCount: Number(effectiveSummary.answeredCount) || 0,
       totalQuestions: Number(effectiveSummary.totalQuestions) || 0,
       maxScore: Number(effectiveSummary.maxScore) || 0,
@@ -519,8 +559,38 @@ const getMcqOptionLabels = (question: StudentMcqQuestion) => {
   });
 };
 
+const getMcqAssessmentTypeShortLabel = (assessmentType: McqAssessmentType) =>
+  assessmentType === "simple-assignment" ? "Assignment" : "Mock Test";
+
 const getMcqAssessmentTypeLabel = (assessmentType: McqAssessmentType) =>
-  assessmentType === "simple-assignment" ? "Simple Assignment" : "Mock Test";
+  assessmentType === "simple-assignment" ? "MCQ + PDF Assignment" : "MCQ + PDF Mock Test";
+
+const getMcqAttemptActionLabel = (assessmentType: McqAssessmentType, hasPreviousAttempt = false) => {
+  const action = hasPreviousAttempt ? "Reattempt" : "Attempt";
+  return assessmentType === "simple-assignment" ? `${action} Assignment` : `${action} Mock Test`;
+};
+
+const MCQ_CONFIG_MARKERS = [
+  ["[MCQ_TEST_CONFIG_V1]", "[/MCQ_TEST_CONFIG_V1]"],
+  ["[MCQ_TEMPLATE_CONFIG_V1]", "[/MCQ_TEMPLATE_CONFIG_V1]"],
+] as const;
+
+const cleanStudentVisibleText = (value?: string | null) => {
+  if (!value) return "";
+  let cleaned = value;
+  MCQ_CONFIG_MARKERS.forEach(([startMarker, endMarker]) => {
+    const start = cleaned.indexOf(startMarker);
+    if (start === -1) return;
+    const end = cleaned.indexOf(endMarker, start + startMarker.length);
+    cleaned = end === -1
+      ? cleaned.slice(0, start)
+      : `${cleaned.slice(0, start)} ${cleaned.slice(end + endMarker.length)}`;
+  });
+  return cleaned.trim();
+};
+
+const getStudentResourceSummary = (resource?: AssignmentResource | null) =>
+  cleanStudentVisibleText(resource?.mcqSummary || resource?.description || "");
 
 const normalizeStudentMcqConfig = (value: unknown): StudentMcqConfig | null => {
   const raw = (value || {}) as Record<string, unknown>;
@@ -612,7 +682,7 @@ const normalizeStudentMcqConfig = (value: unknown): StudentMcqConfig | null => {
 
   return {
     assessmentType: raw.assessmentType === "simple-assignment" || raw.type === "simple-assignment" ? "simple-assignment" : "mock-test",
-    title: typeof raw.title === "string" ? raw.title : "MCQ Test",
+    title: typeof raw.title === "string" ? raw.title : "MCQ + PDF Assessment",
     description: typeof raw.description === "string" ? raw.description : "",
     numberingStyle,
     recommendedTimeMode: raw.recommendedTimeMode === "manual" ? "manual" : "auto",
@@ -687,6 +757,8 @@ export default function StudentDashboard() {
   const [mcqMarkedForReview, setMcqMarkedForReview] = useState<Record<string, boolean>>({});
   const [mcqAttemptHistory, setMcqAttemptHistory] = useState<StudentMcqAttemptRecord[]>([]);
   const [mcqCursor, setMcqCursor] = useState(0);
+  const [mcqQuestionTiming, setMcqQuestionTiming] = useState<Record<string, StudentMcqQuestionTiming>>({});
+  const [mcqSectionFilterId, setMcqSectionFilterId] = useState<string>(ALL_MCQ_SECTIONS_VALUE);
   const [mcqStarted, setMcqStarted] = useState(false);
   const [mcqTimerDecision, setMcqTimerDecision] = useState<"pending" | "timed" | "untimed">("pending");
   const [mcqTimerMinutes, setMcqTimerMinutes] = useState(1);
@@ -695,7 +767,11 @@ export default function StudentDashboard() {
   const [mcqTimerRemainingMs, setMcqTimerRemainingMs] = useState(0);
   const [mcqStartedAtMs, setMcqStartedAtMs] = useState<number | null>(null);
   const [isMcqSubmitting, setIsMcqSubmitting] = useState(false);
+  const [isMcqDialogMaximized, setIsMcqDialogMaximized] = useState(false);
   const mcqTimerIntervalRef = useRef<number | null>(null);
+  const mcqQuestionTimingRef = useRef<Record<string, StudentMcqQuestionTiming>>({});
+  const mcqQuestionEnteredAtMsRef = useRef<number | null>(null);
+  const mcqActiveQuestionIdRef = useRef<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [messageUnreadCount, setMessageUnreadCount] = useState(0);
   const [error, setError] = useState("");
@@ -1045,30 +1121,6 @@ export default function StudentDashboard() {
     };
   }, []);
 
-  // Early return for authentication loading
-  if (authLoading && !authTimedOut) {
-    return <DashboardLoadingSkeleton role="student" tab={activeTab} />;
-  }
-
-  if (authLoading && authTimedOut) {
-    return (
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-gray-50">
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-red-600 text-xl mb-4">Authentication is taking too long.</div>
-              <Button onClick={() => window.location.reload()}>Try Again</Button>
-            </div>
-          </div>
-        </div>
-      </SidebarProvider>
-    );
-  }
-
-  if (!authUser) {
-    return null;
-  }
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
@@ -1318,6 +1370,7 @@ export default function StudentDashboard() {
   const closeMcqDialog = () => {
     clearMcqTimerInterval();
     setIsMcqDialogOpen(false);
+    setIsMcqDialogMaximized(false);
     setMcqAssignment(null);
     setMcqResourceId(null);
     setMcqConfig(null);
@@ -1325,6 +1378,8 @@ export default function StudentDashboard() {
     setMcqMarkedForReview({});
     setMcqAttemptHistory([]);
     setMcqCursor(0);
+    setMcqQuestionTiming({});
+    setMcqSectionFilterId(ALL_MCQ_SECTIONS_VALUE);
     setMcqStarted(false);
     setMcqTimerDecision("pending");
     setMcqTimerMinutes(1);
@@ -1332,6 +1387,9 @@ export default function StudentDashboard() {
     setMcqTimerEndAtMs(null);
     setMcqTimerRemainingMs(0);
     setMcqStartedAtMs(null);
+    mcqQuestionTimingRef.current = {};
+    mcqQuestionEnteredAtMsRef.current = null;
+    mcqActiveQuestionIdRef.current = null;
   };
 
   const loadMcqTemplateForAssignment = (assignment: Assignment, templateId?: number | null) => {
@@ -1344,7 +1402,7 @@ export default function StudentDashboard() {
     if (!normalized) {
       toast({
         variant: "destructive",
-        title: "Invalid test configuration",
+        title: "Invalid MCQ + PDF configuration",
         description: "This test is not configured correctly. Please contact your teacher.",
       });
       return;
@@ -1398,8 +1456,13 @@ export default function StudentDashboard() {
     setMcqMarkedForReview(restoredMarkedForReview);
     setMcqAttemptHistory(restoredAttempts);
     setMcqCursor(0);
+    setMcqQuestionTiming({});
+    mcqQuestionTimingRef.current = {};
+    mcqQuestionEnteredAtMsRef.current = null;
+    mcqActiveQuestionIdRef.current = null;
+    setMcqSectionFilterId(ALL_MCQ_SECTIONS_VALUE);
     setMcqStarted(false);
-    setMcqTimerDecision(isSimpleAssignment ? "untimed" : "pending");
+    setMcqTimerDecision(isSimpleAssignment ? "untimed" : "timed");
     setMcqTimerMinutes(recommendedMinutes);
     setMcqTimerRunning(false);
     setMcqTimerEndAtMs(null);
@@ -1409,10 +1472,17 @@ export default function StudentDashboard() {
   };
 
   const activeMcqResources = mcqAssignment ? getMcqResourcesForAssignment(mcqAssignment) : [];
+  const getMcqAssessmentTypeForResource = (resource: AssignmentResource | null | undefined): McqAssessmentType => {
+    const normalized = resource?.mcqConfig ? normalizeStudentMcqConfig(resource.mcqConfig) : null;
+    return normalized?.assessmentType || "mock-test";
+  };
   const activeMcqResource = activeMcqResources.find((resource) => resource.id === mcqResourceId) || activeMcqResources[0] || null;
   const activeMcqSectionMap = new Map((mcqConfig?.sections || []).map((section) => [section.id, section.name]));
-  const activeMcqSectionColorMap = new Map((mcqConfig?.sections || []).map((section) => [section.id, section.color || "#94a3b8"]));
   const activeMcqTopicMap = new Map((mcqConfig?.topics || []).map((topic) => [topic.id, topic]));
+  const activeMcqQuestionEntries = (mcqConfig?.questions || []).map((question, index) => ({ question, index }));
+  const filteredMcqQuestionEntries = activeMcqQuestionEntries.filter(({ question }) =>
+    mcqSectionFilterId === ALL_MCQ_SECTIONS_VALUE || question.sectionId === mcqSectionFilterId
+  );
   const activeMcqQuestion = mcqConfig?.questions[mcqCursor] || null;
   const activeMcqTopic = activeMcqQuestion?.topicId
     ? activeMcqTopicMap.get(activeMcqQuestion.topicId) || null
@@ -1420,6 +1490,9 @@ export default function StudentDashboard() {
   const activeMcqSubtopic = activeMcqTopic && activeMcqQuestion?.subtopicId
     ? activeMcqTopic.subtopics.find((subtopic) => subtopic.id === activeMcqQuestion.subtopicId) || null
     : null;
+  const activeMcqQuestionTiming = activeMcqQuestion
+    ? mcqQuestionTiming[activeMcqQuestion.id] || createDefaultMcqQuestionTiming()
+    : createDefaultMcqQuestionTiming();
   const activeMcqOptionLabels = activeMcqQuestion ? getMcqOptionLabels(activeMcqQuestion) : [];
   const activeMcqOptionGridClass = activeMcqOptionLabels.length <= 2
     ? "grid-cols-1 sm:grid-cols-2"
@@ -1458,6 +1531,34 @@ export default function StudentDashboard() {
   });
   const mcqAssessmentType = mcqConfig?.assessmentType || "mock-test";
   const isSimpleMcqAssessment = mcqAssessmentType === "simple-assignment";
+  const mcqTypeShortLabel = getMcqAssessmentTypeShortLabel(mcqAssessmentType);
+  const mcqAttemptActionLabel = getMcqAttemptActionLabel(mcqAssessmentType, mcqAttemptHistory.length > 0);
+  const mcqStartActionLabel = mcqAttemptHistory.length > 0 ? mcqAttemptActionLabel : `Start ${mcqTypeShortLabel}`;
+
+  const updateMcqQuestionTiming = useCallback((questionId: string, updater: (current: StudentMcqQuestionTiming) => StudentMcqQuestionTiming) => {
+    const current = mcqQuestionTimingRef.current[questionId] || createDefaultMcqQuestionTiming();
+    const next = updater(current);
+    mcqQuestionTimingRef.current = {
+      ...mcqQuestionTimingRef.current,
+      [questionId]: next,
+    };
+    setMcqQuestionTiming(mcqQuestionTimingRef.current);
+  }, []);
+
+  const flushCurrentMcqQuestionTiming = useCallback((nowMs = Date.now()) => {
+    const questionId = mcqActiveQuestionIdRef.current;
+    const enteredAtMs = mcqQuestionEnteredAtMsRef.current;
+    if (!questionId || enteredAtMs === null) return;
+    const viewedMs = Math.max(0, nowMs - enteredAtMs);
+    if (viewedMs > 0) {
+      updateMcqQuestionTiming(questionId, (current) => ({
+        ...current,
+        timeSpentMs: current.timeSpentMs + viewedMs,
+        lastViewedAt: new Date(nowMs).toISOString(),
+      }));
+    }
+    mcqQuestionEnteredAtMsRef.current = nowMs;
+  }, [updateMcqQuestionTiming]);
 
   const handleMcqTemplateChange = (nextTemplateId: string) => {
     if (!mcqAssignment) return;
@@ -1465,6 +1566,23 @@ export default function StudentDashboard() {
     if (!Number.isFinite(parsed)) return;
     loadMcqTemplateForAssignment(mcqAssignment, parsed);
   };
+
+  useEffect(() => {
+    if (!mcqConfig) return;
+    if (mcqSectionFilterId === ALL_MCQ_SECTIONS_VALUE) return;
+    const sectionExists = mcqConfig.sections.some((section) => section.id === mcqSectionFilterId);
+    if (!sectionExists) {
+      setMcqSectionFilterId(ALL_MCQ_SECTIONS_VALUE);
+    }
+  }, [mcqConfig, mcqSectionFilterId]);
+
+  useEffect(() => {
+    if (!filteredMcqQuestionEntries.length) return;
+    const activeInFilter = filteredMcqQuestionEntries.some(({ index }) => index === mcqCursor);
+    if (!activeInFilter) {
+      setMcqCursor(filteredMcqQuestionEntries[0].index);
+    }
+  }, [filteredMcqQuestionEntries, mcqCursor]);
 
   const toggleMcqAnswer = (question: StudentMcqQuestion, optionLabel: string) => {
     setMcqAnswers((prev) => {
@@ -1476,6 +1594,10 @@ export default function StudentDashboard() {
       const next = exists ? current.filter((value) => value !== optionLabel) : [...current, optionLabel];
       return { ...prev, [question.id]: next };
     });
+    updateMcqQuestionTiming(question.id, (current) => ({
+      ...current,
+      lastAnsweredAt: new Date().toISOString(),
+    }));
   };
 
   const toggleMcqReview = (questionId: string) => {
@@ -1500,27 +1622,88 @@ export default function StudentDashboard() {
     };
   })();
 
+  const getMcqAttemptCountForResource = (submission: Submission | null | undefined, resourceId?: number | null) => {
+    if (!submission?.content) return 0;
+    const attempts = parseStudentMcqAttemptHistory(submission.content);
+    if (!resourceId) return attempts.length;
+    const resourceAttempts = attempts.filter((attempt) => attempt.resourceId === null || attempt.resourceId === resourceId);
+    return resourceAttempts.length;
+  };
+
+  const getMcqActionLabelForResource = (
+    assessmentType: McqAssessmentType,
+    submission: Submission | null | undefined,
+    resourceId?: number | null
+  ) => getMcqAttemptActionLabel(assessmentType, getMcqAttemptCountForResource(submission, resourceId) > 0);
+
+  useEffect(() => {
+    if (!mcqStarted || !activeMcqQuestion) return;
+    const nowMs = Date.now();
+    const nextQuestionId = activeMcqQuestion.id;
+    const previousQuestionId = mcqActiveQuestionIdRef.current;
+
+    if (previousQuestionId && previousQuestionId !== nextQuestionId) {
+      flushCurrentMcqQuestionTiming(nowMs);
+    }
+
+    if (previousQuestionId !== nextQuestionId) {
+      updateMcqQuestionTiming(nextQuestionId, (current) => ({
+        ...current,
+        visitCount: current.visitCount + 1,
+        firstViewedAt: current.firstViewedAt || new Date(nowMs).toISOString(),
+        lastViewedAt: new Date(nowMs).toISOString(),
+      }));
+      mcqActiveQuestionIdRef.current = nextQuestionId;
+      mcqQuestionEnteredAtMsRef.current = nowMs;
+    }
+  }, [mcqStarted, activeMcqQuestion, flushCurrentMcqQuestionTiming, updateMcqQuestionTiming]);
+
+  // Early return for authentication loading
+  if (authLoading && !authTimedOut) {
+    return <DashboardLoadingSkeleton role="student" tab={activeTab} />;
+  }
+
+  if (authLoading && authTimedOut) {
+    return (
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full bg-gray-50">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-red-600 text-xl mb-4">Authentication is taking too long.</div>
+              <Button onClick={() => window.location.reload()}>Try Again</Button>
+            </div>
+          </div>
+        </div>
+      </SidebarProvider>
+    );
+  }
+
+  if (!authUser) {
+    return null;
+  }
+
   const startMcqAttempt = () => {
     if (!mcqConfig) return;
-    const requiresTimerChoice = mcqConfig.assessmentType === "mock-test";
-    if (requiresTimerChoice && mcqTimerDecision === "pending") {
-      toast({
-        title: "Choose timer mode",
-        description: "Pick timed or untimed mode before starting.",
-      });
-      return;
+    const effectiveTimerDecision = mcqConfig.assessmentType === "mock-test" ? "timed" : "untimed";
+    if (mcqConfig.assessmentType === "mock-test") {
+      setMcqAnswers({});
+      setMcqMarkedForReview({});
     }
-    const effectiveTimerDecision = requiresTimerChoice ? mcqTimerDecision : "untimed";
 
     const now = Date.now();
     clearMcqTimerInterval();
+    setMcqQuestionTiming({});
+    mcqQuestionTimingRef.current = {};
+    mcqActiveQuestionIdRef.current = null;
+    mcqQuestionEnteredAtMsRef.current = null;
     setMcqStarted(true);
     setMcqStartedAtMs(now);
     setMcqCursor(0);
     if (effectiveTimerDecision === "timed") {
-      const boundedMinutes = Math.max(1, Math.min(600, Number(mcqTimerMinutes) || mcqRecommendedTimeMinutes));
+      const boundedMinutes = Math.max(1, Math.min(600, Number(mcqRecommendedTimeMinutes) || 1));
       const remainingMs = boundedMinutes * 60 * 1000;
       const endAt = now + remainingMs;
+      setMcqTimerDecision("timed");
       setMcqTimerMinutes(boundedMinutes);
       setMcqTimerRemainingMs(remainingMs);
       setMcqTimerEndAtMs(endAt);
@@ -1536,6 +1719,7 @@ export default function StudentDashboard() {
         }
       }, 500);
     } else {
+      setMcqTimerDecision("untimed");
       setMcqTimerRunning(false);
       setMcqTimerEndAtMs(null);
       setMcqTimerRemainingMs(0);
@@ -1547,15 +1731,29 @@ export default function StudentDashboard() {
     if (isMcqSubmitting) return;
     const existingSubmission = submissions.find((item) => item.assignmentId === mcqAssignment.id);
     const shouldResubmit = Boolean(existingSubmission);
-    const isTimedMode = mcqConfig.assessmentType === "mock-test" && mcqTimerDecision === "timed";
+    const isMockTest = mcqConfig.assessmentType === "mock-test";
+    const isTimedMode = isMockTest && mcqTimerDecision === "timed";
 
-    if (existingSubmission && !canResubmit(existingSubmission)) {
-      toast({
-        variant: "destructive",
-        title: "Cannot submit test",
-        description: "This assignment cannot be updated right now.",
-      });
-      return;
+    if (existingSubmission) {
+      if (!isMockTest && !canResubmit(existingSubmission)) {
+        toast({
+          variant: "destructive",
+          title: "Cannot submit attempt",
+          description: "This assignment cannot be updated right now.",
+        });
+        return;
+      }
+
+      const deadlinePassed = isDeadlinePassed(mcqAssignment.dueDate);
+      const allowLate = Boolean(mcqAssignment.allowLateSubmission);
+      if (isMockTest && deadlinePassed && !allowLate) {
+        toast({
+          variant: "destructive",
+          title: "Cannot submit attempt",
+          description: "This mock test is closed for new attempts.",
+        });
+        return;
+      }
     }
 
     setIsMcqSubmitting(true);
@@ -1564,6 +1762,7 @@ export default function StudentDashboard() {
     setMcqTimerEndAtMs(null);
     try {
       const nowMs = Date.now();
+      flushCurrentMcqQuestionTiming(nowMs);
       const submittedAt = new Date(nowMs).toISOString();
       const currentAnswers = Object.fromEntries(
         mcqConfig.questions.map((question) => [question.id, (mcqAnswers[question.id] || []).map((value) => String(value))])
@@ -1579,23 +1778,28 @@ export default function StudentDashboard() {
         resourceId: activeMcqResource.id,
         startedAt,
         submittedAt,
-        timerMode: isTimedMode ? "timed" : "untimed",
-        recommendedMinutes: mcqRecommendedTimeMinutes,
-        chosenMinutes: isTimedMode ? mcqTimerMinutes : null,
-        elapsedMs: Math.max(0, mcqStartedAtMs ? nowMs - mcqStartedAtMs : 0),
-        markedForReviewQuestionIds,
+          timerMode: isTimedMode ? "timed" : "untimed",
+          recommendedMinutes: mcqRecommendedTimeMinutes,
+          chosenMinutes: isTimedMode ? mcqTimerMinutes : null,
+          elapsedMs: Math.max(0, mcqStartedAtMs ? nowMs - mcqStartedAtMs : 0),
+          markedForReviewQuestionIds,
         summary: mcqAttemptSummary,
         answersByQuestionId: currentAnswers,
-        questions: mcqConfig.questions.map((question, index) => ({
-          questionId: question.id,
-          questionNo: formatMcqQuestionNumber(index, mcqConfig.numberingStyle),
-          type: question.type,
-          marks: question.marks,
-          negativeMarks: question.negativeMarks,
-          partialMarkingEnabled: question.partialMarkingEnabled,
-          selectedAnswers: currentAnswers[question.id] || [],
-        })),
-      };
+          questions: mcqConfig.questions.map((question, index) => ({
+            questionId: question.id,
+            questionNo: formatMcqQuestionNumber(index, mcqConfig.numberingStyle),
+            type: question.type,
+            marks: question.marks,
+            negativeMarks: question.negativeMarks,
+            partialMarkingEnabled: question.partialMarkingEnabled,
+            selectedAnswers: currentAnswers[question.id] || [],
+            timeSpentMs: mcqQuestionTimingRef.current[question.id]?.timeSpentMs || 0,
+            visitCount: mcqQuestionTimingRef.current[question.id]?.visitCount || 0,
+            firstViewedAt: mcqQuestionTimingRef.current[question.id]?.firstViewedAt || null,
+            lastViewedAt: mcqQuestionTimingRef.current[question.id]?.lastViewedAt || null,
+            lastAnsweredAt: mcqQuestionTimingRef.current[question.id]?.lastAnsweredAt || null,
+          })),
+        };
       const nextAttemptHistory = [...mcqAttemptHistory, attemptRecord];
 
       const payload = {
@@ -1619,6 +1823,7 @@ export default function StudentDashboard() {
           assessmentType: mcqConfig.assessmentType,
           timerMode: isTimedMode ? "timed" : "untimed",
           timerMinutes: isTimedMode ? mcqTimerMinutes : null,
+          elapsedMs: attemptRecord.elapsedMs,
           autoSubmitted: Boolean(options?.autoSubmit),
           answersByQuestionId: currentAnswers,
           questions: attemptRecord.questions,
@@ -1637,7 +1842,7 @@ export default function StudentDashboard() {
 
       const result = await response.json();
       if (!result.success) {
-        throw new Error(result.error || "Unable to submit MCQ test.");
+        throw new Error(result.error || "Unable to submit MCQ + PDF attempt.");
       }
 
       await fetchData();
@@ -1803,6 +2008,10 @@ export default function StudentDashboard() {
     detailSubmission.grade === null;
   const detailMcqResources = detailAssignment ? getMcqResourcesForAssignment(detailAssignment) : [];
   const detailHasMcqResources = detailMcqResources.length > 0;
+  const detailSingleMcqResource = detailMcqResources.length === 1 ? detailMcqResources[0] : null;
+  const detailPrimaryMcqType = getMcqAssessmentTypeForResource(detailSingleMcqResource || detailMcqResources[0] || null);
+  const detailDescription = cleanStudentVisibleText(detailAssignment?.description || "");
+  const detailCanStartMcq = !!detailAssignment && detailHasMcqResources && (!detailDeadlinePassed || Boolean(detailAssignment.allowLateSubmission));
 
   if (loading) {
     return <DashboardLoadingSkeleton role="student" tab={activeTab} />;
@@ -2233,6 +2442,10 @@ export default function StudentDashboard() {
                       {assignments.map((assignment) => {
                         // Find if there's a submission for this assignment
                         const existingSubmission = submissions.find(s => s.assignmentId === assignment.id);
+                        const parsedSubmissionSummary = existingSubmission
+                          ? parseMcqSubmissionSummary(existingSubmission.content)
+                          : null;
+                        const gradeMaxPoints = parsedSubmissionSummary ? 100 : assignment.totalPoints;
                         const deadlinePassed = isDeadlinePassed(assignment.dueDate);
                         const acceptsLate = Boolean(assignment.allowLateSubmission);
                         const canResubmitAssignment = existingSubmission &&
@@ -2240,6 +2453,10 @@ export default function StudentDashboard() {
                           existingSubmission.grade === null;
                         const mcqResources = getMcqResourcesForAssignment(assignment);
                         const hasMcqResources = mcqResources.length > 0;
+                        const primaryMcqType = getMcqAssessmentTypeForResource(mcqResources[0]);
+                        const primaryMcqResource = mcqResources[0] || null;
+                        const canStartMcqAttempt = hasMcqResources && (!deadlinePassed || acceptsLate);
+                        const assignmentDescription = cleanStudentVisibleText(assignment.description);
 
                         return (
                           <motion.div
@@ -2263,7 +2480,9 @@ export default function StudentDashboard() {
                                         Click for details
                                       </span>
                                     </button>
-                                    <p className="text-gray-600 mb-3">{assignment.description}</p>
+                                    {assignmentDescription && (
+                                      <p className="text-gray-600 mb-3">{assignmentDescription}</p>
+                                    )}
 
                                     <div className="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-600">
                                       <BookOpen className="h-4 w-4 text-slate-500" />
@@ -2272,7 +2491,7 @@ export default function StudentDashboard() {
                                       </span>
                                       {hasMcqResources && (
                                         <Badge variant="outline" className="border-slate-300 bg-slate-100 text-slate-700">
-                                          Attempt assignment enabled
+                                          {getMcqAssessmentTypeLabel(primaryMcqType)} ready
                                         </Badge>
                                       )}
                                     </div>
@@ -2331,8 +2550,18 @@ export default function StudentDashboard() {
                                       View Details
                                     </Button>
 
-                                    {/* Submit button for new assignments */}
-                                    {!existingSubmission && (!deadlinePassed || acceptsLate) && (
+                                    {canStartMcqAttempt && primaryMcqResource && (
+                                      <Button
+                                        className="bg-brand-blue text-white hover:bg-brand-blue/90"
+                                        onClick={() => loadMcqTemplateForAssignment(assignment, primaryMcqResource.id)}
+                                      >
+                                        <Target className="h-4 w-4 mr-2" />
+                                        {getMcqActionLabelForResource(primaryMcqType, existingSubmission, primaryMcqResource.id)}
+                                      </Button>
+                                    )}
+
+                                    {/* Submit button for new written assignments */}
+                                    {!hasMcqResources && !existingSubmission && (!deadlinePassed || acceptsLate) && (
                                       <Dialog
                                         open={isSubmitDialogOpen && selectedAssignment?.id === assignment.id && !isResubmitting}
                                         onOpenChange={(nextOpen) => handleAssignmentDialogOpenChange(nextOpen, "submit")}
@@ -2399,7 +2628,7 @@ export default function StudentDashboard() {
                                     )}
 
                                     {/* Resubmit button for submitted assignments */}
-                                    {canResubmitAssignment && (
+                                    {!hasMcqResources && canResubmitAssignment && (
                                       <Dialog
                                         open={isResubmitDialogOpen && selectedAssignment?.id === assignment.id && isResubmitting}
                                         onOpenChange={(nextOpen) => handleAssignmentDialogOpenChange(nextOpen, "resubmit")}
@@ -2477,7 +2706,7 @@ export default function StudentDashboard() {
                                       <div className="text-center">
                                         <Badge variant="secondary" className="bg-slate-200 text-slate-800">
                                           <Trophy className="h-3 w-3 mr-1" />
-                                          Graded: {existingSubmission.grade}/{assignment.totalPoints}
+                                          Graded: {existingSubmission.grade}/{gradeMaxPoints}
                                         </Badge>
                                       </div>
                                     )}
@@ -2517,6 +2746,7 @@ export default function StudentDashboard() {
                           ? wasSubmittedAfterDeadline(submission.submittedAt, assignment.dueDate)
                           : false;
                         const parsedMcqSubmission = parseMcqSubmissionSummary(submission.content);
+                        const gradeMaxPoints = parsedMcqSubmission ? 100 : (assignment?.totalPoints || submission.totalPoints || 0);
 
                         return (
                           <motion.div
@@ -2653,12 +2883,12 @@ export default function StudentDashboard() {
                                   <div className="mb-4">
                                     <div className="flex items-center gap-2 mb-2">
                                       <span className="text-sm text-gray-600">Grade:</span>
-                                      <span className={cn("text-lg font-bold", getGradeColor(calculateGradePercentage(submission.grade, assignment.totalPoints)))}>
-                                        {submission.grade}/{assignment.totalPoints} ({calculateGradePercentage(submission.grade, assignment.totalPoints)}%)
+                                      <span className={cn("text-lg font-bold", getGradeColor(calculateGradePercentage(submission.grade, gradeMaxPoints)))}>
+                                        {submission.grade}/{gradeMaxPoints} ({calculateGradePercentage(submission.grade, gradeMaxPoints)}%)
                                       </span>
                                     </div>
                                     <Progress
-                                      value={calculateGradePercentage(submission.grade, assignment.totalPoints)}
+                                      value={calculateGradePercentage(submission.grade, gradeMaxPoints)}
                                       className="h-2"
                                     />
                                   </div>
@@ -3133,7 +3363,9 @@ export default function StudentDashboard() {
                     <span className="font-medium text-slate-700"> {detailAssignment.grade || "N/A"}</span> • Total points:
                     <span className="font-medium text-slate-700"> {detailAssignment.totalPoints}</span>
                   </p>
-                  <p className="mt-2 text-sm text-slate-700">{detailAssignment.description}</p>
+                  {detailDescription && (
+                    <p className="mt-2 text-sm text-slate-700">{detailDescription}</p>
+                  )}
                   {detailAssignment.instructions && (
                     <p className="mt-2 text-sm text-slate-700">
                       Instructions: {detailAssignment.instructions}
@@ -3154,13 +3386,15 @@ export default function StudentDashboard() {
                   )}
                   {detailHasMcqResources && (
                     <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
-                      Attempt assignment ready
+                      {detailMcqResources.length === 1
+                        ? `${getMcqAssessmentTypeLabel(detailPrimaryMcqType)} ready`
+                        : "MCQ + PDF resources ready"}
                     </Badge>
                   )}
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  {!detailSubmission && (!detailDeadlinePassed || Boolean(detailAssignment.allowLateSubmission)) && (
+                  {!detailHasMcqResources && !detailSubmission && (!detailDeadlinePassed || Boolean(detailAssignment.allowLateSubmission)) && (
                     <Button
                       className="bg-brand-blue text-white hover:bg-brand-blue/90"
                       onClick={() => openAssignmentDialog(detailAssignment, "submit")}
@@ -3169,7 +3403,7 @@ export default function StudentDashboard() {
                       Submit Assignment
                     </Button>
                   )}
-                  {detailCanResubmit && detailSubmission && (
+                  {!detailHasMcqResources && detailCanResubmit && detailSubmission && (
                     <Button
                       variant="outline"
                       className="border-slate-300 text-slate-700 hover:bg-slate-50"
@@ -3184,14 +3418,14 @@ export default function StudentDashboard() {
                       Resubmit
                     </Button>
                   )}
-                  {detailHasMcqResources && (
+                  {detailSingleMcqResource && detailCanStartMcq && (
                     <Button
                       variant="outline"
                       className="border-slate-300 text-slate-700 hover:bg-slate-50"
-                      onClick={() => loadMcqTemplateForAssignment(detailAssignment)}
+                      onClick={() => loadMcqTemplateForAssignment(detailAssignment, detailSingleMcqResource.id)}
                     >
                       <Target className="h-4 w-4 mr-2" />
-                      Attempt Assignment
+                      {getMcqActionLabelForResource(detailPrimaryMcqType, detailSubmission, detailSingleMcqResource.id)}
                     </Button>
                   )}
                 </div>
@@ -3208,13 +3442,18 @@ export default function StudentDashboard() {
                         const resourceConfig = resource.type === "mcq_template"
                           ? normalizeStudentMcqConfig(resource.mcqConfig)
                           : null;
-                        const resourceTypeLabel = getMcqAssessmentTypeLabel(resourceConfig?.assessmentType || "mock-test");
+                        const resourceAssessmentType = resourceConfig?.assessmentType || "mock-test";
+                        const resourceTypeLabel = getMcqAssessmentTypeShortLabel(resourceAssessmentType);
+                        const showMcqAttemptButton = detailMcqResources.length > 1;
+                        const resourceSummary = getStudentResourceSummary(resource);
                         return (
                         <div key={resource.id} className="rounded-lg border border-slate-200 bg-white p-3">
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <p className="truncate text-sm font-semibold text-slate-900">{resource.title}</p>
-                              <p className="text-xs text-slate-500">{resource.type}</p>
+                              <p className="text-xs text-slate-500">
+                                {resource.type === "mcq_template" ? "MCQ + PDF" : resource.type}
+                              </p>
                             </div>
                             <div className="flex gap-1">
                               {resource.isRequired && (
@@ -3224,21 +3463,18 @@ export default function StudentDashboard() {
                               )}
                               {resource.type === "mcq_template" && (
                                 <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
-                                  MCQ • {resourceTypeLabel}
+                                  MCQ + PDF • {resourceTypeLabel}
                                 </Badge>
                               )}
                             </div>
                           </div>
 
-                          {resource.mcqSummary && (
-                            <p className="mt-2 text-xs text-slate-600">{resource.mcqSummary}</p>
-                          )}
-                          {resource.description && !resource.mcqSummary && (
-                            <p className="mt-2 text-xs text-slate-600">{resource.description}</p>
+                          {resourceSummary && (
+                            <p className="mt-2 text-xs text-slate-600">{resourceSummary}</p>
                           )}
 
                           <div className="mt-3 flex flex-wrap gap-2">
-                            {resource.fileUrl && (
+                            {resource.fileUrl && resource.type !== "mcq_template" && (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -3262,14 +3498,14 @@ export default function StudentDashboard() {
                               </Button>
                             )}
 
-                            {resource.type === "mcq_template" && (
+                            {resource.type === "mcq_template" && showMcqAttemptButton && detailCanStartMcq && (
                               <Button
                                 size="sm"
                                 className="bg-slate-900 text-white hover:bg-slate-800"
                                 onClick={() => loadMcqTemplateForAssignment(detailAssignment, resource.id)}
                               >
                                 <Target className="h-4 w-4 mr-1" />
-                                Attempt {resourceTypeLabel}
+                                {getMcqActionLabelForResource(resourceAssessmentType, detailSubmission, resource.id)}
                               </Button>
                             )}
                           </div>
@@ -3294,20 +3530,45 @@ export default function StudentDashboard() {
           setIsMcqDialogOpen(true);
         }}
       >
-        <DialogContent className="flex h-[92dvh] max-w-[96vw] flex-col overflow-hidden p-0">
+          <DialogContent
+            className={cn(
+              "flex h-[92dvh] max-w-[96vw] flex-col overflow-hidden p-0",
+              isMcqDialogMaximized &&
+                "inset-0 h-[100dvh] w-[100vw] max-h-none max-w-none translate-x-0 translate-y-0 rounded-none"
+            )}
+            onEscapeKeyDown={(event) => {
+              if (!isMcqDialogMaximized) return;
+              event.preventDefault();
+              setIsMcqDialogMaximized(false);
+            }}
+          >
           <DialogHeader className="border-b border-slate-200 px-5 py-4">
-            <DialogTitle>
-              Attempt {getMcqAssessmentTypeLabel(mcqAssessmentType)}: {mcqAssignment?.title || "Assignment"}
-            </DialogTitle>
-            <p className="text-xs text-slate-600">
-              {mcqAssignment?.subject} • {mcqAttemptSummary.totalQuestions} questions • Max marks {mcqAttemptSummary.maxScore}
-            </p>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <DialogTitle>
+                  {mcqAttemptActionLabel}: {mcqAssignment?.title || "Assignment"}
+                </DialogTitle>
+                <p className="text-xs text-slate-600">
+                  {mcqAssignment?.subject} • {mcqAttemptSummary.totalQuestions} questions • Max marks {mcqAttemptSummary.maxScore}
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                onClick={() => setIsMcqDialogMaximized((prev) => !prev)}
+                aria-label={isMcqDialogMaximized ? "Exit full screen" : "Enter full screen"}
+                title={isMcqDialogMaximized ? "Exit full screen" : "Enter full screen"}
+              >
+                {isMcqDialogMaximized ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              </Button>
+            </div>
           </DialogHeader>
 
           <div className="flex-1 overflow-hidden p-4">
             {!mcqConfig ? (
               <div className="py-8 text-center text-sm text-slate-600">
-                This assignment does not have a valid MCQ test configuration.
+                This assignment does not have a valid MCQ + PDF configuration.
               </div>
             ) : !mcqStarted ? (
               <div className="mx-auto flex h-full w-full max-w-4xl flex-col gap-4 overflow-y-auto">
@@ -3340,11 +3601,13 @@ export default function StudentDashboard() {
                     </Button>
                   )}
                   <Badge variant="outline" className="border-slate-300 text-slate-700">
-                    Reattempts available
+                    {isSimpleMcqAssessment ? "Single attempt" : "Reattempts available"}
                   </Badge>
-                  <Badge variant="outline" className="border-slate-300 text-slate-700">
-                    Previous attempts: {mcqAttemptHistory.length}
-                  </Badge>
+                  {!isSimpleMcqAssessment && (
+                    <Badge variant="outline" className="border-slate-300 text-slate-700">
+                      Previous attempts: {mcqAttemptHistory.length}
+                    </Badge>
+                  )}
                 </div>
 
                 <Card className="border border-slate-200 bg-slate-50/70">
@@ -3352,8 +3615,10 @@ export default function StudentDashboard() {
                     <div>
                       <p className="text-sm font-semibold text-slate-900">Before you start</p>
                       <p className="mt-1 text-sm text-slate-600">
-                        Read the assignment instructions, then {isSimpleMcqAssessment ? "start when ready." : "choose timed or untimed mode."} You can reattempt; if a due date exists, your latest
-                        attempt submitted before the deadline is considered. If no due date applies, your latest attempt is considered.
+                        Read the assignment instructions, then {isSimpleMcqAssessment ? "start when ready." : "the mock test will begin with the configured timer."}{" "}
+                        {isSimpleMcqAssessment
+                          ? ""
+                          : "Each mock-test attempt is saved separately. If a due date exists, your latest attempt submitted before the deadline is considered by default."}
                       </p>
                       {mcqAssignment?.instructions && (
                         <p className="mt-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
@@ -3375,49 +3640,13 @@ export default function StudentDashboard() {
                     </div>
 
                     <div className="space-y-3 rounded-md border border-slate-200 bg-white p-3">
-                      <p className="text-sm font-semibold text-slate-900">Timer preference</p>
+                      <p className="text-sm font-semibold text-slate-900">{isSimpleMcqAssessment ? "Attempt mode" : "Timer"}</p>
                       {isSimpleMcqAssessment ? (
-                        <p className="text-xs text-slate-600">Simple assignments run in untimed mode.</p>
+                        <p className="text-xs text-slate-600">Assignments run in untimed mode.</p>
                       ) : (
-                        <>
-                          <div className="flex flex-wrap gap-2">
-                            <Button
-                              type="button"
-                              variant={mcqTimerDecision === "timed" ? "default" : "outline"}
-                              className={mcqTimerDecision === "timed" ? "bg-slate-900 text-white hover:bg-slate-800" : ""}
-                              onClick={() => {
-                                setMcqTimerDecision("timed");
-                                setMcqTimerMinutes(mcqRecommendedTimeMinutes);
-                                setMcqTimerRemainingMs(mcqRecommendedTimeMinutes * 60 * 1000);
-                              }}
-                            >
-                              Timed attempt
-                            </Button>
-                            <Button
-                              type="button"
-                              variant={mcqTimerDecision === "untimed" ? "default" : "outline"}
-                              className={mcqTimerDecision === "untimed" ? "bg-slate-900 text-white hover:bg-slate-800" : ""}
-                              onClick={() => setMcqTimerDecision("untimed")}
-                            >
-                              Untimed attempt
-                            </Button>
-                          </div>
-                          {mcqTimerDecision === "timed" && (
-                            <div className="flex flex-wrap items-center gap-2">
-                              <Label htmlFor="student-timer-minutes" className="text-xs text-slate-600">Minutes</Label>
-                              <Input
-                                id="student-timer-minutes"
-                                type="number"
-                                min={1}
-                                max={600}
-                                value={mcqTimerMinutes}
-                                onChange={(event) => setMcqTimerMinutes(Math.max(1, Math.min(600, Number(event.target.value) || mcqRecommendedTimeMinutes)))}
-                                className="h-8 w-28"
-                              />
-                              <span className="text-xs text-slate-500">Recommended: {mcqRecommendedTimeMinutes} min</span>
-                            </div>
-                          )}
-                        </>
+                        <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+                          This mock test starts with a fixed time limit of {mcqRecommendedTimeMinutes} minutes from Configure.
+                        </div>
                       )}
                     </div>
                   </CardContent>
@@ -3425,7 +3654,7 @@ export default function StudentDashboard() {
 
                 <div className="mt-auto flex justify-end">
                   <Button type="button" className="bg-brand-blue text-white hover:bg-brand-blue/90" onClick={startMcqAttempt}>
-                    Start Attempt
+                    {mcqStartActionLabel}
                   </Button>
                 </div>
               </div>
@@ -3529,18 +3758,55 @@ export default function StudentDashboard() {
                                 : ""}
                             </p>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="border-slate-300 bg-white text-slate-700">
-                              {activeMcqQuestion.type === "multiple" && activeMcqQuestion.partialMarkingEnabled ? "Partial marking on" : "Partial marking off"}
-                            </Badge>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              onClick={() => toggleMcqReview(activeMcqQuestion.id)}
-                            >
-                              {mcqMarkedForReview[activeMcqQuestion.id] ? "Unmark Review" : "Mark Review"}
-                            </Button>
+                          <div className="flex flex-col items-stretch gap-2 sm:items-end">
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <label className="space-y-1">
+                                <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Section</span>
+                                <select
+                                  value={mcqSectionFilterId}
+                                  onChange={(event) => setMcqSectionFilterId(event.target.value)}
+                                  className="h-9 min-w-[170px] rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900"
+                                >
+                                  <option value={ALL_MCQ_SECTIONS_VALUE}>All sections</option>
+                                  {(mcqConfig.sections || []).map((section) => (
+                                    <option key={section.id} value={section.id}>
+                                      {section.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                              <label className="space-y-1">
+                                <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Question</span>
+                                <select
+                                  value={String(mcqCursor)}
+                                  onChange={(event) => setMcqCursor(Number(event.target.value))}
+                                  className="h-9 min-w-[190px] rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900"
+                                  disabled={filteredMcqQuestionEntries.length === 0}
+                                >
+                                  {filteredMcqQuestionEntries.map(({ question, index }) => (
+                                    <option key={question.id} value={index}>
+                                      Q {formatMcqQuestionNumber(index, mcqConfig.numberingStyle)} - {activeMcqSectionMap.get(question.sectionId) || "Section"}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="border-slate-300 bg-white text-slate-700">
+                                {activeMcqQuestion.type === "multiple" && activeMcqQuestion.partialMarkingEnabled ? "Partial marking on" : "Partial marking off"}
+                              </Badge>
+                              <Badge variant="outline" className="border-slate-300 bg-white text-slate-700">
+                                On this question {formatDuration(activeMcqQuestionTiming.timeSpentMs)}
+                              </Badge>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => toggleMcqReview(activeMcqQuestion.id)}
+                              >
+                                {mcqMarkedForReview[activeMcqQuestion.id] ? "Unmark Review" : "Mark Review"}
+                              </Button>
+                            </div>
                           </div>
                         </div>
 
@@ -3577,21 +3843,9 @@ export default function StudentDashboard() {
                           <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-amber-400" />Marked review</span>
                         </div>
 
-                        <div className="mt-3 max-h-24 overflow-y-auto rounded-md border border-slate-200 bg-white p-2">
-                          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Section Colors</p>
-                          <div className="mt-1 space-y-1">
-                            {(mcqConfig.sections || []).map((section) => (
-                              <p key={section.id} className="flex items-center gap-2 text-xs text-slate-600">
-                                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: section.color || "#94a3b8" }} />
-                                {section.name}
-                              </p>
-                            ))}
-                          </div>
-                        </div>
-
                         <div className="mt-3 min-h-0 flex-1 overflow-y-auto">
                           <div className="grid grid-cols-4 gap-2 pr-1">
-                            {mcqConfig.questions.map((question, index) => {
+                            {filteredMcqQuestionEntries.map(({ question, index }) => {
                               const answered = answeredQuestionIds.has(question.id);
                               const marked = markedQuestionIds.has(question.id);
                               const isActive = index === mcqCursor;
@@ -3608,9 +3862,8 @@ export default function StudentDashboard() {
                                   className={cn(
                                     "h-9 w-9 rounded-full border-2 text-xs font-semibold transition",
                                     bgClass,
-                                    isActive ? "ring-2 ring-slate-900" : "opacity-90 hover:opacity-100"
+                                    isActive ? "border-slate-900 ring-2 ring-slate-300" : "border-white opacity-90 hover:opacity-100"
                                   )}
-                                  style={{ borderColor: activeMcqSectionColorMap.get(question.sectionId) || "#94a3b8" }}
                                 >
                                   {formatMcqQuestionNumber(index, mcqConfig.numberingStyle)}
                                 </button>

@@ -46,6 +46,7 @@ interface Resource {
   id: number;
   title: string;
   description?: string;
+  mcqSummary?: string;
   type: string;
   fileUrl?: string;
   linkUrl?: string;
@@ -100,6 +101,31 @@ interface StudentSubmission {
 interface ResourceLibraryProps {
   studentEmail: string;
 }
+
+const MCQ_CONFIG_MARKERS = [
+  ["[MCQ_TEST_CONFIG_V1]", "[/MCQ_TEST_CONFIG_V1]"],
+  ["[MCQ_TEMPLATE_CONFIG_V1]", "[/MCQ_TEMPLATE_CONFIG_V1]"],
+] as const;
+
+const cleanStudentVisibleText = (value?: string | null) => {
+  if (!value) return "";
+  let cleaned = value;
+  MCQ_CONFIG_MARKERS.forEach(([startMarker, endMarker]) => {
+    const start = cleaned.indexOf(startMarker);
+    if (start === -1) return;
+    const end = cleaned.indexOf(endMarker, start + startMarker.length);
+    cleaned = end === -1
+      ? cleaned.slice(0, start)
+      : `${cleaned.slice(0, start)} ${cleaned.slice(end + endMarker.length)}`;
+  });
+  return cleaned.trim();
+};
+
+const getResourceSummary = (resource: Resource) =>
+  cleanStudentVisibleText(resource.mcqSummary || resource.description || "");
+
+const getResourceTypeLabel = (type: string) =>
+  type === "mcq_template" ? "MCQ + PDF" : type;
 
 export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) {
   const { toast } = useToast();
@@ -463,8 +489,9 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
 
   // Filter resources
   const filteredResources = resources.filter(resource => {
+    const visibleDescription = getResourceSummary(resource).toLowerCase();
     const matchesSearch = resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         resource.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         visibleDescription.includes(searchTerm.toLowerCase()) ||
                          resource.assignmentTitle?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesType = selectedType === 'all' || resource.type === selectedType;
@@ -530,7 +557,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
           >
             <option value="all">All Types</option>
             {uniqueTypes.map(type => (
-              <option key={type} value={type}>{type}</option>
+              <option key={type} value={type}>{getResourceTypeLabel(type)}</option>
             ))}
           </select>
           
@@ -576,7 +603,10 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {studentSpecificResources.map((resource) => (
+              {studentSpecificResources.map((resource) => {
+                const resourceSummary = getResourceSummary(resource);
+                const isMcqTemplate = resource.type === "mcq_template";
+                return (
                 <Card key={resource.id} className="hover:shadow-lg transition-shadow border-blue-200">
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
@@ -589,8 +619,8 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                       </Badge>
                     </div>
                     
-                    {resource.description && (
-                      <p className="text-sm text-gray-600 mt-2">{resource.description}</p>
+                    {resourceSummary && (
+                      <p className="text-sm text-gray-600 mt-2">{resourceSummary}</p>
                     )}
                   </CardHeader>
                   
@@ -601,7 +631,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                         {resource.subject}
                       </Badge>
                       <Badge variant="outline" className="text-xs">
-                        {resource.type}
+                        {getResourceTypeLabel(resource.type)}
                       </Badge>
                     </div>
                     
@@ -612,7 +642,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                     )}
                     
                     <div className="flex gap-2">
-                      {resource.fileUrl && (
+                      {resource.fileUrl && !isMcqTemplate && (
                         <Button
                           size="sm"
                           disabled={viewingResourceIds.has(resource.id)}
@@ -663,7 +693,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              )})}
             </div>
           )}
         </TabsContent>
@@ -676,7 +706,10 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {generalResources.map((resource) => (
+              {generalResources.map((resource) => {
+                const resourceSummary = getResourceSummary(resource);
+                const isMcqTemplate = resource.type === "mcq_template";
+                return (
                 <Card key={resource.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader className="pb-3">
                     <div className="flex items-center gap-2">
@@ -684,8 +717,8 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                       <CardTitle className="text-lg leading-tight">{resource.title}</CardTitle>
                     </div>
                     
-                    {resource.description && (
-                      <p className="text-sm text-gray-600 mt-2">{resource.description}</p>
+                    {resourceSummary && (
+                      <p className="text-sm text-gray-600 mt-2">{resourceSummary}</p>
                     )}
                   </CardHeader>
                   
@@ -695,7 +728,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                         {resource.subject}
                       </Badge>
                       <Badge variant="outline" className="text-xs">
-                        {resource.type}
+                        {getResourceTypeLabel(resource.type)}
                       </Badge>
                       <Badge variant="outline" className="text-xs">
                         {resource.program}
@@ -709,7 +742,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                     )}
                     
                     <div className="flex gap-2">
-                      {resource.fileUrl && (
+                      {resource.fileUrl && !isMcqTemplate && (
                         <Button
                           size="sm"
                           disabled={viewingResourceIds.has(resource.id)}
@@ -741,7 +774,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              )})}
             </div>
           )}
         </TabsContent>

@@ -194,8 +194,18 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Validate grade against assignment total points
-    if (grade !== null && grade > submission.assignment.totalPoints) {
+    let isMcqSubmission = false;
+    if (submission.content) {
+      try {
+        const parsed = JSON.parse(submission.content) as { submissionType?: string };
+        isMcqSubmission = parsed.submissionType === 'mcq_test_attempt';
+      } catch {
+        isMcqSubmission = false;
+      }
+    }
+
+    // Validate grade against assignment total points unless MCQ
+    if (grade !== null && !isMcqSubmission && grade > submission.assignment.totalPoints) {
       return NextResponse.json(
         { 
           success: false, 
@@ -305,8 +315,26 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
+        let isMcqSubmission = false;
+        if (submission.content) {
+          try {
+            const parsed = JSON.parse(submission.content) as { submissionType?: string };
+            isMcqSubmission = parsed.submissionType === 'mcq_test_attempt';
+          } catch {
+            isMcqSubmission = false;
+          }
+        }
+
         // Validate grade
-        if (grade !== null && (grade < 0 || grade > submission.assignment.totalPoints)) {
+        if (grade !== null && (grade < 0 || grade > 100)) {
+          errors.push({ 
+            submissionId, 
+            error: 'Grade must be between 0 and 100'
+          });
+          continue;
+        }
+
+        if (grade !== null && !isMcqSubmission && grade > submission.assignment.totalPoints) {
           errors.push({ 
             submissionId, 
             error: `Grade must be between 0 and ${submission.assignment.totalPoints}` 
