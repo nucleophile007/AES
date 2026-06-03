@@ -159,7 +159,6 @@ const parseMcqSubmission = (content: string | null): ParsedMcqSubmission | null 
     const parsed = JSON.parse(content) as {
       submissionType?: string;
       testTitle?: string;
-      assessmentType?: string;
       submittedAt?: string;
       summary?: {
         answeredCount?: number;
