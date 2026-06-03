@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
+import PremiumMcqReport from "../../../components/common/PremiumMcqReport";
 import { 
   FileText, 
   User, 
@@ -18,10 +19,18 @@ import {
   Star,
   ExternalLink,
   BarChart3,
-  Send
+  Send,
+  CheckCircle2,
+  Save,
+  PencilLine
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getUserTimezone, formatDate as formatDateTz, formatDateTime } from "@/lib/timezone";
+import {
+  McqReportPresentation,
+  createDefaultReportPresentation,
+  normalizeReportPresentation,
+} from "@/lib/mcq-report-presentation";
 
 interface Submission {
   id: number;
@@ -62,6 +71,13 @@ interface ParsedMcqSubmission {
   totalQuestions: number;
   maxScore: number;
   hasReport: boolean;
+  reportPdf?: {
+    fileKey?: string;
+    publicUrl?: string;
+    generatedAt?: string;
+    generatedByTeacherId?: number;
+  };
+  reportPresentation?: McqReportPresentation;
   report?: {
     generatedAt?: string;
     attemptPolicy?: {
@@ -145,11 +161,21 @@ const parseMcqSubmission = (content: string | null): ParsedMcqSubmission | null 
       }>;
       latestAttemptNumber?: number;
       report?: ParsedMcqSubmission["report"];
+      reportPresentation?: unknown;
+      reportPdf?: ParsedMcqSubmission["reportPdf"];
     };
     if (parsed.submissionType !== "mcq_test_attempt") return null;
     const attempts = Array.isArray(parsed.attempts) ? parsed.attempts : [];
     const latestAttempt = attempts.length > 0 ? attempts[attempts.length - 1] : null;
     const latestSummary = latestAttempt?.summary || parsed.summary || {};
+    const fallbackPresentation = createDefaultReportPresentation({
+      testTitle: parsed.testTitle || "MCQ Test",
+      sectionStats: parsed.report?.sectionStats || [],
+    });
+    const reportPresentation = parsed.report
+      ? normalizeReportPresentation(parsed.reportPresentation, fallbackPresentation, parsed.report.sectionStats || [])
+      : undefined;
+
     return {
       testTitle: parsed.testTitle || "MCQ Test",
       attemptCount: attempts.length > 0 ? attempts.length : 1,
@@ -158,7 +184,9 @@ const parseMcqSubmission = (content: string | null): ParsedMcqSubmission | null 
       totalQuestions: Number(latestSummary.totalQuestions) || 0,
       maxScore: Number(latestSummary.maxScore) || 0,
       hasReport: Boolean(parsed.report),
+      reportPdf: parsed.reportPdf,
       report: parsed.report,
+      reportPresentation,
     };
   } catch {
     return null;
@@ -176,7 +204,8 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [selectedReportSubmission, setSelectedReportSubmission] = useState<Submission | null>(null);
   const [selectedReportData, setSelectedReportData] = useState<ParsedMcqSubmission | null>(null);
-  const [gradeData, setGradeData] = useState({ grade: '', feedback: '' });
+  const [selectedReportPresentation, setSelectedReportPresentation] = useState<McqReportPresentation | null>(null);
+  const [gradeData, setGradeData] = useState({ grade: '' });
   const [isSavingGrade, setIsSavingGrade] = useState(false);
   const [reportActionSubmissionId, setReportActionSubmissionId] = useState<number | null>(null);
   const gradeSubmitInFlightRef = useRef(false);
@@ -255,8 +284,7 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
   const handleGrade = (submission: Submission) => {
     setSelectedSubmission(submission);
     setGradeData({
-      grade: submission.grade?.toString() || '',
-      feedback: submission.feedback || ''
+      grade: submission.grade?.toString() || ''
     });
     setIsGradeDialogOpen(true);
   };
@@ -276,7 +304,6 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
         body: JSON.stringify({
           submissionId: selectedSubmission.id,
           grade: gradeData.grade ? parseInt(gradeData.grade) : null,
-          feedback: gradeData.feedback,
           teacherEmail
         }),
       });
@@ -298,7 +325,7 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
       setSelectedSubmission(null);
       toast({
         title: "Submission graded",
-        description: "Your feedback has been saved successfully.",
+        description: "Grade saved successfully.",
         className: "border-green-500 bg-green-50 text-green-900",
       });
 
@@ -315,7 +342,11 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
     }
   };
 
-  const handleGenerateReport = async (submission: Submission, sendToStudent: boolean) => {
+  const handleReportAction = async (
+    submission: Submission,
+    action: "generate" | "saveDraft" | "confirm" | "send",
+    presentation?: McqReportPresentation
+  ) => {
     if (reportActionSubmissionId !== null) return;
     try {
       setReportActionSubmissionId(submission.id);
@@ -327,7 +358,8 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
         body: JSON.stringify({
           submissionId: submission.id,
           teacherEmail,
-          sendToStudent,
+          action,
+          presentation,
         }),
       });
       const data = await response.json();
@@ -342,13 +374,24 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
         const refreshedReport = parseMcqSubmission(data.submission?.content || null);
         setSelectedReportSubmission(data.submission);
         setSelectedReportData(refreshedReport);
+        setSelectedReportPresentation(refreshedReport?.reportPresentation || null);
       }
 
       toast({
-        title: sendToStudent ? "Report sent to student" : "Report generated",
-        description: sendToStudent
-          ? "MCQ report has been added to student feedback."
-          : "Auto-check completed with section and difficulty analytics.",
+        title: action === "generate"
+          ? "Report generated"
+          : action === "saveDraft"
+            ? "Draft saved"
+            : action === "confirm"
+              ? "Report confirmed"
+              : "Report sent to student",
+        description: action === "generate"
+          ? "Auto-check completed. Open mentor workspace to refine the narrative."
+          : action === "saveDraft"
+            ? "Mentor draft updated successfully."
+            : action === "confirm"
+              ? "Final version confirmed. PDF is ready for review and sending."
+              : "Final report PDF has been sent to the student workspace.",
         className: "border-slate-300 bg-slate-100 text-slate-800",
       });
     } catch (error) {
@@ -360,6 +403,16 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
     } finally {
       setReportActionSubmissionId(null);
     }
+  };
+
+  const createPresentationSeed = (submission: Submission, parsed: ParsedMcqSubmission) => {
+    const fallback = createDefaultReportPresentation({
+      studentName: submission.student.name,
+      assignmentTitle: submission.assignment.title,
+      testTitle: parsed.testTitle,
+      sectionStats: parsed.report?.sectionStats || [],
+    });
+    return normalizeReportPresentation(parsed.reportPresentation, fallback, parsed.report?.sectionStats || []);
   };
 
   const openReportDialog = (submission: Submission) => {
@@ -374,7 +427,39 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
     }
     setSelectedReportSubmission(submission);
     setSelectedReportData(parsed);
+    setSelectedReportPresentation(createPresentationSeed(submission, parsed));
     setIsReportDialogOpen(true);
+  };
+
+  const updatePresentationField = (field: keyof McqReportPresentation, value: string) => {
+    setSelectedReportPresentation((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        [field]: value,
+        updatedAt: new Date().toISOString(),
+        mode: prev.mode === "confirmed" ? "draft" : prev.mode,
+        confirmedAt: prev.mode === "confirmed" ? null : prev.confirmedAt,
+        confirmedByTeacherId: prev.mode === "confirmed" ? null : prev.confirmedByTeacherId,
+      };
+    });
+  };
+
+  const updateMasteryLabel = (sectionId: string, value: string) => {
+    setSelectedReportPresentation((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        masteryLabels: {
+          ...prev.masteryLabels,
+          [sectionId]: value,
+        },
+        updatedAt: new Date().toISOString(),
+        mode: prev.mode === "confirmed" ? "draft" : prev.mode,
+        confirmedAt: prev.mode === "confirmed" ? null : prev.confirmedAt,
+        confirmedByTeacherId: prev.mode === "confirmed" ? null : prev.confirmedByTeacherId,
+      };
+    });
   };
 
   const formatDate = (dateString: string) => {
@@ -593,6 +678,16 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                       </p>
                       {parsedMcqSubmission?.hasReport && (
                         <div className="mt-2 space-y-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-700">
+                          <div className="flex items-center justify-between gap-2">
+                            <span>Report Workspace Ready</span>
+                            <Badge
+                              className={parsedMcqSubmission?.reportPresentation?.mode === "confirmed"
+                                ? "border-emerald-200 bg-emerald-100 text-emerald-800"
+                                : "border-amber-200 bg-amber-100 text-amber-800"}
+                            >
+                              {parsedMcqSubmission?.reportPresentation?.mode === "confirmed" ? "Confirmed" : "Draft"}
+                            </Badge>
+                          </div>
                           <p>
                             Checked: {parsedMcqSubmission?.report?.scoreSummary?.finalScore ?? 0}/{parsedMcqSubmission?.maxScore}
                             {" "}({parsedMcqSubmission?.report?.scoreSummary?.percentage ?? 0}%)
@@ -638,14 +733,7 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                     </div>
                   )}
 
-                  {submission.feedback && (
-                    <div>
-                      <p className="text-sm font-medium text-gray-600 mb-1">Feedback:</p>
-                      <div className="bg-blue-50 p-3 rounded border border-blue-200">
-                        <p className="text-sm">{submission.feedback}</p>
-                      </div>
-                    </div>
-                  )}
+                  {/* Teacher feedback display removed from teacher dashboard */}
                 </div>
 
                 {/* Actions */}
@@ -654,27 +742,19 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                     <>
                       <Button
                         variant="outline"
-                        onClick={() => handleGenerateReport(submission, false)}
+                        onClick={() => handleReportAction(submission, "generate")}
                         disabled={reportActionSubmissionId !== null || isSavingGrade}
                       >
                         <BarChart3 className="mr-2 h-4 w-4" />
-                        {reportBusy ? "Checking..." : "Check Marks"}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => handleGenerateReport(submission, true)}
-                        disabled={reportActionSubmissionId !== null || isSavingGrade}
-                      >
-                        <Send className="mr-2 h-4 w-4" />
-                        {reportBusy ? "Sending..." : "Send Report"}
+                        {reportBusy ? "Generating..." : "Generate Draft"}
                       </Button>
                       <Button
                         variant="outline"
                         onClick={() => openReportDialog(submission)}
                         disabled={reportActionSubmissionId !== null}
                       >
-                        <BarChart3 className="mr-2 h-4 w-4" />
-                        View Report
+                        <PencilLine className="mr-2 h-4 w-4" />
+                        Mentor Workspace
                       </Button>
                     </>
                   )}
@@ -696,163 +776,253 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
           if (!nextOpen) {
             setSelectedReportSubmission(null);
             setSelectedReportData(null);
+            setSelectedReportPresentation(null);
           }
         }}
       >
-        <DialogContent className="max-h-[90vh] max-w-6xl overflow-hidden">
-          <DialogHeader>
+        <DialogContent className="flex h-[92vh] max-h-[92vh] max-w-[96vw] flex-col overflow-hidden p-0">
+          <DialogHeader className="shrink-0 border-b border-slate-200 px-6 py-4 pr-10">
             <DialogTitle>
-              MCQ Report: {selectedReportSubmission?.assignment.title || "Submission"}
+              Mentor Report Workspace: {selectedReportSubmission?.assignment.title || "Submission"}
             </DialogTitle>
             <p className="text-sm text-gray-600">
-              Student: {selectedReportSubmission?.student.name || "N/A"} • Test: {selectedReportData?.testTitle || "MCQ Test"}
+              Student: {selectedReportSubmission?.student.name || "N/A"} • Test: {selectedReportData?.testTitle || "MCQ Test"} • Edit live preview before confirmation
             </p>
           </DialogHeader>
 
-          {!selectedReportData?.report ? (
-            <div className="py-8 text-center text-sm text-slate-600">
-              No report data available.
-            </div>
-          ) : (
-            <div className="space-y-4 overflow-y-auto pr-1">
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-                <div className="rounded border bg-slate-50 p-3">
-                  <p className="text-xs text-slate-500">Score</p>
-                  <p className="text-lg font-semibold text-slate-900">
-                    {selectedReportData.report.scoreSummary?.finalScore ?? 0}/{selectedReportData.report.scoreSummary?.maxScore ?? selectedReportData.maxScore}
-                  </p>
-                </div>
-                <div className="rounded border bg-slate-50 p-3">
-                  <p className="text-xs text-slate-500">Percentage</p>
-                  <p className="text-lg font-semibold text-slate-900">
-                    {selectedReportData.report.scoreSummary?.percentage ?? 0}%
-                  </p>
-                </div>
-                <div className="rounded border bg-slate-50 p-3">
-                  <p className="text-xs text-slate-500">Attempts</p>
-                  <p className="text-lg font-semibold text-slate-900">
-                    {selectedReportData.attemptCount} (latest #{selectedReportData.latestAttemptNumber})
-                  </p>
-                </div>
-                <div className="rounded border bg-slate-50 p-3">
-                  <p className="text-xs text-slate-500">Considered Attempt</p>
-                  <p className="text-lg font-semibold text-slate-900">
-                    #{selectedReportData.report.attemptPolicy?.consideredAttemptNumber ?? selectedReportData.latestAttemptNumber}
-                  </p>
-                </div>
+          <div className="min-h-0 flex-1 overflow-hidden px-4 py-3">
+            {!selectedReportData?.report || !selectedReportPresentation || !selectedReportSubmission ? (
+              <div className="py-8 text-center text-sm text-slate-600">
+                No report data available.
               </div>
+            ) : (
+              <div className="grid h-full min-h-0 grid-cols-1 gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
+                <div className="h-full min-h-0 overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="font-semibold text-slate-900">Draft Controls</h3>
+                    <Badge className={selectedReportPresentation.mode === "confirmed"
+                      ? "border-emerald-200 bg-emerald-100 text-emerald-800"
+                      : "border-amber-200 bg-amber-100 text-amber-800"}
+                    >
+                      {selectedReportPresentation.mode === "confirmed" ? "Confirmed" : "Draft"}
+                    </Badge>
+                  </div>
 
-              <div className="rounded border">
-                <div className="border-b bg-slate-50 px-3 py-2">
-                  <p className="text-sm font-semibold text-slate-900">Section Statistics</p>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[720px] text-sm">
-                    <thead className="bg-white text-left text-xs uppercase text-slate-500">
-                      <tr>
-                        <th className="px-3 py-2">Section</th>
-                        <th className="px-3 py-2">Questions</th>
-                        <th className="px-3 py-2">Answered</th>
-                        <th className="px-3 py-2">Correct</th>
-                        <th className="px-3 py-2">Partial</th>
-                        <th className="px-3 py-2">Wrong</th>
-                        <th className="px-3 py-2">Score</th>
-                        <th className="px-3 py-2">%</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(selectedReportData.report.sectionStats || []).map((section, index) => (
-                        <tr key={`report-section-${index}`} className="border-t">
-                          <td className="px-3 py-2">{section.sectionName || "Section"}</td>
-                          <td className="px-3 py-2">{section.questionCount ?? 0}</td>
-                          <td className="px-3 py-2">{section.answeredCount ?? 0}</td>
-                          <td className="px-3 py-2">{section.correctCount ?? 0}</td>
-                          <td className="px-3 py-2">{section.partialCount ?? 0}</td>
-                          <td className="px-3 py-2">{section.wrongCount ?? 0}</td>
-                          <td className="px-3 py-2">{section.score ?? 0}/{section.maxScore ?? 0}</td>
-                          <td className="px-3 py-2">{section.percentage ?? 0}%</td>
-                        </tr>
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="report-title">Report Title</Label>
+                      <Input
+                        id="report-title"
+                        value={selectedReportPresentation.reportTitle}
+                        onChange={(e) => updatePresentationField("reportTitle", e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="report-type">Report Type</Label>
+                      <Input
+                        id="report-type"
+                        value={selectedReportPresentation.reportType}
+                        onChange={(e) => updatePresentationField("reportType", e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="ai-narrative">AI Narrative</Label>
+                      <Textarea
+                        id="ai-narrative"
+                        value={selectedReportPresentation.aiNarrative}
+                        onChange={(e) => updatePresentationField("aiNarrative", e.target.value)}
+                        rows={4}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="strengths">Strengths (one per line)</Label>
+                      <Textarea
+                        id="strengths"
+                        value={selectedReportPresentation.strengths}
+                        onChange={(e) => updatePresentationField("strengths", e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="weaknesses">Weaknesses (one per line)</Label>
+                      <Textarea
+                        id="weaknesses"
+                        value={selectedReportPresentation.weaknesses}
+                        onChange={(e) => updatePresentationField("weaknesses", e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+                    <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Topic Insights</p>
+                      {(selectedReportData.report.sectionStats || []).map((section, index) => {
+                        const sectionId = section.sectionId || `section-${index + 1}`;
+                        return (
+                          <div key={`ai-topic-${sectionId}`}>
+                            <Label htmlFor={`ai-topic-${sectionId}`}>{section.sectionName || `Section ${index + 1}`}</Label>
+                            <Textarea
+                              id={`ai-topic-${sectionId}`}
+                              value={selectedReportPresentation.aiTopicInsights?.[sectionId] || ""}
+                              onChange={(e) => {
+                                setSelectedReportPresentation((prev) => {
+                                  if (!prev) return prev;
+                                  return {
+                                    ...prev,
+                                    aiTopicInsights: {
+                                      ...(prev.aiTopicInsights || {}),
+                                      [sectionId]: e.target.value,
+                                    },
+                                    updatedAt: new Date().toISOString(),
+                                    mode: prev.mode === "confirmed" ? "draft" : prev.mode,
+                                    confirmedAt: prev.mode === "confirmed" ? null : prev.confirmedAt,
+                                    confirmedByTeacherId: prev.mode === "confirmed" ? null : prev.confirmedByTeacherId,
+                                  };
+                                });
+                              }}
+                              rows={2}
+                              placeholder="one-line insight for this topic"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* <div>
+                      <Label htmlFor="concept-gaps">Conceptual Gaps</Label>
+                      <Textarea
+                        id="concept-gaps"
+                        value={selectedReportPresentation.conceptualGaps}
+                        onChange={(e) => updatePresentationField("conceptualGaps", e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="topic-insights">Topic Insights</Label>
+                      <Textarea
+                        id="topic-insights"
+                        value={selectedReportPresentation.topicInsights}
+                        onChange={(e) => updatePresentationField("topicInsights", e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="interpretation">Interpretation</Label>
+                      <Textarea
+                        id="interpretation"
+                        value={selectedReportPresentation.interpretationText}
+                        onChange={(e) => updatePresentationField("interpretationText", e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="recommendations">Recommendations</Label>
+                      <Textarea
+                        id="recommendations"
+                        value={selectedReportPresentation.recommendations}
+                        onChange={(e) => updatePresentationField("recommendations", e.target.value)}
+                        rows={3}
+                      />
+                    </div> */}
+
+                    {/* <div>
+                      <Label htmlFor="next-action">Next Action</Label>
+                      <Textarea
+                        id="next-action"
+                        value={selectedReportPresentation.nextAction}
+                        onChange={(e) => updatePresentationField("nextAction", e.target.value)}
+                        rows={2}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="mentor-comments">Mentor Comments</Label>
+                      <Textarea
+                        id="mentor-comments"
+                        value={selectedReportPresentation.mentorComments}
+                        onChange={(e) => updatePresentationField("mentorComments", e.target.value)}
+                        rows={2}
+                      />
+                    </div> */}
+                    <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Proficiency Labels</p>
+                      {(selectedReportData.report.sectionStats || []).map((section, index) => {
+                        const sectionId = section.sectionId || `section-${index + 1}`;
+                        return (
+                          <div key={`label-${sectionId}`}>
+                            <Label htmlFor={`mastery-${sectionId}`}>{section.sectionName || `Section ${index + 1}`}</Label>
+                            <Input
+                              id={`mastery-${sectionId}`}
+                              value={selectedReportPresentation.masteryLabels[sectionId] || ""}
+                              onChange={(e) => updateMasteryLabel(sectionId, e.target.value)}
+                              placeholder="Advanced / Developing / Needs Support"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Difficulty Reviews</p>
+                      {([
+                        { key: "easy", label: "Easy Tier Review" },
+                        { key: "medium", label: "Medium Tier Review" },
+                        { key: "hard", label: "Hard Tier Review" },
+                      ] as const).map((tier) => (
+                        <div key={tier.key}>
+                          <Label htmlFor={`ai-difficulty-${tier.key}`}>{tier.label}</Label>
+                          <Textarea
+                            id={`ai-difficulty-${tier.key}`}
+                            value={selectedReportPresentation.aiDifficultyReviews?.[tier.key] || ""}
+                            onChange={(e) => {
+                              setSelectedReportPresentation((prev) => {
+                                if (!prev) return prev;
+                                return {
+                                  ...prev,
+                                  aiDifficultyReviews: {
+                                    ...(prev.aiDifficultyReviews || { easy: "", medium: "", hard: "" }),
+                                    [tier.key]: e.target.value,
+                                  },
+                                  updatedAt: new Date().toISOString(),
+                                  mode: prev.mode === "confirmed" ? "draft" : prev.mode,
+                                  confirmedAt: prev.mode === "confirmed" ? null : prev.confirmedAt,
+                                  confirmedByTeacherId: prev.mode === "confirmed" ? null : prev.confirmedByTeacherId,
+                                };
+                              });
+                            }}
+                            rows={3}
+                            placeholder="Gemini-generated review text for this tier"
+                          />
+                        </div>
                       ))}
-                    </tbody>
-                  </table>
+                    </div>
+
+                    
+
+                    
+                  </div>
+                </div>
+
+                <div className="h-full min-h-0 overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white p-4">
+                  <PremiumMcqReport
+                    report={selectedReportData.report}
+                    presentation={selectedReportPresentation}
+                    studentName={selectedReportSubmission.student.name}
+                    assignmentTitle={selectedReportSubmission.assignment.title}
+                    testTitle={selectedReportData.testTitle}
+                    attemptsLabel={`${selectedReportData.attemptCount} (latest #${selectedReportData.latestAttemptNumber})`}
+                    consideredAttemptLabel={`#${selectedReportData.report.attemptPolicy?.consideredAttemptNumber ?? selectedReportData.latestAttemptNumber}`}
+                    showModeBadge
+                  />
                 </div>
               </div>
+            )}
+          </div>
 
-              <div className="rounded border">
-                <div className="border-b bg-slate-50 px-3 py-2">
-                  <p className="text-sm font-semibold text-slate-900">Difficulty Statistics</p>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[700px] text-sm">
-                    <thead className="bg-white text-left text-xs uppercase text-slate-500">
-                      <tr>
-                        <th className="px-3 py-2">Difficulty</th>
-                        <th className="px-3 py-2">Questions</th>
-                        <th className="px-3 py-2">Answered</th>
-                        <th className="px-3 py-2">Correct</th>
-                        <th className="px-3 py-2">Partial</th>
-                        <th className="px-3 py-2">Wrong</th>
-                        <th className="px-3 py-2">Score</th>
-                        <th className="px-3 py-2">%</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(selectedReportData.report.difficultyStats || []).map((difficulty, index) => (
-                        <tr key={`report-difficulty-${index}`} className="border-t">
-                          <td className="px-3 py-2 capitalize">{difficulty.difficulty || "medium"}</td>
-                          <td className="px-3 py-2">{difficulty.questionCount ?? 0}</td>
-                          <td className="px-3 py-2">{difficulty.answeredCount ?? 0}</td>
-                          <td className="px-3 py-2">{difficulty.correctCount ?? 0}</td>
-                          <td className="px-3 py-2">{difficulty.partialCount ?? 0}</td>
-                          <td className="px-3 py-2">{difficulty.wrongCount ?? 0}</td>
-                          <td className="px-3 py-2">{difficulty.score ?? 0}/{difficulty.maxScore ?? 0}</td>
-                          <td className="px-3 py-2">{difficulty.percentage ?? 0}%</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className="rounded border">
-                <div className="border-b bg-slate-50 px-3 py-2">
-                  <p className="text-sm font-semibold text-slate-900">Per-Question Evaluation</p>
-                </div>
-                <div className="max-h-[320px] overflow-auto">
-                  <table className="w-full min-w-[980px] text-sm">
-                    <thead className="sticky top-0 bg-white text-left text-xs uppercase text-slate-500">
-                      <tr>
-                        <th className="px-3 py-2">Q No.</th>
-                        <th className="px-3 py-2">Section</th>
-                        <th className="px-3 py-2">Difficulty</th>
-                        <th className="px-3 py-2">Type</th>
-                        <th className="px-3 py-2">Correct Answers</th>
-                        <th className="px-3 py-2">Student Answers</th>
-                        <th className="px-3 py-2">Score</th>
-                        <th className="px-3 py-2">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(selectedReportData.report.questionStats || []).map((question, index) => (
-                        <tr key={`report-question-${index}`} className="border-t align-top">
-                          <td className="px-3 py-2 font-medium">{question.questionNumber || index + 1}</td>
-                          <td className="px-3 py-2">{question.sectionName || "Section"}</td>
-                          <td className="px-3 py-2 capitalize">{question.difficulty || "medium"}</td>
-                          <td className="px-3 py-2 capitalize">{question.type || "single"}</td>
-                          <td className="px-3 py-2">{(question.correctAnswers || []).join(", ") || "-"}</td>
-                          <td className="px-3 py-2">{(question.selectedAnswers || []).join(", ") || "-"}</td>
-                          <td className="px-3 py-2">{question.scoreAwarded ?? 0}</td>
-                          <td className="px-3 py-2 capitalize">{question.status || "-"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex shrink-0 justify-end gap-2 border-t border-slate-200 px-6 py-3">
             <Button
               variant="outline"
               onClick={() => setIsReportDialogOpen(false)}
@@ -860,14 +1030,35 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
             >
               Close
             </Button>
-            {selectedReportSubmission && (
-              <Button
-                onClick={() => handleGenerateReport(selectedReportSubmission, true)}
-                disabled={reportActionSubmissionId !== null}
-              >
-                <Send className="mr-2 h-4 w-4" />
-                {reportActionSubmissionId === selectedReportSubmission.id ? "Sending..." : "Send Report to Student"}
-              </Button>
+            {selectedReportSubmission && selectedReportPresentation && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => handleReportAction(selectedReportSubmission, "saveDraft", selectedReportPresentation)}
+                  disabled={reportActionSubmissionId !== null}
+                >
+                  <Save className="mr-2 h-4 w-4" />
+                  {reportActionSubmissionId === selectedReportSubmission.id ? "Saving..." : "Save Draft"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleReportAction(selectedReportSubmission, "confirm", selectedReportPresentation)}
+                  disabled={reportActionSubmissionId !== null}
+                >
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  {reportActionSubmissionId === selectedReportSubmission.id ? "Confirming..." : "Confirm Report"}
+                </Button>
+                <Button
+                  onClick={() => handleReportAction(selectedReportSubmission, "send", selectedReportPresentation)}
+                  disabled={
+                    reportActionSubmissionId !== null ||
+                    selectedReportPresentation.mode !== "confirmed"
+                  }
+                >
+                  <Send className="mr-2 h-4 w-4" />
+                  {reportActionSubmissionId === selectedReportSubmission.id ? "Sending..." : "Send Report to Student"}
+                </Button>
+              </>
             )}
           </div>
         </DialogContent>
@@ -899,16 +1090,7 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
               />
             </div>
 
-            <div>
-              <Label htmlFor="feedback">Feedback</Label>
-              <Textarea
-                id="feedback"
-                value={gradeData.feedback}
-                onChange={(e) => setGradeData({...gradeData, feedback: e.target.value})}
-                placeholder="Provide feedback to the student..."
-                rows={4}
-              />
-            </div>
+            {/* Feedback removed: not displayed/collected in dashboard */}
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">

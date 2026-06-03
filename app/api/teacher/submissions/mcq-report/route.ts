@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest, hasRole } from "@/lib/auth";
+import {
+  McqReportPresentation,
+  createDefaultReportPresentation,
+  normalizeReportPresentation,
+} from "@/lib/mcq-report-presentation";
+import { generateGeminiDifficultyReviews } from "@/lib/gemini-difficulty-reviews";
+import { generateGeminiTopicInsights } from "@/lib/gemini-topic-insights";
 
 const TEST_CONFIG_START = "[MCQ_TEST_CONFIG_V1]";
 const TEST_CONFIG_END = "[/MCQ_TEST_CONFIG_V1]";
@@ -282,16 +289,35 @@ const stripPreviousAutoReport = (feedback: string | null) => {
   return value.slice(0, idx).trim();
 };
 
-const buildFeedbackReportText = (report: any) => {
+const buildFeedbackReportText = (report: any, presentation?: McqReportPresentation | null) => {
   const lines: string[] = [];
-  lines.push("MCQ Evaluation Report");
+  lines.push(presentation?.reportTitle || "MCQ Evaluation Report");
+  if (presentation?.reportType) {
+    lines.push(presentation.reportType);
+  }
   lines.push(`Score: ${report.scoreSummary.finalScore}/${report.scoreSummary.maxScore} (${report.scoreSummary.percentage}%)`);
   lines.push(`Raw score (with negatives): ${report.scoreSummary.rawScore}`);
   lines.push(`Considered attempt: #${report.attemptPolicy.consideredAttemptNumber} on ${report.attemptPolicy.consideredAttemptSubmittedAt || "N/A"}`);
   lines.push("");
+
+  if (presentation) {
+    lines.push("Mentor Interpretation:");
+    lines.push(`- Narrative: ${presentation.aiNarrative}`);
+    lines.push(`- Strengths: ${presentation.strengths.replace(/\n/g, "; ")}`);
+    lines.push(`- Weaknesses: ${presentation.weaknesses.replace(/\n/g, "; ")}`);
+    lines.push(`- Conceptual Gaps: ${presentation.conceptualGaps}`);
+    lines.push(`- Recommendations: ${presentation.recommendations}`);
+    lines.push(`- Next Action: ${presentation.nextAction}`);
+    lines.push(`- Mentor Comments: ${presentation.mentorComments}`);
+    lines.push("");
+  }
+
   lines.push("Section Breakdown:");
   report.sectionStats.forEach((section: any) => {
-    lines.push(`- ${section.sectionName}: ${section.score}/${section.maxScore} (${section.percentage}%)`);
+    const sectionLabel = section.sectionId && presentation?.masteryLabels?.[section.sectionId]
+      ? `${section.sectionName} [${presentation.masteryLabels[section.sectionId]}]`
+      : section.sectionName;
+    lines.push(`- ${sectionLabel}: ${section.score}/${section.maxScore} (${section.percentage}%)`);
   });
   lines.push("");
   lines.push(`Questions: ${report.scoreSummary.answeredCount} answered, ${report.scoreSummary.correctCount} correct, ${report.scoreSummary.partialCount} partial, ${report.scoreSummary.wrongCount} wrong.`);
@@ -311,7 +337,8 @@ export async function POST(request: NextRequest) {
 
     const data = await request.json();
     const submissionId = Number(data.submissionId);
-    const sendToStudent = Boolean(data.sendToStudent);
+    const action = String(data.action || (data.sendToStudent ? "send" : "generate"));
+    const incomingPresentation = data.presentation as unknown;
     const teacherEmailParam = String(data.teacherEmail || "").toLowerCase();
 
     if (!Number.isFinite(submissionId)) {
@@ -350,6 +377,133 @@ export async function POST(request: NextRequest) {
 
     if (!submission) {
       return NextResponse.json({ success: false, error: "Submission not found or access denied" }, { status: 404 });
+    }
+
+    const parsedContent = submission.content ? JSON.parse(submission.content) as Record<string, unknown> : null;
+    const existingReport = parsedContent?.report as Record<string, unknown> | undefined;
+
+    if (action === "saveDraft" || action === "confirm" || action === "send") {
+      if (!parsedContent || !existingReport) {
+        return NextResponse.json({ success: false, error: "Generate report before editing or sending." }, { status: 400 });
+      }
+
+      const fallbackPresentation = createDefaultReportPresentation({
+        studentName: submission.student.name,
+        assignmentTitle: submission.assignment.title,
+        testTitle: String(parsedContent.testTitle || "MCQ Test"),
+        sectionStats: Array.isArray(existingReport.sectionStats) ? (existingReport.sectionStats as any[]) : [],
+      });
+      const currentPresentation = normalizeReportPresentation(
+        parsedContent.reportPresentation,
+        fallbackPresentation,
+        Array.isArray(existingReport.sectionStats) ? (existingReport.sectionStats as any[]) : []
+      );
+      const mergedPresentation = normalizeReportPresentation(
+        incomingPresentation,
+        currentPresentation,
+        Array.isArray(existingReport.sectionStats) ? (existingReport.sectionStats as any[]) : []
+      );
+
+      const aiDifficultyReviews = await generateGeminiDifficultyReviews({
+        studentName: submission.student.name,
+        assignmentTitle: submission.assignment.title,
+        testTitle: String(parsedContent.testTitle || "MCQ Test"),
+        difficultyStats: Array.isArray(existingReport.difficultyStats) ? (existingReport.difficultyStats as any[]) : [],
+      });
+
+      const aiTopicInsights = await generateGeminiTopicInsights({
+        studentName: submission.student.name,
+        assignmentTitle: submission.assignment.title,
+        testTitle: String(parsedContent.testTitle || "MCQ Test"),
+        sections: Array.isArray(existingReport.sectionStats) ? (existingReport.sectionStats as any[]) : [],
+      });
+
+      let nextPresentation: McqReportPresentation = {
+        ...mergedPresentation,
+        aiDifficultyReviews,
+        aiTopicInsights,
+        updatedAt: new Date().toISOString(),
+      };
+
+      if (action === "saveDraft") {
+        nextPresentation = {
+          ...nextPresentation,
+          mode: "draft",
+          confirmedAt: null,
+          confirmedByTeacherId: null,
+        };
+      }
+
+      if (action === "confirm") {
+        nextPresentation = {
+          ...nextPresentation,
+          mode: "confirmed",
+          confirmedAt: new Date().toISOString(),
+          confirmedByTeacherId: teacher.id,
+        };
+      }
+
+      if (action === "send" && nextPresentation.mode !== "confirmed") {
+        return NextResponse.json({ success: false, error: "Confirm report before sending to student." }, { status: 400 });
+      }
+
+      const existingPdf = parsedContent.reportPdf && typeof parsedContent.reportPdf === "object"
+        ? (parsedContent.reportPdf as Record<string, unknown>)
+        : null;
+      const reportViewUrl = `/student-dashboard/report/${submission.id}`;
+
+      const manualFeedback = stripPreviousAutoReport(submission.feedback);
+      const reportText = buildFeedbackReportText(existingReport, nextPresentation);
+      const nextFeedback = (action === "send" || action === "confirm")
+        ? [manualFeedback, reportText].filter(Boolean).join("\n\n")
+        : submission.feedback;
+
+      const updatedSubmission = await prisma.submission.update({
+        where: { id: submission.id },
+        data: {
+          content: JSON.stringify({
+            ...parsedContent,
+            reportPresentation: nextPresentation,
+            reportPresentationUpdatedAt: nextPresentation.updatedAt,
+            reportPdf: (action === "confirm" || action === "send")
+              ? {
+                  publicUrl: reportViewUrl,
+                  generatedAt: nextPresentation.updatedAt,
+                  generatedByTeacherId: teacher.id,
+                }
+              : existingPdf
+                ? existingPdf
+                : undefined,
+          }, null, 2),
+          feedback: nextFeedback,
+        },
+        include: {
+          student: {
+            select: { id: true, name: true, email: true, grade: true },
+          },
+          assignment: {
+            select: {
+              id: true,
+              title: true,
+              description: true,
+              dueDate: true,
+              totalPoints: true,
+              program: true,
+              subject: true,
+            },
+          },
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        submission: updatedSubmission,
+        message: action === "saveDraft"
+          ? "Draft saved successfully."
+          : action === "confirm"
+            ? "Report confirmed successfully."
+            : "Report marked as sent and PDF is ready for student access.",
+      });
     }
 
     const { parsed, attempts, resourceId } = parseSubmissionAttempts(submission.content);
@@ -558,18 +712,47 @@ export async function POST(request: NextRequest) {
       questionStats,
     };
 
+    const fallbackPresentation = createDefaultReportPresentation({
+      studentName: submission.student.name,
+      assignmentTitle: submission.assignment.title,
+      testTitle: String(parsed.testTitle || "MCQ Test"),
+      sectionStats,
+    });
+    const reportPresentation = normalizeReportPresentation(
+      (parsed as Record<string, unknown>).reportPresentation,
+      fallbackPresentation,
+      sectionStats
+    );
+    const aiDifficultyReviews = await generateGeminiDifficultyReviews({
+      studentName: submission.student.name,
+      assignmentTitle: submission.assignment.title,
+      testTitle: String(parsed.testTitle || "MCQ Test"),
+      difficultyStats,
+    });
+    const aiTopicInsights = await generateGeminiTopicInsights({
+      studentName: submission.student.name,
+      assignmentTitle: submission.assignment.title,
+      testTitle: String(parsed.testTitle || "MCQ Test"),
+      sections: sectionStats,
+    });
+    const normalizedReportPresentation: McqReportPresentation = {
+      ...reportPresentation,
+      aiDifficultyReviews,
+      aiTopicInsights,
+      mode: "draft",
+      updatedAt: new Date().toISOString(),
+      confirmedAt: null,
+      confirmedByTeacherId: null,
+    };
+
     const nextContentPayload = {
       ...parsed,
       report,
+      reportPresentation: normalizedReportPresentation,
+      reportPresentationUpdatedAt: normalizedReportPresentation.updatedAt,
       reportGeneratedAt: report.generatedAt,
       reportGeneratedByTeacherId: teacher.id,
     };
-
-    const manualFeedback = stripPreviousAutoReport(submission.feedback);
-    const reportText = buildFeedbackReportText(report);
-    const nextFeedback = sendToStudent
-      ? [manualFeedback, reportText].filter(Boolean).join("\n\n")
-      : submission.feedback;
 
     const updatedSubmission = await prisma.submission.update({
       where: { id: submission.id },
@@ -577,7 +760,7 @@ export async function POST(request: NextRequest) {
         content: JSON.stringify(nextContentPayload, null, 2),
         grade: gradeToStore,
         status: "graded",
-        feedback: nextFeedback,
+        feedback: submission.feedback,
       },
       include: {
         student: {
@@ -601,9 +784,7 @@ export async function POST(request: NextRequest) {
       success: true,
       report,
       submission: updatedSubmission,
-      message: sendToStudent
-        ? "MCQ report generated and sent to student feedback."
-        : "MCQ report generated successfully.",
+      message: "MCQ report generated successfully.",
     });
   } catch (error) {
     console.error("Error generating MCQ report:", error);

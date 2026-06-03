@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
 import { useRequireAuth } from "../../contexts/AuthContext";
-import "../components/chat-no-spinner.css";
+import "../chat-no-spinner.css";
 import { useToast } from "@/hooks/use-toast";
 import {
   SidebarProvider,

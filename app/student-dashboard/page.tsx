@@ -235,6 +235,7 @@ interface ParsedMcqSubmission {
   attemptCount: number;
   latestAttemptLabel: string;
   obtainedScore?: number | null;
+  isConfirmedReport: boolean;
 }
 
 interface StudentMcqAttemptRecord {
@@ -444,6 +445,9 @@ const parseMcqSubmissionSummary = (content: string | undefined): ParsedMcqSubmis
           finalScore?: number;
         };
       };
+      reportPresentation?: {
+        mode?: "draft" | "confirmed";
+      };
       attempts?: Array<{ summary?: { answeredCount?: number; totalQuestions?: number; maxScore?: number } }>;
     };
     if (parsed.submissionType !== "mcq_test_attempt") return null;
@@ -459,6 +463,7 @@ const parseMcqSubmissionSummary = (content: string | undefined): ParsedMcqSubmis
       attemptCount: attempts.length > 0 ? attempts.length : 1,
       latestAttemptLabel: attempts.length > 1 ? `Attempt ${attempts.length}` : "Attempt 1",
       obtainedScore: Number.isFinite(reportScore) ? reportScore : null,
+      isConfirmedReport: parsed.reportPresentation?.mode === "confirmed",
     };
   } catch {
     return null;
@@ -2568,16 +2573,18 @@ export default function StudentDashboard() {
                                           <p className="mt-1 text-sm text-slate-700">
                                             {parsedMcqSubmission.answeredCount}/{parsedMcqSubmission.totalQuestions} answered
                                           </p>
-                                          <p className="text-xs text-slate-600">
-                                            Maximum score: {parsedMcqSubmission.maxScore}
-                                          </p>
-                                          <p className="text-xs text-slate-600">
-                                            Attempts: {parsedMcqSubmission.attemptCount} ({parsedMcqSubmission.latestAttemptLabel})
-                                          </p>
-                                          {Number.isFinite(parsedMcqSubmission.obtainedScore) && (
-                                            <p className="text-xs text-slate-600">
-                                              Evaluated score: {parsedMcqSubmission.obtainedScore}
-                                            </p>
+                                          <p className="text-xs text-slate-600">Maximum score: {parsedMcqSubmission.maxScore}</p>
+                                          <p className="text-xs text-slate-600">Attempts: {parsedMcqSubmission.attemptCount} ({parsedMcqSubmission.latestAttemptLabel})</p>
+                                          {parsedMcqSubmission.isConfirmedReport && (
+                                            <div className="mt-3 flex items-center justify-end gap-3">
+                                              <Button
+                                                size="sm"
+                                                className="bg-slate-900 text-white hover:bg-slate-800"
+                                                onClick={() => window.open(`/student-dashboard/report/${submission.id}`, "_blank")}
+                                              >
+                                                Open PDF Report
+                                              </Button>
+                                            </div>
                                           )}
                                         </div>
                                       </>
@@ -2657,13 +2664,7 @@ export default function StudentDashboard() {
                                   </div>
                                 )}
 
-                                {/* Teacher Feedback */}
-                                {submission.feedback && (
-                                  <div className="bg-slate-100 p-4 rounded-lg">
-                                    <p className="text-sm font-medium text-slate-900 mb-1">Teacher Feedback:</p>
-                                    <p className="text-sm text-slate-700 whitespace-pre-wrap">{submission.feedback}</p>
-                                  </div>
-                                )}
+                                {/* Teacher feedback hidden in student dashboard */}
 
                                 {/* Submission Status Info */}
                                 <div className="mt-4 pt-4 border-t border-gray-200">
