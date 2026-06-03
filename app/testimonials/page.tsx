@@ -47,66 +47,77 @@ const getSchoolLogo = (school: string | null | undefined): string => {
 };
 
 async function getTestimonials(): Promise<SectionsType> {
-  const rows = await prisma.testimonial.findMany({
-    where: {
-      OR: [
-        { contentApproved: true },
-        { successStoryApproved: true },
-        { ratingApproved: true },
-      ],
-    },
-    include: {
-      Student: {
-        select: {
-          name: true,
-          grade: true,
-          schoolName: true,
+  try {
+    const rows = await prisma.testimonial.findMany({
+      where: {
+        OR: [
+          { contentApproved: true },
+          { successStoryApproved: true },
+          { ratingApproved: true },
+        ],
+      },
+      include: {
+        Student: {
+          select: {
+            name: true,
+            grade: true,
+            schoolName: true,
+          },
         },
       },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
-  const grouped: SectionsType = {
-    tutoring: [],
-    satCoaching: [],
-    collegePrep: [],
-    researchProgram: [],
-    mathCompetition: [],
-  };
-
-  const programMap: Record<string, keyof SectionsType> = {
-    "UACHIEVE COLLEGE ADMISSIONS PREP": "collegePrep",
-    "AES CHAMPIONS Competitions": "mathCompetition",
-    "AES EXPLORERS Research Program": "researchProgram",
-    "SAT COACHING": "satCoaching",
-    Tutoring: "tutoring",
-  };
-
-  rows.forEach((row) => {
-    const testimonial: Testimonial = {
-      id: row.id.toString(),
-      name: row.studentName || row.Student?.name || "Student",
-      designation: row.grade || row.Student?.grade || "",
-      school: row.school || row.Student?.schoolName || "",
-      content: row.content ?? "",
-      successStory: row.successStory ?? "",
-      src: getSchoolLogo(row.school || row.Student?.schoolName || ""),
-      rating: row.rating ?? 5,
-      programs: Array.isArray(row.programs) ? row.programs : [],
+    const grouped: SectionsType = {
+      tutoring: [],
+      satCoaching: [],
+      collegePrep: [],
+      researchProgram: [],
+      mathCompetition: [],
     };
 
-    testimonial.programs.forEach((program) => {
-      const key = programMap[program];
-      if (key) {
-        grouped[key].push(testimonial);
-      }
-    });
-  });
+    const programMap: Record<string, keyof SectionsType> = {
+      "UACHIEVE COLLEGE ADMISSIONS PREP": "collegePrep",
+      "AES CHAMPIONS Competitions": "mathCompetition",
+      "AES EXPLORERS Research Program": "researchProgram",
+      "SAT COACHING": "satCoaching",
+      Tutoring: "tutoring",
+    };
 
-  return grouped;
+    rows.forEach((row) => {
+      const testimonial: Testimonial = {
+        id: row.id.toString(),
+        name: row.studentName || row.Student?.name || "Student",
+        designation: row.grade || row.Student?.grade || "",
+        school: row.school || row.Student?.schoolName || "",
+        content: row.content ?? "",
+        successStory: row.successStory ?? "",
+        src: getSchoolLogo(row.school || row.Student?.schoolName || ""),
+        rating: row.rating ?? 5,
+        programs: Array.isArray(row.programs) ? row.programs : [],
+      };
+
+      testimonial.programs.forEach((program) => {
+        const key = programMap[program];
+        if (key) {
+          grouped[key].push(testimonial);
+        }
+      });
+    });
+
+    return grouped;
+  } catch (error) {
+    console.error("Error fetching testimonials:", error);
+    return {
+      tutoring: [],
+      satCoaching: [],
+      collegePrep: [],
+      researchProgram: [],
+      mathCompetition: [],
+    };
+  }
 }
 
 export default async function Page() {

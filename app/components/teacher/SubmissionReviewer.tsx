@@ -10,20 +10,27 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
+import PremiumMcqReport from "../../../components/common/PremiumMcqReport";
 import { 
   FileText, 
   User, 
   Calendar, 
   Clock, 
-  Download, 
-  Eye, 
   Star,
-  CheckCircle,
-  AlertCircle,
-  ExternalLink
+  ExternalLink,
+  BarChart3,
+  Send,
+  CheckCircle2,
+  Save,
+  PencilLine
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getUserTimezone, formatDate as formatDateTz, formatDateTime } from "@/lib/timezone";
+import {
+  McqReportPresentation,
+  createDefaultReportPresentation,
+  normalizeReportPresentation,
+} from "@/lib/mcq-report-presentation";
 
 interface Submission {
   id: number;
@@ -56,6 +63,140 @@ interface SubmissionReviewerProps {
   teacherEmail: string;
 }
 
+interface ParsedMcqSubmission {
+  testTitle: string;
+  assessmentType: "mock-test" | "simple-assignment";
+  attemptCount: number;
+  latestAttemptNumber: number;
+  answeredCount: number;
+  totalQuestions: number;
+  maxScore: number;
+  hasReport: boolean;
+  reportPdf?: {
+    fileKey?: string;
+    publicUrl?: string;
+    generatedAt?: string;
+    generatedByTeacherId?: number;
+  };
+  reportPresentation?: McqReportPresentation;
+  report?: {
+    assessmentType?: "mock-test" | "simple-assignment";
+    generatedAt?: string;
+    attemptPolicy?: {
+      consideredAttemptNumber?: number;
+      consideredAttemptSubmittedAt?: string;
+      validAttemptsBeforeDue?: number;
+      attemptsFound?: number;
+    };
+    scoreSummary?: {
+      finalScore?: number;
+      rawScore?: number;
+      percentage?: number;
+      maxScore?: number;
+      correctCount?: number;
+      partialCount?: number;
+      wrongCount?: number;
+      answeredCount?: number;
+      unansweredCount?: number;
+    };
+    sectionStats?: Array<{
+      sectionId?: string;
+      sectionName?: string;
+      questionCount?: number;
+      answeredCount?: number;
+      correctCount?: number;
+      partialCount?: number;
+      wrongCount?: number;
+      unansweredCount?: number;
+      score?: number;
+      maxScore?: number;
+      percentage?: number;
+    }>;
+    difficultyStats?: Array<{
+      difficulty?: string;
+      questionCount?: number;
+      answeredCount?: number;
+      correctCount?: number;
+      partialCount?: number;
+      wrongCount?: number;
+      unansweredCount?: number;
+      score?: number;
+      maxScore?: number;
+      percentage?: number;
+    }>;
+    questionStats?: Array<{
+      questionId?: string;
+      questionNumber?: string;
+      sectionId?: string;
+      sectionName?: string;
+      difficulty?: string;
+      type?: string;
+      marks?: number;
+      negativeMarks?: number;
+      partialMarkingEnabled?: boolean;
+      correctAnswers?: string[];
+      selectedAnswers?: string[];
+      scoreAwarded?: number;
+      status?: string;
+    }>;
+  };
+}
+
+const parseMcqSubmission = (content: string | null): ParsedMcqSubmission | null => {
+  if (!content) return null;
+  try {
+    const parsed = JSON.parse(content) as {
+      submissionType?: string;
+      testTitle?: string;
+      summary?: {
+        answeredCount?: number;
+        totalQuestions?: number;
+        maxScore?: number;
+      };
+      attempts?: Array<{
+        attemptNumber?: number;
+        summary?: {
+          answeredCount?: number;
+          totalQuestions?: number;
+          maxScore?: number;
+        };
+      }>;
+      latestAttemptNumber?: number;
+      report?: ParsedMcqSubmission["report"];
+      assessmentType?: "mock-test" | "simple-assignment";
+      reportPresentation?: unknown;
+      reportPdf?: ParsedMcqSubmission["reportPdf"];
+    };
+    if (parsed.submissionType !== "mcq_test_attempt") return null;
+    const attempts = Array.isArray(parsed.attempts) ? parsed.attempts : [];
+    const latestAttempt = attempts.length > 0 ? attempts[attempts.length - 1] : null;
+    const latestSummary = latestAttempt?.summary || parsed.summary || {};
+    const fallbackPresentation = createDefaultReportPresentation({
+      testTitle: parsed.testTitle || "MCQ Test",
+      sectionStats: parsed.report?.sectionStats || [],
+    });
+    const reportPresentation = parsed.report
+      ? normalizeReportPresentation(parsed.reportPresentation, fallbackPresentation, parsed.report.sectionStats || [])
+      : undefined;
+
+    return {
+      testTitle: parsed.testTitle || "MCQ Test",
+      assessmentType: parsed.assessmentType === "simple-assignment" || parsed.report?.assessmentType === "simple-assignment" ? "simple-assignment" : "mock-test",
+      attemptCount: attempts.length > 0 ? attempts.length : 1,
+      latestAttemptNumber: Number(parsed.latestAttemptNumber) || Number(latestAttempt?.attemptNumber) || 1,
+      answeredCount: Number(latestSummary.answeredCount) || 0,
+      totalQuestions: Number(latestSummary.totalQuestions) || 0,
+      maxScore: Number(latestSummary.maxScore) || 0,
+      hasReport: Boolean(parsed.report),
+      reportPdf: parsed.reportPdf,
+      report: parsed.report,
+      reportPresentation,
+    };
+  } catch {
+    return null;
+  }
+};
+
 export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerProps) {
   const { toast } = useToast();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -64,8 +205,13 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [isGradeDialogOpen, setIsGradeDialogOpen] = useState(false);
-  const [gradeData, setGradeData] = useState({ grade: '', feedback: '' });
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [selectedReportSubmission, setSelectedReportSubmission] = useState<Submission | null>(null);
+  const [selectedReportData, setSelectedReportData] = useState<ParsedMcqSubmission | null>(null);
+  const [selectedReportPresentation, setSelectedReportPresentation] = useState<McqReportPresentation | null>(null);
+  const [gradeData, setGradeData] = useState({ grade: '' });
   const [isSavingGrade, setIsSavingGrade] = useState(false);
+  const [reportActionSubmissionId, setReportActionSubmissionId] = useState<number | null>(null);
   const gradeSubmitInFlightRef = useRef(false);
   const [filters, setFilters] = useState({
     status: 'all',
@@ -142,8 +288,7 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
   const handleGrade = (submission: Submission) => {
     setSelectedSubmission(submission);
     setGradeData({
-      grade: submission.grade?.toString() || '',
-      feedback: submission.feedback || ''
+      grade: submission.grade?.toString() || ''
     });
     setIsGradeDialogOpen(true);
   };
@@ -163,7 +308,6 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
         body: JSON.stringify({
           submissionId: selectedSubmission.id,
           grade: gradeData.grade ? parseInt(gradeData.grade) : null,
-          feedback: gradeData.feedback,
           teacherEmail
         }),
       });
@@ -185,7 +329,7 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
       setSelectedSubmission(null);
       toast({
         title: "Submission graded",
-        description: "Your feedback has been saved successfully.",
+        description: "Grade saved successfully.",
         className: "border-green-500 bg-green-50 text-green-900",
       });
 
@@ -200,6 +344,126 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
       setIsSavingGrade(false);
       gradeSubmitInFlightRef.current = false;
     }
+  };
+
+  const handleReportAction = async (
+    submission: Submission,
+    action: "generate" | "saveDraft" | "confirm" | "send",
+    presentation?: McqReportPresentation
+  ) => {
+    if (reportActionSubmissionId !== null) return;
+    try {
+      setReportActionSubmissionId(submission.id);
+      const response = await fetch('/api/teacher/submissions/mcq-report', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          submissionId: submission.id,
+          teacherEmail,
+          action,
+          presentation,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to generate MCQ report');
+      }
+
+      setSubmissions((prev) => prev.map((item) => (
+        item.id === submission.id ? data.submission : item
+      )));
+      if (selectedReportSubmission?.id === submission.id) {
+        const refreshedReport = parseMcqSubmission(data.submission?.content || null);
+        setSelectedReportSubmission(data.submission);
+        setSelectedReportData(refreshedReport);
+        setSelectedReportPresentation(refreshedReport?.reportPresentation || null);
+      }
+
+      toast({
+        title: action === "generate"
+          ? "Report generated"
+          : action === "saveDraft"
+            ? "Draft saved"
+            : action === "confirm"
+              ? "Report confirmed"
+              : "Report sent",
+        description: action === "generate"
+          ? "Auto-check completed. Open mentor workspace to refine the narrative."
+          : action === "saveDraft"
+            ? "Mentor draft updated successfully."
+            : action === "confirm"
+              ? "Final version confirmed. PDF is ready for review and sending."
+              : "Final report PDF has been shared with the student and parent dashboards.",
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Report action failed",
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    } finally {
+      setReportActionSubmissionId(null);
+    }
+  };
+
+  const createPresentationSeed = (submission: Submission, parsed: ParsedMcqSubmission) => {
+    const fallback = createDefaultReportPresentation({
+      studentName: submission.student.name,
+      assignmentTitle: submission.assignment.title,
+      testTitle: parsed.testTitle,
+      sectionStats: parsed.report?.sectionStats || [],
+    });
+    return normalizeReportPresentation(parsed.reportPresentation, fallback, parsed.report?.sectionStats || []);
+  };
+
+  const openReportDialog = (submission: Submission) => {
+    const parsed = parseMcqSubmission(submission.content);
+    if (!parsed?.hasReport || !parsed.report) {
+      toast({
+        title: "No report yet",
+        description: "Run Check Marks first to generate a report.",
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+      return;
+    }
+    setSelectedReportSubmission(submission);
+    setSelectedReportData(parsed);
+    setSelectedReportPresentation(createPresentationSeed(submission, parsed));
+    setIsReportDialogOpen(true);
+  };
+
+  const updatePresentationField = (field: keyof McqReportPresentation, value: string) => {
+    setSelectedReportPresentation((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        [field]: value,
+        updatedAt: new Date().toISOString(),
+        mode: prev.mode === "confirmed" ? "draft" : prev.mode,
+        confirmedAt: prev.mode === "confirmed" ? null : prev.confirmedAt,
+        confirmedByTeacherId: prev.mode === "confirmed" ? null : prev.confirmedByTeacherId,
+      };
+    });
+  };
+
+  const updateMasteryLabel = (sectionId: string, value: string) => {
+    setSelectedReportPresentation((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        masteryLabels: {
+          ...prev.masteryLabels,
+          [sectionId]: value,
+        },
+        updatedAt: new Date().toISOString(),
+        mode: prev.mode === "confirmed" ? "draft" : prev.mode,
+        confirmedAt: prev.mode === "confirmed" ? null : prev.confirmedAt,
+        confirmedByTeacherId: prev.mode === "confirmed" ? null : prev.confirmedByTeacherId,
+      };
+    });
   };
 
   const formatDate = (dateString: string) => {
@@ -340,7 +604,11 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
             </CardContent>
           </Card>
         ) : (
-          filteredSubmissions.map((submission) => (
+          filteredSubmissions.map((submission) => {
+            const parsedMcqSubmission = parseMcqSubmission(submission.content);
+            const isMcqSubmission = Boolean(parsedMcqSubmission);
+            const reportBusy = reportActionSubmissionId === submission.id;
+            return (
             <Card key={submission.id} className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <div className="flex justify-between items-start">
@@ -399,14 +667,56 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
 
                 {/* Submission Content */}
                 <div className="space-y-3">
-                  {submission.content && (
+                  {isMcqSubmission ? (
+                    <div className="rounded border bg-slate-50 p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-medium text-slate-800">{parsedMcqSubmission?.testTitle}</p>
+                        <Badge variant="outline">MCQ Attempt</Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-600">
+                        Attempt #{parsedMcqSubmission?.latestAttemptNumber} of {parsedMcqSubmission?.attemptCount} •{" "}
+                        {parsedMcqSubmission?.answeredCount}/{parsedMcqSubmission?.totalQuestions} answered
+                      </p>
+                      <p className="text-xs text-slate-600">
+                        Max score: {parsedMcqSubmission?.maxScore}
+                      </p>
+                      {parsedMcqSubmission?.hasReport && (
+                        <div className="mt-2 space-y-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-700">
+                          <div className="flex items-center justify-between gap-2">
+                            <span>Report Workspace Ready</span>
+                            <Badge
+                              className={parsedMcqSubmission?.reportPresentation?.mode === "confirmed"
+                                ? "border-emerald-200 bg-emerald-100 text-emerald-800"
+                                : "border-amber-200 bg-amber-100 text-amber-800"}
+                            >
+                              {parsedMcqSubmission?.reportPresentation?.mode === "confirmed" ? "Confirmed" : "Draft"}
+                            </Badge>
+                          </div>
+                          <p>
+                            Checked: {parsedMcqSubmission?.report?.scoreSummary?.finalScore ?? 0}/{parsedMcqSubmission?.maxScore}
+                            {" "}({parsedMcqSubmission?.report?.scoreSummary?.percentage ?? 0}%)
+                          </p>
+                          <p>
+                            Correct {parsedMcqSubmission?.report?.scoreSummary?.correctCount ?? 0} •
+                            Partial {parsedMcqSubmission?.report?.scoreSummary?.partialCount ?? 0} •
+                            Wrong {parsedMcqSubmission?.report?.scoreSummary?.wrongCount ?? 0}
+                          </p>
+                          {(parsedMcqSubmission?.report?.sectionStats || []).slice(0, 3).map((section, index) => (
+                            <p key={`section-stat-${submission.id}-${index}`}>
+                              {section.sectionName || "Section"}: {section.score ?? 0}/{section.maxScore ?? 0} ({section.percentage ?? 0}%)
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : submission.content ? (
                     <div>
                       <p className="text-sm font-medium text-gray-600 mb-1">Text Submission:</p>
                       <div className="bg-gray-50 p-3 rounded border">
                         <p className="text-sm whitespace-pre-wrap">{submission.content}</p>
                       </div>
                     </div>
-                  )}
+                  ) : null}
 
                   {submission.fileUrl && (
                     <div>
@@ -427,27 +737,371 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                     </div>
                   )}
 
-                  {submission.feedback && (
-                    <div>
-                      <p className="text-sm font-medium text-gray-600 mb-1">Feedback:</p>
-                      <div className="bg-blue-50 p-3 rounded border border-blue-200">
-                        <p className="text-sm">{submission.feedback}</p>
-                      </div>
-                    </div>
-                  )}
+                  {/* Teacher feedback display removed from teacher dashboard */}
                 </div>
 
                 {/* Actions */}
-                <div className="flex justify-end mt-4">
-                  <Button onClick={() => handleGrade(submission)} disabled={isSavingGrade}>
+                <div className="mt-4 flex flex-wrap justify-end gap-2">
+                  {isMcqSubmission && (
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleReportAction(submission, "generate")}
+                        disabled={reportActionSubmissionId !== null || isSavingGrade}
+                      >
+                        <BarChart3 className="mr-2 h-4 w-4" />
+                        {reportBusy ? "Generating..." : "Generate Draft"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => openReportDialog(submission)}
+                        disabled={reportActionSubmissionId !== null}
+                      >
+                        <PencilLine className="mr-2 h-4 w-4" />
+                        Mentor Workspace
+                      </Button>
+                    </>
+                  )}
+                  <Button onClick={() => handleGrade(submission)} disabled={isSavingGrade || reportBusy}>
                     {submission.grade !== null ? 'Update Grade' : 'Grade Submission'}
                   </Button>
                 </div>
               </CardContent>
             </Card>
-          ))
+          );
+          })
         )}
       </div>
+
+      <Dialog
+        open={isReportDialogOpen}
+        onOpenChange={(nextOpen) => {
+          setIsReportDialogOpen(nextOpen);
+          if (!nextOpen) {
+            setSelectedReportSubmission(null);
+            setSelectedReportData(null);
+            setSelectedReportPresentation(null);
+          }
+        }}
+      >
+        <DialogContent className="flex h-[92vh] max-h-[92vh] max-w-[96vw] flex-col overflow-hidden p-0">
+          <DialogHeader className="shrink-0 border-b border-slate-200 px-6 py-4 pr-10">
+            <DialogTitle>
+              Mentor Report Workspace: {selectedReportSubmission?.assignment.title || "Submission"}
+            </DialogTitle>
+            <p className="text-sm text-gray-600">
+              Student: {selectedReportSubmission?.student.name || "N/A"} • Test: {selectedReportData?.testTitle || "MCQ Test"} • Edit live preview before confirmation
+            </p>
+          </DialogHeader>
+
+          <div className="min-h-0 flex-1 overflow-hidden px-4 py-3">
+            {!selectedReportData?.report || !selectedReportPresentation || !selectedReportSubmission ? (
+              <div className="py-8 text-center text-sm text-slate-600">
+                No report data available.
+              </div>
+            ) : (
+              <div className="grid h-full min-h-0 grid-cols-1 gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
+                <div className="h-full min-h-0 overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="font-semibold text-slate-900">Draft Controls</h3>
+                    <Badge className={selectedReportPresentation.mode === "confirmed"
+                      ? "border-emerald-200 bg-emerald-100 text-emerald-800"
+                      : "border-amber-200 bg-amber-100 text-amber-800"}
+                    >
+                      {selectedReportPresentation.mode === "confirmed" ? "Confirmed" : "Draft"}
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="report-title">Report Title</Label>
+                      <Input
+                        id="report-title"
+                        value={selectedReportPresentation.reportTitle}
+                        onChange={(e) => updatePresentationField("reportTitle", e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="report-type">Report Type</Label>
+                      <Input
+                        id="report-type"
+                        value={selectedReportPresentation.reportType}
+                        onChange={(e) => updatePresentationField("reportType", e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="ai-narrative">AI Narrative</Label>
+                      <Textarea
+                        id="ai-narrative"
+                        value={selectedReportPresentation.aiNarrative}
+                        onChange={(e) => updatePresentationField("aiNarrative", e.target.value)}
+                        rows={4}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="strengths">Strengths (one per line)</Label>
+                      <Textarea
+                        id="strengths"
+                        value={selectedReportPresentation.strengths}
+                        onChange={(e) => updatePresentationField("strengths", e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="weaknesses">Weaknesses (one per line)</Label>
+                      <Textarea
+                        id="weaknesses"
+                        value={selectedReportPresentation.weaknesses}
+                        onChange={(e) => updatePresentationField("weaknesses", e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+                    {selectedReportData.assessmentType === "simple-assignment" && (
+                      <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Gap Analysis and Next Steps</p>
+                        <div>
+                          <Label htmlFor="concept-gaps">Conceptual Gaps</Label>
+                          <Textarea
+                            id="concept-gaps"
+                            value={selectedReportPresentation.conceptualGaps}
+                            onChange={(e) => updatePresentationField("conceptualGaps", e.target.value)}
+                            rows={3}
+                            placeholder="Gemini-generated conceptual gap summary"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="recommendations">Recommendations</Label>
+                          <Textarea
+                            id="recommendations"
+                            value={selectedReportPresentation.recommendations}
+                            onChange={(e) => updatePresentationField("recommendations", e.target.value)}
+                            rows={3}
+                            placeholder="Gemini-generated recommendations"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="next-action">Next Action</Label>
+                          <Textarea
+                            id="next-action"
+                            value={selectedReportPresentation.nextAction}
+                            onChange={(e) => updatePresentationField("nextAction", e.target.value)}
+                            rows={2}
+                            placeholder="Gemini-generated next action"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Topic Insights</p>
+                      {(selectedReportData.report.sectionStats || []).map((section, index) => {
+                        const sectionId = section.sectionId || `section-${index + 1}`;
+                        return (
+                          <div key={`ai-topic-${sectionId}`}>
+                            <Label htmlFor={`ai-topic-${sectionId}`}>{section.sectionName || `Section ${index + 1}`}</Label>
+                            <Textarea
+                              id={`ai-topic-${sectionId}`}
+                              value={selectedReportPresentation.aiTopicInsights?.[sectionId] || ""}
+                              onChange={(e) => {
+                                setSelectedReportPresentation((prev) => {
+                                  if (!prev) return prev;
+                                  return {
+                                    ...prev,
+                                    aiTopicInsights: {
+                                      ...(prev.aiTopicInsights || {}),
+                                      [sectionId]: e.target.value,
+                                    },
+                                    updatedAt: new Date().toISOString(),
+                                    mode: prev.mode === "confirmed" ? "draft" : prev.mode,
+                                    confirmedAt: prev.mode === "confirmed" ? null : prev.confirmedAt,
+                                    confirmedByTeacherId: prev.mode === "confirmed" ? null : prev.confirmedByTeacherId,
+                                  };
+                                });
+                              }}
+                              rows={2}
+                              placeholder="one-line insight for this topic"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* <div>
+                      <Label htmlFor="concept-gaps">Conceptual Gaps</Label>
+                      <Textarea
+                        id="concept-gaps"
+                        value={selectedReportPresentation.conceptualGaps}
+                        onChange={(e) => updatePresentationField("conceptualGaps", e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="topic-insights">Topic Insights</Label>
+                      <Textarea
+                        id="topic-insights"
+                        value={selectedReportPresentation.topicInsights}
+                        onChange={(e) => updatePresentationField("topicInsights", e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="interpretation">Interpretation</Label>
+                      <Textarea
+                        id="interpretation"
+                        value={selectedReportPresentation.interpretationText}
+                        onChange={(e) => updatePresentationField("interpretationText", e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="recommendations">Recommendations</Label>
+                      <Textarea
+                        id="recommendations"
+                        value={selectedReportPresentation.recommendations}
+                        onChange={(e) => updatePresentationField("recommendations", e.target.value)}
+                        rows={3}
+                      />
+                    </div> */}
+
+                    {/* <div>
+                      <Label htmlFor="next-action">Next Action</Label>
+                      <Textarea
+                        id="next-action"
+                        value={selectedReportPresentation.nextAction}
+                        onChange={(e) => updatePresentationField("nextAction", e.target.value)}
+                        rows={2}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="mentor-comments">Mentor Comments</Label>
+                      <Textarea
+                        id="mentor-comments"
+                        value={selectedReportPresentation.mentorComments}
+                        onChange={(e) => updatePresentationField("mentorComments", e.target.value)}
+                        rows={2}
+                      />
+                    </div> */}
+                    <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Proficiency Labels</p>
+                      {(selectedReportData.report.sectionStats || []).map((section, index) => {
+                        const sectionId = section.sectionId || `section-${index + 1}`;
+                        return (
+                          <div key={`label-${sectionId}`}>
+                            <Label htmlFor={`mastery-${sectionId}`}>{section.sectionName || `Section ${index + 1}`}</Label>
+                            <Input
+                              id={`mastery-${sectionId}`}
+                              value={selectedReportPresentation.masteryLabels[sectionId] || ""}
+                              onChange={(e) => updateMasteryLabel(sectionId, e.target.value)}
+                              placeholder="Advanced / Developing / Needs Support"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Difficulty Reviews</p>
+                      {([
+                        { key: "easy", label: "Easy Tier Review" },
+                        { key: "medium", label: "Medium Tier Review" },
+                        { key: "hard", label: "Hard Tier Review" },
+                      ] as const).map((tier) => (
+                        <div key={tier.key}>
+                          <Label htmlFor={`ai-difficulty-${tier.key}`}>{tier.label}</Label>
+                          <Textarea
+                            id={`ai-difficulty-${tier.key}`}
+                            value={selectedReportPresentation.aiDifficultyReviews?.[tier.key] || ""}
+                            onChange={(e) => {
+                              setSelectedReportPresentation((prev) => {
+                                if (!prev) return prev;
+                                return {
+                                  ...prev,
+                                  aiDifficultyReviews: {
+                                    ...(prev.aiDifficultyReviews || { easy: "", medium: "", hard: "" }),
+                                    [tier.key]: e.target.value,
+                                  },
+                                  updatedAt: new Date().toISOString(),
+                                  mode: prev.mode === "confirmed" ? "draft" : prev.mode,
+                                  confirmedAt: prev.mode === "confirmed" ? null : prev.confirmedAt,
+                                  confirmedByTeacherId: prev.mode === "confirmed" ? null : prev.confirmedByTeacherId,
+                                };
+                              });
+                            }}
+                            rows={3}
+                            placeholder="Gemini-generated review text for this tier"
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    
+
+                    
+                  </div>
+                </div>
+
+                <div className="h-full min-h-0 overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white p-4">
+                  <PremiumMcqReport
+                    report={{ ...selectedReportData.report, assessmentType: selectedReportData.assessmentType }}
+                    presentation={selectedReportPresentation}
+                    studentName={selectedReportSubmission.student.name}
+                    assignmentTitle={selectedReportSubmission.assignment.title}
+                    testTitle={selectedReportData.testTitle}
+                    attemptsLabel={`${selectedReportData.attemptCount} (latest #${selectedReportData.latestAttemptNumber})`}
+                    consideredAttemptLabel={`#${selectedReportData.report.attemptPolicy?.consideredAttemptNumber ?? selectedReportData.latestAttemptNumber}`}
+                    showModeBadge
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex shrink-0 justify-end gap-2 border-t border-slate-200 px-6 py-3">
+            <Button
+              variant="outline"
+              onClick={() => setIsReportDialogOpen(false)}
+              disabled={reportActionSubmissionId !== null}
+            >
+              Close
+            </Button>
+            {selectedReportSubmission && selectedReportPresentation && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => handleReportAction(selectedReportSubmission, "saveDraft", selectedReportPresentation)}
+                  disabled={reportActionSubmissionId !== null}
+                >
+                  <Save className="mr-2 h-4 w-4" />
+                  {reportActionSubmissionId === selectedReportSubmission.id ? "Saving..." : "Save Draft"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleReportAction(selectedReportSubmission, "confirm", selectedReportPresentation)}
+                  disabled={reportActionSubmissionId !== null}
+                >
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  {reportActionSubmissionId === selectedReportSubmission.id ? "Confirming..." : "Confirm Report"}
+                </Button>
+                <Button
+                  onClick={() => handleReportAction(selectedReportSubmission, "send", selectedReportPresentation)}
+                  disabled={
+                    reportActionSubmissionId !== null ||
+                    selectedReportPresentation.mode !== "confirmed"
+                  }
+                >
+                  <Send className="mr-2 h-4 w-4" />
+                  {reportActionSubmissionId === selectedReportSubmission.id ? "Sending..." : "Send Report"}
+                </Button>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Grade Dialog */}
       <Dialog open={isGradeDialogOpen} onOpenChange={setIsGradeDialogOpen}>
@@ -475,16 +1129,7 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
               />
             </div>
 
-            <div>
-              <Label htmlFor="feedback">Feedback</Label>
-              <Textarea
-                id="feedback"
-                value={gradeData.feedback}
-                onChange={(e) => setGradeData({...gradeData, feedback: e.target.value})}
-                placeholder="Provide feedback to the student..."
-                rows={4}
-              />
-            </div>
+            {/* Feedback removed: not displayed/collected in dashboard */}
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">

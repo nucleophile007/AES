@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
 import { useRequireAuth } from "../../contexts/AuthContext";
-import "../components/chat-no-spinner.css";
+import "../chat-no-spinner.css";
 import { useToast } from "@/hooks/use-toast";
 import {
   SidebarProvider,
@@ -150,10 +150,14 @@ interface Assignment {
     };
   }>;
   resources: Array<{
-    id: number;
-    name: string;
-    url: string;
-    resource?: any;
+    resource: {
+      id: number;
+      title: string;
+      type: string;
+      fileUrl?: string | null;
+      linkUrl?: string | null;
+      fileName?: string | null;
+    };
   }>;
   _count?: {
     submissions: number;
@@ -217,6 +221,23 @@ interface ResourceFormState {
   existingFileSize: number | null;
 }
 
+type TeacherDashboardTab =
+  | "students"
+  | "assignments"
+  | "submissions"
+  | "resources"
+  | "progress"
+  | "schedule";
+
+const TEACHER_DASHBOARD_TABS: TeacherDashboardTab[] = [
+  "students",
+  "assignments",
+  "submissions",
+  "resources",
+  "progress",
+  "schedule",
+];
+
 export default function TeacherDashboard() {
   // Authentication - require teacher role
   const { user: authUser, isLoading: authLoading } = useRequireAuth('teacher');
@@ -228,7 +249,7 @@ export default function TeacherDashboard() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState("students");
+  const [activeTab, setActiveTab] = useState<TeacherDashboardTab>("students");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [progressReports, setProgressReports] = useState<any[]>([]);
@@ -307,6 +328,16 @@ export default function TeacherDashboard() {
   const [selectedProgressStudent, setSelectedProgressStudent] = useState<Student | null>(null);
   const [isUrlStateReady, setIsUrlStateReady] = useState(false);
   const [authTimedOut, setAuthTimedOut] = useState(false);
+  const [studentGroupsLoading, setStudentGroupsLoading] = useState(false);
+  const [assignmentsLoading, setAssignmentsLoading] = useState(false);
+  const [tabLoadingState, setTabLoadingState] = useState<Record<TeacherDashboardTab, boolean>>({
+    students: false,
+    assignments: false,
+    submissions: false,
+    resources: false,
+    progress: false,
+    schedule: false,
+  });
   const router = useRouter();
   const pathname = usePathname();
 
@@ -324,7 +355,8 @@ export default function TeacherDashboard() {
   }, [teacher]);
 
   // Fetch functions
-  const fetchTeacherData = async () => {
+  const fetchTeacherData = async (options?: { showGlobalLoader?: boolean }) => {
+    const showGlobalLoader = options?.showGlobalLoader ?? true;
     const controller = new AbortController();
     let didTimeout = false;
     const timeoutId = setTimeout(() => {
@@ -332,8 +364,10 @@ export default function TeacherDashboard() {
       controller.abort("request-timeout");
     }, 15000);
     try {
-      setLoading(true);
-      setError(null);
+      if (showGlobalLoader) {
+        setLoading(true);
+        setError(null);
+      }
       const response = await fetch(`/api/teacher/students?teacherEmail=${encodeURIComponent(teacherEmail)}`, {
         signal: controller.signal,
       });
@@ -343,27 +377,44 @@ export default function TeacherDashboard() {
         setTeacher(data.teacher);
         setStudents(data.students || []);
       } else {
-        setError(data.error || 'Failed to fetch teacher data');
+        if (showGlobalLoader) {
+          setError(data.error || 'Failed to fetch teacher data');
+        } else {
+          console.error('Failed to fetch teacher data:', data.error);
+        }
       }
     } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") {
+      const isAbortError =
+        (err instanceof DOMException && err.name === "AbortError") ||
+        (err instanceof Error && err.name === "AbortError") ||
+        err === "request-timeout" ||
+        (typeof err === "string" && err.includes("request-timeout"));
+
+      if (isAbortError) {
         if (didTimeout) {
-          setError("Dashboard load timed out. Please retry.");
+          if (showGlobalLoader) {
+            setError("Dashboard load timed out. Please retry.");
+          }
         }
         return;
-      } else {
-        setError('Failed to fetch teacher data');
-        console.error('Error fetching teacher data:', err);
       }
+
+      if (showGlobalLoader) {
+        setError('Failed to fetch teacher data');
+      }
+      console.error('Error fetching teacher data:', err);
     } finally {
       clearTimeout(timeoutId);
-      setLoading(false);
+      if (showGlobalLoader) {
+        setLoading(false);
+      }
     }
   };
 
   const fetchStudentGroups = async () => {
     if (!teacherEmail) return;
     try {
+      setStudentGroupsLoading(true);
       const response = await fetch(`/api/teacher/student-groups?teacherEmail=${encodeURIComponent(teacherEmail)}`);
       const data = await response.json();
 
@@ -374,6 +425,8 @@ export default function TeacherDashboard() {
       }
     } catch (err) {
       console.error('Error fetching student groups:', err);
+    } finally {
+      setStudentGroupsLoading(false);
     }
   };
 
@@ -456,6 +509,7 @@ export default function TeacherDashboard() {
 
   const fetchAssignments = async () => {
     try {
+      setAssignmentsLoading(true);
       const response = await fetch(
         `/api/teacher/assignments?teacherEmail=${encodeURIComponent(teacherEmail)}&_=${Date.now()}`,
         { cache: "no-store" }
@@ -469,6 +523,8 @@ export default function TeacherDashboard() {
       }
     } catch (err) {
       console.error('Error fetching assignments:', err);
+    } finally {
+      setAssignmentsLoading(false);
     }
   };
 
@@ -1039,6 +1095,43 @@ export default function TeacherDashboard() {
     }
   };
 
+  const warmTabData = async (tab: TeacherDashboardTab) => {
+    if (!teacherEmail) return;
+    if (tab === "progress" || tab === "schedule") return;
+
+    setTabLoadingState((prev) => ({ ...prev, [tab]: true }));
+    try {
+      if (tab === "students") {
+        await Promise.all([
+          fetchTeacherData({ showGlobalLoader: false }),
+          fetchStudentGroups(),
+          teacher?.id ? fetchParentConversations() : Promise.resolve(),
+        ]);
+        return;
+      }
+
+      if (tab === "assignments") {
+        await fetchAssignments();
+        return;
+      }
+
+      if (tab === "submissions") {
+        await fetchStudentSubmissions();
+        return;
+      }
+
+      if (tab === "resources") {
+        await Promise.all([
+          fetchResources(),
+          fetchAssignments(),
+          fetchStudentGroups(),
+        ]);
+      }
+    } finally {
+      setTabLoadingState((prev) => ({ ...prev, [tab]: false }));
+    }
+  };
+
   const handleAddRemark = async (submissionId: number) => {
     if (addRemarkInFlightRef.current || isAddingRemark) return;
     if (!remarkText.trim()) return;
@@ -1150,10 +1243,10 @@ export default function TeacherDashboard() {
     const tab = params.get("tab");
     const q = params.get("q");
     const program = params.get("program");
-    const allowedTabs = new Set(["students", "assignments", "submissions", "resources", "progress", "schedule"]);
+    const allowedTabs = new Set<TeacherDashboardTab>(TEACHER_DASHBOARD_TABS);
 
-    if (tab && allowedTabs.has(tab)) {
-      setActiveTab(tab);
+    if (tab && allowedTabs.has(tab as TeacherDashboardTab)) {
+      setActiveTab(tab as TeacherDashboardTab);
     }
     if (q !== null) {
       setSearch(q);
@@ -1178,6 +1271,11 @@ export default function TeacherDashboard() {
     if (nextUrl === currentUrl) return;
     router.replace(nextUrl, { scroll: false });
   }, [activeTab, search, selectedProgram, isUrlStateReady, pathname, router]);
+
+  useEffect(() => {
+    if (!isUrlStateReady || !teacherEmail) return;
+    void warmTabData(activeTab);
+  }, [activeTab, isUrlStateReady, teacherEmail]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Early return for authentication loading (AFTER all hooks)
   if (authLoading && !authTimedOut) {
@@ -1228,7 +1326,7 @@ export default function TeacherDashboard() {
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
               <div className="text-red-600 text-xl mb-4">Error: {error}</div>
-              <Button onClick={fetchTeacherData}>Try Again</Button>
+              <Button onClick={() => void fetchTeacherData()}>Try Again</Button>
             </div>
           </div>
         </div>
@@ -1366,6 +1464,20 @@ export default function TeacherDashboard() {
     { label: "Assignments", value: filteredAssignments.length, icon: BookOpen },
     { label: "Needs Review", value: reviewPendingCount, icon: AlertCircle },
   ];
+  const isActiveTabLoading = tabLoadingState[activeTab];
+  const renderActiveTabWireframe = () => (
+    <Card className="border border-slate-200 bg-white shadow-sm">
+      <CardHeader className="space-y-2">
+        <ShimmerSkeleton className="h-6 w-48 rounded-md" />
+        <ShimmerSkeleton className="h-4 w-80 rounded-md" />
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <ShimmerSkeleton key={`teacher-tab-wireframe-${index}`} className="h-14 w-full rounded-lg" />
+        ))}
+      </CardContent>
+    </Card>
+  );
 
   return (
     <SidebarProvider>
@@ -1398,7 +1510,7 @@ export default function TeacherDashboard() {
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
                         isActive={activeTab === item.value}
-                        onClick={() => setActiveTab(item.value)}
+                        onClick={() => setActiveTab(item.value as TeacherDashboardTab)}
                         className={cn(
                           "w-full rounded-md transition-colors hover:bg-slate-100",
                           activeTab === item.value && "bg-slate-900 text-white"
@@ -1512,6 +1624,10 @@ export default function TeacherDashboard() {
               </CardContent>
             </Card>
 
+            {isActiveTabLoading ? (
+              renderActiveTabWireframe()
+            ) : (
+              <>
             {/* Students Tab */}
             {activeTab === "students" && (
               <motion.div
@@ -1876,16 +1992,13 @@ export default function TeacherDashboard() {
                             setNewResource((prev) => ({
                               ...prev,
                               category: nextCategory,
-                              assignmentId: nextCategory === "assignment" ? prev.assignmentId : null,
-                              studentIds: nextCategory === "assignment" ? [] : prev.studentIds
+                              assignmentId: null,
+                              studentIds: nextCategory === "personal" ? [] : prev.studentIds
                             }));
-                            if (nextCategory === "assignment") {
-                              setResourceGroupIds([]);
-                            }
+                            // keep groups as-is for personal/general
                           }}
                           className="w-full px-3 py-2 border rounded-md bg-white"
                         >
-                          <option value="assignment">Assignment</option>
                           <option value="personal">Personal</option>
                           <option value="general">General</option>
                         </select>
@@ -1944,33 +2057,7 @@ export default function TeacherDashboard() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {newResource.category === "assignment" && (
-                        <div className="space-y-2">
-                          <Label>Link to Assignment *</Label>
-                          <select
-                            value={newResource.assignmentId ?? ""}
-                            onChange={(e) =>
-                              setNewResource({
-                                ...newResource,
-                                assignmentId: e.target.value ? Number(e.target.value) : null
-                              })
-                            }
-                            className="w-full px-3 py-2 border rounded-md bg-white"
-                          >
-                            <option value="">Select assignment</option>
-                            {assignments.map((a) => (
-                              <option key={a.id} value={a.id}>
-                                {a.title}
-                              </option>
-                            ))}
-                          </select>
-                          {selectedResourceAssignment && (
-                            <p className="text-xs text-blue-700">
-                              Auto-targeting {assignmentAutoStudentIds.length} assigned student{assignmentAutoStudentIds.length === 1 ? "" : "s"} from this assignment.
-                            </p>
-                          )}
-                        </div>
-                      )}
+                      {/* Assignment linking removed from Resources tab; only Personal and General categories supported here. */}
 
                       <div className="space-y-2">
                         <Label>Attach File (optional)</Label>
@@ -2235,16 +2322,12 @@ export default function TeacherDashboard() {
                               setEditResource((prev) => ({
                                 ...prev,
                                 category: nextCategory,
-                                assignmentId: nextCategory === "assignment" ? prev.assignmentId : null,
-                                studentIds: nextCategory === "assignment" ? [] : prev.studentIds
+                                assignmentId: null,
+                                studentIds: nextCategory === "personal" ? [] : prev.studentIds
                               }));
-                              if (nextCategory === "assignment") {
-                                setEditResourceGroupIds([]);
-                              }
                             }}
                             className="w-full px-3 py-2 border rounded-md bg-white"
                           >
-                            <option value="assignment">Assignment</option>
                             <option value="personal">Personal</option>
                             <option value="general">General</option>
                           </select>
@@ -2302,28 +2385,7 @@ export default function TeacherDashboard() {
                         </div>
                       </div>
 
-                      {editResource.category === "assignment" && (
-                        <div className="space-y-2">
-                          <Label>Link to Assignment *</Label>
-                          <select
-                            value={editResource.assignmentId ?? ""}
-                            onChange={(e) => setEditResource({ ...editResource, assignmentId: e.target.value ? Number(e.target.value) : null })}
-                            className="w-full px-3 py-2 border rounded-md bg-white"
-                          >
-                            <option value="">Select assignment</option>
-                            {assignments.map((assignment) => (
-                              <option key={assignment.id} value={assignment.id}>
-                                {assignment.title}
-                              </option>
-                            ))}
-                          </select>
-                          {selectedEditResourceAssignment && (
-                            <p className="text-xs text-blue-700">
-                              Auto-targeting {editAssignmentAutoStudentIds.length} assigned student{editAssignmentAutoStudentIds.length === 1 ? "" : "s"} from this assignment.
-                            </p>
-                          )}
-                        </div>
-                      )}
+                      {/* Assignment linking removed from Resources tab; only Personal and General categories supported here. */}
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
@@ -2717,6 +2779,8 @@ export default function TeacherDashboard() {
                   </CardContent>
                 </Card>
               </motion.div>
+            )}
+              </>
             )}
           </div>
         </SidebarInset>

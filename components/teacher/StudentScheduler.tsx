@@ -277,9 +277,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
       setError(null);
       const response = await fetch(`/api/teacher/students?teacherEmail=${encodeURIComponent(teacherEmail)}`, {
         headers: {
-          'Content-Type': 'application/json',
-          // Add auth headers
-          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
+          'Content-Type': 'application/json'
         },
       });
 
@@ -316,8 +314,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
       }
       const response = await fetch(`/api/teacher/student-groups?teacherEmail=${encodeURIComponent(teacherEmail)}`, {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
+          'Content-Type': 'application/json'
         },
       });
 
@@ -360,33 +357,12 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
   const connectGoogleCalendar = async () => {
     try {
       setGoogleCalendarLoading(true);
-      const authHeaders: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-
-      const localAuthToken = typeof window !== 'undefined' ? localStorage.getItem('auth-token') : null;
-      if (localAuthToken) {
-        authHeaders.Authorization = `Bearer ${localAuthToken}`;
-      }
-
-      const requestAuthUrl = () =>
-        fetch(`/api/auth/google-calendar?email=${encodeURIComponent(teacherEmail)}`, {
-          credentials: 'include',
-          headers: authHeaders,
-        });
-
-      let response = await requestAuthUrl();
-
-      if (response.status === 401) {
-        const refreshResponse = await fetch('/api/auth/refresh', {
-          method: 'POST',
-          credentials: 'include',
-        });
-
-        if (refreshResponse.ok) {
-          response = await requestAuthUrl();
-        }
-      }
+      const response = await fetch(`/api/auth/google-calendar?email=${encodeURIComponent(teacherEmail)}`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
       const data = await response.json().catch(() => ({ error: 'Unexpected server response' }));
 
@@ -520,18 +496,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
           body: requestBody,
         });
 
-      let response = await sendBulkSyncRequest();
-
-      if (response.status === 401) {
-        const refreshResponse = await fetch('/api/auth/refresh', {
-          method: 'POST',
-          credentials: 'include',
-        });
-
-        if (refreshResponse.ok) {
-          response = await sendBulkSyncRequest();
-        }
-      }
+      const response = await sendBulkSyncRequest();
 
       const data = await response.json().catch(() => ({ error: 'Unexpected server response' }));
       if (response.ok) {
@@ -573,9 +538,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
       
       const response = await fetch(url, {
         headers: {
-          'Content-Type': 'application/json',
-          // Add auth headers
-          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
+          'Content-Type': 'application/json'
         }
       });
 
@@ -810,8 +773,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
       const response = await fetch('/api/teacher/schedule', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ ...eventData, studentId: targetStudentId })
       });
@@ -984,8 +946,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
           const response = await fetch(`/api/teacher/schedule?id=${eventToDelete.id}`, {
             method: 'DELETE',
             headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
+              'Content-Type': 'application/json'
             },
             body: JSON.stringify({ reason: reason?.trim() || null }),
           });
@@ -1166,8 +1127,7 @@ const StudentScheduler: React.FC<StudentSchedulerProps> = ({
       const response = await fetch('/api/teacher/schedule', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload),
       });

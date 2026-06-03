@@ -44,6 +44,7 @@ export async function GET(request: NextRequest) {
           studentId: student.id
         },
         include: {
+          student: true,
           assignment: {
             include: {
               resources: {

@@ -254,6 +254,39 @@ export async function rotateRefreshToken(
   };
 }
 
+async function getUserFromValidRefreshToken(refreshToken: string): Promise<{ user: AuthUser; expiresAt: Date } | null> {
+  const tokenHash = getTokenHash(refreshToken);
+  const now = new Date();
+
+  const existingTokenRows = await prisma.$queryRaw<Array<{
+    userId: number;
+    userRole: string;
+    expiresAt: Date;
+    revokedAt: Date | null;
+  }>>`
+    SELECT "userId", "userRole", "expiresAt", "revokedAt"
+    FROM "RefreshToken"
+    WHERE "tokenHash" = ${tokenHash}
+    LIMIT 1
+  `;
+
+  const existingToken = existingTokenRows[0];
+  if (!existingToken || existingToken.revokedAt || existingToken.expiresAt <= now) {
+    return null;
+  }
+
+  if (!isAuthRole(existingToken.userRole)) {
+    return null;
+  }
+
+  const user = await getAuthUserByRoleAndId(existingToken.userRole, existingToken.userId);
+  if (!user) {
+    return null;
+  }
+
+  return { user, expiresAt: existingToken.expiresAt };
+}
+
 export async function revokeRefreshToken(refreshToken: string): Promise<void> {
   const tokenHash = getTokenHash(refreshToken);
 
@@ -324,20 +357,38 @@ export async function revokeToken(
 export async function getUserFromRequest(request: NextRequest): Promise<JWTPayload | null> {
   try {
     const token = extractAuthToken(request);
-    if (!token) {
+    if (token) {
+      const payload = verifyToken(token);
+      if (payload) {
+        if (await isTokenRevoked(token, payload)) {
+          return null;
+        }
+
+        return payload;
+      }
+    }
+
+    const refreshToken = extractRefreshToken(request);
+    if (!refreshToken) {
       return null;
     }
 
-    const payload = verifyToken(token);
-    if (!payload) {
+    const refreshIdentity = await getUserFromValidRefreshToken(refreshToken);
+    if (!refreshIdentity) {
       return null;
     }
 
-    if (await isTokenRevoked(token, payload)) {
-      return null;
-    }
-
-    return payload;
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    const refreshExpirySeconds = Math.floor(refreshIdentity.expiresAt.getTime() / 1000);
+    return {
+      id: refreshIdentity.user.id,
+      email: refreshIdentity.user.email,
+      name: refreshIdentity.user.name,
+      role: refreshIdentity.user.role,
+      tokenType: 'access',
+      iat: nowSeconds,
+      exp: refreshExpirySeconds,
+    };
   } catch (error) {
     console.error('Error extracting user from request:', error);
     return null;

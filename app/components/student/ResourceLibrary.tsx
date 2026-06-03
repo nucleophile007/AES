@@ -478,7 +478,6 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
   const uniqueSubjects = [...new Set(resources.map(r => r.subject))];
 
   // Separate resources by category
-  const assignmentResources = filteredResources.filter(r => r.assignmentTitle);
   const generalResources = filteredResources.filter(r => !r.assignmentTitle && !r.isStudentSpecific);
   const studentSpecificResources = filteredResources.filter(r => r.isStudentSpecific);
 
@@ -562,133 +561,12 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
       )}
 
       {/* Resource Categories */}
-      <Tabs defaultValue="assignment" className="space-y-6">
+      <Tabs defaultValue="personal" className="space-y-6">
         <TabsList>
-          <TabsTrigger value="assignment">Assignment Resources ({assignmentResources.length})</TabsTrigger>
           <TabsTrigger value="personal">Personal Resources ({studentSpecificResources.length})</TabsTrigger>
           <TabsTrigger value="general">General Resources ({generalResources.length})</TabsTrigger>
           <TabsTrigger value="submissions">My Submissions ({submissions.length})</TabsTrigger>
         </TabsList>
-
-        {/* Assignment Resources */}
-        <TabsContent value="assignment" className="space-y-4">
-          {assignmentResources.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              No assignment resources found.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {assignmentResources.map((resource) => (
-                <Card key={resource.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-2">
-                        {getResourceIcon(resource.type)}
-                        <CardTitle className="text-lg leading-tight">{resource.title}</CardTitle>
-                      </div>
-                      {!resource.viewedAt && (
-                        <Badge variant="secondary" className="bg-blue-50 text-blue-700 text-xs">
-                          New
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    {resource.description && (
-                      <p className="text-sm text-gray-600 mt-2">{resource.description}</p>
-                    )}
-                  </CardHeader>
-                  
-                  <CardContent className="space-y-3">
-                    {/* Assignment Info */}
-                    <div className="bg-blue-50 p-3 rounded-lg">
-                      <div className="text-sm font-medium text-blue-900">
-                        {resource.assignmentTitle}
-                      </div>
-                      <div className="text-xs text-blue-600">
-                        {resource.assignmentSubject}
-                      </div>
-                    </div>
-                    
-                    {/* Resource Info */}
-                    <div className="flex flex-wrap gap-2">
-                      <Badge variant="outline" className="text-xs">
-                        {resource.subject}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        {resource.type}
-                      </Badge>
-                      {resource.isRequired && (
-                        <Badge variant="destructive" className="text-xs">
-                          Required
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    {resource.fileSize && (
-                      <div className="text-xs text-gray-500">
-                        Size: {formatFileSize(resource.fileSize)}
-                      </div>
-                    )}
-                    
-                    {/* Actions */}
-                    <div className="flex gap-2">
-                      {resource.fileUrl && (
-                        <Button
-                          size="sm"
-                          disabled={viewingResourceIds.has(resource.id)}
-                          onClick={() => {
-                            markAsViewed(resource.id);
-                            window.open(resource.fileUrl, '_blank');
-                          }}
-                          className="flex-1"
-                        >
-                          <Download className="h-4 w-4 mr-1" />
-                          Download
-                        </Button>
-                      )}
-                      {resource.linkUrl && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={viewingResourceIds.has(resource.id)}
-                          onClick={() => {
-                            markAsViewed(resource.id);
-                            window.open(resource.linkUrl, '_blank');
-                          }}
-                          className="flex-1"
-                        >
-                          <ExternalLink className="h-4 w-4 mr-1" />
-                          Open Link
-                        </Button>
-                      )}
-                    </div>
-                    
-                    {/* Status */}
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <div className="flex items-center gap-1">
-                        {resource.isStudentSpecific ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
-                        {resource.isStudentSpecific ? 'Personal' : 'Shared'}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {resource.viewedAt ? (
-                          <>
-                            <CheckCircle className="h-3 w-3 text-green-500" />
-                            Viewed
-                          </>
-                        ) : (
-                          <>
-                            <Clock className="h-3 w-3" />
-                            Not viewed
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
 
         {/* Personal Resources */}
         <TabsContent value="personal" className="space-y-4">

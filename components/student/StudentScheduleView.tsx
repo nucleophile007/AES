@@ -24,10 +24,53 @@ import {
   ExternalLink,
   AlertCircle
 } from "lucide-react";
-import { getUserTimezone, formatDateTime, formatDate, formatTime } from "@/lib/timezone";
+import { getUserTimezone, formatTime } from "@/lib/timezone";
 
 // Setup the localizer by providing the moment object
 const localizer = momentLocalizer(moment);
+
+const scheduleColorPalette = [
+  {
+    badge: 'bg-blue-50 text-blue-700 border-blue-200',
+    detail: 'bg-blue-100 text-blue-800',
+    calendar: 'bg-blue-200 border-blue-400 text-blue-800',
+  },
+  {
+    badge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    detail: 'bg-emerald-100 text-emerald-800',
+    calendar: 'bg-emerald-200 border-emerald-400 text-emerald-800',
+  },
+  {
+    badge: 'bg-amber-50 text-amber-700 border-amber-200',
+    detail: 'bg-amber-100 text-amber-800',
+    calendar: 'bg-amber-200 border-amber-400 text-amber-800',
+  },
+  {
+    badge: 'bg-rose-50 text-rose-700 border-rose-200',
+    detail: 'bg-rose-100 text-rose-800',
+    calendar: 'bg-rose-200 border-rose-400 text-rose-800',
+  },
+  {
+    badge: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    detail: 'bg-indigo-100 text-indigo-800',
+    calendar: 'bg-indigo-200 border-indigo-400 text-indigo-800',
+  },
+  {
+    badge: 'bg-slate-50 text-slate-700 border-slate-200',
+    detail: 'bg-slate-100 text-slate-800',
+    calendar: 'bg-slate-200 border-slate-400 text-slate-800',
+  },
+];
+
+const getSubjectColorSet = (subject: string) => {
+  const normalized = subject.trim().toLowerCase() || "general";
+  let hash = 0;
+  for (let i = 0; i < normalized.length; i++) {
+    hash = ((hash << 5) - hash) + normalized.charCodeAt(i);
+    hash |= 0;
+  }
+  return scheduleColorPalette[Math.abs(hash) % scheduleColorPalette.length];
+};
 
 interface ClassEvent {
   id: number;
@@ -68,13 +111,7 @@ const StudentScheduleView: React.FC<StudentScheduleViewProps> = ({ studentEmail 
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/student/schedule?studentEmail=${encodeURIComponent(studentEmail)}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          // Use the same auth header pattern as other components
-          'Authorization': `Bearer ${localStorage.getItem('auth-token') || sessionStorage.getItem('auth-token')}`
-        }
-      });
+      const response = await fetch(`/api/student/schedule?studentEmail=${encodeURIComponent(studentEmail)}`);
       
       // Get response data first, so we can include error message if available
       const data = await response.json();
@@ -250,14 +287,9 @@ const StudentScheduleView: React.FC<StudentScheduleViewProps> = ({ studentEmail 
                       <h4 className="font-medium text-gray-900">{event.title}</h4>
                       <Badge 
                         variant="outline" 
-                        className={`${
-                          event.subject === 'Mathematics' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                          event.subject === 'Science' ? 'bg-green-50 text-green-700 border-green-200' :
-                          event.subject === 'English' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                          'bg-gray-50 text-gray-700 border-gray-200'
-                        }`}
+                        className={getSubjectColorSet(event.subject || "General").badge}
                       >
-                        {event.subject}
+                        {event.subject || "General"}
                       </Badge>
                     </div>
                     <div className="text-sm text-gray-500">
@@ -324,28 +356,7 @@ const StudentScheduleView: React.FC<StudentScheduleViewProps> = ({ studentEmail 
                   style={{ height: '100%' }}
                   onSelectEvent={handleEventSelect}
                   eventPropGetter={(event: ClassEvent) => {
-                    // Generate consistent colors based on subject
-                    const subjectToColor = (subject: string) => {
-                      const colors = [
-                        'bg-blue-200 border-blue-400 text-blue-800',
-                        'bg-green-200 border-green-400 text-green-800',
-                        'bg-purple-200 border-purple-400 text-purple-800',
-                        'bg-red-200 border-red-400 text-red-800',
-                        'bg-yellow-200 border-yellow-400 text-yellow-800',
-                        'bg-pink-200 border-pink-400 text-pink-800'
-                      ];
-                      
-                      // Simple hash function to consistently map subject to color
-                      let hash = 0;
-                      for (let i = 0; i < subject.length; i++) {
-                        hash = ((hash << 5) - hash) + subject.charCodeAt(i);
-                        hash |= 0; // Convert to 32bit integer
-                      }
-                      
-                      return colors[Math.abs(hash) % colors.length];
-                    };
-                    
-                    const colorClass = event.color ? event.color : subjectToColor(event.subject);
+                    const colorClass = event.color || getSubjectColorSet(event.subject || "General").calendar;
                     
                     return {
                       className: `${colorClass} border-l-4 rounded px-2`
@@ -370,14 +381,9 @@ const StudentScheduleView: React.FC<StudentScheduleViewProps> = ({ studentEmail 
               {/* Subject Badge */}
               <div className="flex justify-center">
                 <Badge 
-                  className={`${
-                    selectedEvent.subject === 'Mathematics' ? 'bg-blue-100 text-blue-800' :
-                    selectedEvent.subject === 'Science' ? 'bg-green-100 text-green-800' :
-                    selectedEvent.subject === 'English' ? 'bg-purple-100 text-purple-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}
+                  className={getSubjectColorSet(selectedEvent.subject || "General").detail}
                 >
-                  {selectedEvent.subject}
+                  {selectedEvent.subject || "General"}
                 </Badge>
               </div>
               
@@ -410,7 +416,7 @@ const StudentScheduleView: React.FC<StudentScheduleViewProps> = ({ studentEmail 
                 <Book className="h-5 w-5 text-blue-600" />
                 <p>
                   <span className="font-medium">Subject:</span>{' '}
-                  {selectedEvent.subject}
+                  {selectedEvent.subject || "General"}
                 </p>
               </div>
               

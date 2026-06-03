@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
 import { useRequireAuth } from "../../contexts/AuthContext";
@@ -32,6 +32,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,6 +63,7 @@ import {
   CheckCircle,
   AlertCircle,
   Download,
+  ExternalLink,
   Eye,
   Send,
   ChevronRight,
@@ -75,16 +77,10 @@ import {
 import { cn } from "@/lib/utils";
 import ResourceLibrary from "@/components/student/ResourceLibrary";
 import MentorMessages from "../../components/student/MentorMessages";
+import StudentScheduleView from "@/components/student/StudentScheduleView";
 import ProgressReportList from "@/components/common/ProgressReportList";
 import DashboardLoadingSkeleton, { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
 import { getUserTimezone, formatDateTime, formatDate } from "@/lib/timezone";
-
-// Mock data - replace with actual API calls
-const mockUpcomingEvents = [
-  { id: 1, title: "Math Tutoring Session", date: "2025-09-10", time: "3:00 PM", type: "tutoring" },
-  { id: 2, title: "SAT Practice Test", date: "2025-09-12", time: "9:00 AM", type: "test" },
-  { id: 3, title: "Science Fair Project Review", date: "2025-09-15", time: "2:00 PM", type: "review" },
-];
 
 interface Student {
   id: number;
@@ -120,13 +116,82 @@ interface Assignment {
   title: string;
   subject: string;
   description: string;
+  instructions?: string | null;
   program: string;
   grade: string;
   dueDate: string;
+  dueDateIso?: string;
+  dueDateTimezone?: string | null;
   totalPoints: number;
   status: string;
+  allowLateSubmission?: boolean;
   submissionId?: number | null;
-  resources?: Array<any>; // Add this line to allow resources property
+  resources?: AssignmentResource[];
+}
+
+type McqQuestionType = "single" | "multiple";
+type McqOptionLabelStyle = "alpha-upper" | "numeric" | "roman-lower" | "custom";
+type McqQuestionNumberingStyle = "numeric" | "alpha-upper" | "roman-lower" | "roman-upper";
+type McqAssessmentType = "mock-test" | "simple-assignment";
+
+interface AssignmentResource {
+  id: number;
+  title: string;
+  description?: string | null;
+  type: string;
+  isRequired?: boolean;
+  fileUrl?: string | null;
+  linkUrl?: string | null;
+  fileName?: string | null;
+  fileSize?: number | null;
+  mcqSummary?: string;
+  mcqConfig?: unknown;
+}
+
+interface StudentMcqSection {
+  id: string;
+  name: string;
+  color?: string;
+  rangeExpression?: string;
+}
+
+interface StudentMcqSubtopic {
+  id: string;
+  name: string;
+}
+
+interface StudentMcqTopic {
+  id: string;
+  name: string;
+  subtopics: StudentMcqSubtopic[];
+}
+
+interface StudentMcqQuestion {
+  id: string;
+  sectionId: string;
+  topicId?: string | null;
+  subtopicId?: string | null;
+  type: McqQuestionType;
+  marks: number;
+  negativeEnabled?: boolean;
+  negativeMarks: number;
+  partialMarkingEnabled: boolean;
+  optionCount: number;
+  optionLabelStyle: McqOptionLabelStyle;
+  customOptionLabels: string[];
+  difficulty?: "easy" | "medium" | "hard";
+}
+
+interface StudentMcqConfig {
+  assessmentType: McqAssessmentType;
+  title: string;
+  description: string;
+  numberingStyle: McqQuestionNumberingStyle;
+  recommendedTimeMode?: "auto" | "manual";
+  recommendedTimeMinutes?: number;
+  sections: StudentMcqSection[];
+  topics: StudentMcqTopic[];
+  questions: StudentMcqQuestion[];
 }
 
 interface Submission {
@@ -145,15 +210,464 @@ interface Submission {
   status: string;
 }
 
+interface StudentScheduleEvent {
+  id: number;
+  title?: string | null;
+  subject?: string | null;
+  status?: string | null;
+  date?: string | null;
+  startDateTime?: string | null;
+  startTime?: string | null;
+}
+
+interface TimelineEvent {
+  id: string;
+  title: string;
+  when: Date;
+  typeLabel: string;
+}
+
+interface ParsedMcqSubmission {
+  testTitle: string;
+  answeredCount: number;
+  totalQuestions: number;
+  maxScore: number;
+  attemptCount: number;
+  latestAttemptLabel: string;
+  obtainedScore?: number | null;
+  isConfirmedReport: boolean;
+}
+
+interface StudentMcqAttemptRecord {
+  attemptId: string;
+  attemptNumber: number;
+  resourceId: number | null;
+  startedAt: string;
+  submittedAt: string;
+  timerMode: "timed" | "untimed";
+  recommendedMinutes: number;
+  chosenMinutes: number | null;
+  elapsedMs: number;
+  markedForReviewQuestionIds: string[];
+  summary: {
+    answeredCount: number;
+    totalQuestions: number;
+    maxScore: number;
+  };
+  answersByQuestionId: Record<string, string[]>;
+  questions: Array<{
+    questionId: string;
+    questionNo: string;
+    type: McqQuestionType;
+    marks: number;
+    negativeMarks: number;
+    partialMarkingEnabled: boolean;
+    selectedAnswers: string[];
+  }>;
+}
+
+const clampPercentage = (value: number) => {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(100, value));
+};
+
+const getDueDateDeadline = (dueDate: string) => {
+  const endOfDay = new Date(`${dueDate}T23:59:59`);
+  if (Number.isNaN(endOfDay.getTime())) {
+    return new Date(dueDate);
+  }
+  return endOfDay;
+};
+
+const normalizeTimelineDate = (schedule: StudentScheduleEvent) => {
+  if (schedule.startDateTime) {
+    const dt = new Date(schedule.startDateTime);
+    if (!Number.isNaN(dt.getTime())) return dt;
+  }
+
+  if (schedule.date && typeof schedule.startTime === "string" && /^\d{1,2}:\d{2}/.test(schedule.startTime)) {
+    const dt = new Date(`${schedule.date.split("T")[0]}T${schedule.startTime}`);
+    if (!Number.isNaN(dt.getTime())) return dt;
+  }
+
+  if (schedule.date) {
+    const dt = new Date(schedule.date);
+    if (!Number.isNaN(dt.getTime())) return dt;
+  }
+
+  return null;
+};
+
+const formatDuration = (ms: number) => {
+  const value = Math.max(0, Math.floor(ms / 1000));
+  const hours = Math.floor(value / 3600);
+  const mins = Math.floor((value % 3600) / 60);
+  const secs = value % 60;
+  if (hours > 0) {
+    return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  }
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+};
+
+const parseStudentMcqAttemptHistory = (content: string | undefined): StudentMcqAttemptRecord[] => {
+  if (!content) return [];
+  try {
+    const parsed = JSON.parse(content) as {
+      submissionType?: string;
+      attempts?: unknown;
+      resourceId?: number;
+      answersByQuestionId?: Record<string, string[]>;
+      questions?: Array<{
+        questionId?: string;
+        questionNo?: string;
+        type?: McqQuestionType;
+        marks?: number;
+        negativeMarks?: number;
+        partialMarkingEnabled?: boolean;
+        selectedAnswers?: string[];
+      }>;
+      summary?: {
+        answeredCount?: number;
+        totalQuestions?: number;
+        maxScore?: number;
+      };
+      submittedAt?: string;
+    };
+
+    if (parsed.submissionType !== "mcq_test_attempt") return [];
+    if (Array.isArray(parsed.attempts)) {
+      return parsed.attempts
+        .map((attempt, index) => {
+          const current = (attempt || {}) as Partial<StudentMcqAttemptRecord>;
+          const attemptSummary = current.summary || { answeredCount: 0, totalQuestions: 0, maxScore: 0 };
+          const safeAnswers = current.answersByQuestionId && typeof current.answersByQuestionId === "object"
+            ? Object.fromEntries(
+                Object.entries(current.answersByQuestionId).map(([questionId, answers]) => [
+                  questionId,
+                  Array.isArray(answers) ? answers.map((value) => String(value)) : [],
+                ])
+              )
+            : {};
+          return {
+            attemptId: current.attemptId || `attempt-${index + 1}`,
+            attemptNumber: Number(current.attemptNumber) || index + 1,
+            resourceId: Number.isFinite(Number(current.resourceId)) ? Number(current.resourceId) : null,
+            startedAt: typeof current.startedAt === "string" ? current.startedAt : "",
+            submittedAt: typeof current.submittedAt === "string" ? current.submittedAt : "",
+            timerMode: current.timerMode === "timed" ? ("timed" as const) : ("untimed" as const),
+            recommendedMinutes: Math.max(1, Number(current.recommendedMinutes) || 1),
+            chosenMinutes: current.chosenMinutes !== null && current.chosenMinutes !== undefined
+              ? Math.max(1, Number(current.chosenMinutes) || 1)
+              : null,
+            elapsedMs: Math.max(0, Number(current.elapsedMs) || 0),
+            markedForReviewQuestionIds: Array.isArray(current.markedForReviewQuestionIds)
+              ? current.markedForReviewQuestionIds.map((value) => String(value))
+              : [],
+            summary: {
+              answeredCount: Number(attemptSummary.answeredCount) || 0,
+              totalQuestions: Number(attemptSummary.totalQuestions) || 0,
+              maxScore: Number(attemptSummary.maxScore) || 0,
+            },
+            answersByQuestionId: safeAnswers,
+            questions: Array.isArray(current.questions)
+              ? current.questions.map((question, questionIndex) => {
+                  const currentQuestion = (question || {}) as StudentMcqAttemptRecord["questions"][number];
+                  return {
+                    questionId: String(currentQuestion.questionId || `q-${questionIndex + 1}`),
+                    questionNo: String(currentQuestion.questionNo || `${questionIndex + 1}`),
+                    type: currentQuestion.type === "multiple" ? ("multiple" as McqQuestionType) : ("single" as McqQuestionType),
+                    marks: Math.max(0, Number(currentQuestion.marks) || 0),
+                    negativeMarks: Math.max(0, Number(currentQuestion.negativeMarks) || 0),
+                    partialMarkingEnabled: Boolean(currentQuestion.partialMarkingEnabled),
+                    selectedAnswers: Array.isArray(currentQuestion.selectedAnswers)
+                      ? currentQuestion.selectedAnswers.map((value) => String(value))
+                      : [],
+                  };
+                })
+              : [],
+          };
+        })
+        .filter((attempt) => attempt.summary.totalQuestions > 0 || Object.keys(attempt.answersByQuestionId).length > 0);
+    }
+
+    // Legacy fallback before attempt history existed.
+    const summary = parsed.summary || { answeredCount: 0, totalQuestions: 0, maxScore: 0 };
+    const answersByQuestionId = parsed.answersByQuestionId && typeof parsed.answersByQuestionId === "object"
+      ? parsed.answersByQuestionId
+      : {};
+    return [{
+      attemptId: "attempt-1",
+      attemptNumber: 1,
+      resourceId: Number.isFinite(Number(parsed.resourceId)) ? Number(parsed.resourceId) : null,
+      startedAt: parsed.submittedAt || "",
+      submittedAt: parsed.submittedAt || "",
+      timerMode: "untimed" as const,
+      recommendedMinutes: 1,
+      chosenMinutes: null,
+      elapsedMs: 0,
+      markedForReviewQuestionIds: [],
+      summary: {
+        answeredCount: Number(summary.answeredCount) || 0,
+        totalQuestions: Number(summary.totalQuestions) || 0,
+        maxScore: Number(summary.maxScore) || 0,
+      },
+      answersByQuestionId: answersByQuestionId,
+      questions: Array.isArray(parsed.questions) ? parsed.questions.map((question, index) => ({
+        questionId: String(question.questionId || `q-${index + 1}`),
+        questionNo: String(question.questionNo || `${index + 1}`),
+        type: question.type === "multiple" ? ("multiple" as McqQuestionType) : ("single" as McqQuestionType),
+        marks: Math.max(0, Number(question.marks) || 0),
+        negativeMarks: Math.max(0, Number(question.negativeMarks) || 0),
+        partialMarkingEnabled: Boolean(question.partialMarkingEnabled),
+        selectedAnswers: Array.isArray(question.selectedAnswers)
+          ? question.selectedAnswers.map((value) => String(value))
+          : [],
+      })) : [],
+    }];
+  } catch {
+    return [];
+  }
+};
+
+const parseMcqSubmissionSummary = (content: string | undefined): ParsedMcqSubmission | null => {
+  if (!content) return null;
+  try {
+    const parsed = JSON.parse(content) as {
+      submissionType?: string;
+      testTitle?: string;
+      summary?: {
+        answeredCount?: number;
+        totalQuestions?: number;
+        maxScore?: number;
+      };
+      report?: {
+        scoreSummary?: {
+          finalScore?: number;
+        };
+      };
+      reportPresentation?: {
+        mode?: "draft" | "confirmed";
+      };
+      attempts?: Array<{ summary?: { answeredCount?: number; totalQuestions?: number; maxScore?: number } }>;
+    };
+    if (parsed.submissionType !== "mcq_test_attempt") return null;
+    const attempts = Array.isArray(parsed.attempts) ? parsed.attempts : [];
+    const latestAttemptSummary = attempts.length > 0 ? attempts[attempts.length - 1]?.summary : null;
+    const effectiveSummary = latestAttemptSummary || parsed.summary || {};
+    const reportScore = Number(parsed.report?.scoreSummary?.finalScore);
+    return {
+      testTitle: parsed.testTitle || "MCQ Test",
+      answeredCount: Number(effectiveSummary.answeredCount) || 0,
+      totalQuestions: Number(effectiveSummary.totalQuestions) || 0,
+      maxScore: Number(effectiveSummary.maxScore) || 0,
+      attemptCount: attempts.length > 0 ? attempts.length : 1,
+      latestAttemptLabel: attempts.length > 1 ? `Attempt ${attempts.length}` : "Attempt 1",
+      obtainedScore: Number.isFinite(reportScore) ? reportScore : null,
+      isConfirmedReport: parsed.reportPresentation?.mode === "confirmed",
+    };
+  } catch {
+    return null;
+  }
+};
+
+const toRoman = (num: number) => {
+  if (num <= 0) return "";
+  const romans: Array<[number, string]> = [[1000, "M"], [900, "CM"], [500, "D"], [400, "CD"], [100, "C"], [90, "XC"], [50, "L"], [40, "XL"], [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]];
+  let value = num;
+  let result = "";
+  romans.forEach(([v, symbol]) => {
+    while (value >= v) {
+      result += symbol;
+      value -= v;
+    }
+  });
+  return result;
+};
+
+const toAlpha = (num: number) => {
+  if (num <= 0) return "";
+  let n = num;
+  let result = "";
+  while (n > 0) {
+    n -= 1;
+    result = String.fromCharCode(65 + (n % 26)) + result;
+    n = Math.floor(n / 26);
+  }
+  return result;
+};
+
+const formatMcqQuestionNumber = (index: number, style: McqQuestionNumberingStyle) => {
+  const n = index + 1;
+  if (style === "alpha-upper") return toAlpha(n);
+  if (style === "roman-lower") return toRoman(n).toLowerCase();
+  if (style === "roman-upper") return toRoman(n);
+  return String(n);
+};
+
+const getMcqOptionLabels = (question: StudentMcqQuestion) => {
+  const count = Math.max(2, Math.min(8, question.optionCount));
+  if (question.optionLabelStyle === "custom") {
+    const normalizedCustom = question.customOptionLabels.map((item) => item.trim()).filter(Boolean);
+    return Array.from({ length: count }, (_, idx) => normalizedCustom[idx] || `Opt ${idx + 1}`);
+  }
+
+  return Array.from({ length: count }, (_, idx) => {
+    const n = idx + 1;
+    if (question.optionLabelStyle === "numeric") return String(n);
+    if (question.optionLabelStyle === "roman-lower") return toRoman(n).toLowerCase();
+    return toAlpha(n);
+  });
+};
+
+const getMcqAssessmentTypeLabel = (assessmentType: McqAssessmentType) =>
+  assessmentType === "simple-assignment" ? "Simple Assignment" : "Mock Test";
+
+const normalizeStudentMcqConfig = (value: unknown): StudentMcqConfig | null => {
+  const raw = (value || {}) as Record<string, unknown>;
+  const rawSections = Array.isArray(raw.sections) ? raw.sections : [];
+  const sections = rawSections.map((section, idx) => {
+    const current = (section || {}) as Record<string, unknown>;
+    return {
+      id: typeof current.id === "string" && current.id ? current.id : `section-${idx + 1}`,
+      name: typeof current.name === "string" && current.name ? current.name : `Section ${idx + 1}`,
+      color: typeof current.color === "string" ? current.color : undefined,
+      rangeExpression: typeof current.rangeExpression === "string" ? current.rangeExpression : undefined,
+    };
+  });
+
+  if (sections.length === 0) {
+    sections.push({ id: "section-1", name: "Section 1", color: undefined, rangeExpression: undefined });
+  }
+
+  const rawTopics = Array.isArray(raw.topics) ? raw.topics : [];
+  const topics: StudentMcqTopic[] = rawTopics
+    .map((topic, idx) => {
+      const current = (topic || {}) as Record<string, unknown>;
+      const topicName = typeof current.name === "string" ? current.name.trim() : "";
+      if (!topicName) return null;
+      const rawSubtopics = Array.isArray(current.subtopics) ? current.subtopics : [];
+      const subtopics: StudentMcqSubtopic[] = rawSubtopics
+        .map((subtopic, subtopicIndex) => {
+          const sub = (subtopic || {}) as Record<string, unknown>;
+          const subtopicName = typeof sub.name === "string" ? sub.name.trim() : "";
+          if (!subtopicName) return null;
+          return {
+            id: typeof sub.id === "string" && sub.id ? sub.id : `subtopic-${idx + 1}-${subtopicIndex + 1}`,
+            name: subtopicName,
+          };
+        })
+        .filter((subtopic): subtopic is StudentMcqSubtopic => Boolean(subtopic));
+      return {
+        id: typeof current.id === "string" && current.id ? current.id : `topic-${idx + 1}`,
+        name: topicName,
+        subtopics,
+      };
+    })
+    .filter((topic): topic is StudentMcqTopic => Boolean(topic));
+  const subtopicIdByTopicId = new Map(topics.map((topic) => [topic.id, new Set(topic.subtopics.map((subtopic) => subtopic.id))]));
+
+  const sectionIds = new Set(sections.map((section) => section.id));
+  const firstSection = sections[0].id;
+  const rawQuestions = Array.isArray(raw.questions) ? raw.questions : [];
+  const questions = rawQuestions.map((question, idx) => {
+    const current = (question || {}) as Record<string, unknown>;
+    const type: McqQuestionType = current.type === "multiple" ? "multiple" : "single";
+    const optionCountRaw = Number(current.optionCount);
+    const optionCount = Number.isFinite(optionCountRaw) ? Math.max(2, Math.min(8, Math.floor(optionCountRaw))) : 4;
+    const negativeRaw = Number(current.negativeMarks);
+    const sectionIdRaw = typeof current.sectionId === "string" ? current.sectionId : firstSection;
+    const topicIdRaw = typeof current.topicId === "string" ? current.topicId : "";
+    const topicId = subtopicIdByTopicId.has(topicIdRaw) ? topicIdRaw : null;
+    const subtopicIdRaw = typeof current.subtopicId === "string" ? current.subtopicId : "";
+    const subtopicId = topicId && subtopicIdByTopicId.get(topicId)?.has(subtopicIdRaw) ? subtopicIdRaw : null;
+    return {
+      id: typeof current.id === "string" && current.id ? current.id : `q-${idx + 1}`,
+      sectionId: sectionIds.has(sectionIdRaw) ? sectionIdRaw : firstSection,
+      topicId,
+      subtopicId,
+      type,
+      marks: Math.max(1, Number(current.marks) || 1),
+      negativeEnabled: Boolean(current.negativeEnabled),
+      negativeMarks: Math.max(0, Number.isFinite(negativeRaw) ? negativeRaw : 0),
+      partialMarkingEnabled: type === "multiple" ? Boolean(current.partialMarkingEnabled) : false,
+      optionCount,
+      optionLabelStyle: ["alpha-upper", "numeric", "roman-lower", "custom"].includes(String(current.optionLabelStyle))
+        ? (current.optionLabelStyle as McqOptionLabelStyle)
+        : "alpha-upper",
+      customOptionLabels: Array.isArray(current.customOptionLabels)
+        ? current.customOptionLabels.map((item) => String(item)).filter(Boolean)
+        : [],
+      difficulty: ["easy", "medium", "hard"].includes(String(current.difficulty))
+        ? (current.difficulty as "easy" | "medium" | "hard")
+        : "medium",
+    };
+  });
+
+  if (questions.length === 0) return null;
+
+  const numberingStyle: McqQuestionNumberingStyle =
+    raw.numberingStyle === "alpha-upper" || raw.numberingStyle === "roman-lower" || raw.numberingStyle === "roman-upper"
+      ? raw.numberingStyle
+      : "numeric";
+
+  return {
+    assessmentType: raw.assessmentType === "simple-assignment" || raw.type === "simple-assignment" ? "simple-assignment" : "mock-test",
+    title: typeof raw.title === "string" ? raw.title : "MCQ Test",
+    description: typeof raw.description === "string" ? raw.description : "",
+    numberingStyle,
+    recommendedTimeMode: raw.recommendedTimeMode === "manual" ? "manual" : "auto",
+    recommendedTimeMinutes: Math.max(1, Number(raw.recommendedTimeMinutes) || 1),
+    sections,
+    topics,
+    questions,
+  };
+};
+
+type StudentDashboardTab =
+  | "overview"
+  | "assignments"
+  | "submissions"
+  | "grades"
+  | "schedule"
+  | "progress"
+  | "resources"
+  | "messages";
+
+const createStudentTabLoadingState = (): Record<StudentDashboardTab, boolean> => ({
+  overview: false,
+  assignments: false,
+  submissions: false,
+  grades: false,
+  schedule: false,
+  progress: false,
+  resources: false,
+  messages: false,
+});
+
+const createStudentTabReadyState = (): Record<StudentDashboardTab, boolean> => ({
+  overview: false,
+  assignments: false,
+  submissions: false,
+  grades: false,
+  schedule: false,
+  progress: false,
+  resources: false,
+  messages: false,
+});
+
 export default function StudentDashboard() {
   // Authentication - require student role
   const { user: authUser, isLoading: authLoading } = useRequireAuth('student');
 
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState<StudentDashboardTab>("overview");
+  const [tabLoadingState, setTabLoadingState] = useState<Record<StudentDashboardTab, boolean>>(createStudentTabLoadingState);
+  const [tabReadyState, setTabReadyState] = useState<Record<StudentDashboardTab, boolean>>(createStudentTabReadyState);
   const [student, setStudent] = useState<Student | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [scheduleEvents, setScheduleEvents] = useState<StudentScheduleEvent[]>([]);
   const [progressReports, setProgressReports] = useState<any[]>([]);
+  const [expandedAssignmentId, setExpandedAssignmentId] = useState<number | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [submissionText, setSubmissionText] = useState("");
   const [submissionFile, setSubmissionFile] = useState<File | null>(null);
@@ -165,6 +679,23 @@ export default function StudentDashboard() {
   const [pendingDiscardMode, setPendingDiscardMode] = useState<"submit" | "resubmit" | null>(null);
   const [isResubmitting, setIsResubmitting] = useState(false);
   const [resubmissionId, setResubmissionId] = useState<number | null>(null);
+  const [isMcqDialogOpen, setIsMcqDialogOpen] = useState(false);
+  const [mcqAssignment, setMcqAssignment] = useState<Assignment | null>(null);
+  const [mcqResourceId, setMcqResourceId] = useState<number | null>(null);
+  const [mcqConfig, setMcqConfig] = useState<StudentMcqConfig | null>(null);
+  const [mcqAnswers, setMcqAnswers] = useState<Record<string, string[]>>({});
+  const [mcqMarkedForReview, setMcqMarkedForReview] = useState<Record<string, boolean>>({});
+  const [mcqAttemptHistory, setMcqAttemptHistory] = useState<StudentMcqAttemptRecord[]>([]);
+  const [mcqCursor, setMcqCursor] = useState(0);
+  const [mcqStarted, setMcqStarted] = useState(false);
+  const [mcqTimerDecision, setMcqTimerDecision] = useState<"pending" | "timed" | "untimed">("pending");
+  const [mcqTimerMinutes, setMcqTimerMinutes] = useState(1);
+  const [mcqTimerRunning, setMcqTimerRunning] = useState(false);
+  const [mcqTimerEndAtMs, setMcqTimerEndAtMs] = useState<number | null>(null);
+  const [mcqTimerRemainingMs, setMcqTimerRemainingMs] = useState(0);
+  const [mcqStartedAtMs, setMcqStartedAtMs] = useState<number | null>(null);
+  const [isMcqSubmitting, setIsMcqSubmitting] = useState(false);
+  const mcqTimerIntervalRef = useRef<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [messageUnreadCount, setMessageUnreadCount] = useState(0);
   const [error, setError] = useState("");
@@ -176,12 +707,17 @@ export default function StudentDashboard() {
 
   // Get student email from authenticated user
   const studentEmail = authUser?.email || "";
+  const isAuthenticated = Boolean(authUser);
 
   // Fetch data function
   const fetchData = async () => {
     if (!studentEmail) return;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    let didTimeout = false;
+    const timeoutId = setTimeout(() => {
+      didTimeout = true;
+      controller.abort("request-timeout");
+    }, 15000);
 
     try {
       setLoading(true);
@@ -201,6 +737,31 @@ export default function StudentDashboard() {
       setAssignments(data.assignments);
       setSubmissions(data.submissions);
 
+      // Fetch schedule events for overview timeline and schedule context.
+      try {
+        const scheduleResponse = await fetch(`/api/student/schedule?studentEmail=${encodeURIComponent(studentEmail)}`, {
+          signal: controller.signal,
+        });
+        const scheduleData = await scheduleResponse.json();
+        if (scheduleResponse.ok && scheduleData.success && Array.isArray(scheduleData.schedules)) {
+          setScheduleEvents(scheduleData.schedules);
+        } else {
+          setScheduleEvents([]);
+          console.error("Failed to fetch schedule events:", scheduleData);
+        }
+      } catch (scheduleError) {
+        const isAbortError =
+          (scheduleError instanceof DOMException && scheduleError.name === "AbortError") ||
+          (scheduleError instanceof Error && scheduleError.name === "AbortError") ||
+          scheduleError === "request-timeout" ||
+          (typeof scheduleError === "string" && scheduleError.includes("request-timeout"));
+
+        setScheduleEvents([]);
+        if (!isAbortError) {
+          console.error("Error fetching schedule events:", scheduleError);
+        }
+      }
+
       // Fetch progress reports
       try {
         const reportsResponse = await fetch('/api/student/progress-report');
@@ -217,12 +778,24 @@ export default function StudentDashboard() {
         // Don't fail the whole dashboard if progress reports fail
       }
     } catch (err) {
+      const isAbortError =
+        (err instanceof DOMException && err.name === "AbortError") ||
+        (err instanceof Error && err.name === "AbortError") ||
+        err === "request-timeout" ||
+        (typeof err === "string" && err.includes("request-timeout"));
+
+      if (isAbortError && didTimeout) {
+        setError("Dashboard load timed out. Please retry.");
+        toast({
+          variant: "destructive",
+          title: "Request Timeout",
+          description: "Dashboard load timed out. Please retry.",
+        });
+        return;
+      }
+
       const message =
-        err instanceof DOMException && err.name === "AbortError"
-          ? "Dashboard load timed out. Please retry."
-          : err instanceof Error
-            ? err.message
-            : 'Failed to load dashboard data';
+        err instanceof Error ? err.message : 'Failed to load dashboard data';
       setError(message);
       console.error("Error fetching data:", err);
       toast({
@@ -239,11 +812,11 @@ export default function StudentDashboard() {
   // Fetch initial data - Move this hook before any conditional returns
   useEffect(() => {
     // Only fetch data if we have a student email and auth is complete
-    if (!authLoading && authUser && studentEmail) {
+    if (!authLoading && isAuthenticated && studentEmail) {
       fetchData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading, authUser, studentEmail]);
+  }, [authLoading, isAuthenticated, studentEmail]);
 
   useEffect(() => {
     if (!authLoading) {
@@ -267,9 +840,18 @@ export default function StudentDashboard() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get("tab");
-    const allowedTabs = new Set(["overview", "assignments", "submissions", "grades", "schedule", "progress", "resources", "messages"]);
-    if (tab && allowedTabs.has(tab)) {
-      setActiveTab(tab);
+    const allowedTabs = new Set<StudentDashboardTab>([
+      "overview",
+      "assignments",
+      "submissions",
+      "grades",
+      "schedule",
+      "progress",
+      "resources",
+      "messages",
+    ]);
+    if (tab && allowedTabs.has(tab as StudentDashboardTab)) {
+      setActiveTab(tab as StudentDashboardTab);
     }
     setIsUrlStateReady(true);
   }, []);
@@ -284,6 +866,59 @@ export default function StudentDashboard() {
     if (nextUrl === currentUrl) return;
     router.replace(nextUrl, { scroll: false });
   }, [activeTab, isUrlStateReady, pathname, router]);
+
+  const warmTabData = useCallback(async (tab: StudentDashboardTab) => {
+    if (!studentEmail || tabReadyState[tab]) return;
+
+    setTabLoadingState((prev) => ({ ...prev, [tab]: true }));
+    try {
+      if (tab === "schedule") {
+        const scheduleResponse = await fetch(`/api/student/schedule?studentEmail=${encodeURIComponent(studentEmail)}`);
+        const scheduleData = await scheduleResponse.json();
+        if (scheduleResponse.ok && scheduleData.success && Array.isArray(scheduleData.schedules)) {
+          setScheduleEvents(scheduleData.schedules);
+        }
+      } else if (tab === "resources") {
+        await Promise.all([
+          fetch(`/api/student/resources?studentEmail=${encodeURIComponent(studentEmail)}`),
+          fetch(`/api/student/teachers?studentEmail=${encodeURIComponent(studentEmail)}`),
+          fetch(`/api/student/submissions/resources?studentEmail=${encodeURIComponent(studentEmail)}`),
+        ]);
+      } else if (tab === "messages") {
+        await fetch(`/api/student/mentors?studentEmail=${encodeURIComponent(studentEmail)}`);
+      }
+      setTabReadyState((prev) => ({ ...prev, [tab]: true }));
+    } catch (prefetchError) {
+      console.error("Error warming student tab data:", prefetchError);
+      // Keep this tab in not-ready state so the next visit retries prefetch.
+    } finally {
+      setTabLoadingState((prev) => ({ ...prev, [tab]: false }));
+    }
+  }, [studentEmail, tabReadyState]);
+
+  useEffect(() => {
+    if (!studentEmail) return;
+    setTabLoadingState(createStudentTabLoadingState());
+    setTabReadyState(createStudentTabReadyState());
+  }, [studentEmail]);
+
+  useEffect(() => {
+    if (loading || !studentEmail || Boolean(error)) return;
+    setTabReadyState((prev) => ({
+      ...prev,
+      overview: true,
+      assignments: true,
+      submissions: true,
+      grades: true,
+      schedule: true,
+      progress: true,
+    }));
+  }, [loading, studentEmail, error]);
+
+  useEffect(() => {
+    if (!isUrlStateReady || loading || !studentEmail || Boolean(error)) return;
+    void warmTabData(activeTab);
+  }, [activeTab, isUrlStateReady, loading, studentEmail, error, warmTabData]);
 
   const hasUnsavedAssignmentDraft = Boolean(submissionText.trim() || submissionFile);
 
@@ -401,6 +1036,14 @@ export default function StudentDashboard() {
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [isSubmitDialogOpen, isResubmitDialogOpen, hasUnsavedAssignmentDraft]);
+
+  useEffect(() => {
+    return () => {
+      if (mcqTimerIntervalRef.current !== null) {
+        window.clearInterval(mcqTimerIntervalRef.current);
+      }
+    };
+  }, []);
 
   // Early return for authentication loading
   if (authLoading && !authTimedOut) {
@@ -585,7 +1228,7 @@ export default function StudentDashboard() {
       icon: FileText,
       isActive: activeTab === "assignments",
       onClick: () => setActiveTab("assignments"),
-      badge: student ? student.stats.pendingAssignments : 0,
+      badge: assignments.filter((assignment) => !submissions.some((submission) => submission.assignmentId === assignment.id)).length,
     },
     {
       title: "Submissions",
@@ -633,26 +1276,392 @@ export default function StudentDashboard() {
   ];
 
   const calculateGradePercentage = (grade: number, total: number) => {
-    return Math.round((grade / total) * 100);
+    if (!Number.isFinite(total) || total <= 0) return 0;
+    return Math.round(clampPercentage((grade / total) * 100));
   };
 
   // Check if assignment deadline has passed
   const isDeadlinePassed = (dueDate: string): boolean => {
-    const deadline = new Date(dueDate);
+    const deadline = getDueDateDeadline(dueDate);
     const now = new Date();
+    if (Number.isNaN(deadline.getTime())) return false;
     return now > deadline;
+  };
+
+  const wasSubmittedAfterDeadline = (submittedAt: string, dueDate: string): boolean => {
+    const submitted = new Date(submittedAt);
+    const deadline = getDueDateDeadline(dueDate);
+    if (Number.isNaN(submitted.getTime()) || Number.isNaN(deadline.getTime())) return false;
+    return submitted.getTime() > deadline.getTime();
   };
 
   // Check if submission can be resubmitted
   const canResubmit = (submission: Submission): boolean => {
-    // Find the corresponding assignment
     const assignment = assignments.find(a => a.id === submission.assignmentId);
     if (!assignment) return false;
 
-    // Can resubmit if deadline hasn't passed and submission is submitted (but not graded yet)
-    return !isDeadlinePassed(assignment.dueDate) &&
-      submission.status === 'submitted' &&
-      submission.grade === null;
+    const lateAllowed = Boolean(assignment.allowLateSubmission);
+    if (isDeadlinePassed(assignment.dueDate) && !lateAllowed) return false;
+    return submission.grade === null || submission.grade === undefined;
+  };
+
+  const getMcqResourcesForAssignment = (assignment: Assignment) =>
+    (assignment.resources || []).filter((resource) => resource.type === "mcq_template");
+
+  const clearMcqTimerInterval = () => {
+    if (mcqTimerIntervalRef.current !== null) {
+      window.clearInterval(mcqTimerIntervalRef.current);
+      mcqTimerIntervalRef.current = null;
+    }
+  };
+
+  const closeMcqDialog = () => {
+    clearMcqTimerInterval();
+    setIsMcqDialogOpen(false);
+    setMcqAssignment(null);
+    setMcqResourceId(null);
+    setMcqConfig(null);
+    setMcqAnswers({});
+    setMcqMarkedForReview({});
+    setMcqAttemptHistory([]);
+    setMcqCursor(0);
+    setMcqStarted(false);
+    setMcqTimerDecision("pending");
+    setMcqTimerMinutes(1);
+    setMcqTimerRunning(false);
+    setMcqTimerEndAtMs(null);
+    setMcqTimerRemainingMs(0);
+    setMcqStartedAtMs(null);
+  };
+
+  const loadMcqTemplateForAssignment = (assignment: Assignment, templateId?: number | null) => {
+    const mcqResources = getMcqResourcesForAssignment(assignment);
+    if (mcqResources.length === 0) return;
+    const nextResource = templateId
+      ? mcqResources.find((resource) => resource.id === templateId) || mcqResources[0]
+      : mcqResources[0];
+    const normalized = normalizeStudentMcqConfig(nextResource.mcqConfig);
+    if (!normalized) {
+      toast({
+        variant: "destructive",
+        title: "Invalid test configuration",
+        description: "This test is not configured correctly. Please contact your teacher.",
+      });
+      return;
+    }
+
+    const recommendedMinutes = Math.max(
+      1,
+      Number.isFinite(Number(normalized.recommendedTimeMinutes))
+        ? Number(normalized.recommendedTimeMinutes)
+        : Math.ceil(normalized.questions.length * 1.8)
+    );
+    const isSimpleAssignment = normalized.assessmentType === "simple-assignment";
+
+    let restoredAnswers: Record<string, string[]> = {};
+    let restoredMarkedForReview: Record<string, boolean> = {};
+    let restoredAttempts: StudentMcqAttemptRecord[] = [];
+    const existingSubmission = submissions.find((submission) => submission.assignmentId === assignment.id);
+    if (existingSubmission?.content) {
+      const parsedAttempts = parseStudentMcqAttemptHistory(existingSubmission.content)
+        .filter((attempt) => attempt.resourceId === null || attempt.resourceId === nextResource.id)
+        .sort((a, b) => {
+          const left = new Date(a.submittedAt).getTime();
+          const right = new Date(b.submittedAt).getTime();
+          return left - right;
+        });
+
+      if (parsedAttempts.length > 0) {
+        restoredAttempts = parsedAttempts;
+        const latestAttempt = parsedAttempts[parsedAttempts.length - 1];
+        restoredAnswers = latestAttempt.answersByQuestionId || {};
+        restoredMarkedForReview = Object.fromEntries(
+          latestAttempt.markedForReviewQuestionIds.map((questionId) => [questionId, true])
+        );
+      } else {
+        const parsedAttemptsAny = parseStudentMcqAttemptHistory(existingSubmission.content);
+        if (parsedAttemptsAny.length > 0) {
+          restoredAttempts = parsedAttemptsAny;
+          const latestAttempt = parsedAttemptsAny[parsedAttemptsAny.length - 1];
+          restoredAnswers = latestAttempt.answersByQuestionId || {};
+          restoredMarkedForReview = Object.fromEntries(
+            latestAttempt.markedForReviewQuestionIds.map((questionId) => [questionId, true])
+          );
+        }
+      }
+    }
+
+    setMcqAssignment(assignment);
+    setMcqResourceId(nextResource.id);
+    setMcqConfig(normalized);
+    setMcqAnswers(restoredAnswers);
+    setMcqMarkedForReview(restoredMarkedForReview);
+    setMcqAttemptHistory(restoredAttempts);
+    setMcqCursor(0);
+    setMcqStarted(false);
+    setMcqTimerDecision(isSimpleAssignment ? "untimed" : "pending");
+    setMcqTimerMinutes(recommendedMinutes);
+    setMcqTimerRunning(false);
+    setMcqTimerEndAtMs(null);
+    setMcqTimerRemainingMs(isSimpleAssignment ? 0 : recommendedMinutes * 60 * 1000);
+    setMcqStartedAtMs(null);
+    setIsMcqDialogOpen(true);
+  };
+
+  const activeMcqResources = mcqAssignment ? getMcqResourcesForAssignment(mcqAssignment) : [];
+  const activeMcqResource = activeMcqResources.find((resource) => resource.id === mcqResourceId) || activeMcqResources[0] || null;
+  const activeMcqSectionMap = new Map((mcqConfig?.sections || []).map((section) => [section.id, section.name]));
+  const activeMcqSectionColorMap = new Map((mcqConfig?.sections || []).map((section) => [section.id, section.color || "#94a3b8"]));
+  const activeMcqTopicMap = new Map((mcqConfig?.topics || []).map((topic) => [topic.id, topic]));
+  const activeMcqQuestion = mcqConfig?.questions[mcqCursor] || null;
+  const activeMcqTopic = activeMcqQuestion?.topicId
+    ? activeMcqTopicMap.get(activeMcqQuestion.topicId) || null
+    : null;
+  const activeMcqSubtopic = activeMcqTopic && activeMcqQuestion?.subtopicId
+    ? activeMcqTopic.subtopics.find((subtopic) => subtopic.id === activeMcqQuestion.subtopicId) || null
+    : null;
+  const activeMcqOptionLabels = activeMcqQuestion ? getMcqOptionLabels(activeMcqQuestion) : [];
+  const activeMcqOptionGridClass = activeMcqOptionLabels.length <= 2
+    ? "grid-cols-1 sm:grid-cols-2"
+    : activeMcqOptionLabels.length <= 4
+      ? "grid-cols-2"
+      : "grid-cols-2 lg:grid-cols-3";
+  const answeredQuestionIds = new Set(
+    Object.entries(mcqAnswers)
+      .filter(([, selected]) => Array.isArray(selected) && selected.length > 0)
+      .map(([questionId]) => questionId)
+  );
+  const markedQuestionIds = new Set(
+    Object.entries(mcqMarkedForReview)
+      .filter(([, marked]) => Boolean(marked))
+      .map(([questionId]) => questionId)
+  );
+  const mcqRecommendedTimeMinutes = Math.max(
+    1,
+    Number.isFinite(Number(mcqConfig?.recommendedTimeMinutes))
+      ? Number(mcqConfig?.recommendedTimeMinutes)
+      : Math.ceil(((mcqConfig?.questions || []).length || 1) * 1.8)
+  );
+  const mcqSectionBreakdown = (mcqConfig?.sections || []).map((section) => {
+    const sectionQuestions = (mcqConfig?.questions || []).filter((question) => question.sectionId === section.id);
+    const totalMarks = sectionQuestions.reduce((sum, question) => sum + Math.max(0, question.marks), 0);
+    const totalNegative = sectionQuestions.reduce((sum, question) => {
+      const negativeEnabled = question.negativeEnabled || question.negativeMarks > 0;
+      return sum + (negativeEnabled ? Math.max(0, question.negativeMarks) : 0);
+    }, 0);
+    return {
+      section,
+      questionCount: sectionQuestions.length,
+      totalMarks,
+      totalNegative,
+    };
+  });
+  const mcqAssessmentType = mcqConfig?.assessmentType || "mock-test";
+  const isSimpleMcqAssessment = mcqAssessmentType === "simple-assignment";
+
+  const handleMcqTemplateChange = (nextTemplateId: string) => {
+    if (!mcqAssignment) return;
+    const parsed = Number(nextTemplateId);
+    if (!Number.isFinite(parsed)) return;
+    loadMcqTemplateForAssignment(mcqAssignment, parsed);
+  };
+
+  const toggleMcqAnswer = (question: StudentMcqQuestion, optionLabel: string) => {
+    setMcqAnswers((prev) => {
+      const current = prev[question.id] || [];
+      if (question.type === "single") {
+        return { ...prev, [question.id]: [optionLabel] };
+      }
+      const exists = current.includes(optionLabel);
+      const next = exists ? current.filter((value) => value !== optionLabel) : [...current, optionLabel];
+      return { ...prev, [question.id]: next };
+    });
+  };
+
+  const toggleMcqReview = (questionId: string) => {
+    setMcqMarkedForReview((prev) => ({ ...prev, [questionId]: !prev[questionId] }));
+  };
+
+  const mcqAttemptSummary = (() => {
+    if (!mcqConfig) {
+      return { answeredCount: 0, totalQuestions: 0, maxScore: 0 };
+    }
+    let maxScore = 0;
+    let answeredCount = 0;
+    mcqConfig.questions.forEach((question) => {
+      const answers = mcqAnswers[question.id] || [];
+      if (answers.length > 0) answeredCount += 1;
+      maxScore += Math.max(0, question.marks);
+    });
+    return {
+      answeredCount,
+      totalQuestions: mcqConfig.questions.length,
+      maxScore,
+    };
+  })();
+
+  const startMcqAttempt = () => {
+    if (!mcqConfig) return;
+    const requiresTimerChoice = mcqConfig.assessmentType === "mock-test";
+    if (requiresTimerChoice && mcqTimerDecision === "pending") {
+      toast({
+        title: "Choose timer mode",
+        description: "Pick timed or untimed mode before starting.",
+      });
+      return;
+    }
+    const effectiveTimerDecision = requiresTimerChoice ? mcqTimerDecision : "untimed";
+
+    const now = Date.now();
+    clearMcqTimerInterval();
+    setMcqStarted(true);
+    setMcqStartedAtMs(now);
+    setMcqCursor(0);
+    if (effectiveTimerDecision === "timed") {
+      const boundedMinutes = Math.max(1, Math.min(600, Number(mcqTimerMinutes) || mcqRecommendedTimeMinutes));
+      const remainingMs = boundedMinutes * 60 * 1000;
+      const endAt = now + remainingMs;
+      setMcqTimerMinutes(boundedMinutes);
+      setMcqTimerRemainingMs(remainingMs);
+      setMcqTimerEndAtMs(endAt);
+      setMcqTimerRunning(true);
+      mcqTimerIntervalRef.current = window.setInterval(() => {
+        const remaining = Math.max(0, endAt - Date.now());
+        setMcqTimerRemainingMs(remaining);
+        if (remaining <= 0) {
+          clearMcqTimerInterval();
+          setMcqTimerRunning(false);
+          setMcqTimerEndAtMs(null);
+          void submitMcqAttempt({ autoSubmit: true });
+        }
+      }, 500);
+    } else {
+      setMcqTimerRunning(false);
+      setMcqTimerEndAtMs(null);
+      setMcqTimerRemainingMs(0);
+    }
+  };
+
+  const submitMcqAttempt = async (options?: { autoSubmit?: boolean }) => {
+    if (!student || !mcqAssignment || !mcqConfig || !activeMcqResource) return;
+    if (isMcqSubmitting) return;
+    const existingSubmission = submissions.find((item) => item.assignmentId === mcqAssignment.id);
+    const shouldResubmit = Boolean(existingSubmission);
+    const isTimedMode = mcqConfig.assessmentType === "mock-test" && mcqTimerDecision === "timed";
+
+    if (existingSubmission && !canResubmit(existingSubmission)) {
+      toast({
+        variant: "destructive",
+        title: "Cannot submit test",
+        description: "This assignment cannot be updated right now.",
+      });
+      return;
+    }
+
+    setIsMcqSubmitting(true);
+    clearMcqTimerInterval();
+    setMcqTimerRunning(false);
+    setMcqTimerEndAtMs(null);
+    try {
+      const nowMs = Date.now();
+      const submittedAt = new Date(nowMs).toISOString();
+      const currentAnswers = Object.fromEntries(
+        mcqConfig.questions.map((question) => [question.id, (mcqAnswers[question.id] || []).map((value) => String(value))])
+      );
+      const attemptNumber = mcqAttemptHistory.length + 1;
+      const startedAt = mcqStartedAtMs ? new Date(mcqStartedAtMs).toISOString() : submittedAt;
+      const markedForReviewQuestionIds = Object.entries(mcqMarkedForReview)
+        .filter(([, marked]) => Boolean(marked))
+        .map(([questionId]) => questionId);
+      const attemptRecord: StudentMcqAttemptRecord = {
+        attemptId: `${mcqAssignment.id}-${activeMcqResource.id}-${nowMs}`,
+        attemptNumber,
+        resourceId: activeMcqResource.id,
+        startedAt,
+        submittedAt,
+        timerMode: isTimedMode ? "timed" : "untimed",
+        recommendedMinutes: mcqRecommendedTimeMinutes,
+        chosenMinutes: isTimedMode ? mcqTimerMinutes : null,
+        elapsedMs: Math.max(0, mcqStartedAtMs ? nowMs - mcqStartedAtMs : 0),
+        markedForReviewQuestionIds,
+        summary: mcqAttemptSummary,
+        answersByQuestionId: currentAnswers,
+        questions: mcqConfig.questions.map((question, index) => ({
+          questionId: question.id,
+          questionNo: formatMcqQuestionNumber(index, mcqConfig.numberingStyle),
+          type: question.type,
+          marks: question.marks,
+          negativeMarks: question.negativeMarks,
+          partialMarkingEnabled: question.partialMarkingEnabled,
+          selectedAnswers: currentAnswers[question.id] || [],
+        })),
+      };
+      const nextAttemptHistory = [...mcqAttemptHistory, attemptRecord];
+
+      const payload = {
+        studentEmail: student.email,
+        assignmentId: mcqAssignment.id,
+        content: JSON.stringify({
+          submissionType: "mcq_test_attempt",
+          assignmentId: mcqAssignment.id,
+          resourceId: activeMcqResource.id,
+          testTitle: activeMcqResource.title,
+          submittedAt,
+          startedAt,
+          latestAttemptNumber: attemptNumber,
+          attemptPolicy: {
+            mode: "last_before_due_date_or_latest",
+            dueDate: mcqAssignment.dueDateIso || mcqAssignment.dueDate || null,
+            dueDateTimezone: mcqAssignment.dueDateTimezone || null,
+          },
+          summary: mcqAttemptSummary,
+          numberingStyle: mcqConfig.numberingStyle,
+          assessmentType: mcqConfig.assessmentType,
+          timerMode: isTimedMode ? "timed" : "untimed",
+          timerMinutes: isTimedMode ? mcqTimerMinutes : null,
+          autoSubmitted: Boolean(options?.autoSubmit),
+          answersByQuestionId: currentAnswers,
+          questions: attemptRecord.questions,
+          attempts: nextAttemptHistory,
+        }, null, 2),
+        fileUrl: null,
+        fileName: null,
+        fileSize: null,
+      };
+
+      const response = await fetch('/api/student/submissions', {
+        method: shouldResubmit ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || "Unable to submit MCQ test.");
+      }
+
+      await fetchData();
+      closeMcqDialog();
+
+      toast({
+        title: options?.autoSubmit ? "Time up: test submitted" : shouldResubmit ? "Attempt submitted" : "Assignment submitted",
+        description: options?.autoSubmit
+          ? "Your timer ended, so your latest answers were submitted automatically."
+          : shouldResubmit
+            ? "Your latest MCQ attempt has been submitted."
+            : "Your MCQ assignment attempt has been submitted successfully.",
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to submit test.";
+      toast({
+        variant: "destructive",
+        title: "Submission failed",
+        description: message,
+      });
+    } finally {
+      setIsMcqSubmitting(false);
+    }
   };
 
   const getGradeColor = (percentage: number) => {
@@ -705,13 +1714,95 @@ export default function StudentDashboard() {
   };
 
   const currentTabMeta = tabMeta[activeTab] || tabMeta.overview;
-  const gradedSubmissions = submissions.filter((submission) => submission.grade !== null && submission.grade !== undefined).length;
+  const submissionsByAssignmentId = new Map(submissions.map((submission) => [submission.assignmentId, submission]));
+  const gradedSubmissions = submissions.filter((submission) => submission.grade !== null && submission.grade !== undefined);
+  const openAssignmentsCount = assignments.filter((assignment) => {
+    const existingSubmission = submissionsByAssignmentId.get(assignment.id);
+    if (existingSubmission) return false;
+    if (!isDeadlinePassed(assignment.dueDate)) return true;
+    return Boolean(assignment.allowLateSubmission);
+  }).length;
+  const pendingAssignmentsCount = assignments.filter((assignment) => !submissionsByAssignmentId.has(assignment.id)).length;
+  const averageGradePercent = gradedSubmissions.length > 0
+    ? Math.round(
+      clampPercentage(
+        gradedSubmissions.reduce((sum, submission) => {
+          const total = submission.totalPoints > 0 ? submission.totalPoints : 0;
+          if (total === 0) return sum;
+          return sum + ((submission.grade || 0) / total) * 100;
+        }, 0) / gradedSubmissions.length
+      )
+    )
+    : 0;
+  const gradedSubmissionPercentage = submissions.length > 0
+    ? Math.round(clampPercentage((gradedSubmissions.length / submissions.length) * 100))
+    : 0;
+
+  const scheduleTimelineEvents: TimelineEvent[] = scheduleEvents
+    .map((event) => {
+      const when = normalizeTimelineDate(event);
+      if (!when) return null;
+      return {
+        id: `schedule-${event.id}`,
+        title: event.title?.trim() || "Scheduled Class",
+        when,
+        typeLabel: event.subject?.trim() || "Class",
+      };
+    })
+    .filter((item): item is TimelineEvent => {
+      if (!item) return false;
+      const isUpcoming = item.when.getTime() >= Date.now();
+      return isUpcoming;
+    });
+
+  const assignmentTimelineEvents: TimelineEvent[] = assignments
+    .filter((assignment) => !submissionsByAssignmentId.has(assignment.id))
+    .map((assignment) => ({
+      id: `assignment-${assignment.id}`,
+      title: assignment.title,
+      when: getDueDateDeadline(assignment.dueDate),
+      typeLabel: "Assignment",
+    }))
+    .filter((item) => !Number.isNaN(item.when.getTime()) && item.when.getTime() >= Date.now());
+
+  const upcomingTimeline = [...scheduleTimelineEvents, ...assignmentTimelineEvents]
+    .sort((a, b) => a.when.getTime() - b.when.getTime())
+    .slice(0, 5);
+
   const quickMetrics = [
-    { label: "Active Assignments", value: assignments.filter((assignment) => assignment.status === "active").length, icon: FileText },
-    { label: "Pending", value: student?.stats?.pendingAssignments ?? 0, icon: Clock },
-    { label: "Graded", value: gradedSubmissions, icon: Trophy },
+    { label: "Open Assignments", value: openAssignmentsCount, icon: FileText },
+    { label: "Pending", value: pendingAssignmentsCount, icon: Clock },
+    { label: "Graded", value: gradedSubmissions.length, icon: Trophy },
     { label: "Unread Messages", value: messageUnreadCount, icon: MessageCircle },
   ];
+  const isActiveTabLoading = tabLoadingState[activeTab];
+  const renderActiveTabWireframe = () => (
+    <Card className="border border-slate-200 bg-white shadow-sm">
+      <CardHeader className="space-y-2">
+        <ShimmerSkeleton className="h-6 w-52 rounded-md" />
+        <ShimmerSkeleton className="h-4 w-80 rounded-md" />
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <ShimmerSkeleton key={`student-tab-wireframe-${index}`} className="h-14 w-full rounded-lg" />
+        ))}
+      </CardContent>
+    </Card>
+  );
+  const detailAssignment = expandedAssignmentId
+    ? assignments.find((assignment) => assignment.id === expandedAssignmentId) || null
+    : null;
+  const detailSubmission = detailAssignment
+    ? submissions.find((submission) => submission.assignmentId === detailAssignment.id) || null
+    : null;
+  const detailDeadlinePassed = detailAssignment ? isDeadlinePassed(detailAssignment.dueDate) : true;
+  const detailCanResubmit =
+    !!detailAssignment &&
+    !!detailSubmission &&
+    (!detailDeadlinePassed || Boolean(detailAssignment.allowLateSubmission)) &&
+    detailSubmission.grade === null;
+  const detailMcqResources = detailAssignment ? getMcqResourcesForAssignment(detailAssignment) : [];
+  const detailHasMcqResources = detailMcqResources.length > 0;
 
   if (loading) {
     return <DashboardLoadingSkeleton role="student" tab={activeTab} />;
@@ -977,6 +2068,10 @@ export default function StudentDashboard() {
                   </CardContent>
                 </Card>
 
+                {isActiveTabLoading ? (
+                  renderActiveTabWireframe()
+                ) : (
+                  <>
                 {activeTab === "overview" && (
                   <div className="space-y-6">
                     <motion.div
@@ -1008,23 +2103,20 @@ export default function StudentDashboard() {
                       {[
                         {
                           label: "Open Assignments",
-                          value: assignments.filter((assignment) => assignment.status === "active").length,
+                          value: openAssignmentsCount,
                           helper: "Needs submission",
                           icon: FileText,
                         },
                         {
                           label: "Completed",
-                          value: submissions.filter((submission) => submission.grade !== null && submission.grade !== undefined).length,
+                          value: gradedSubmissions.length,
                           helper: "Already graded",
                           icon: CheckCircle,
                         },
                         {
                           label: "Average Grade",
-                          value: submissions.filter((submission) => submission.grade !== null && submission.grade !== undefined).length > 0
-                            ? `${Math.round(submissions
-                              .filter((submission) => submission.grade !== null && submission.grade !== undefined)
-                              .reduce((acc, submission) => acc + (submission.grade || 0), 0) /
-                              submissions.filter((submission) => submission.grade !== null && submission.grade !== undefined).length)}%`
+                          value: gradedSubmissions.length > 0
+                            ? `${averageGradePercent}%`
                             : "N/A",
                           helper: "Across graded work",
                           icon: TrendingUp,
@@ -1081,24 +2173,30 @@ export default function StudentDashboard() {
                       <Card className="xl:col-span-2 border border-slate-200 bg-white shadow-sm">
                         <CardHeader className="pb-3">
                           <CardTitle className="text-lg text-slate-900">Upcoming Timeline</CardTitle>
-                          <CardDescription>What is coming next in your schedule.</CardDescription>
+                          <CardDescription>Upcoming classes and assignment deadlines.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                          {mockUpcomingEvents.map((event) => (
-                            <div key={event.id} className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
-                              <div className="flex items-start justify-between gap-3">
-                                <div>
-                                  <p className="text-sm font-semibold text-slate-900">{event.title}</p>
-                                  <p className="mt-1 text-xs text-slate-500">
-                                    {new Date(event.date).toLocaleDateString()} at {event.time}
-                                  </p>
-                                </div>
-                                <Badge variant="outline" className="border-slate-300 bg-slate-100 text-slate-700">
-                                  {event.type}
-                                </Badge>
-                              </div>
+                          {upcomingTimeline.length === 0 ? (
+                            <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">
+                              No upcoming classes or deadlines.
                             </div>
-                          ))}
+                          ) : (
+                            upcomingTimeline.map((event) => (
+                              <div key={event.id} className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <p className="text-sm font-semibold text-slate-900">{event.title}</p>
+                                    <p className="mt-1 text-xs text-slate-500">
+                                      {formatDateTime(event.when, getUserTimezone())}
+                                    </p>
+                                  </div>
+                                  <Badge variant="outline" className="border-slate-300 bg-slate-100 text-slate-700">
+                                    {event.typeLabel}
+                                  </Badge>
+                                </div>
+                              </div>
+                            ))
+                          )}
                           <Button
                             variant="outline"
                             className="w-full"
@@ -1136,9 +2234,12 @@ export default function StudentDashboard() {
                         // Find if there's a submission for this assignment
                         const existingSubmission = submissions.find(s => s.assignmentId === assignment.id);
                         const deadlinePassed = isDeadlinePassed(assignment.dueDate);
+                        const acceptsLate = Boolean(assignment.allowLateSubmission);
                         const canResubmitAssignment = existingSubmission &&
-                          !deadlinePassed &&
+                          (!deadlinePassed || acceptsLate) &&
                           existingSubmission.grade === null;
+                        const mcqResources = getMcqResourcesForAssignment(assignment);
+                        const hasMcqResources = mcqResources.length > 0;
 
                         return (
                           <motion.div
@@ -1151,29 +2252,30 @@ export default function StudentDashboard() {
                               <CardContent className="p-6">
                                 <div className="flex items-start justify-between">
                                   <div className="flex-1">
-                                    <div className="flex items-center gap-3 mb-2">
+                                    <button
+                                      type="button"
+                                      className="mb-2 flex w-full items-center gap-3 text-left"
+                                      onClick={() => setExpandedAssignmentId(assignment.id)}
+                                    >
                                       <h3 className="text-lg font-semibold">{assignment.title}</h3>
                                       {existingSubmission ? getStatusBadge(existingSubmission.status) : getStatusBadge("pending")}
-                                    </div>
+                                      <span className="ml-auto text-xs text-slate-500">
+                                        Click for details
+                                      </span>
+                                    </button>
                                     <p className="text-gray-600 mb-3">{assignment.description}</p>
 
-                                    {/* Resource indicator */}
-                                    {assignment.resources && assignment.resources.length > 0 && (
-                                      <div className="flex items-center gap-2 mb-3">
-                                        <BookOpen className="h-4 w-4 text-slate-500" />
-                                        <span className="text-sm text-slate-600">
-                                          {assignment.resources.length} resource{assignment.resources.length !== 1 ? 's' : ''} available
-                                        </span>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="h-6 px-2 text-xs"
-                                          onClick={() => setActiveTab("resources")}
-                                        >
-                                          View Resources
-                                        </Button>
-                                      </div>
-                                    )}
+                                    <div className="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                                      <BookOpen className="h-4 w-4 text-slate-500" />
+                                      <span>
+                                        {(assignment.resources || []).length} resource{(assignment.resources || []).length !== 1 ? 's' : ''} linked
+                                      </span>
+                                      {hasMcqResources && (
+                                        <Badge variant="outline" className="border-slate-300 bg-slate-100 text-slate-700">
+                                          Attempt assignment enabled
+                                        </Badge>
+                                      )}
+                                    </div>
                                     <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
                                       <span className="flex items-center gap-1">
                                         <BookOpen className="h-4 w-4" />
@@ -1192,10 +2294,17 @@ export default function StudentDashboard() {
                                     {/* Deadline status indicator */}
                                     <div className="flex items-center gap-2 text-sm">
                                       {deadlinePassed ? (
-                                        <span className="flex items-center gap-1 text-red-600">
-                                          <AlertCircle className="h-4 w-4" />
-                                          Deadline passed
-                                        </span>
+                                        acceptsLate ? (
+                                          <span className="flex items-center gap-1 text-amber-700">
+                                            <AlertCircle className="h-4 w-4" />
+                                            Deadline passed, late attempts allowed
+                                          </span>
+                                        ) : (
+                                          <span className="flex items-center gap-1 text-red-600">
+                                            <AlertCircle className="h-4 w-4" />
+                                            Deadline passed
+                                          </span>
+                                        )
                                       ) : (
                                         <span className="flex items-center gap-1 text-slate-700">
                                           <CheckCircle className="h-4 w-4" />
@@ -1205,15 +2314,25 @@ export default function StudentDashboard() {
 
                                       {existingSubmission && (
                                         <span className="text-gray-500">
-                                          • Submitted on {existingSubmission.submittedAt}
+                                          • Submitted on {formatDateTime(new Date(existingSubmission.submittedAt), getUserTimezone())}
                                         </span>
                                       )}
                                     </div>
                                   </div>
 
                                   <div className="flex flex-col gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                                      onClick={() => setExpandedAssignmentId(assignment.id)}
+                                    >
+                                      <Eye className="h-4 w-4 mr-2" />
+                                      View Details
+                                    </Button>
+
                                     {/* Submit button for new assignments */}
-                                    {!existingSubmission && !deadlinePassed && (
+                                    {!existingSubmission && (!deadlinePassed || acceptsLate) && (
                                       <Dialog
                                         open={isSubmitDialogOpen && selectedAssignment?.id === assignment.id && !isResubmitting}
                                         onOpenChange={(nextOpen) => handleAssignmentDialogOpenChange(nextOpen, "submit")}
@@ -1354,7 +2473,7 @@ export default function StudentDashboard() {
                                     )}
 
                                     {/* Status indicators for completed/graded submissions */}
-                                    {existingSubmission && existingSubmission.grade !== undefined && (
+                                    {existingSubmission && existingSubmission.grade !== null && existingSubmission.grade !== undefined && (
                                       <div className="text-center">
                                         <Badge variant="secondary" className="bg-slate-200 text-slate-800">
                                           <Trophy className="h-3 w-3 mr-1" />
@@ -1363,7 +2482,7 @@ export default function StudentDashboard() {
                                       </div>
                                     )}
 
-                                    {deadlinePassed && existingSubmission && existingSubmission.grade === undefined && (
+                                    {deadlinePassed && existingSubmission && (existingSubmission.grade === null || existingSubmission.grade === undefined) && (
                                       <div className="text-center">
                                         <Badge variant="secondary" className="bg-gray-100 text-gray-600">
                                           <Clock className="h-3 w-3 mr-1" />
@@ -1373,6 +2492,7 @@ export default function StudentDashboard() {
                                     )}
                                   </div>
                                 </div>
+
                               </CardContent>
                             </Card>
                           </motion.div>
@@ -1393,7 +2513,10 @@ export default function StudentDashboard() {
                     <div className="grid gap-4">
                       {submissions.map((submission) => {
                         const assignment = assignments.find(a => a.id === submission.assignmentId);
-                        const deadlinePassed = assignment ? isDeadlinePassed(assignment.dueDate) : true;
+                        const submittedAfterDeadline = assignment
+                          ? wasSubmittedAfterDeadline(submission.submittedAt, assignment.dueDate)
+                          : false;
+                        const parsedMcqSubmission = parseMcqSubmissionSummary(submission.content);
 
                         return (
                           <motion.div
@@ -1413,8 +2536,8 @@ export default function StudentDashboard() {
                                     {assignment && (
                                       <p className="text-sm text-gray-500 mt-1">
                                         Due: {formatDate(new Date(assignment.dueDate), getUserTimezone())}
-                                        {deadlinePassed && <span className="text-red-500 ml-2">(Submitted after deadline)</span>}
-                                        {!deadlinePassed && <span className="text-slate-500 ml-2">(Submitted on time)</span>}
+                                        {submittedAfterDeadline && <span className="text-red-500 ml-2">(Submitted after deadline)</span>}
+                                        {!submittedAfterDeadline && <span className="text-slate-500 ml-2">(Submitted on time)</span>}
                                       </p>
                                     )}
                                     {assignment && (
@@ -1442,10 +2565,37 @@ export default function StudentDashboard() {
                                 {/* Submission Content */}
                                 {submission.content && (
                                   <div className="mb-4">
-                                    <h4 className="text-sm font-medium text-gray-700 mb-2">Written Response:</h4>
-                                    <div className="bg-gray-50 p-4 rounded-lg">
-                                      <p className="text-sm text-gray-800 whitespace-pre-wrap">{submission.content}</p>
-                                    </div>
+                                    {parsedMcqSubmission ? (
+                                      <>
+                                        <h4 className="text-sm font-medium text-gray-700 mb-2">MCQ Attempt Summary:</h4>
+                                        <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
+                                          <p className="text-sm font-semibold text-slate-900">{parsedMcqSubmission.testTitle}</p>
+                                          <p className="mt-1 text-sm text-slate-700">
+                                            {parsedMcqSubmission.answeredCount}/{parsedMcqSubmission.totalQuestions} answered
+                                          </p>
+                                          <p className="text-xs text-slate-600">Maximum score: {parsedMcqSubmission.maxScore}</p>
+                                          <p className="text-xs text-slate-600">Attempts: {parsedMcqSubmission.attemptCount} ({parsedMcqSubmission.latestAttemptLabel})</p>
+                                          {parsedMcqSubmission.isConfirmedReport && (
+                                            <div className="mt-3 flex items-center justify-end gap-3">
+                                              <Button
+                                                size="sm"
+                                                className="bg-slate-900 text-white hover:bg-slate-800"
+                                                onClick={() => window.open(`/student-dashboard/report/${submission.id}`, "_blank")}
+                                              >
+                                                Open PDF Report
+                                              </Button>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <h4 className="text-sm font-medium text-gray-700 mb-2">Written Response:</h4>
+                                        <div className="bg-gray-50 p-4 rounded-lg">
+                                          <p className="text-sm text-gray-800 whitespace-pre-wrap">{submission.content}</p>
+                                        </div>
+                                      </>
+                                    )}
                                   </div>
                                 )}
 
@@ -1514,13 +2664,7 @@ export default function StudentDashboard() {
                                   </div>
                                 )}
 
-                                {/* Teacher Feedback */}
-                                {submission.feedback && (
-                                  <div className="bg-slate-100 p-4 rounded-lg">
-                                    <p className="text-sm font-medium text-slate-900 mb-1">Teacher Feedback:</p>
-                                    <p className="text-sm text-slate-700 whitespace-pre-wrap">{submission.feedback}</p>
-                                  </div>
-                                )}
+                                {/* Teacher feedback hidden in student dashboard */}
 
                                 {/* Submission Status Info */}
                                 <div className="mt-4 pt-4 border-t border-gray-200">
@@ -1589,18 +2733,26 @@ export default function StudentDashboard() {
                           <CardContent>
                             <div className="text-center space-y-2">
                               <div className="text-3xl font-bold text-slate-900">
-                                {student?.stats?.averageGrade
-                                  ? student.stats.averageGrade >= 90 ? 'A'
-                                    : student.stats.averageGrade >= 80 ? 'B'
-                                      : student.stats.averageGrade >= 70 ? 'C'
-                                        : student.stats.averageGrade >= 60 ? 'D'
+                                {gradedSubmissions.length > 0
+                                  ? averageGradePercent >= 90 ? 'A'
+                                    : averageGradePercent >= 80 ? 'B'
+                                      : averageGradePercent >= 70 ? 'C'
+                                        : averageGradePercent >= 60 ? 'D'
                                           : 'F'
                                   : 'N/A'}
                               </div>
                               <div className="text-sm text-gray-600">Current Grade</div>
-                              <Progress value={student?.stats?.averageGrade || 0} className="h-3" />
+                              <Progress
+                                value={averageGradePercent}
+                                className={cn(
+                                  "h-3",
+                                  gradedSubmissions.length > 0 && averageGradePercent >= 80 && "[&>div]:bg-emerald-600",
+                                  gradedSubmissions.length > 0 && averageGradePercent >= 60 && averageGradePercent < 80 && "[&>div]:bg-amber-500",
+                                  gradedSubmissions.length > 0 && averageGradePercent < 60 && "[&>div]:bg-rose-500"
+                                )}
+                              />
                               <div className="text-xs text-gray-500">
-                                {student?.stats?.averageGrade ? `${student.stats.averageGrade}% Average` : 'No grades yet'}
+                                {gradedSubmissions.length > 0 ? `${averageGradePercent}% Average` : 'No grades yet'}
                               </div>
                             </div>
                           </CardContent>
@@ -1623,20 +2775,15 @@ export default function StudentDashboard() {
                           <CardContent>
                             <div className="text-center space-y-2">
                               <div className="text-3xl font-bold text-slate-900">
-                                {student?.stats?.gradedSubmissions || 0}/{student?.stats?.totalSubmissions || 0}
+                                {gradedSubmissions.length}/{submissions.length}
                               </div>
                               <div className="text-sm text-gray-600">Graded Assignments</div>
                               <Progress
-                                value={student?.stats?.totalSubmissions
-                                  ? (student.stats.gradedSubmissions / student.stats.totalSubmissions) * 100
-                                  : 0
-                                }
+                                value={gradedSubmissionPercentage}
                                 className="h-3"
                               />
                               <div className="text-xs text-gray-500">
-                                {student?.stats?.totalSubmissions
-                                  ? Math.round((student.stats.gradedSubmissions / student.stats.totalSubmissions) * 100)
-                                  : 0}% Graded
+                                {gradedSubmissionPercentage}% Graded
                               </div>
                             </div>
                           </CardContent>
@@ -1659,14 +2806,14 @@ export default function StudentDashboard() {
                           <CardContent>
                             <div className="text-center space-y-2">
                               <div className="text-3xl font-bold text-slate-900">
-                                {student?.stats?.pendingAssignments || 0}
+                                {pendingAssignmentsCount}
                               </div>
                               <div className="text-sm text-gray-600">Due Soon</div>
                               <div className={cn(
                                 "text-xs font-medium",
-                                (student?.stats?.pendingAssignments || 0) > 0 ? "text-slate-700" : "text-slate-600"
+                                pendingAssignmentsCount > 0 ? "text-slate-700" : "text-slate-600"
                               )}>
-                                {(student?.stats?.pendingAssignments || 0) > 0
+                                {pendingAssignmentsCount > 0
                                   ? 'Action Required'
                                   : 'All Caught Up'}
                               </div>
@@ -1725,7 +2872,7 @@ export default function StudentDashboard() {
                                         <span className="text-sm text-gray-600">{item.assignments} graded</span>
                                         <span className="text-sm font-medium">{item.grade} ({item.percentage}%)</span>
                                       </div>
-                                      <Progress value={item.percentage} className="h-2" />
+                                      <Progress value={clampPercentage(item.percentage)} className="h-2" />
                                     </div>
                                   </div>
                                 ))
@@ -1747,17 +2894,18 @@ export default function StudentDashboard() {
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <h2 className="text-2xl font-semibold text-slate-900">Schedule & Events</h2>
-                      <Button className="bg-slate-900 text-white hover:bg-slate-800">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Book Session
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fetchData()}
+                        disabled={loading}
+                      >
+                        <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
+                        Refresh
                       </Button>
                     </div>
 
-                    {/* StudentScheduleView Component */}
-                    {studentEmail && (() => {
-                      const StudentScheduleView = require("../../components/student/StudentScheduleView").default;
-                      return <StudentScheduleView studentEmail={studentEmail} />;
-                    })()}
+                    {studentEmail && <StudentScheduleView studentEmail={studentEmail} />}
                   </div>
                 )}
 
@@ -1798,7 +2946,7 @@ export default function StudentDashboard() {
                                     </span>
                                   </div>
                                   <Progress
-                                    value={counts.total > 0 ? (counts.completed / counts.total) * 100 : 0}
+                                    value={clampPercentage(counts.total > 0 ? (counts.completed / counts.total) * 100 : 0)}
                                     className="h-2"
                                   />
                                   <div className="text-xs text-gray-500">
@@ -1861,14 +3009,17 @@ export default function StudentDashboard() {
                                 Recent Activity
                               </p>
                               <p className="text-sm text-gray-600">
-                                {submissions.length > 0
-                                  ? `Last submission: ${new Date(
-                                    submissions.sort((a, b) =>
-                                      new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
-                                    )[0]?.submittedAt
-                                  ).toLocaleDateString()}`
-                                  : 'No submissions yet'
-                                }
+                                {(() => {
+                                  if (submissions.length === 0) return "No submissions yet";
+                                  const latestSubmission = submissions.reduce<Submission | null>((latest, current) => {
+                                    if (!latest) return current;
+                                    return new Date(current.submittedAt).getTime() > new Date(latest.submittedAt).getTime()
+                                      ? current
+                                      : latest;
+                                  }, null);
+                                  if (!latestSubmission) return "No submissions yet";
+                                  return `Last submission: ${formatDate(new Date(latestSubmission.submittedAt), getUserTimezone())}`;
+                                })()}
                               </p>
                             </div>
                           </div>
@@ -1915,7 +3066,7 @@ export default function StudentDashboard() {
                   <Card className="border border-slate-200 bg-white shadow-sm">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-lg text-slate-900">Learning Resources</CardTitle>
-                      <CardDescription>Browse teacher-shared materials for your coursework.</CardDescription>
+                      <CardDescription>Personal and general resources shared by your teachers.</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <ResourceLibrary studentEmail={studentEmail} />
@@ -1948,11 +3099,560 @@ export default function StudentDashboard() {
                     )}
                   </div>
                 )}
+                  </>
+                )}
               </motion.div>
             )}
           </div>
         </SidebarInset>
       </div>
+
+      <Sheet
+        open={Boolean(detailAssignment)}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            setExpandedAssignmentId(null);
+          }
+        }}
+      >
+        <SheetContent side="right" className="w-full border-l border-slate-200 bg-white p-0 sm:max-w-2xl">
+          {!detailAssignment ? null : (
+            <div className="flex h-full flex-col">
+              <SheetHeader className="border-b border-slate-200 px-5 py-4">
+                <SheetTitle className="text-slate-900">{detailAssignment.title}</SheetTitle>
+                <SheetDescription className="text-slate-600">
+                  {detailAssignment.subject} • Due {formatDate(new Date(detailAssignment.dueDate), getUserTimezone())}
+                </SheetDescription>
+              </SheetHeader>
+
+              <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-sm font-medium text-slate-800">Assignment Info</p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Program: <span className="font-medium text-slate-700">{detailAssignment.program}</span> • Grade:
+                    <span className="font-medium text-slate-700"> {detailAssignment.grade || "N/A"}</span> • Total points:
+                    <span className="font-medium text-slate-700"> {detailAssignment.totalPoints}</span>
+                  </p>
+                  <p className="mt-2 text-sm text-slate-700">{detailAssignment.description}</p>
+                  {detailAssignment.instructions && (
+                    <p className="mt-2 text-sm text-slate-700">
+                      Instructions: {detailAssignment.instructions}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {detailSubmission ? getStatusBadge(detailSubmission.status) : getStatusBadge("pending")}
+                  {detailDeadlinePassed ? (
+                    detailAssignment.allowLateSubmission ? (
+                      <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">Late attempts allowed</Badge>
+                    ) : (
+                      <Badge variant="destructive">Deadline passed</Badge>
+                    )
+                  ) : (
+                    <Badge variant="outline" className="border-slate-300 bg-slate-100 text-slate-700">Accepting submissions</Badge>
+                  )}
+                  {detailHasMcqResources && (
+                    <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
+                      Attempt assignment ready
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {!detailSubmission && (!detailDeadlinePassed || Boolean(detailAssignment.allowLateSubmission)) && (
+                    <Button
+                      className="bg-brand-blue text-white hover:bg-brand-blue/90"
+                      onClick={() => openAssignmentDialog(detailAssignment, "submit")}
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      Submit Assignment
+                    </Button>
+                  )}
+                  {detailCanResubmit && detailSubmission && (
+                    <Button
+                      variant="outline"
+                      className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                      onClick={() =>
+                        openAssignmentDialog(detailAssignment, "resubmit", {
+                          initialText: detailSubmission.content || "",
+                          submissionId: detailSubmission.id,
+                        })
+                      }
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Resubmit
+                    </Button>
+                  )}
+                  {detailHasMcqResources && (
+                    <Button
+                      variant="outline"
+                      className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                      onClick={() => loadMcqTemplateForAssignment(detailAssignment)}
+                    >
+                      <Target className="h-4 w-4 mr-2" />
+                      Attempt Assignment
+                    </Button>
+                  )}
+                </div>
+
+                <div>
+                  <p className="mb-2 text-sm font-semibold text-slate-900">Linked Resources</p>
+                  {(detailAssignment.resources || []).length === 0 ? (
+                    <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+                      No resources attached to this assignment.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {(detailAssignment.resources || []).map((resource) => {
+                        const resourceConfig = resource.type === "mcq_template"
+                          ? normalizeStudentMcqConfig(resource.mcqConfig)
+                          : null;
+                        const resourceTypeLabel = getMcqAssessmentTypeLabel(resourceConfig?.assessmentType || "mock-test");
+                        return (
+                        <div key={resource.id} className="rounded-lg border border-slate-200 bg-white p-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-slate-900">{resource.title}</p>
+                              <p className="text-xs text-slate-500">{resource.type}</p>
+                            </div>
+                            <div className="flex gap-1">
+                              {resource.isRequired && (
+                                <Badge variant="outline" className="border-rose-200 bg-rose-50 text-rose-700">
+                                  Required
+                                </Badge>
+                              )}
+                              {resource.type === "mcq_template" && (
+                                <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
+                                  MCQ • {resourceTypeLabel}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+
+                          {resource.mcqSummary && (
+                            <p className="mt-2 text-xs text-slate-600">{resource.mcqSummary}</p>
+                          )}
+                          {resource.description && !resource.mcqSummary && (
+                            <p className="mt-2 text-xs text-slate-600">{resource.description}</p>
+                          )}
+
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {resource.fileUrl && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                                onClick={() => window.open(resource.fileUrl || "", "_blank")}
+                              >
+                                <FileText className="h-4 w-4 mr-1" />
+                                Open PDF
+                              </Button>
+                            )}
+
+                            {resource.linkUrl && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                                onClick={() => window.open(resource.linkUrl || "", "_blank")}
+                              >
+                                <ExternalLink className="h-4 w-4 mr-1" />
+                                Open Link
+                              </Button>
+                            )}
+
+                            {resource.type === "mcq_template" && (
+                              <Button
+                                size="sm"
+                                className="bg-slate-900 text-white hover:bg-slate-800"
+                                onClick={() => loadMcqTemplateForAssignment(detailAssignment, resource.id)}
+                              >
+                                <Target className="h-4 w-4 mr-1" />
+                                Attempt {resourceTypeLabel}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      )})}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      <Dialog
+        open={isMcqDialogOpen}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            closeMcqDialog();
+            return;
+          }
+          setIsMcqDialogOpen(true);
+        }}
+      >
+        <DialogContent className="flex h-[92dvh] max-w-[96vw] flex-col overflow-hidden p-0">
+          <DialogHeader className="border-b border-slate-200 px-5 py-4">
+            <DialogTitle>
+              Attempt {getMcqAssessmentTypeLabel(mcqAssessmentType)}: {mcqAssignment?.title || "Assignment"}
+            </DialogTitle>
+            <p className="text-xs text-slate-600">
+              {mcqAssignment?.subject} • {mcqAttemptSummary.totalQuestions} questions • Max marks {mcqAttemptSummary.maxScore}
+            </p>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-hidden p-4">
+            {!mcqConfig ? (
+              <div className="py-8 text-center text-sm text-slate-600">
+                This assignment does not have a valid MCQ test configuration.
+              </div>
+            ) : !mcqStarted ? (
+              <div className="mx-auto flex h-full w-full max-w-4xl flex-col gap-4 overflow-y-auto">
+                <div className="flex flex-wrap items-center gap-2">
+                  {activeMcqResources.length > 1 && (
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-slate-600">Template</Label>
+                      <select
+                        value={activeMcqResource?.id || ""}
+                        onChange={(event) => handleMcqTemplateChange(event.target.value)}
+                        className="h-8 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900"
+                      >
+                        {activeMcqResources.map((resource) => (
+                          <option key={resource.id} value={resource.id}>
+                            {resource.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  {activeMcqResource?.fileUrl && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(activeMcqResource.fileUrl || "", "_blank")}
+                    >
+                      <Eye className="mr-1 h-4 w-4" />
+                      Open PDF
+                    </Button>
+                  )}
+                  <Badge variant="outline" className="border-slate-300 text-slate-700">
+                    Reattempts available
+                  </Badge>
+                  <Badge variant="outline" className="border-slate-300 text-slate-700">
+                    Previous attempts: {mcqAttemptHistory.length}
+                  </Badge>
+                </div>
+
+                <Card className="border border-slate-200 bg-slate-50/70">
+                  <CardContent className="space-y-4 p-4">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">Before you start</p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        Read the assignment instructions, then {isSimpleMcqAssessment ? "start when ready." : "choose timed or untimed mode."} You can reattempt; if a due date exists, your latest
+                        attempt submitted before the deadline is considered. If no due date applies, your latest attempt is considered.
+                      </p>
+                      {mcqAssignment?.instructions && (
+                        <p className="mt-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+                          {mcqAssignment.instructions}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {mcqSectionBreakdown.map((item) => (
+                        <div key={item.section.id} className="rounded-md border border-slate-200 bg-white p-3">
+                          <p className="text-sm font-semibold text-slate-900">{item.section.name}</p>
+                          <p className="mt-1 text-xs text-slate-600">
+                            {item.questionCount} questions • {item.totalMarks} marks
+                            {item.totalNegative > 0 ? ` • Up to ${item.totalNegative} negative marks` : ""}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="space-y-3 rounded-md border border-slate-200 bg-white p-3">
+                      <p className="text-sm font-semibold text-slate-900">Timer preference</p>
+                      {isSimpleMcqAssessment ? (
+                        <p className="text-xs text-slate-600">Simple assignments run in untimed mode.</p>
+                      ) : (
+                        <>
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              type="button"
+                              variant={mcqTimerDecision === "timed" ? "default" : "outline"}
+                              className={mcqTimerDecision === "timed" ? "bg-slate-900 text-white hover:bg-slate-800" : ""}
+                              onClick={() => {
+                                setMcqTimerDecision("timed");
+                                setMcqTimerMinutes(mcqRecommendedTimeMinutes);
+                                setMcqTimerRemainingMs(mcqRecommendedTimeMinutes * 60 * 1000);
+                              }}
+                            >
+                              Timed attempt
+                            </Button>
+                            <Button
+                              type="button"
+                              variant={mcqTimerDecision === "untimed" ? "default" : "outline"}
+                              className={mcqTimerDecision === "untimed" ? "bg-slate-900 text-white hover:bg-slate-800" : ""}
+                              onClick={() => setMcqTimerDecision("untimed")}
+                            >
+                              Untimed attempt
+                            </Button>
+                          </div>
+                          {mcqTimerDecision === "timed" && (
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Label htmlFor="student-timer-minutes" className="text-xs text-slate-600">Minutes</Label>
+                              <Input
+                                id="student-timer-minutes"
+                                type="number"
+                                min={1}
+                                max={600}
+                                value={mcqTimerMinutes}
+                                onChange={(event) => setMcqTimerMinutes(Math.max(1, Math.min(600, Number(event.target.value) || mcqRecommendedTimeMinutes)))}
+                                className="h-8 w-28"
+                              />
+                              <span className="text-xs text-slate-500">Recommended: {mcqRecommendedTimeMinutes} min</span>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="mt-auto flex justify-end">
+                  <Button type="button" className="bg-brand-blue text-white hover:bg-brand-blue/90" onClick={startMcqAttempt}>
+                    Start Attempt
+                  </Button>
+                </div>
+              </div>
+            ) : !activeMcqQuestion ? (
+              <div className="py-8 text-center text-sm text-slate-600">
+                No question found in this assignment.
+              </div>
+            ) : (
+              <div className="grid h-full min-h-0 gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+                <Card className="flex min-h-0 flex-col border border-slate-200 bg-slate-50/70">
+                  <CardContent className="flex min-h-0 flex-1 flex-col p-0">
+                    <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">PDF Workspace</p>
+                      {activeMcqResource?.fileUrl && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8"
+                          onClick={() => window.open(activeMcqResource.fileUrl || "", "_blank")}
+                        >
+                          <ExternalLink className="mr-1 h-3.5 w-3.5" />
+                          Open in new tab
+                        </Button>
+                      )}
+                    </div>
+                    {activeMcqResource?.fileUrl ? (
+                      <iframe
+                        title="Assignment PDF"
+                        src={activeMcqResource.fileUrl}
+                        className="h-full min-h-0 w-full"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center px-4 text-center text-sm text-slate-600">
+                        Linked PDF is not available for this template.
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <div className="flex min-h-0 flex-col gap-3">
+                  <Card className="border border-slate-200 bg-slate-50/70">
+                    <CardContent className="flex flex-wrap items-center gap-2 p-3">
+                      {mcqTimerDecision === "timed" ? (
+                        <Badge variant="outline" className="border-slate-300 bg-white text-slate-700">
+                          Timer {formatDuration(mcqTimerRemainingMs)}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="border-slate-300 bg-white text-slate-700">
+                          Untimed
+                        </Badge>
+                      )}
+                      <Badge variant="outline" className="border-slate-300 bg-white text-slate-700">
+                        {mcqAttemptSummary.answeredCount}/{mcqAttemptSummary.totalQuestions} answered
+                      </Badge>
+                      <Badge variant="outline" className="border-slate-300 bg-white text-slate-700">
+                        Attempt {mcqAttemptHistory.length + 1}
+                      </Badge>
+                      <div className="ml-auto flex items-center gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-8"
+                          disabled={mcqCursor === 0}
+                          onClick={() => setMcqCursor((prev) => Math.max(0, prev - 1))}
+                        >
+                          Previous
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-8"
+                          disabled={mcqCursor >= mcqConfig.questions.length - 1}
+                          onClick={() => setMcqCursor((prev) => Math.min(mcqConfig.questions.length - 1, prev + 1))}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <div className="grid min-h-0 flex-1 gap-3 xl:grid-cols-[minmax(0,1fr)_260px]">
+                    <Card className="flex min-h-0 flex-col border border-slate-200 bg-slate-50/70">
+                      <CardContent className="flex min-h-0 flex-1 flex-col gap-3 p-3">
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div>
+                            <p className="text-base font-semibold text-slate-900">
+                              Q {formatMcqQuestionNumber(mcqCursor, mcqConfig.numberingStyle)}
+                            </p>
+                            <p className="text-xs text-slate-600">
+                              {activeMcqSectionMap.get(activeMcqQuestion.sectionId) || "Section"} •{" "}
+                              {activeMcqQuestion.type === "single" ? "Single correct" : "Multiple correct"} •{" "}
+                              {activeMcqQuestion.marks} marks
+                              {activeMcqTopic
+                                ? ` • ${activeMcqTopic.name}${activeMcqSubtopic ? ` / ${activeMcqSubtopic.name}` : ""}`
+                                : ""}
+                              {activeMcqQuestion.negativeEnabled || activeMcqQuestion.negativeMarks > 0
+                                ? ` • -${activeMcqQuestion.negativeMarks} negative`
+                                : ""}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="border-slate-300 bg-white text-slate-700">
+                              {activeMcqQuestion.type === "multiple" && activeMcqQuestion.partialMarkingEnabled ? "Partial marking on" : "Partial marking off"}
+                            </Badge>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => toggleMcqReview(activeMcqQuestion.id)}
+                            >
+                              {mcqMarkedForReview[activeMcqQuestion.id] ? "Unmark Review" : "Mark Review"}
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className={cn("grid gap-2", activeMcqOptionGridClass)}>
+                          {activeMcqOptionLabels.map((optionLabel) => {
+                            const selected = (mcqAnswers[activeMcqQuestion.id] || []).includes(optionLabel);
+                            return (
+                              <button
+                                type="button"
+                                key={`${activeMcqQuestion.id}-${optionLabel}`}
+                                onClick={() => toggleMcqAnswer(activeMcqQuestion, optionLabel)}
+                                className={cn(
+                                  "flex min-h-11 items-center justify-between rounded-md border px-3 py-2 text-left text-sm transition",
+                                  selected
+                                    ? "border-slate-700 bg-slate-900 text-white"
+                                    : "border-slate-300 bg-white text-slate-800 hover:bg-slate-100"
+                                )}
+                              >
+                                <span className="truncate">{optionLabel}</span>
+                                {selected ? <CheckCircle className="h-4 w-4" /> : null}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="flex min-h-0 flex-col border border-slate-200 bg-slate-50/70">
+                      <CardContent className="flex min-h-0 flex-1 flex-col p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Question Navigator</p>
+                        <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-600">
+                          <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />Answered</span>
+                          <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-red-500" />Not answered</span>
+                          <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-amber-400" />Marked review</span>
+                        </div>
+
+                        <div className="mt-3 max-h-24 overflow-y-auto rounded-md border border-slate-200 bg-white p-2">
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Section Colors</p>
+                          <div className="mt-1 space-y-1">
+                            {(mcqConfig.sections || []).map((section) => (
+                              <p key={section.id} className="flex items-center gap-2 text-xs text-slate-600">
+                                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: section.color || "#94a3b8" }} />
+                                {section.name}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="mt-3 min-h-0 flex-1 overflow-y-auto">
+                          <div className="grid grid-cols-4 gap-2 pr-1">
+                            {mcqConfig.questions.map((question, index) => {
+                              const answered = answeredQuestionIds.has(question.id);
+                              const marked = markedQuestionIds.has(question.id);
+                              const isActive = index === mcqCursor;
+                              const bgClass = marked
+                                ? "bg-amber-400 text-slate-900"
+                                : answered
+                                  ? "bg-emerald-500 text-white"
+                                  : "bg-red-500 text-white";
+                              return (
+                                <button
+                                  type="button"
+                                  key={question.id}
+                                  onClick={() => setMcqCursor(index)}
+                                  className={cn(
+                                    "h-9 w-9 rounded-full border-2 text-xs font-semibold transition",
+                                    bgClass,
+                                    isActive ? "ring-2 ring-slate-900" : "opacity-90 hover:opacity-100"
+                                  )}
+                                  style={{ borderColor: activeMcqSectionColorMap.get(question.sectionId) || "#94a3b8" }}
+                                >
+                                  {formatMcqQuestionNumber(index, mcqConfig.numberingStyle)}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="border-t border-slate-200 px-5 py-3">
+            <Button type="button" variant="outline" onClick={closeMcqDialog}>
+              Close
+            </Button>
+            {mcqStarted && (
+              <Button
+                type="button"
+                onClick={() => submitMcqAttempt()}
+                disabled={!mcqConfig || isMcqSubmitting}
+                className="bg-brand-blue text-white hover:bg-brand-blue/90"
+              >
+                {isMcqSubmitting ? (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Submit Attempt
+                  </>
+                )}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog
         open={isDiscardDialogOpen}

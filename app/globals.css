@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -418,6 +418,173 @@
   100% {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+/* ============================================================
+ * Academic report theme used by MCQ diagnostic report preview
+ * ============================================================ */
+.report-paper {
+  --ink: #111827;
+  --paper: #ffffff;
+  --navy: #1e3a5f;
+  --navy-deep: #142a47;
+  --rule: #1e3a5f;
+  --muted-ink: #4b5563;
+  --green: #2e7d32;
+  --green-soft: #e8f3ea;
+  --amber: #c97a16;
+  --amber-soft: #fbf1de;
+  --rose: #b3261e;
+  --rose-soft: #fbe7e6;
+  --violet: #6b3fa0;
+  --violet-soft: #f0e9f7;
+  --panel: #f5f7fb;
+
+  font-family: "Libre Caslon Text", "Libre Baskerville", "Crimson Pro", Georgia, "Times New Roman", serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.report-paper .serif-display {
+  font-family: "Libre Caslon Text", "Libre Baskerville", Georgia, serif;
+}
+
+.report-paper .num {
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum", "tnum";
+}
+
+.report-paper h1,
+.report-paper h2,
+.report-paper h3 {
+  color: var(--navy);
+  font-weight: 700;
+  letter-spacing: -0.005em;
+}
+
+.report-paper .section-heading {
+  color: var(--navy);
+  font-weight: 700;
+  font-size: 1.125rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 1rem;
+}
+
+.report-paper .summary-box {
+  border: 1px solid rgba(30,58,95,0.14);
+  border-radius: 2px;
+  background: transparent;
+  text-align: center;
+  overflow: hidden;
+}
+
+.report-paper .summary-box-header {
+  background: var(--navy);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.4rem 0.5rem;
+  letter-spacing: 0.01em;
+}
+
+.report-paper .summary-box-body {
+  padding: 1.1rem 0.75rem 0.9rem;
+}
+
+.report-paper .proficiency-cell {
+  border: 1px solid rgba(30,58,95,0.12);
+  background: transparent;
+}
+
+.report-paper .proficiency-head {
+  background: var(--navy);
+  color: #fff;
+  text-align: center;
+  padding: 0.5rem 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: 0.95rem;
+}
+
+.report-paper .diff-track {
+  position: relative;
+  height: 22px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.report-paper .diff-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  padding-left: 0.75rem;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.report-paper .item-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.report-paper .item-table thead th {
+  color: var(--navy);
+  font-weight: 700;
+  text-align: left;
+  padding: 0.55rem 0.6rem;
+  border-top: 1.25px solid var(--navy);
+  border-bottom: 0.75px solid var(--navy);
+  background: transparent;
+}
+
+.report-paper .item-table tbody td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: middle;
+}
+
+.report-paper .item-table tbody tr:last-child td {
+  border-bottom: 1.25px solid var(--navy);
+}
+
+.report-paper .page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.6rem;
+  border-bottom: 1.25px solid var(--navy);
+}
+
+.report-paper .watermark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  /* Slightly stronger but still translucent so page content overlays visibly */
+  opacity: 0.12;
+  z-index: 0;
+}
+
+@media print {
+  .report-paper {
+    box-shadow: none !important;
+    ring: 0 !important;
+    margin-bottom: 0 !important;
+    break-after: page;
+  }
+
+  .report-paper:last-child {
+    break-after: auto;
   }
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ import { ToastAction } from "@/components/ui/toast";
 import { Plus, Save, X, Calendar, FileText, Users, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getUserTimezone } from "@/lib/timezone";
+import McqPdfAssignmentModal from "./McqPdfAssignmentModal";
 
 interface Assignment {
   id: number;
@@ -36,7 +37,9 @@ interface Assignment {
   allowLateSubmission: boolean;
   isActive: boolean;
   submissions: any[];
-  resources: any[];
+  resources: Array<{
+    resource: Resource;
+  }>;
   assignmentTargets?: Array<{
     student: {
       id: number;
@@ -74,6 +77,26 @@ interface StudentGroup {
   members: StudentGroupMember[];
 }
 
+interface Resource {
+  id: number;
+  title: string;
+  type: string;
+  fileUrl?: string | null;
+  linkUrl?: string | null;
+  fileName?: string | null;
+}
+
+type McqAssessmentType = "mock-test" | "simple-assignment";
+
+interface McqTemplateOption {
+  id: number;
+  title: string;
+  fileName?: string | null;
+  summary?: string;
+  updatedAt?: string;
+  assessmentType: McqAssessmentType;
+}
+
 interface AssignmentFormData {
   title: string;
   description: string;
@@ -85,6 +108,10 @@ interface AssignmentFormData {
   allowLateSubmission: boolean;
   studentIds: string[];
   groupIds: string[];
+  resourceFiles?: File[];
+  resourceLinks?: string[];
+  resourceIds?: number[];
+  mcqTemplateIds?: string[];
 }
 
 interface AssignmentManagerProps {
@@ -105,6 +132,10 @@ const EMPTY_ASSIGNMENT_FORM: AssignmentFormData = {
   allowLateSubmission: false,
   studentIds: [],
   groupIds: [],
+  resourceFiles: [],
+  resourceLinks: [],
+  resourceIds: [],
+  mcqTemplateIds: [],
 };
 
 const PROGRAMS = [
@@ -126,19 +157,26 @@ const SUBJECTS = [
   "Biology"
 ];
 
+const getMcqTemplateTypeLabel = (assessmentType: McqAssessmentType) =>
+  assessmentType === "simple-assignment" ? "Simple Assignment" : "Mock Test";
+
 // Separate AssignmentForm component to prevent recreation on every render
 const AssignmentForm = ({ 
   formData, 
   setFormData, 
   students, 
   availablePrograms,
-  studentGroups
+  studentGroups,
+  existingResources,
+  mcqTemplates
 }: {
   formData: AssignmentFormData;
   setFormData: (data: AssignmentFormData) => void;
   students: Student[];
   availablePrograms: string[];
   studentGroups: StudentGroup[];
+  existingResources?: Resource[];
+  mcqTemplates?: McqTemplateOption[];
 }) => {
   const filteredStudents = formData.programs.length > 0
     ? students.filter((student) => formData.programs.includes(student.program))
@@ -152,6 +190,109 @@ const AssignmentForm = ({
   const manualSelectedStudentIdSet = new Set(formData.studentIds);
   const isStudentChecked = (studentId: string) =>
     groupedStudentIdSet.has(studentId) || manualSelectedStudentIdSet.has(studentId);
+
+  const [linkInput, setLinkInput] = React.useState("");
+  const [resourceError, setResourceError] = React.useState<string | null>(null);
+
+  const ALLOWED_EXTENSIONS = [
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".txt",
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".ppt",
+    ".pptx",
+    ".xlsx",
+    // videos intentionally excluded for now
+  ];
+
+  const MAX_RESOURCES = 8;
+  const MAX_TOTAL_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
+
+  const handleFilesSelected = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const currentFiles = formData.resourceFiles || [];
+    const nextFiles: File[] = [];
+    // validate extensions and sizes
+    const existingSize = currentFiles.reduce((s, f) => s + (f.size || 0), 0);
+    let runningSize = existingSize;
+    for (const file of Array.from(files)) {
+      const lower = file.name.toLowerCase();
+      const ok = ALLOWED_EXTENSIONS.some((ext) => lower.endsWith(ext));
+      if (!ok) {
+        setResourceError(`File type not allowed: ${file.name}`);
+        continue;
+      }
+      if (runningSize + file.size > MAX_TOTAL_SIZE_BYTES) {
+        setResourceError(`Adding ${file.name} would exceed total size limit of 50 MB. File skipped.`);
+        continue;
+      }
+      runningSize += file.size;
+      nextFiles.push(file);
+      if (currentFiles.length + nextFiles.length >= MAX_RESOURCES) break;
+    }
+
+    const combined = [...currentFiles, ...nextFiles].slice(0, MAX_RESOURCES);
+    if (combined.length >= MAX_RESOURCES && nextFiles.length > 0) {
+      setResourceError(`Reached max resources (${MAX_RESOURCES}). Extra files were ignored.`);
+    } else if (!resourceError) {
+      setResourceError(null);
+    }
+    setFormData({ ...formData, resourceFiles: combined });
+  };
+
+  const handleAddLink = () => {
+    if (!linkInput) return;
+    try {
+      // Validate URL
+      // eslint-disable-next-line no-new
+      new URL(linkInput);
+    } catch {
+      setResourceError('Invalid URL');
+      return;
+    }
+    const currentLinks = formData.resourceLinks || [];
+    if (currentLinks.length + (formData.resourceFiles?.length || 0) >= MAX_RESOURCES) {
+      setResourceError(`Cannot add more than ${MAX_RESOURCES} resources`);
+      return;
+    }
+    setFormData({ ...formData, resourceLinks: [...currentLinks, linkInput] });
+    setLinkInput("");
+    setResourceError(null);
+  };
+
+  const removeResourceFileAt = (index: number) => {
+    const files = formData.resourceFiles || [];
+    const next = files.filter((_, i) => i !== index);
+    setFormData({ ...formData, resourceFiles: next });
+  };
+
+  const removeResourceLinkAt = (index: number) => {
+    const links = formData.resourceLinks || [];
+    const next = links.filter((_, i) => i !== index);
+    setFormData({ ...formData, resourceLinks: next });
+  };
+
+  const activeResourceIds = new Set(formData.resourceIds || []);
+  const selectedTemplateIdSet = new Set(formData.mcqTemplateIds || []);
+  const visibleExistingResources = (existingResources || []).filter((resource) =>
+    activeResourceIds.has(resource.id) && resource.type !== "mcq_template"
+  );
+  const removeExistingResource = (resourceId: number) => {
+    const next = (formData.resourceIds || []).filter((id) => id !== resourceId);
+    setFormData({ ...formData, resourceIds: next });
+  };
+
+  const toggleTemplateSelection = (templateId: number) => {
+    const templateIdStr = String(templateId);
+    const current = formData.mcqTemplateIds || [];
+    const next = selectedTemplateIdSet.has(templateIdStr)
+      ? current.filter((id) => id !== templateIdStr)
+      : [...current, templateIdStr];
+    setFormData({ ...formData, mcqTemplateIds: next });
+  };
 
   return (
     <div className="space-y-4">
@@ -390,6 +531,122 @@ const AssignmentForm = ({
         />
         <Label htmlFor="allowLateSubmission">Allow late submissions</Label>
       </div>
+
+      <div className="space-y-2">
+        <Label>Add Resources (optional)</Label>
+        <p className="text-xs text-muted-foreground">Allowed: {ALLOWED_EXTENSIONS.join(', ')}. Max {MAX_RESOURCES} total (files + links).</p>
+        <div className="flex flex-col gap-2">
+          <input
+            type="file"
+            accept={ALLOWED_EXTENSIONS.join(',')}
+            multiple
+            onChange={(e) => handleFilesSelected(e.target.files)}
+          />
+
+          <div className="flex items-center gap-2">
+            <Input placeholder="https://example.com/resource" value={linkInput} onChange={(e) => setLinkInput(e.target.value)} />
+            <Button type="button" onClick={handleAddLink}>Add Link</Button>
+          </div>
+
+          {resourceError && <p className="text-xs text-red-600">{resourceError}</p>}
+
+          {(formData.resourceFiles?.length || 0) + (formData.resourceLinks?.length || 0) > 0 && (
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Added resources</p>
+              <div className="flex flex-wrap gap-2">
+                {formData.resourceFiles?.map((file, idx) => (
+                  <div key={`file-${idx}`} className="rounded-md border bg-white px-2 py-1 text-xs flex items-center gap-2">
+                    <span>{file.name}</span>
+                    <Button size="sm" variant="ghost" onClick={() => removeResourceFileAt(idx)}>
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ))}
+                {formData.resourceLinks?.map((link, idx) => (
+                  <div key={`link-${idx}`} className="rounded-md border bg-white px-2 py-1 text-xs flex items-center gap-2">
+                    <a href={link} target="_blank" rel="noreferrer" className="underline text-blue-700 truncate max-w-[220px]">{link}</a>
+                    <Button size="sm" variant="ghost" onClick={() => removeResourceLinkAt(idx)}>
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Attach MCQ Templates</Label>
+        <details className="rounded-md border bg-gray-50 p-3">
+          <summary className="cursor-pointer text-sm font-medium">
+            {selectedTemplateIdSet.size > 0
+              ? `${selectedTemplateIdSet.size} template${selectedTemplateIdSet.size > 1 ? "s" : ""} selected`
+              : "Select templates"}
+          </summary>
+          <div className="mt-3 space-y-2">
+            {(mcqTemplates || []).length === 0 ? (
+              <p className="text-sm text-gray-500">No saved templates yet. Create one using “Create Test”.</p>
+            ) : (
+              (mcqTemplates || []).map((template) => (
+                <label
+                  key={template.id}
+                  className="flex cursor-pointer items-center justify-between rounded-md border bg-white p-2"
+                >
+                  <div className="min-w-0 pr-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="truncate text-sm font-medium">{template.title}</p>
+                      <Badge variant="outline" className="text-[10px]">{getMcqTemplateTypeLabel(template.assessmentType)}</Badge>
+                    </div>
+                    <p className="truncate text-xs text-gray-500">
+                      {template.fileName || "Linked PDF"}
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="rounded"
+                    checked={selectedTemplateIdSet.has(String(template.id))}
+                    onChange={() => toggleTemplateSelection(template.id)}
+                  />
+                </label>
+              ))
+            )}
+          </div>
+        </details>
+      </div>
+
+      {visibleExistingResources.length > 0 && (
+        <div className="space-y-2">
+          <Label>Existing resources</Label>
+          <div className="space-y-2">
+            {visibleExistingResources.map((resource) => (
+              <div key={resource.id} className="flex items-center justify-between rounded-md border bg-white p-2 text-sm">
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{resource.title}</p>
+                  <p className="text-xs text-gray-500 truncate">
+                    {resource.fileName || resource.linkUrl || resource.fileUrl || resource.type}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {(resource.linkUrl || resource.fileUrl) && (
+                    <a
+                      href={resource.linkUrl || resource.fileUrl || '#'}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-blue-700 underline"
+                    >
+                      View
+                    </a>
+                  )}
+                  <Button size="sm" variant="outline" onClick={() => removeExistingResource(resource.id)}>
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -398,12 +655,16 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
   const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isMcqPdfDialogOpen, setIsMcqPdfDialogOpen] = useState(false);
   const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
+  const [activeTemplateEditorId, setActiveTemplateEditorId] = useState<number | null>(null);
   const [pendingDiscardTarget, setPendingDiscardTarget] = useState<"create" | "edit" | null>(null);
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
   const [loading, setLoading] = useState(false);
   const submitInFlightRef = useRef(false);
   const [students, setStudents] = useState<Student[]>([]);
+  const [mcqTemplates, setMcqTemplates] = useState<McqTemplateOption[]>([]);
+  const [deletingTemplateIds, setDeletingTemplateIds] = useState<Set<number>>(new Set());
   const [availablePrograms, setAvailablePrograms] = useState<string[]>([]);
   const [studentGroups, setStudentGroups] = useState<StudentGroup[]>([]);
   const [groupLoadError, setGroupLoadError] = useState<string | null>(null);
@@ -492,6 +753,77 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
       fetchStudents();
     }
   }, [teacherEmail]);
+
+  const fetchMcqTemplates = useCallback(async () => {
+    if (!teacherEmail) return;
+    try {
+      const response = await fetch(`/api/teacher/mcq-tests?teacherEmail=${encodeURIComponent(teacherEmail)}`);
+      const data = await response.json();
+      const tests = Array.isArray(data.tests) ? data.tests : Array.isArray(data.templates) ? data.templates : [];
+      if (response.ok && tests.length > 0) {
+        const templates = tests.map((template: any) => ({
+          id: Number(template.id),
+          title: String(template.title || "Untitled Test"),
+          fileName: template.fileName ? String(template.fileName) : null,
+          summary: template.summary ? String(template.summary) : "",
+          updatedAt: template.updatedAt ? String(template.updatedAt) : undefined,
+          assessmentType: template?.config?.assessmentType === "simple-assignment" ? "simple-assignment" : "mock-test",
+        }));
+        setMcqTemplates(templates);
+      } else if (response.ok) {
+        setMcqTemplates([]);
+      }
+    } catch (error) {
+      console.error('Error fetching tests:', error);
+    }
+  }, [teacherEmail]);
+
+  useEffect(() => {
+    if (teacherEmail) {
+      void fetchMcqTemplates();
+    }
+  }, [teacherEmail, fetchMcqTemplates]);
+
+  const handleDeleteTemplate = async (templateId: number) => {
+    const confirmed = window.confirm("Delete this test? This will remove it from linked assignments.");
+    if (!confirmed) return;
+
+    setDeletingTemplateIds((prev) => {
+      const next = new Set(prev);
+      next.add(templateId);
+      return next;
+    });
+
+    try {
+      const response = await fetch(
+        `/api/teacher/mcq-tests?id=${templateId}`,
+        { method: "DELETE" }
+      );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to delete test");
+      }
+
+      await fetchMcqTemplates();
+      toast({
+        title: "Test deleted",
+        description: data.message || "Test deleted successfully.",
+        className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Delete failed",
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    } finally {
+      setDeletingTemplateIds((prev) => {
+        const next = new Set(prev);
+        next.delete(templateId);
+        return next;
+      });
+    }
+  };
 
   useEffect(() => {
     const fetchGroups = async () => {
@@ -622,7 +954,11 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
       totalPoints: assignment.totalPoints,
       allowLateSubmission: assignment.allowLateSubmission,
       studentIds: manuallySelectedStudentIds.map((id) => id.toString()),
-      groupIds: prefilledGroupIds
+      groupIds: prefilledGroupIds,
+      resourceIds: assignment.resources.filter((item) => item.resource.type !== "mcq_template").map((item) => item.resource.id),
+      mcqTemplateIds: assignment.resources
+        .filter((item) => item.resource.type === "mcq_template")
+        .map((item) => String(item.resource.id)),
     };
     const editDraft = readAssignmentDraft(assignment.id);
     setFormData(editDraft || snapshot);
@@ -731,6 +1067,72 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
     setIsDiscardDialogOpen(false);
   };
 
+  const buildResourceTitle = (input: string) => {
+    try {
+      const url = new URL(input);
+      return url.hostname;
+    } catch {
+      return input;
+    }
+  };
+
+  const classifyResourceType = (file: File) => {
+    if (file.type.startsWith('image/')) return 'image';
+    return 'document';
+  };
+
+  const uploadAssignmentResources = async (files: File[]) => {
+    if (files.length === 0) return [] as Array<{
+      type: string;
+      fileUrl: string;
+      fileName: string;
+      fileSize: number;
+      title: string;
+    }>;
+
+    const uploads: Array<{ type: string; fileUrl: string; fileName: string; fileSize: number; title: string }> = [];
+
+    for (const file of files) {
+      const presignResponse = await fetch('/api/r2-presign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: file.name,
+          contentType: file.type,
+          fileSize: file.size,
+          resourceType: 'assignment'
+        })
+      });
+
+      const presignData = await presignResponse.json();
+      if (!presignResponse.ok || !presignData.success) {
+        throw new Error(presignData.error || 'Failed to request upload URL');
+      }
+
+      const putResponse = await fetch(presignData.url, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
+        mode: 'cors',
+        credentials: 'omit'
+      });
+
+      if (!putResponse.ok) {
+        throw new Error(`Upload failed for ${file.name}`);
+      }
+
+      uploads.push({
+        type: classifyResourceType(file),
+        fileUrl: presignData.publicUrl,
+        fileName: file.name,
+        fileSize: file.size,
+        title: file.name
+      });
+    }
+
+    return uploads;
+  };
+
   const handleSubmit = async () => {
     // Hard guard against rapid double-clicks before React re-renders disabled state.
     if (submitInFlightRef.current || loading) {
@@ -789,24 +1191,72 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
     const resolvedProgram = selectedStudent?.program || selectedGroupPrograms[0] || formData.programs[0] || "";
     const resolvedSubject = formData.subject || "";
 
+    const resourceLinks = (formData.resourceLinks || [])
+      .map((link) => link.trim())
+      .filter(Boolean);
+    for (const link of resourceLinks) {
+      try {
+        // eslint-disable-next-line no-new
+        new URL(link);
+      } catch {
+        toast({
+          title: 'Invalid resource link',
+          description: `Invalid URL: ${link}`,
+          className: 'border-yellow-500 bg-yellow-50 text-yellow-900'
+        });
+        return;
+      }
+    }
+
     submitInFlightRef.current = true;
     setLoading(true);
     showSaveFeedback("saving", editingAssignment ? "Updating assignment..." : "Creating assignment...");
     try {
+      const resourceFiles = formData.resourceFiles || [];
+      if (resourceFiles.length > 0) {
+        showSaveFeedback('saving', 'Uploading resources...');
+      }
+
+      const uploadedResources = await uploadAssignmentResources(resourceFiles);
+      const linkResources = resourceLinks.map((link) => ({
+        type: 'link',
+        linkUrl: link,
+        title: buildResourceTitle(link)
+      }));
+
       const url = editingAssignment 
         ? `/api/teacher/assignments`
         : `/api/teacher/assignments`;
       
       const method = editingAssignment ? 'PATCH' : 'POST';
       
+      const selectedTemplateResourceIds = Array.from(
+        new Set(
+          (formData.mcqTemplateIds || [])
+            .map((id) => Number(id))
+            .filter((id) => Number.isFinite(id))
+        )
+      );
+      const mergedResourceIds = Array.from(
+        new Set([...(formData.resourceIds || []), ...selectedTemplateResourceIds])
+      );
+
+      const {
+        resourceFiles: _resourceFiles,
+        resourceLinks: _resourceLinks,
+        mcqTemplateIds: _mcqTemplateIds,
+        ...assignmentPayload
+      } = formData;
       const requestData = {
-        ...formData,
+        ...assignmentPayload,
+        resourceIds: mergedResourceIds,
         program: resolvedProgram,
         subject: resolvedSubject,
         teacherEmail,
         timezone: getUserTimezone(), // Include timezone for proper UTC conversion
         ...(editingAssignment && { id: editingAssignment.id }),
-        studentIds: allTargetStudentIds
+        studentIds: allTargetStudentIds,
+        resourceUploads: [...uploadedResources, ...linkResources]
       };
 
       const response = await fetch(url, {
@@ -817,10 +1267,11 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
         body: JSON.stringify(requestData),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to save assignment');
+        const debugReason = data?.debug?.reason ? ` (${data.debug.reason})` : '';
+        throw new Error((data?.error || data?.message || `Failed to save assignment (${response.status})`) + debugReason);
       }
 
       // Close dialogs and reset form
@@ -852,6 +1303,13 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
 
     } catch (error) {
       console.error('Error saving assignment:', error);
+      if (error instanceof Error && /Failed to fetch/i.test(error.message)) {
+        toast({
+          variant: 'destructive',
+          title: 'Upload failed',
+          description: 'Check Cloudflare R2 CORS settings for PUT requests from this origin.',
+        });
+      }
       toast({
         variant: "destructive",
         title: "Failed to save assignment",
@@ -968,38 +1426,68 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
       {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Assignment Management</h2>
-        <Dialog open={isCreateDialogOpen} onOpenChange={handleCreateDialogOpenChange}>
-          <DialogTrigger asChild>
-            <Button onClick={handleCreate} className="flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              Create Assignment
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create New Assignment</DialogTitle>
-            </DialogHeader>
-            <AssignmentForm 
-              formData={formData}
-              setFormData={setFormData}
-              students={students}
-              availablePrograms={availablePrograms}
-              studentGroups={studentGroups}
-            />
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button variant="outline" onClick={() => handleCreateDialogOpenChange(false)}>
-                Cancel
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="flex items-center gap-2"
+            onClick={() => {
+              setActiveTemplateEditorId(null);
+              setIsMcqPdfDialogOpen(true);
+            }}
+          >
+            <FileText className="w-4 h-4" />
+            Create Test
+          </Button>
+          <Dialog open={isCreateDialogOpen} onOpenChange={handleCreateDialogOpenChange}>
+            <DialogTrigger asChild>
+              <Button onClick={handleCreate} className="flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                Create Assignment
               </Button>
-              <Button onClick={handleSubmit} disabled={loading}>
-                {loading ? 'Creating...' : 'Create Assignment'}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Create New Assignment</DialogTitle>
+              </DialogHeader>
+              <AssignmentForm
+                formData={formData}
+                setFormData={setFormData}
+                students={students}
+                availablePrograms={availablePrograms}
+                studentGroups={studentGroups}
+                mcqTemplates={mcqTemplates}
+              />
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button variant="outline" onClick={() => handleCreateDialogOpenChange(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSubmit} disabled={loading}>
+                  {loading ? 'Creating...' : 'Create Assignment'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
                 {groupLoadError && (
                   <p className="text-sm text-orange-600">{groupLoadError}</p>
                 )}
       </div>
+
+      <McqPdfAssignmentModal
+        open={isMcqPdfDialogOpen}
+        onOpenChange={(nextOpen) => {
+          setIsMcqPdfDialogOpen(nextOpen);
+          if (!nextOpen) {
+            setActiveTemplateEditorId(null);
+          }
+        }}
+        teacherEmail={teacherEmail}
+        initialTemplateId={activeTemplateEditorId}
+        onTemplatesUpdated={() => {
+          void fetchMcqTemplates();
+        }}
+      />
 
       {saveFeedback && (
         <div
@@ -1014,6 +1502,59 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
           {saveFeedback.message}
         </div>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg text-slate-900">Saved MCQ Templates</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {mcqTemplates.length === 0 ? (
+            <p className="text-sm text-gray-600">No templates yet. Use “Create Test” to create one.</p>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2">
+              {mcqTemplates.map((template) => (
+                <div key={template.id} className="rounded-md border bg-white p-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-medium text-slate-900">{template.title}</p>
+                    <Badge variant="outline" className="text-[10px]">{getMcqTemplateTypeLabel(template.assessmentType)}</Badge>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">{template.fileName || "Linked PDF"}</p>
+                  {template.summary && <p className="mt-1 line-clamp-2 text-xs text-gray-600">{template.summary}</p>}
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <p className="text-xs text-gray-500">
+                      {template.updatedAt ? `Updated ${new Date(template.updatedAt).toLocaleString()}` : ""}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setActiveTemplateEditorId(template.id);
+                          setIsMcqPdfDialogOpen(true);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="destructive"
+                        disabled={deletingTemplateIds.has(template.id)}
+                        onClick={() => {
+                          void handleDeleteTemplate(template.id);
+                        }}
+                      >
+                        {deletingTemplateIds.has(template.id) ? "Deleting..." : "Delete"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Assignment List */}
       <div className="grid gap-4">
@@ -1163,6 +1704,8 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
             students={students}
             availablePrograms={availablePrograms}
             studentGroups={studentGroups}
+            existingResources={editingAssignment?.resources?.map((item) => item.resource) || []}
+            mcqTemplates={mcqTemplates}
           />
           <div className="flex justify-end space-x-2 pt-4">
             <Button variant="outline" onClick={() => handleEditDialogOpenChange(false)}>
