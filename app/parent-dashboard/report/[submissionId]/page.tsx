@@ -55,7 +55,7 @@ interface ParsedReportPayload {
   latestAttemptNumber?: number;
 }
 
-export default function StudentReportPdfPage() {
+export default function ParentReportPdfPage() {
   const params = useParams<{ submissionId: string }>();
   const router = useRouter();
   const submissionId = Number(params?.submissionId || 0);
@@ -77,7 +77,7 @@ export default function StudentReportPdfPage() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch(`/api/student/submissions?submissionId=${submissionId}`);
+        const response = await fetch(`/api/parent/mcq-report?submissionId=${submissionId}`);
         const data = await response.json() as SubmissionResponse;
 
         if (!response.ok || !data.success || !data.submission) {
@@ -111,7 +111,6 @@ export default function StudentReportPdfPage() {
           testTitle: normalizedTestTitle,
           reportPresentation: presentation,
         });
-        console.log("API student object:", data.submission.student);
         setStudentName(data.submission.student?.name || "Student");
         setAssignmentTitle(data.submission.assignment?.title || "Assessment");
       } catch (err) {
@@ -139,7 +138,7 @@ export default function StudentReportPdfPage() {
     return (
       <div className="mx-auto max-w-3xl space-y-4 p-6">
         <p className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error || "Report unavailable."}</p>
-        <Button variant="outline" onClick={() => router.push("/student-dashboard")}>Back to Dashboard</Button>
+        <Button variant="outline" onClick={() => router.push("/parent-dashboard")}>Back to Dashboard</Button>
       </div>
     );
   }
@@ -147,8 +146,7 @@ export default function StudentReportPdfPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-4 bg-white p-4 print:max-w-none print:p-0">
       <div className="flex flex-wrap items-center justify-between gap-2 print:hidden">
-        <Button variant="outline" onClick={() => router.push("/student-dashboard")}>Back to Dashboard</Button>
-        {/* <Button onClick={() => window.print()}>Download as PDF</Button> */}
+        <Button variant="outline" onClick={() => router.push("/parent-dashboard")}>Back to Dashboard</Button>
       </div>
 
       <PremiumMcqReport

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sendMail } from "@/lib/mailer";
 import { getUserFromRequest, hasRole } from "@/lib/auth";
 import {
   McqReportPresentation,
@@ -8,6 +9,7 @@ import {
 } from "@/lib/mcq-report-presentation";
 import { generateGeminiDifficultyReviews } from "@/lib/gemini-difficulty-reviews";
 import { generateGeminiTopicInsights } from "@/lib/gemini-topic-insights";
+import { generateGeminiGapAnalysis } from "@/lib/gemini-gap-analysis";
 
 const TEST_CONFIG_START = "[MCQ_TEST_CONFIG_V1]";
 const TEST_CONFIG_END = "[/MCQ_TEST_CONFIG_V1]";
@@ -36,6 +38,7 @@ interface McqQuestionConfig {
 }
 
 interface McqConfigStored {
+  assessmentType?: "mock-test" | "simple-assignment";
   title?: string;
   numberingStyle?: string;
   sections: McqSectionConfig[];
@@ -82,6 +85,72 @@ const formatDurationLabel = (ms: number) => {
     return `${minutes}m ${seconds}s`;
   }
   return `${seconds}s`;
+};
+
+const getBaseUrl = () => (
+  process.env.APP_BASE_URL ||
+  process.env.NEXT_PUBLIC_BASE_URL ||
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  ""
+).replace(/\/$/, "");
+
+const makeAbsoluteUrl = (path: string) => {
+  const baseUrl = getBaseUrl();
+  return baseUrl ? `${baseUrl}${path}` : path;
+};
+
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+const sendDiagnosticReportEmail = async (args: {
+  to: string;
+  recipientName: string;
+  studentName: string;
+  teacherName: string;
+  assignmentTitle: string;
+  testTitle: string;
+  reportUrl: string;
+}) => {
+  const safeRecipientName = escapeHtml(args.recipientName || "there");
+  const safeStudentName = escapeHtml(args.studentName || "the student");
+  const safeTeacherName = escapeHtml(args.teacherName || "the mentor");
+  const safeAssignmentTitle = escapeHtml(args.assignmentTitle || "Diagnostic Report");
+  const safeTestTitle = escapeHtml(args.testTitle || "MCQ Diagnostic");
+  const safeReportUrl = escapeHtml(args.reportUrl);
+
+  await sendMail({
+    to: args.to,
+    subject: `Diagnostic report ready: ${args.assignmentTitle}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827;">
+        <p>Hello ${safeRecipientName},</p>
+        <p>${safeTeacherName} has shared the diagnostic report for <strong>${safeStudentName}</strong>.</p>
+        <p><strong>Assessment:</strong> ${safeAssignmentTitle}<br/>
+        <strong>Report:</strong> ${safeTestTitle}</p>
+        <p>
+          <a href="${safeReportUrl}" style="display: inline-block; padding: 10px 16px; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px;">
+            View report
+          </a>
+        </p>
+        <p>If the button does not work, copy and paste this link into your browser:<br/>
+        <a href="${safeReportUrl}">${safeReportUrl}</a></p>
+      </div>
+    `,
+    text: [
+      `Hello ${args.recipientName || "there"},`,
+      "",
+      `${args.teacherName || "The mentor"} has shared the diagnostic report for ${args.studentName || "the student"}.`,
+      `Assessment: ${args.assignmentTitle || "Diagnostic Report"}`,
+      `Report: ${args.testTitle || "MCQ Diagnostic"}`,
+      "",
+      `View report: ${args.reportUrl}`,
+    ].join("\n"),
+  });
 };
 
 const normalizeAnswerArray = (value: unknown) => {
@@ -385,6 +454,13 @@ const buildFeedbackReportText = (report: any, presentation?: McqReportPresentati
   });
   lines.push("");
   lines.push(`Questions: ${report.scoreSummary.answeredCount} answered, ${report.scoreSummary.correctCount} correct, ${report.scoreSummary.partialCount} partial, ${report.scoreSummary.wrongCount} wrong.`);
+  if (report.assessmentType === "simple-assignment" && presentation) {
+    lines.push("");
+    lines.push("Gap Analysis and Next Steps:");
+    lines.push(`- Conceptual Gaps: ${presentation.conceptualGaps}`);
+    lines.push(`- Recommendations: ${presentation.recommendations}`);
+    lines.push(`- Next Action: ${presentation.nextAction}`);
+  }
   return lines.join("\n");
 };
 
@@ -428,7 +504,19 @@ export async function POST(request: NextRequest) {
       },
       include: {
         student: {
-          select: { id: true, name: true, email: true },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            parentName: true,
+            parentEmail: true,
+            parentAccount: {
+              select: {
+                name: true,
+                email: true,
+              },
+            },
+          },
         },
         assignment: {
           include: {
@@ -470,6 +558,9 @@ export async function POST(request: NextRequest) {
         currentPresentation,
         Array.isArray(existingReport.sectionStats) ? (existingReport.sectionStats as any[]) : []
       );
+      const isSimpleAssignmentReport =
+        parsedContent.assessmentType === "simple-assignment" ||
+        (existingReport as Record<string, unknown>).assessmentType === "simple-assignment";
 
       const aiDifficultyReviews = await generateGeminiDifficultyReviews({
         studentName: submission.student.name,
@@ -484,9 +575,26 @@ export async function POST(request: NextRequest) {
         testTitle: String(parsedContent.testTitle || "MCQ + PDF Assessment"),
         sections: Array.isArray(existingReport.sectionStats) ? (existingReport.sectionStats as any[]) : [],
       });
+      const gapAnalysis = isSimpleAssignmentReport && (
+        !mergedPresentation.conceptualGaps ||
+        !mergedPresentation.recommendations ||
+        !mergedPresentation.nextAction
+      )
+        ? await generateGeminiGapAnalysis({
+            studentName: submission.student.name,
+            assignmentTitle: submission.assignment.title,
+            testTitle: String(parsedContent.testTitle || "MCQ Test"),
+            scoreSummary: typeof existingReport.scoreSummary === "object" && existingReport.scoreSummary
+              ? existingReport.scoreSummary as Record<string, unknown>
+              : {},
+            sectionStats: Array.isArray(existingReport.sectionStats) ? existingReport.sectionStats as Array<Record<string, unknown>> : [],
+            difficultyStats: Array.isArray(existingReport.difficultyStats) ? existingReport.difficultyStats as Array<Record<string, unknown>> : [],
+          })
+        : null;
 
       let nextPresentation: McqReportPresentation = {
         ...mergedPresentation,
+        ...(gapAnalysis ? gapAnalysis : {}),
         aiDifficultyReviews,
         aiTopicInsights,
         updatedAt: new Date().toISOString(),
@@ -518,6 +626,7 @@ export async function POST(request: NextRequest) {
         ? (parsedContent.reportPdf as Record<string, unknown>)
         : null;
       const reportViewUrl = `/student-dashboard/report/${submission.id}`;
+      const parentReportViewUrl = `/parent-dashboard/report/${submission.id}`;
 
       const manualFeedback = stripPreviousAutoReport(submission.feedback);
       const reportText = buildFeedbackReportText(existingReport, nextPresentation);
@@ -535,8 +644,10 @@ export async function POST(request: NextRequest) {
             reportPdf: (action === "confirm" || action === "send")
               ? {
                   publicUrl: reportViewUrl,
+                  parentPublicUrl: parentReportViewUrl,
                   generatedAt: nextPresentation.updatedAt,
                   generatedByTeacherId: teacher.id,
+                  sentAt: action === "send" ? new Date().toISOString() : existingPdf?.sentAt || null,
                 }
               : existingPdf
                 ? existingPdf
@@ -562,14 +673,56 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      const mailErrors: string[] = [];
+      if (action === "send") {
+        const testTitle = String(parsedContent.testTitle || "MCQ Test");
+        const emailTargets = [
+          {
+            role: "student",
+            to: updatedSubmission.student.email,
+            recipientName: updatedSubmission.student.name,
+            reportUrl: makeAbsoluteUrl(reportViewUrl),
+          },
+          {
+            role: "parent",
+            to: submission.student.parentAccount?.email || submission.student.parentEmail,
+            recipientName: submission.student.parentAccount?.name || submission.student.parentName || "Parent",
+            reportUrl: makeAbsoluteUrl(parentReportViewUrl),
+          },
+        ].filter((target, index, targets) =>
+          Boolean(target.to) &&
+          targets.findIndex((candidate) => candidate.to.toLowerCase() === target.to.toLowerCase()) === index
+        );
+
+        for (const target of emailTargets) {
+          try {
+            await sendDiagnosticReportEmail({
+              to: target.to,
+              recipientName: target.recipientName,
+              studentName: updatedSubmission.student.name,
+              teacherName: teacher.name,
+              assignmentTitle: updatedSubmission.assignment.title,
+              testTitle,
+              reportUrl: target.reportUrl,
+            });
+          } catch (error) {
+            console.error(`Failed to send diagnostic report email to ${target.role}:`, error);
+            mailErrors.push(target.role);
+          }
+        }
+      }
+
       return NextResponse.json({
         success: true,
         submission: updatedSubmission,
+        mailErrors,
         message: action === "saveDraft"
           ? "Draft saved successfully."
           : action === "confirm"
             ? "Report confirmed successfully."
-            : "Report marked as sent and PDF is ready for student access.",
+            : mailErrors.length > 0
+              ? "Report shared in dashboards, but one or more email notifications failed."
+              : "Report shared with student and parent. Email notifications sent.",
       });
     }
 
@@ -781,6 +934,7 @@ export async function POST(request: NextRequest) {
 
     const report = {
       version: 1,
+      assessmentType: mcqConfig.assessmentType || parsed.assessmentType || "mock-test",
       generatedAt: new Date().toISOString(),
       generatedByTeacherId: teacher.id,
       submissionId: submission.id,
@@ -859,8 +1013,19 @@ export async function POST(request: NextRequest) {
       testTitle: String(parsed.testTitle || "MCQ + PDF Assessment"),
       sections: sectionStats,
     });
+    const gapAnalysis = report.assessmentType === "simple-assignment"
+      ? await generateGeminiGapAnalysis({
+          studentName: submission.student.name,
+          assignmentTitle: submission.assignment.title,
+          testTitle: String(parsed.testTitle || "MCQ Test"),
+          scoreSummary: report.scoreSummary,
+          sectionStats,
+          difficultyStats,
+        })
+      : null;
     const normalizedReportPresentation: McqReportPresentation = {
       ...reportPresentation,
+      ...(gapAnalysis ? gapAnalysis : {}),
       aiDifficultyReviews,
       aiTopicInsights,
       mode: "draft",

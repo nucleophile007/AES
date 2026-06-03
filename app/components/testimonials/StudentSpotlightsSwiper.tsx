@@ -15,6 +15,7 @@ export type StudentSpotlight = {
   achievement: string;
   quote: string;
   schoolLogo?: string;
+  competitionLogo?: string;
 };
 
 interface StudentSpotlightsSwiperProps {
@@ -56,74 +57,94 @@ export default function StudentSpotlightsSwiper({
       <div
         className={`rounded-3xl border overflow-hidden h-[600px] w-[500px] flex flex-col ${
           isCenter
-            ? "border-yellow-400/50 bg-gradient-to-br from-slate-800 via-slate-800/95 to-slate-900 p-8 shadow-2xl"
+            ? "border-yellow-400/50 bg-gradient-to-br from-slate-800 via-slate-800/95 to-slate-900 p-7 shadow-2xl"
             : "border-slate-700/50 bg-gradient-to-br from-slate-800/80 via-slate-800/70 to-slate-900/80 p-6"
         }`}
       >
-        {/* School Logo + Competition Title */}
-        <div className="mb-6 flex items-start gap-4">
-          {item.schoolLogo && (
-            <div className="w-16 h-16 flex-shrink-0">
+        {/* Competition Logo + Title */}
+        <div className="mb-4 flex items-start gap-3 rounded-2xl border border-yellow-400/10 bg-white/5 px-4 py-2.5 shadow-inner shadow-black/20">
+          {item.competitionLogo ? (
+            <div className="h-14 w-14 flex-shrink-0 rounded-full overflow-hidden border border-yellow-400/15 bg-slate-950/50 flex items-center justify-center">
               <Image
-                src={item.schoolLogo}
-                alt="School logo"
-                width={64}
-                height={64}
-                className="w-full h-full object-contain"
+                src={item.competitionLogo}
+                alt="Competition logo"
+                width={56}
+                height={56}
+                className="h-full w-full object-cover"
               />
+            </div>
+          ) : (
+            <div className="h-14 w-14 flex-shrink-0 rounded-full border border-dashed border-yellow-400/20 bg-slate-950/50 flex items-center justify-center text-[10px] uppercase tracking-[0.14em] text-slate-400 text-center px-1">
+              Logo
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <p className="text-xs uppercase tracking-widest text-yellow-400 font-bold line-clamp-2">
+            <p className="mt-0.5 text-sm md:text-xl font-semibold leading-snug text-slate-50 line-clamp-2">
               {item.event}
             </p>
-            <p className="text-xs text-slate-400 mt-2">{item.date}</p>
+            <div className="mt-1.5 h-px w-14 bg-gradient-to-r from-yellow-400/70 to-transparent" />
+            <p className="text-[10px] uppercase tracking-[0.18em] text-slate-400 mt-1.5">{item.date}</p>
           </div>
         </div>
 
-        {/* Content - No Scrolling */}
-        <div className="flex-1 space-y-4 flex flex-col justify-between">
-          {/* Achievement */}
-          <div>
+        {/* Content - Highlight sentence + handwritten note */}
+        <div className="flex-1 flex flex-col justify-between">
+          <div className="space-y-4 pt-1">
+            <div className="mx-auto h-px w-24 bg-gradient-to-r from-transparent via-yellow-400/70 to-transparent" />
+
             <p
-              className={`font-bold bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent leading-snug ${
-                isCenter ? "text-2xl md:text-3xl" : "text-lg"
+              className={`text-center leading-relaxed text-slate-100 ${
+                isCenter ? "text-base md:text-[1.15rem]" : "text-sm"
               }`}
-              style={{ fontFamily: '"Comic Sans MS", "Comic Sans", cursive' }}
+              style={{ fontFamily: 'Georgia, serif' }}
             >
-              {item.achievement}
+              <span className="mx-1 text-slate-300">{item.student}</span> achieved
+              <span className="mx-1 font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-amber-400 to-orange-400">
+                {item.achievement}
+              </span>
+              with the topic
+              <span className="mx-1 font-semibold italic text-cyan-300">“{item.topic}”</span>!
             </p>
           </div>
 
-          {/* Topic - Italic with quotes */}
-          <div className="border-l-4 border-cyan-400/50 pl-4">
+          <div className="mt-4 rounded-2xl border border-slate-700/40 bg-slate-950/30 px-4 py-3">
             <p
-              className={`text-cyan-300 italic leading-relaxed font-normal ${
-                isCenter ? "text-sm" : "text-xs"
+              className={`text-amber-100 leading-relaxed ${
+                isCenter ? "text-sm" : "text-[11px]"
               }`}
+              style={{ fontFamily: '"Kalam", cursive', letterSpacing: '0.2px' }}
             >
-              &ldquo;<span className="font-medium">{item.topic}</span>&rdquo;
-            </p>
-          </div>
-
-          {/* Message */}
-          <div>
-            <p
-              className={`font-semibold text-amber-100 leading-relaxed ${
-                isCenter ? "text-base" : "text-xs"
-              }`}
-              style={{ fontFamily: '"Kalam", cursive', letterSpacing: '0.3px' }}
-            >
-              {item.quote}
+              “{item.quote}”
             </p>
           </div>
         </div>
 
         {/* Student Info - Bottom */}
         <div className="pt-6 border-t border-slate-700/50 mt-4">
-          <p className="text-sm font-bold bg-gradient-to-r from-yellow-300 to-amber-500 bg-clip-text text-transparent line-clamp-1">
-            {item.student}
-          </p>
+          <div className="flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold bg-gradient-to-r from-yellow-300 to-amber-500 bg-clip-text text-transparent line-clamp-1">
+                {item.student}
+              </p>
+              <p className="text-xs text-slate-400 mt-1 line-clamp-1">Student spotlight</p>
+            </div>
+
+            {item.schoolLogo ? (
+              <div className="mt-2 h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl border border-slate-600/60 bg-slate-900/80 p-2 self-end">
+                <Image
+                  src={item.schoolLogo}
+                  alt={`${item.student} school logo`}
+                  width={56}
+                  height={56}
+                  className="h-full w-full object-contain"
+                />
+              </div>
+            ) : (
+              <div className="mt-2 h-14 w-14 flex-shrink-0 self-end rounded-xl border border-dashed border-slate-600/70 bg-slate-900/70 flex items-center justify-center text-[9px] uppercase tracking-[0.18em] text-slate-500 text-center px-1">
+                School logo
+              </div>
+            )}
+          </div>
           <p className="text-xs text-slate-400 mt-1 line-clamp-1">{item.gradeSchool}</p>
         </div>
       </div>
