@@ -1,0 +1,206 @@
+  const handleSendResource = async () => {
+    if (sendResourceInFlightRef.current || sendingResource) return;
+    setResourceError(null);
+    setResourceSaveFeedback(null);
+
+    const isAssignmentCategory = newResource.category === "assignment";
+    const selectedAssignmentForSend = isAssignmentCategory && newResource.assignmentId
+      ? assignments.find((assignment) => assignment.id === newResource.assignmentId)
+      : null;
+    const assignmentStudentIds = selectedAssignmentForSend
+      ? Array.from(
+          new Set([
+            ...(selectedAssignmentForSend.assignmentTargets || []).map((target) => target.student.id),
+            ...(selectedAssignmentForSend.targetStudent ? [selectedAssignmentForSend.targetStudent.id] : [])
+          ])
+        )
+      : [];
+    const groupedStudentIds = Array.from(
+      new Set(
+        resourceGroupIds.flatMap((groupId) => {
+          const group = studentGroups.find((item) => item.id.toString() === groupId);
+          return group ? group.members.map((member) => member.id) : [];
+        })
+      )
+    );
+    const manuallySelectedStudentIds = Array.from(new Set(newResource.studentIds));
+    const directStudentIds = Array.from(new Set([...groupedStudentIds, ...manuallySelectedStudentIds]));
+    const targetStudentIds = isAssignmentCategory ? assignmentStudentIds : directStudentIds;
+    const normalizedLinkUrl = newResource.linkUrl.trim();
+
+    if (!teacherEmail) {
+      const message = "Teacher email not available.";
+      setResourceError(message);
+      toast({
+        variant: "destructive",
+        title: "Cannot send resource",
+        description: message,
+      });
+      return;
+    }
+
+    if (!newResource.title.trim()) {
+      const message = "Title is required.";
+      setResourceError(message);
+      toast({
+        title: "Missing title",
+        description: message,
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+      return;
+    }
+
+    if (!newResource.type) {
+      const message = "Type is required.";
+      setResourceError(message);
+      toast({
+        title: "Missing type",
+        description: message,
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+      return;
+    }
+
+    if (newResource.category === "assignment" && !newResource.assignmentId) {
+      const message = "Select an assignment for this category.";
+      setResourceError(message);
+      toast({
+        title: "Assignment required",
+        description: message,
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+      return;
+    }
+
+    if (isAssignmentCategory && assignmentStudentIds.length === 0) {
+      const message = "Selected assignment has no assigned students.";
+      setResourceError(message);
+      toast({
+        title: "No assignment students",
+        description: message,
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+      return;
+    }
+
+    if (!isAssignmentCategory && newResource.category === "personal" && targetStudentIds.length === 0) {
+      const message = "Select at least one student or group.";
+      setResourceError(message);
+      toast({
+        title: "No students selected",
+        description: message,
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+      return;
+    }
+
+    if (newResource.type === "link" && !normalizedLinkUrl) {
+      const message = "Provide a link URL for link type resources.";
+      setResourceError(message);
+      toast({
+        title: "Link URL required",
+        description: message,
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+      return;
+    }
+
+    if (newResource.type !== "link" && !newResourceFile && !normalizedLinkUrl) {
+      const message = "Attach a file or provide a link URL.";
+      setResourceError(message);
+      toast({
+        title: "File or link required",
+        description: message,
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+      return;
+    }
+
+    sendResourceInFlightRef.current = true;
+    setSendingResource(true);
+    showResourceSaveFeedback("saving", "Sending resource...");
+    try {
+      let fileUrl: string | null = null;
+
+      if (newResourceFile) {
+        const formData = new FormData();
+        formData.append("file", newResourceFile);
+        formData.append("studentId", "0");
+        formData.append("assignmentId", newResource.assignmentId ? newResource.assignmentId.toString() : "0");
+
+        const uploadResponse = await fetch("/api/teacher/upload-r2", {
+          method: "POST",
+          body: formData,
+        });
+
+        const uploadData = await uploadResponse.json();
+        if (!uploadData.success) {
+          throw new Error(uploadData.error || "Upload failed");
+        }
+        fileUrl = uploadData.fileUrl;
+      }
+
+      const payload = {
+        title: newResource.title,
+        description: newResource.description,
+        type: newResource.type,
+        fileUrl,
+        linkUrl: normalizedLinkUrl || null,
+        fileName: newResourceFile?.name,
+        fileSize: newResourceFile?.size,
+        program: newResource.program?.trim() || selectedAssignmentForSend?.program || "",
+        subject: newResource.subject?.trim() || selectedAssignmentForSend?.subject || "",
+        grade: newResource.grade?.trim() || "",
+        teacherEmail,
+        isPublic: newResource.category === "general",
+        assignmentIds: newResource.category === "assignment" && newResource.assignmentId ? [newResource.assignmentId] : [],
+        studentIds: targetStudentIds,
+      };
+
+      const createResponse = await fetch("/api/teacher/resources", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await createResponse.json();
+      if (!data.success) {
+        throw new Error(data.error || "Failed to send resource");
+      }
+
+      if (data.resource) {
+        setResources((prev) => {
+          const rest = prev.filter((item) => item.id !== data.resource.id);
+          return [data.resource, ...rest];
+        });
+      }
+      void fetchResources();
+
+      resetResourceForm();
+      toast({
+        title: "Resource sent",
+        description: isAssignmentCategory
+          ? "Your resource has been linked to the selected assignment."
+          : newResource.category === "general"
+            ? "Your resource has been published."
+            : "Your resource has been shared with the selected students.",
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+      showResourceSaveFeedback(
+        "success",
+        isAssignmentCategory
+          ? "Resource linked to assignment."
+          : newResource.category === "general"
+            ? "Resource published."
+            : "Resource shared with students."
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to send resource";
+      setResourceError(message);
+      console.error("Send resource error:", err);
+      toast({
+        variant: "destructive",
+        title: "Failed to send resource",
+        description: message,
+      });
+      showResourceSaveFeedback("error", message);

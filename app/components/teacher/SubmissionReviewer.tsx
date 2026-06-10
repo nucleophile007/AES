@@ -265,6 +265,7 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
   const [isSavingGrade, setIsSavingGrade] = useState(false);
   const [reportActionSubmissionId, setReportActionSubmissionId] = useState<number | null>(null);
   const gradeSubmitInFlightRef = useRef(false);
+  const autoRecommendationInFlightRef = useRef<Set<number>>(new Set());
   const [filters, setFilters] = useState({
     status: 'all',
     assignment: 'all',
@@ -400,7 +401,7 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
 
   const handleReportAction = async (
     submission: Submission,
-    action: "generate" | "saveDraft" | "confirm" | "send",
+    action: "generate" | "saveDraft" | "confirm" | "send" | "generateTeacherRecommendation",
     presentation?: McqReportPresentation,
     attemptNumber?: number
   ) => {
@@ -438,6 +439,8 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
       toast({
         title: action === "generate"
           ? "Report generated"
+          : action === "generateTeacherRecommendation"
+            ? "Teacher recommendation generated"
           : action === "saveDraft"
             ? "Draft saved"
             : action === "confirm"
@@ -462,6 +465,23 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
       setReportActionSubmissionId(null);
     }
   };
+
+  useEffect(() => {
+    if (!isReportDialogOpen) return;
+    if (!selectedReportSubmission || !selectedReportData?.report || !selectedReportPresentation) return;
+    if (selectedReportPresentation.teacherRecommendation.trim()) return;
+    if (reportActionSubmissionId !== null) return;
+    if (autoRecommendationInFlightRef.current.has(selectedReportSubmission.id)) return;
+
+    autoRecommendationInFlightRef.current.add(selectedReportSubmission.id);
+    handleReportAction(selectedReportSubmission, "generateTeacherRecommendation", selectedReportPresentation);
+  }, [
+    isReportDialogOpen,
+    selectedReportSubmission,
+    selectedReportData,
+    selectedReportPresentation,
+    reportActionSubmissionId,
+  ]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const createPresentationSeed = (submission: Submission, parsed: ParsedMcqSubmission) => {
     const fallback = createDefaultReportPresentation({
@@ -1026,6 +1046,33 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                         value={selectedReportPresentation.weaknesses}
                         onChange={(e) => updatePresentationField("weaknesses", e.target.value)}
                         rows={3}
+                      />
+                    </div>
+                    <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Teacher&apos;s Recommendation</p>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            if (!selectedReportSubmission || !selectedReportPresentation) return;
+                            handleReportAction(selectedReportSubmission, "generateTeacherRecommendation", {
+                              ...selectedReportPresentation,
+                              teacherRecommendation: "",
+                            });
+                          }}
+                          disabled={reportActionSubmissionId !== null}
+                        >
+                          {reportActionSubmissionId === selectedReportSubmission.id ? "Generating..." : "Regenerate"}
+                        </Button>
+                      </div>
+                      <Textarea
+                        id="teacher-recommendation"
+                        value={selectedReportPresentation.teacherRecommendation}
+                        onChange={(e) => updatePresentationField("teacherRecommendation", e.target.value)}
+                        rows={5}
+                        placeholder="Gemini-generated teacher recommendation for mentor editing"
                       />
                     </div>
                     {selectedReportData.assessmentType === "simple-assignment" && (

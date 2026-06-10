@@ -21,6 +21,7 @@ export interface McqReportPresentation {
   conceptualGaps: string;
   interpretationText: string;
   recommendations: string;
+  teacherRecommendation: string;
   nextAction: string;
   mentorComments: string;
   topicInsights: string;
@@ -111,6 +112,7 @@ export const createDefaultReportPresentation = (
     conceptualGaps: "Needs reinforcement in conceptual transfer and elimination strategy.",
     interpretationText: "Current performance indicates potential for rapid improvement with focused revision cycles.",
     recommendations: "Use a targeted practice plan with alternating concept and mixed-difficulty drills.",
+    teacherRecommendation: "",
     nextAction: "Complete two guided revision sessions and one timed mixed-paper within 7 days.",
     mentorComments: "Mentor to personalize recommendations before confirmation.",
     topicInsights: "Prioritize weak sections first, then consolidate medium-confidence areas.",
@@ -143,6 +145,7 @@ export const normalizeReportPresentation = (
     conceptualGaps: toText(source.conceptualGaps, fallback.conceptualGaps),
     interpretationText: toText(source.interpretationText, fallback.interpretationText),
     recommendations: toText(source.recommendations, fallback.recommendations),
+    teacherRecommendation: toText(source.teacherRecommendation, fallback.teacherRecommendation),
     nextAction: toText(source.nextAction, fallback.nextAction),
     mentorComments: toText(source.mentorComments, fallback.mentorComments),
     topicInsights: toText(source.topicInsights, fallback.topicInsights),

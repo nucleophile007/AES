@@ -151,7 +151,7 @@ export default function PremiumMcqReport({
   const weaknesses = toBulletList(presentation.weaknesses);
   const narrativeTitle = presentation.sectionTitleNarrative === "AI Performance Narrative" ? "Performance Narrative" : presentation.sectionTitleNarrative;
   const showGapAnalysis = report.assessmentType === "simple-assignment";
-  const totalPages = showGapAnalysis ? 3 : 2;
+  const totalPages = showGapAnalysis ? 4 : 3;
 
   const excellent = sectionStats.filter((section) => pct(section.percentage) >= 75);
   const developing = sectionStats.filter((section) => pct(section.percentage) >= 50 && pct(section.percentage) < 75);
@@ -373,9 +373,18 @@ export default function PremiumMcqReport({
         </div>
       </PageFrame>
 
+      <PageFrame presentation={presentation} studentName={studentName} testTitle={testTitle} pageNumber={2} totalPages={totalPages}>
+        <h2 className="section-heading serif-display mt-2">6. Teacher&apos;s Recommendation</h2>
+        <div className="mt-6 border border-slate-300 bg-white p-6">
+          <p className="text-[15px] leading-8 text-slate-700 whitespace-pre-wrap">
+            {presentation.teacherRecommendation || "Teacher recommendation will appear here after generation."}
+          </p>
+        </div>
+      </PageFrame>
+
       {showGapAnalysis && (
-        <PageFrame presentation={presentation} studentName={studentName} testTitle={testTitle} pageNumber={2} totalPages={totalPages}>
-          <h2 className="section-heading serif-display mt-2">6. Gap Analysis and Next Steps</h2>
+        <PageFrame presentation={presentation} studentName={studentName} testTitle={testTitle} pageNumber={3} totalPages={totalPages}>
+          <h2 className="section-heading serif-display mt-2">7. Gap Analysis and Next Steps</h2>
           <div className="mt-6 grid gap-5">
             {[
               {
@@ -421,7 +430,7 @@ export default function PremiumMcqReport({
         </PageFrame>
       )}
 
-      <PageFrame presentation={presentation} studentName={studentName} testTitle={testTitle} pageNumber={showGapAnalysis ? 3 : 2} totalPages={totalPages}>
+      <PageFrame presentation={presentation} studentName={studentName} testTitle={testTitle} pageNumber={showGapAnalysis ? 4 : 3} totalPages={totalPages}>
         <h2 className="section-heading serif-display mt-2">Detailed Item Analysis</h2>
         <table className="item-table serif-display">
           <thead>

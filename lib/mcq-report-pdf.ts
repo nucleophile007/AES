@@ -437,6 +437,22 @@ export async function generateMcqReportPdfBytes(input: McqReportPdfInput): Promi
   y = cardY - tierCardHeight - 12;
 
   page = await makePage();
+  y = await drawPageChrome(page, pdfDoc, { body: bodyFont, bodyBold: bodyBoldFont, title: titleFont }, presentation, input.studentName, input.testTitle);
+  y = drawSectionHeader(page, "6. TEACHER'S RECOMMENDATION", MARGIN, y, PAGE_WIDTH - MARGIN * 2, bodyBoldFont) - 10;
+  page.drawRectangle({ x: MARGIN, y: y - 180, width: PAGE_WIDTH - MARGIN * 2, height: 180, borderWidth: 1, borderColor: BORDER });
+  drawWrappedText(
+    page,
+    presentation.teacherRecommendation || "Teacher recommendation will appear here after generation.",
+    MARGIN + 14,
+    y - 18,
+    PAGE_WIDTH - MARGIN * 2 - 28,
+    serifFont,
+    10.5,
+    15,
+    TEXT
+  );
+
+  page = await makePage();
   y = PAGE_HEIGHT - MARGIN;
   y = drawSectionHeader(page, "DETAILED ITEM ANALYSIS", MARGIN, y, PAGE_WIDTH - MARGIN * 2, bodyBoldFont) - 4;
   const colWidths = [34, 150, 72, 104, 104, 40, 40];

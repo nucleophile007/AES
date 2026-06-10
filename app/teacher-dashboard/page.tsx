@@ -278,7 +278,9 @@ export default function TeacherDashboard() {
 
   // Resource sending state
   const [newResource, setNewResource] = useState<ResourceFormState>(createEmptyResourceForm(""));
-  const [newResourceFile, setNewResourceFile] = useState<File | null>(null);
+  const [newResourceFiles, setNewResourceFiles] = useState<File[]>([]);
+  const [newResourceLinks, setNewResourceLinks] = useState<string[]>([]);
+  const [currentLinkInput, setCurrentLinkInput] = useState("");
   const [sendingResource, setSendingResource] = useState(false);
   const sendResourceInFlightRef = useRef(false);
   const [resourceError, setResourceError] = useState<string | null>(null);
@@ -604,7 +606,9 @@ export default function TeacherDashboard() {
 
   const resetResourceForm = () => {
     setNewResource(createEmptyResourceForm(teacher?.programs?.[0] || ""));
-    setNewResourceFile(null);
+    setNewResourceFiles([]);
+    setNewResourceLinks([]);
+    setCurrentLinkInput("");
     setResourceError(null);
     setResourceGroupIds([]);
   };
@@ -707,18 +711,6 @@ export default function TeacherDashboard() {
     setResourceError(null);
     setResourceSaveFeedback(null);
 
-    const isAssignmentCategory = newResource.category === "assignment";
-    const selectedAssignmentForSend = isAssignmentCategory && newResource.assignmentId
-      ? assignments.find((assignment) => assignment.id === newResource.assignmentId)
-      : null;
-    const assignmentStudentIds = selectedAssignmentForSend
-      ? Array.from(
-          new Set([
-            ...(selectedAssignmentForSend.assignmentTargets || []).map((target) => target.student.id),
-            ...(selectedAssignmentForSend.targetStudent ? [selectedAssignmentForSend.targetStudent.id] : [])
-          ])
-        )
-      : [];
     const groupedStudentIds = Array.from(
       new Set(
         resourceGroupIds.flatMap((groupId) => {
@@ -728,186 +720,140 @@ export default function TeacherDashboard() {
       )
     );
     const manuallySelectedStudentIds = Array.from(new Set(newResource.studentIds));
-    const directStudentIds = Array.from(new Set([...groupedStudentIds, ...manuallySelectedStudentIds]));
-    const targetStudentIds = isAssignmentCategory ? assignmentStudentIds : directStudentIds;
-    const normalizedLinkUrl = newResource.linkUrl.trim();
+    const targetStudentIds = Array.from(new Set([...groupedStudentIds, ...manuallySelectedStudentIds]));
 
     if (!teacherEmail) {
       const message = "Teacher email not available.";
       setResourceError(message);
-      toast({
-        variant: "destructive",
-        title: "Cannot send resource",
-        description: message,
-      });
+      toast({ variant: "destructive", title: "Cannot send resource", description: message });
       return;
     }
 
     if (!newResource.title.trim()) {
       const message = "Title is required.";
       setResourceError(message);
-      toast({
-        title: "Missing title",
-        description: message,
-        className: "border-slate-300 bg-slate-100 text-slate-800",
-      });
+      toast({ title: "Missing title", description: message, className: "border-slate-300 bg-slate-100 text-slate-800" });
       return;
     }
 
     if (!newResource.type) {
       const message = "Type is required.";
       setResourceError(message);
-      toast({
-        title: "Missing type",
-        description: message,
-        className: "border-slate-300 bg-slate-100 text-slate-800",
-      });
+      toast({ title: "Missing type", description: message, className: "border-slate-300 bg-slate-100 text-slate-800" });
       return;
     }
 
-    if (newResource.category === "assignment" && !newResource.assignmentId) {
-      const message = "Select an assignment for this category.";
-      setResourceError(message);
-      toast({
-        title: "Assignment required",
-        description: message,
-        className: "border-slate-300 bg-slate-100 text-slate-800",
-      });
-      return;
-    }
-
-    if (isAssignmentCategory && assignmentStudentIds.length === 0) {
-      const message = "Selected assignment has no assigned students.";
-      setResourceError(message);
-      toast({
-        title: "No assignment students",
-        description: message,
-        className: "border-slate-300 bg-slate-100 text-slate-800",
-      });
-      return;
-    }
-
-    if (!isAssignmentCategory && newResource.category === "personal" && targetStudentIds.length === 0) {
+    if (newResource.category === "personal" && targetStudentIds.length === 0) {
       const message = "Select at least one student or group.";
       setResourceError(message);
-      toast({
-        title: "No students selected",
-        description: message,
-        className: "border-slate-300 bg-slate-100 text-slate-800",
-      });
+      toast({ title: "No students selected", description: message, className: "border-slate-300 bg-slate-100 text-slate-800" });
       return;
     }
 
-    if (newResource.type === "link" && !normalizedLinkUrl) {
-      const message = "Provide a link URL for link type resources.";
-      setResourceError(message);
-      toast({
-        title: "Link URL required",
-        description: message,
-        className: "border-slate-300 bg-slate-100 text-slate-800",
-      });
-      return;
-    }
+    const hasLinks = newResourceLinks.length > 0 || currentLinkInput.trim() !== "";
+    const hasFiles = newResourceFiles.length > 0;
 
-    if (newResource.type !== "link" && !newResourceFile && !normalizedLinkUrl) {
-      const message = "Attach a file or provide a link URL.";
+    if (!hasLinks && !hasFiles) {
+      const message = "Attach at least one file or provide a link URL.";
       setResourceError(message);
-      toast({
-        title: "File or link required",
-        description: message,
-        className: "border-slate-300 bg-slate-100 text-slate-800",
-      });
+      toast({ title: "File or link required", description: message, className: "border-slate-300 bg-slate-100 text-slate-800" });
       return;
     }
 
     sendResourceInFlightRef.current = true;
     setSendingResource(true);
-    showResourceSaveFeedback("saving", "Sending resource...");
+    showResourceSaveFeedback("saving", "Sending resources...");
+    
     try {
-      let fileUrl: string | null = null;
+      const finalLinks = [...newResourceLinks];
+      if (currentLinkInput.trim() !== "" && !finalLinks.includes(currentLinkInput.trim())) {
+        finalLinks.push(currentLinkInput.trim());
+      }
 
-      if (newResourceFile) {
+      const totalItems = newResourceFiles.length + finalLinks.length;
+      let successCount = 0;
+      let allCreatedResources: any[] = [];
+
+      const createResourceRecord = async (fileUrl: string | null, linkUrl: string | null, fileObj: File | null) => {
+        const payload = {
+          title: newResource.title + (totalItems > 1 && fileObj ? ` - ${fileObj.name}` : totalItems > 1 && linkUrl ? ' - Link' : ''),
+          description: newResource.description,
+          type: newResource.type,
+          fileUrl,
+          linkUrl,
+          fileName: fileObj?.name || null,
+          fileSize: fileObj?.size || null,
+          program: "",
+          subject: "",
+          grade: "",
+          teacherEmail,
+          isPublic: newResource.category === "general",
+          assignmentIds: [],
+          studentIds: targetStudentIds,
+        };
+
+        const createResponse = await fetch("/api/teacher/resources", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await createResponse.json();
+        if (!data.success) throw new Error(data.error || "Failed to send resource");
+        return data.resource;
+      };
+
+      for (const file of newResourceFiles) {
         const formData = new FormData();
-        formData.append("file", newResourceFile);
-        formData.append("studentId", "0");
-        formData.append("assignmentId", newResource.assignmentId ? newResource.assignmentId.toString() : "0");
-
-        const uploadResponse = await fetch("/api/upload-r2", {
+        formData.append("file", file);
+        formData.append("type", newResource.type);
+        
+        const uploadResponse = await fetch("/api/teacher/upload-r2", {
           method: "POST",
           body: formData,
         });
 
         const uploadData = await uploadResponse.json();
-        if (!uploadData.success) {
-          throw new Error(uploadData.error || "Upload failed");
-        }
-        fileUrl = uploadData.fileUrl;
+        if (!uploadData.success) throw new Error(uploadData.error || "Upload failed");
+        
+        const resObj = await createResourceRecord(uploadData.fileUrl, null, file);
+        if (resObj) allCreatedResources.push(resObj);
+        successCount++;
       }
 
-      const payload = {
-        title: newResource.title,
-        description: newResource.description,
-        type: newResource.type,
-        fileUrl,
-        linkUrl: normalizedLinkUrl || null,
-        fileName: newResourceFile?.name,
-        fileSize: newResourceFile?.size,
-        program: newResource.program?.trim() || selectedAssignmentForSend?.program || "",
-        subject: newResource.subject?.trim() || selectedAssignmentForSend?.subject || "",
-        grade: newResource.grade?.trim() || "",
-        teacherEmail,
-        isPublic: newResource.category === "general",
-        assignmentIds: newResource.category === "assignment" && newResource.assignmentId ? [newResource.assignmentId] : [],
-        studentIds: targetStudentIds,
-      };
-
-      const createResponse = await fetch("/api/teacher/resources", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await createResponse.json();
-      if (!data.success) {
-        throw new Error(data.error || "Failed to send resource");
+      for (const linkUrl of finalLinks) {
+        const resObj = await createResourceRecord(null, linkUrl, null);
+        if (resObj) allCreatedResources.push(resObj);
+        successCount++;
       }
 
-      if (data.resource) {
+      if (allCreatedResources.length > 0) {
         setResources((prev) => {
-          const rest = prev.filter((item) => item.id !== data.resource.id);
-          return [data.resource, ...rest];
+          let next = [...prev];
+          allCreatedResources.forEach(res => {
+            next = next.filter(item => item.id !== res.id);
+            next.unshift(res);
+          });
+          return next;
         });
       }
+      
       void fetchResources();
-
       resetResourceForm();
+      
       toast({
-        title: "Resource sent",
-        description: isAssignmentCategory
-          ? "Your resource has been linked to the selected assignment."
-          : newResource.category === "general"
-            ? "Your resource has been published."
-            : "Your resource has been shared with the selected students.",
+        title: "Resources sent",
+        description: newResource.category === "general" ? "Your resources have been published." : "Your resources have been shared with the selected students.",
         className: "border-slate-300 bg-slate-100 text-slate-800",
       });
-      showResourceSaveFeedback(
-        "success",
-        isAssignmentCategory
-          ? "Resource linked to assignment."
-          : newResource.category === "general"
-            ? "Resource published."
-            : "Resource shared with students."
-      );
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to send resource";
+      showResourceSaveFeedback("success", `Successfully sent ${successCount} resource(s).`);
+
+    } catch (error) {
+      console.error('Resource send failed:', error);
+      const message = error instanceof Error ? error.message : "Upload failed";
       setResourceError(message);
-      console.error("Send resource error:", err);
-      toast({
-        variant: "destructive",
-        title: "Failed to send resource",
-        description: message,
-      });
-      showResourceSaveFeedback("error", message);
+      toast({ variant: "destructive", title: "Failed", description: message });
+      showResourceSaveFeedback("error", "Failed to send resource");
     } finally {
       setSendingResource(false);
       sendResourceInFlightRef.current = false;
@@ -1433,12 +1379,8 @@ export default function TeacherDashboard() {
       return group ? group.members.map((member) => member.id) : [];
     })
   );
-  const isAssignmentResourceCategory = newResource.category === "assignment";
-  const isResourceSubmitDisabled =
-    sendingResource ||
-    !newResource.title.trim() ||
-    !newResource.type ||
-    (isAssignmentResourceCategory && !newResource.assignmentId);
+  const isAssignmentResourceCategory = false;
+  const isResourceSubmitDisabled = sendingResource || !newResource.title.trim() || !newResource.type || (newResourceFiles.length === 0 && newResourceLinks.length === 0 && currentLinkInput.trim() === "");
   const selectedEditResourceAssignment = editResource.assignmentId
     ? assignments.find((assignment) => assignment.id === editResource.assignmentId) || null
     : null;
@@ -1964,27 +1906,28 @@ export default function TeacherDashboard() {
               >
                 {/* Send resource to students */}
                 <Card className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg flex items-center gap-2 text-slate-900">
+                  <CardHeader className="pb-3 border-b border-slate-100 bg-gradient-to-r from-brand-blue/10 to-brand-teal/10 rounded-t-xl">
+                    <CardTitle className="text-lg flex items-center gap-2 text-brand-blue">
                       <Send className="h-5 w-5" />
                       Send Resource to Students
                     </CardTitle>
                     <CardDescription>
-                      Pick a category first. Assignment resources use assignment assignees automatically, while personal/general can target groups or individual students.
+                      Share learning materials with individuals or groups.
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <CardContent className="space-y-6 pt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label>Title *</Label>
+                        <Label className="text-slate-700">Title *</Label>
                         <Input
                           value={newResource.title}
                           onChange={(e) => setNewResource({ ...newResource, title: e.target.value })}
-                          placeholder="Resource title"
+                          placeholder="e.g., Chapter 4 Study Guide"
+                          className="bg-slate-50"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Category *</Label>
+                        <Label className="text-slate-700">Category *</Label>
                         <select
                           value={newResource.category}
                           onChange={(e) => {
@@ -1995,105 +1938,146 @@ export default function TeacherDashboard() {
                               assignmentId: null,
                               studentIds: nextCategory === "personal" ? [] : prev.studentIds
                             }));
-                            // keep groups as-is for personal/general
                           }}
-                          className="w-full px-3 py-2 border rounded-md bg-white"
+                          className="w-full px-3 py-2 border border-slate-200 rounded-md bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
-                          <option value="personal">Personal</option>
-                          <option value="general">General</option>
+                          <option value="personal">Personal (Specific Students)</option>
+                          <option value="general">General (Public / Broadcast)</option>
                         </select>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label>Description</Label>
-                        <Input
-                          value={newResource.description}
-                          onChange={(e) => setNewResource({ ...newResource, description: e.target.value })}
-                          placeholder="Short description (optional)"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Type *</Label>
+                        <Label className="text-slate-700">What kind of resource? *</Label>
                         <select
                           value={newResource.type}
                           onChange={(e) => setNewResource({ ...newResource, type: e.target.value })}
-                          className="w-full px-3 py-2 border rounded-md bg-white"
+                          className="w-full px-3 py-2 border border-slate-200 rounded-md bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           <option value="document">Document</option>
                           <option value="video">Video</option>
                           <option value="image">Image</option>
-                          <option value="link">Link</option>
+                          <option value="link">Link / URL</option>
                         </select>
                       </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
-                        <Label>Program</Label>
+                        <Label className="text-slate-700">Description</Label>
                         <Input
-                          value={newResource.program}
-                          onChange={(e) => setNewResource({ ...newResource, program: e.target.value })}
-                          placeholder="Optional override"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Subject</Label>
-                        <Input
-                          value={newResource.subject}
-                          onChange={(e) => setNewResource({ ...newResource, subject: e.target.value })}
-                          placeholder="Optional override"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Grade</Label>
-                        <Input
-                          value={newResource.grade}
-                          onChange={(e) => setNewResource({ ...newResource, grade: e.target.value })}
-                          placeholder="Optional override"
+                          value={newResource.description}
+                          onChange={(e) => setNewResource({ ...newResource, description: e.target.value })}
+                          placeholder="Short description (optional)"
+                          className="bg-slate-50"
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Assignment linking removed from Resources tab; only Personal and General categories supported here. */}
-
-                      <div className="space-y-2">
-                        <Label>Attach File (optional)</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                      <div className="space-y-3">
+                        <Label className="text-slate-700 flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-slate-500" />
+                          Attach Resources (Multiple Allowed)
+                        </Label>
                         <Input
                           type="file"
+                          multiple
                           accept=".pdf,.doc,.docx,.txt,.jpg,.png,.ppt,.pptx,.xlsx,.mp4,.mov"
-                          onChange={(e) => setNewResourceFile(e.target.files?.[0] || null)}
+                          onClick={(e) => {
+                            (e.target as HTMLInputElement).value = '';
+                          }}
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files.length > 0) {
+                              const selectedFiles = Array.from(e.target.files);
+                              setNewResourceFiles((prev) => [...prev, ...selectedFiles]);
+                            }
+                          }}
+                          className="bg-white cursor-pointer"
                         />
-                        <p className="text-xs text-gray-500">Or provide a link below.</p>
+                        {newResourceFiles.length > 0 && (
+                          <div className="space-y-2 mt-2">
+                            {newResourceFiles.map((f, i) => (
+                              <div key={i} className="flex items-center justify-between bg-white border border-slate-200 rounded-md p-2 text-sm">
+                                <span className="truncate max-w-[200px] text-slate-700">{f.name}</span>
+                                <button
+                                  className="text-red-500 hover:text-red-700 ml-2"
+                                  onClick={() => setNewResourceFiles(prev => prev.filter((_, idx) => idx !== i))}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-
-                      <div className="space-y-2">
-                        <Label>Link URL (optional)</Label>
-                        <Input
-                          placeholder="https://..."
-                          value={newResource.linkUrl}
-                          onChange={(e) => setNewResource({ ...newResource, linkUrl: e.target.value })}
-                        />
+                      
+                      <div className="space-y-3">
+                        <Label className="text-slate-700 flex items-center gap-2">
+                          <ExternalLink className="h-4 w-4 text-slate-500" />
+                          Link URLs (Multiple Allowed)
+                        </Label>
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="https://..."
+                            value={currentLinkInput}
+                            onChange={(e) => setCurrentLinkInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && currentLinkInput.trim() !== '') {
+                                e.preventDefault();
+                                if (!newResourceLinks.includes(currentLinkInput.trim())) {
+                                  setNewResourceLinks(prev => [...prev, currentLinkInput.trim()]);
+                                }
+                                setCurrentLinkInput("");
+                              }
+                            }}
+                            className="bg-white"
+                          />
+                          <Button 
+                            type="button" 
+                            variant="secondary"
+                            onClick={() => {
+                              if (currentLinkInput.trim() !== '' && !newResourceLinks.includes(currentLinkInput.trim())) {
+                                setNewResourceLinks(prev => [...prev, currentLinkInput.trim()]);
+                                setCurrentLinkInput("");
+                              }
+                            }}
+                          >
+                            Add
+                          </Button>
+                        </div>
+                        {newResourceLinks.length > 0 && (
+                          <div className="space-y-2 mt-2">
+                            {newResourceLinks.map((link, i) => (
+                              <div key={i} className="flex items-center justify-between bg-white border border-slate-200 rounded-md p-2 text-sm">
+                                <span className="truncate max-w-[200px] text-blue-600">{link}</span>
+                                <button
+                                  className="text-red-500 hover:text-red-700 ml-2"
+                                  onClick={() => setNewResourceLinks(prev => prev.filter((_, idx) => idx !== i))}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {!isAssignmentResourceCategory && (
-                      <>
-                        <div className="space-y-2">
-                          <Label>Assign to Groups (Optional)</Label>
-                          <div className="space-y-2 rounded-md border bg-gray-50 p-3">
+                    <div className="space-y-4 pt-2 border-t border-slate-100">
+                      <h4 className="text-sm font-medium text-slate-900">Target Audience</h4>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="space-y-3">
+                          <Label className="text-slate-700">Assign to Groups (Optional)</Label>
+                          <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3 h-48 overflow-y-auto">
                             {studentGroups.length === 0 ? (
-                              <p className="text-sm text-gray-500">No groups available.</p>
+                              <p className="text-sm text-slate-500 p-2 text-center">No groups available.</p>
                             ) : (
                               studentGroups.map((group) => (
-                                <div key={group.id} className="rounded-md border bg-white p-2">
+                                <div key={group.id} className="rounded-md border border-slate-200 bg-white p-2.5 shadow-sm hover:border-blue-200 transition-colors">
                                   <div className="flex items-center justify-between gap-2">
-                                    <label className="flex cursor-pointer items-center gap-2 text-sm">
+                                    <label className="flex cursor-pointer items-center gap-3 text-sm">
                                       <input
                                         type="checkbox"
-                                        className="rounded"
+                                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
                                         checked={resourceGroupIds.includes(group.id.toString())}
                                         onChange={(e) => {
                                           if (e.target.checked) {
@@ -2103,14 +2087,8 @@ export default function TeacherDashboard() {
                                           }
                                         }}
                                       />
-                                      <span>{group.name} ({group.members.length} students)</span>
+                                      <span className="font-medium text-slate-700">{group.name} <span className="text-slate-400 font-normal">({group.members.length})</span></span>
                                     </label>
-                                    <details className="text-xs text-blue-700">
-                                      <summary className="cursor-pointer">View students</summary>
-                                      <p className="mt-1 max-w-[320px] text-gray-600">
-                                        {group.members.map((member) => member.name).join(", ")}
-                                      </p>
-                                    </details>
                                   </div>
                                 </div>
                               ))
@@ -2118,22 +2096,23 @@ export default function TeacherDashboard() {
                           </div>
                         </div>
 
-                        <div className="space-y-2">
-                          <Label>Select Students {newResource.category === "personal" ? "*" : "(Optional)"}</Label>
-                          <div className="max-h-56 space-y-2 overflow-y-auto rounded-md border bg-gray-50 p-3">
+                        <div className="space-y-3">
+                          <Label className="text-slate-700">Select Students {newResource.category === "personal" ? "*" : "(Optional)"}</Label>
+                          <div className="h-48 space-y-2 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3">
                             {students.map((student) => {
                               const lockedByGroup = groupedResourceStudentIdSet.has(student.id);
                               const checked = lockedByGroup || newResource.studentIds.includes(student.id);
                               return (
-                                <label key={student.id} className="flex items-center justify-between rounded-md border bg-white p-2 text-sm">
-                                  <span>
-                                    {student.name} <span className="text-gray-500">({student.email})</span>
+                                <label key={student.id} className="flex items-center justify-between rounded-md border border-slate-200 bg-white p-2.5 shadow-sm hover:border-blue-200 transition-colors text-sm cursor-pointer">
+                                  <span className="font-medium text-slate-700">
+                                    {student.name} <span className="text-slate-400 font-normal hidden sm:inline">({student.email})</span>
                                   </span>
-                                  <span className="flex items-center gap-2">
-                                    {lockedByGroup && <span className="text-xs text-blue-700">via group</span>}
+                                  <span className="flex items-center gap-3">
+                                    {lockedByGroup && <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Group Selected</span>}
                                     <Checkbox
                                       checked={checked}
                                       disabled={lockedByGroup}
+                                      className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                                       onCheckedChange={(value) => {
                                         if (value) {
                                           setNewResource({
@@ -2153,33 +2132,40 @@ export default function TeacherDashboard() {
                               );
                             })}
                             {students.length === 0 && (
-                              <p className="text-sm text-gray-500">No students found.</p>
+                              <p className="text-sm text-slate-500 p-2 text-center">No students found.</p>
                             )}
                           </div>
                         </div>
-                      </>
-                    )}
+                      </div>
+                    </div>
 
-                    <div className="flex items-center justify-end gap-3">
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
                       {resourceSaveFeedback && (
                         <span
                           className={
                             resourceSaveFeedback.type === "saving"
-                              ? "mr-auto rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-sm text-blue-800"
+                              ? "mr-auto rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm text-blue-800 flex items-center gap-2"
                               : resourceSaveFeedback.type === "success"
-                                ? "mr-auto rounded-md border border-green-200 bg-green-50 px-2 py-1 text-sm text-green-800"
-                                : "mr-auto rounded-md border border-red-200 bg-red-50 px-2 py-1 text-sm text-red-800"
+                                ? "mr-auto rounded-md border border-green-200 bg-green-50 px-3 py-1.5 text-sm text-green-800 flex items-center gap-2"
+                                : "mr-auto rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-sm text-red-800 flex items-center gap-2"
                           }
                         >
+                          {resourceSaveFeedback.type === "saving" && <RefreshCw className="h-4 w-4 animate-spin" />}
+                          {resourceSaveFeedback.type === "success" && <CheckCircle className="h-4 w-4" />}
+                          {resourceSaveFeedback.type === "error" && <AlertCircle className="h-4 w-4" />}
                           {resourceSaveFeedback.message}
                         </span>
                       )}
                       {resourceError && (
-                        <span className="text-sm text-red-600 mr-auto">{resourceError}</span>
+                        <span className="text-sm text-red-600 mr-auto flex items-center gap-2">
+                          <AlertCircle className="h-4 w-4" />
+                          {resourceError}
+                        </span>
                       )}
                       <Button
                         onClick={handleSendResource}
                         disabled={isResourceSubmitDisabled}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6"
                       >
                         {sendingResource ? (
                           <>
@@ -2226,7 +2212,17 @@ export default function TeacherDashboard() {
                       <p className="text-sm text-slate-600">No resources shared yet.</p>
                     ) : (
                       <div className="space-y-3">
-                        {resources.map((resource) => {
+                        {resources
+                          .filter((res) => {
+                            const cat = inferResourceCategory(res);
+                            if (cat !== "general" && cat !== "personal") return false;
+                            const t = res.type?.toLowerCase() || "";
+                            const title = res.title?.toLowerCase() || "";
+                            if (t === "mcq" || t === "pdf" || t === "mcq+pdf" || t.includes("mcq")) return false;
+                            if (title.includes("mcq") || title.includes("mcq+pdf")) return false;
+                            return true;
+                          })
+                          .map((resource) => {
                           const isBusy = resourceActionLoadingIds.has(resource.id);
                           const resourceCategory = inferResourceCategory(resource);
                           return (

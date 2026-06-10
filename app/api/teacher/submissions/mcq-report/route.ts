@@ -10,6 +10,7 @@ import {
 import { generateGeminiDifficultyReviews } from "@/lib/gemini-difficulty-reviews";
 import { generateGeminiTopicInsights } from "@/lib/gemini-topic-insights";
 import { generateGeminiGapAnalysis } from "@/lib/gemini-gap-analysis";
+import { generateGeminiTeacherRecommendation } from "@/lib/gemini-teacher-recommendation";
 
 const TEST_CONFIG_START = "[MCQ_TEST_CONFIG_V1]";
 const TEST_CONFIG_END = "[/MCQ_TEST_CONFIG_V1]";
@@ -440,6 +441,7 @@ const buildFeedbackReportText = (report: any, presentation?: McqReportPresentati
     lines.push(`- Weaknesses: ${presentation.weaknesses.replace(/\n/g, "; ")}`);
     lines.push(`- Conceptual Gaps: ${presentation.conceptualGaps}`);
     lines.push(`- Recommendations: ${presentation.recommendations}`);
+    lines.push(`- Teacher's Recommendation: ${presentation.teacherRecommendation}`);
     lines.push(`- Next Action: ${presentation.nextAction}`);
     lines.push(`- Mentor Comments: ${presentation.mentorComments}`);
     lines.push("");
@@ -537,7 +539,7 @@ export async function POST(request: NextRequest) {
     const parsedContent = submission.content ? JSON.parse(submission.content) as Record<string, unknown> : null;
     const existingReport = parsedContent?.report as Record<string, unknown> | undefined;
 
-    if (action === "saveDraft" || action === "confirm" || action === "send") {
+    if (action === "saveDraft" || action === "confirm" || action === "send" || action === "generateTeacherRecommendation") {
       if (!parsedContent || !existingReport) {
         return NextResponse.json({ success: false, error: "Generate report before editing or sending." }, { status: 400 });
       }
@@ -591,10 +593,27 @@ export async function POST(request: NextRequest) {
             difficultyStats: Array.isArray(existingReport.difficultyStats) ? existingReport.difficultyStats as Array<Record<string, unknown>> : [],
           })
         : null;
+      const teacherRecommendation = mergedPresentation.teacherRecommendation
+        ? mergedPresentation.teacherRecommendation
+        : await generateGeminiTeacherRecommendation({
+            studentName: submission.student.name,
+            assignmentTitle: submission.assignment.title,
+            testTitle: String(parsedContent.testTitle || "MCQ Test"),
+            scoreSummary: typeof existingReport.scoreSummary === "object" && existingReport.scoreSummary
+              ? existingReport.scoreSummary as Record<string, unknown>
+              : {},
+            sectionStats: Array.isArray(existingReport.sectionStats) ? existingReport.sectionStats as Array<Record<string, unknown>> : [],
+            difficultyStats: Array.isArray(existingReport.difficultyStats) ? existingReport.difficultyStats as Array<Record<string, unknown>> : [],
+            questionStats: Array.isArray(existingReport.questionStats) ? existingReport.questionStats as Array<Record<string, unknown>> : [],
+            timingSummary: typeof existingReport.timingSummary === "object" && existingReport.timingSummary
+              ? existingReport.timingSummary as Record<string, unknown>
+              : {},
+          });
 
       let nextPresentation: McqReportPresentation = {
         ...mergedPresentation,
         ...(gapAnalysis ? gapAnalysis : {}),
+        teacherRecommendation,
         aiDifficultyReviews,
         aiTopicInsights,
         updatedAt: new Date().toISOString(),
@@ -718,6 +737,8 @@ export async function POST(request: NextRequest) {
         mailErrors,
         message: action === "saveDraft"
           ? "Draft saved successfully."
+          : action === "generateTeacherRecommendation"
+            ? "Teacher recommendation generated successfully."
           : action === "confirm"
             ? "Report confirmed successfully."
             : mailErrors.length > 0
@@ -1023,9 +1044,20 @@ export async function POST(request: NextRequest) {
           difficultyStats,
         })
       : null;
+    const teacherRecommendation = await generateGeminiTeacherRecommendation({
+      studentName: submission.student.name,
+      assignmentTitle: submission.assignment.title,
+      testTitle: String(parsed.testTitle || "MCQ Test"),
+      scoreSummary: report.scoreSummary,
+      sectionStats,
+      difficultyStats,
+      questionStats,
+      timingSummary: report.timingSummary,
+    });
     const normalizedReportPresentation: McqReportPresentation = {
       ...reportPresentation,
       ...(gapAnalysis ? gapAnalysis : {}),
+      teacherRecommendation,
       aiDifficultyReviews,
       aiTopicInsights,
       mode: "draft",

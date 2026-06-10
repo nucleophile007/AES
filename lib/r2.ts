@@ -94,6 +94,8 @@ export const ALLOWED_FILE_TYPES = [
   'text/plain',
   'image/jpeg',
   'image/png',
+  'video/mp4',
+  'video/quicktime',
 ] as const;
 
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -101,7 +103,7 @@ export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 export function validateFile(file: File) {
   // Validate file type
   if (!ALLOWED_FILE_TYPES.includes(file.type as any)) {
-    throw new Error('Invalid file type. Allowed types: PDF, DOC, DOCX, TXT, JPG, PNG');
+    throw new Error('Invalid file type. Allowed types: PDF, DOC, DOCX, TXT, JPG, PNG, MP4, MOV');
   }
 
   // Validate file size
