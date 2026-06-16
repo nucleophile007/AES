@@ -903,7 +903,7 @@ const admissionsSlides: AdmissionsSlide[] = [
     category: "Pre-med Admissions",
     sections: [
       {
-        title: "Tier 1 - Elite Medical Feeder Schools",
+        title: "",
         colleges: [
           { name: "Washington University, St. Louis", logo: "/college-logos/washi.png" },
           { name: "University of North Carolina, Chapel Hill", logo: "/college-logos/north.png" },
@@ -912,31 +912,46 @@ const admissionsSlides: AdmissionsSlide[] = [
           { name: "Pomona College", logo: "/college-logos/pomona1.png" },
         ],
       },
+    ],
+  },
+  {
+    category: "Pre-med  Admissions",
+    sections: [
       {
-        title: "Tier 2 - High Success Medical Feeder Schools",
+        title: "",
         colleges: [
-          { name: "University of Rochester" },
-          { name: "Carleton College" },
-          { name: "University of Southern California" },
+          { name: "University of Rochester", logo: "/college-logos/rochester.png" },
+          { name: "Carleton College", logo: "/college-logos/carleton.png" },
+          { name: "University of Southern California", logo: "/college-logos/usc.png" },
           { name: "UC Santa Barbara", logo: "/college-logos/ucsb.png" },
         ],
       },
+    ],
+  },
+  {
+    category: "Pre-med   Admissions",
+    sections: [
       {
-        title: "Tier 3 - Solid Regional Feeders",
+        title: "",
         colleges: [
           { name: "UC Riverside", logo: "/college-logos/ucr.png" },
           { name: "University of Colorado, Boulder", logo: "/college-logos/ucb.png" },
-          { name: "University of Massachusetts Amherst" },
+          { name: "University of Massachusetts Amherst", logo: "/college-logos/umass.png" },
           { name: "UC Santa Cruz", logo: "/college-logos/ucsc.png" },
         ],
       },
+    ],
+  },
+  {
+    category: "Pre-med     Admissions",
+    sections: [
       {
-        title: "Tier 4 - Specialized Feeders",
+        title: "",
         colleges: [
-          { name: "NJIT" },
+          { name: "NJIT", logo: "/college-logos/njit.png" },
           { name: "UC Merced", logo: "/college-logos/ucm.png" },
-          { name: "CSU Long Beach" },
-          { name: "University of Colorado, Colorado Springs" },
+          { name: "CSU Long Beach", logo: "/college-logos/csulb.png" },
+          { name: "University of Colorado, Colorado Springs", logo: "/college-logos/uccs.png" },
         ],
       },
     ],
@@ -947,8 +962,8 @@ const admissionsSlides: AdmissionsSlide[] = [
       {
         title: "",
         colleges: [
-          { name: "Fordham University" },
-          { name: "Northeastern" },
+          { name: "Fordham University", logo: "/college-logos/fordham.png" },
+          { name: "Northeastern", logo: "/college-logos/northeastern.png" },
           { name: "UC Santa Cruz", logo: "/college-logos/ucsc.png" },
           { name: "UC Riverside", logo: "/college-logos/ucr.png" },
           { name: "UC Merced", logo: "/college-logos/ucm.png" },
@@ -1058,7 +1073,6 @@ export default function CollegePrepPage() {
   const [roadProgress, setRoadProgress] = React.useState(0)
   const [selectedMilestone, setSelectedMilestone] = React.useState<number | null>(null)
   const [admissionsSlideIndex, setAdmissionsSlideIndex] = React.useState(0)
-  const [preMedPageIndex, setPreMedPageIndex] = React.useState(0)
   const [logoSlideDirection, setLogoSlideDirection] = React.useState<1 | -1>(1)
 
   React.useEffect(() => {
@@ -1089,15 +1103,6 @@ export default function CollegePrepPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  React.useEffect(() => {
-    const intervalId = setInterval(() => {
-      setLogoSlideDirection(1)
-      setAdmissionsSlideIndex((prev) => (prev + 1) % admissionsSlides.length)
-    }, 5500)
-
-    return () => clearInterval(intervalId)
-  }, [])
-
   const goToPreviousAdmissionsSlide = () => {
     setLogoSlideDirection(-1)
     setAdmissionsSlideIndex((prev) => (prev - 1 + admissionsSlides.length) % admissionsSlides.length)
@@ -1109,31 +1114,15 @@ export default function CollegePrepPage() {
   }
 
   const activeAdmissionsSlide = admissionsSlides[admissionsSlideIndex]
-  const isPreMedSlide = activeAdmissionsSlide.category === "Pre-med Admissions"
-  const preMedColleges = React.useMemo(() => {
-    if (!isPreMedSlide) return []
-    return activeAdmissionsSlide.sections.flatMap((section) => section.colleges)
-  }, [activeAdmissionsSlide, isPreMedSlide])
-
-  const preMedPages = React.useMemo(
-    () => chunkColleges(preMedColleges, 5),
-    [preMedColleges]
-  )
 
   React.useEffect(() => {
-    setPreMedPageIndex(0)
-  }, [admissionsSlideIndex])
-
-  React.useEffect(() => {
-    if (!isPreMedSlide || preMedPages.length <= 1) return
-
-    const pageTimer = setInterval(() => {
+    const intervalId = setInterval(() => {
       setLogoSlideDirection(1)
-      setPreMedPageIndex((prev) => (prev + 1) % preMedPages.length)
-    }, 3800)
+      setAdmissionsSlideIndex((prev) => (prev + 1) % admissionsSlides.length)
+    }, 5500)
 
-    return () => clearInterval(pageTimer)
-  }, [isPreMedSlide, preMedPages.length])
+    return () => clearInterval(intervalId)
+  }, [])
 
   return (
     <main className="min-h-screen theme-bg-dark flex flex-col">
@@ -1176,7 +1165,7 @@ export default function CollegePrepPage() {
                 </button>
 
                 <h3 className="text-xl md:text-3xl font-bold text-yellow-400 text-center">
-                  {activeAdmissionsSlide.category}
+                  {activeAdmissionsSlide.category.replace(/\s+/g, ' ').trim()}
                 </h3>
 
                 <button
@@ -1190,7 +1179,7 @@ export default function CollegePrepPage() {
 
               <AnimatePresence mode="wait">
                 <motion.div
-                  key={`${activeAdmissionsSlide.category}-${preMedPageIndex}`}
+                  key={`${admissionsSlideIndex}`}
                   custom={logoSlideDirection}
                   initial={{ opacity: 0, x: logoSlideDirection > 0 ? 90 : -90 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -1198,14 +1187,17 @@ export default function CollegePrepPage() {
                   transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                   className="space-y-8"
                 >
-                  {isPreMedSlide ? (
-                    <>
-                      <div className={getLogoWrapClass((preMedPages[preMedPageIndex] || []).length)}>
-                        {(preMedPages[preMedPageIndex] || []).map((college) => (
+                  {activeAdmissionsSlide.sections.map((section, sectionIndex) => (
+                    <div key={`${admissionsSlideIndex}-section-${sectionIndex}`} className="space-y-3">
+                      {section.title && section.title.trim() ? (
+                        <h4 className="text-base md:text-lg font-semibold text-white">{section.title}</h4>
+                      ) : null}
+                      <div className={getLogoWrapClass(section.colleges.length)}>
+                        {section.colleges.map((college) => (
                           <div
                             key={college.name}
                             className={`flex flex-col items-center text-center ${
-                              (preMedPages[preMedPageIndex] || []).length === 5 ? "w-[205px]" : "w-[195px] md:w-[220px]"
+                              section.colleges.length === 5 ? "w-[205px]" : "w-[195px] md:w-[220px]"
                             }`}
                           >
                             <div className="w-32 h-32 md:w-36 md:h-36 rounded-full bg-white flex items-center justify-center overflow-hidden border-2 border-white/80 shadow-lg transition-transform duration-500">
@@ -1227,80 +1219,26 @@ export default function CollegePrepPage() {
                           </div>
                         ))}
                       </div>
-                      {preMedPages.length > 1 ? (
-                        <div className="flex justify-center gap-2">
-                          {preMedPages.map((_, index) => (
-                            <button
-                              key={`pre-med-page-${index}`}
-                              onClick={() => {
-                                setLogoSlideDirection(index > preMedPageIndex ? 1 : -1)
-                                setPreMedPageIndex(index)
-                              }}
-                              className={`h-2.5 rounded-full transition-all ${
-                                preMedPageIndex === index ? "w-8 bg-yellow-400" : "w-2.5 bg-white/40 hover:bg-white/70"
-                              }`}
-                              aria-label={`Show pre-med colleges page ${index + 1}`}
-                            />
-                          ))}
-                        </div>
-                      ) : null}
-                    </>
-                  ) : (
-                    activeAdmissionsSlide.sections.map((section, sectionIndex) => (
-                      <div key={`${activeAdmissionsSlide.category}-section-${sectionIndex}`} className="space-y-3">
-                        {section.title && section.title.trim() ? (
-                          <h4 className="text-base md:text-lg font-semibold text-white">{section.title}</h4>
-                        ) : null}
-                        <div className={getLogoWrapClass(section.colleges.length)}>
-                          {section.colleges.map((college) => (
-                            <div
-                              key={college.name}
-                              className={`flex flex-col items-center text-center ${
-                                section.colleges.length === 5 ? "w-[205px]" : "w-[195px] md:w-[220px]"
-                              }`}
-                            >
-                              <div className="w-32 h-32 md:w-36 md:h-36 rounded-full bg-white flex items-center justify-center overflow-hidden border-2 border-white/80 shadow-lg transition-transform duration-500">
-                                {college.logo ? (
-                                  <Image
-                                    src={college.logo}
-                                    alt={`${college.name} logo`}
-                                    width={116}
-                                    height={116}
-                                    className="object-contain"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full rounded-full bg-gradient-to-br from-[#22325a] to-[#35518a] flex items-center justify-center">
-                                    <span className="text-base font-bold text-yellow-300 tracking-wide">{getInitials(college.name)}</span>
-                                  </div>
-                                )}
-                              </div>
-                              <p className="text-xs md:text-sm text-slate-100 leading-snug mt-2 max-w-[165px]">{college.name}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))
-                  )}
+                    </div>
+                  ))}
                 </motion.div>
               </AnimatePresence>
 
-              {!isPreMedSlide ? (
-                <div className="flex justify-center gap-2 mt-6">
-                  {admissionsSlides.map((slide, index) => (
-                    <button
-                      key={slide.category}
-                      onClick={() => {
-                        setLogoSlideDirection(index > admissionsSlideIndex ? 1 : -1)
-                        setAdmissionsSlideIndex(index)
-                      }}
-                      className={`h-2.5 rounded-full transition-all ${
-                        admissionsSlideIndex === index ? "w-8 bg-yellow-400" : "w-2.5 bg-white/40 hover:bg-white/70"
-                      }`}
-                      aria-label={`Go to ${slide.category}`}
-                    />
-                  ))}
-                </div>
-              ) : null}
+              <div className="flex justify-center gap-2 mt-6">
+                {admissionsSlides.map((slide, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setLogoSlideDirection(index > admissionsSlideIndex ? 1 : -1)
+                      setAdmissionsSlideIndex(index)
+                    }}
+                    className={`h-2.5 rounded-full transition-all ${
+                      admissionsSlideIndex === index ? "w-8 bg-yellow-400" : "w-2.5 bg-white/40 hover:bg-white/70"
+                    }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                  />
+                ))}
+              </div>
             </div>
           </motion.div>
         </div>

@@ -10,10 +10,11 @@ interface Testimonial {
   name: string
   designation: string
   school: string
-  content: string
+  content: string | React.ReactNode
   successStory: string
   src: string
   rating: number
+  subject?: string
 }
 
 interface TestimonialSectionProps {
@@ -136,6 +137,13 @@ export default function TestimonialSection({
         isCenter ? "border-yellow-400 p-8" : "border-slate-700 p-6"
       }`}
     >
+      {/* Subject */}
+      {testimonial.subject && (
+        <div className="text-yellow-300 text-sm font-medium mb-2">
+          {testimonial.subject}
+        </div>
+      )}
+
       {/* Rating */}
       <div className="flex gap-1 mb-4">
         {Array.from({ length: testimonial.rating }).map((_, i) => (

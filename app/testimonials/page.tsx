@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import TestimonialsPageClient from "./TestimonialsPageClient";
+import { hardcodedTutoringTestimonials } from "./hardcodedTutoringTestimonials";
 
 export const revalidate = 60;
 
@@ -13,6 +14,7 @@ interface Testimonial {
   src: string;
   rating: number;
   programs: string[];
+  subject?: string;
 }
 
 type SectionsType = {
@@ -106,6 +108,17 @@ async function getTestimonials(): Promise<SectionsType> {
         }
       });
     });
+
+    // Add subject from API if any, otherwise map from programs array
+    Object.keys(grouped).forEach((key) => {
+      const sectionKey = key as keyof SectionsType;
+      grouped[sectionKey] = grouped[sectionKey].map(t => ({
+        ...t,
+        subject: (t as any).subject
+      }));
+    });
+
+    grouped.tutoring = [...hardcodedTutoringTestimonials, ...grouped.tutoring];
 
     return grouped;
   } catch (error) {

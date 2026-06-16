@@ -135,9 +135,9 @@ export default function TestimonialsPageClient({
     <main className="min-h-screen theme-bg-dark flex flex-col">
       <Header />
 
-      <section className="pt-28 pb-10 px-4">
-        <div className="max-w-7xl mx-auto">
-          {/* Student Spotlights heading + Swiper */}
+      <section className="pt-28 pb-10">
+        <div className="max-w-7xl mx-auto px-4">
+          {/* Student Spotlights heading */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -154,7 +154,9 @@ export default function TestimonialsPageClient({
               Celebrating research, competitions and notable milestones.
             </p>
           </motion.div>
+        </div>
 
+        <div className="w-full">
           <StudentSpotlightsSwiper items={filteredSpotlights} />
         </div>
       </section>

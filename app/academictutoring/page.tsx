@@ -136,6 +136,7 @@ const fallbackTestimonials = [
     designation: "Physics: 95% | Math: B's to A's",
     initials: getInitials("Pragna"),
     rating: 5,
+    subject: "Physics & Math",
     content: (
       <p>
         ACHARYA Educational Services has significantly improved my academic performance in both physics and math. With their guidance, I achieved a <Highlight>95 on my physics midterm</Highlight> and raised my math test scores from low B&apos;s to consistent A&apos;s. The tutors are knowledgeable, clear in their explanations, and genuinely committed to student success.
@@ -148,6 +149,7 @@ const fallbackTestimonials = [
     designation: "Math Grade: D to A",
     initials: getInitials("Adwitha"),
     rating: 5,
+    subject: "Math",
     content: (
       <p>
         Shanti Swaroop is a great tutor and has helped improve in math a lot. I went from a <Highlight>D to an A this year</Highlight>. Math is now easier than before when I was struggling everything finally clicked. My confidence in math has grown throughout the year.
@@ -172,6 +174,7 @@ const fallbackTestimonials = [
     designation: "AP Calculus Confidence",
     initials: getInitials("Ruhee"),
     rating: 5,
+    subject: "AP Calculus",
     content: (
       <p>
         I joined because I wanted help in preparing for the AP Calculus exam, and these sessions definitely <Highlight>boosted my confidence</Highlight> in and familiarity with the subject. Shanti provided lots of good practice problems, explained concepts that I didn&apos;t understand at first, and was patient if it took me a while to figure something out. Overall, great experience!
@@ -208,6 +211,7 @@ const fallbackTestimonials = [
     designation: "Pre-Calculus Mastery",
     initials: getInitials("Geetika"),
     rating: 5,
+    subject: "Pre-Calculus",
     content: (
       <p>
         I joined these classes because I need help with Pre-Calculus, and every time I come to my classes I leave feeling <Highlight>more confident in the topic</Highlight> I am learning. Going to these classes helped me improve my test scores and helped me improve my overall grade in my pre-calculus class.
@@ -220,6 +224,7 @@ const fallbackTestimonials = [
     designation: "Patient Teaching Approach",
     initials: getInitials("IM1 Tutoring: Sutter Middle School"),
     rating: 5,
+    subject: "IM1",
     content: (
       <p>
         Shanti Swaroop is very patient and positive. Our daughter is having difficulty keeping up with the pace of her teacher at school. Shanti is better at <Highlight>explaining the concepts and allows her time to learn</Highlight>. He is very encouraging and helps to boost her confidence.
@@ -232,6 +237,7 @@ const fallbackTestimonials = [
     designation: "Interactive Learning",
     initials: getInitials("Pre-Calc Tutoring: Folsom High School"),
     rating: 5,
+    subject: "Pre-Calculus",
     content: (
       <p>
         Amazing Service! Shanti Swaroop is very interactive and focused with my kid. He <Highlight>explains concepts very well in multiple different ways</Highlight> and also a very nice and understanding person. Great Tutor!
@@ -244,6 +250,7 @@ const fallbackTestimonials = [
     designation: "Flexible Scheduling",
     initials: getInitials("IM3 Tutoring: Folsom High School"),
     rating: 5,
+    subject: "IM3",
     content: (
       <p>
         Shanti Swaroop has flexible scheduling and we worked together to find the best days to meet that provide the most benefit for my son. He makes sure that my son is not just working on math when he is in his session but rather, he also asks that my son check in, <Highlight>provides updates and samples of what he is working on</Highlight>.
@@ -256,6 +263,7 @@ const fallbackTestimonials = [
     designation: "Professional Methodology",
     initials: getInitials("IM2 Tutoring: Folsom High School"),
     rating: 5,
+    subject: "IM2",
     content: (
       <p>
         Shanti Swaroop is a great Tutor! He is very professional and organized in his methodology. You can tell right away that he <Highlight>cares about the students</Highlight>. He provides a game plan for his students. Would definitely recommend him.
@@ -268,6 +276,7 @@ const fallbackTestimonials = [
     designation: "Concept Breakdown",
     initials: getInitials("IM1 Tutoring: Folsom High School"),
     rating: 5,
+    subject: "IM1",
     content: (
       <p>
         Shanti has been really good about breaking down the steps of my son&apos;s struggles. He provided help with preparing for quizzes and tests. He has provided <Highlight>tips and tricks that helped math concepts makes sense</Highlight> that common core just is not accomplishing.
@@ -333,12 +342,17 @@ function TestimonialsSection() {
               successStory: t.successStory,
               content: t.content || t.experienceDescription,
               rating: t.rating,
-              initials: t.studentName ? t.studentName.split(" ").map((n: string) => n[0]).join("") : "ST"
+              initials: t.studentName ? t.studentName.split(" ").map((n: string) => n[0]).join("") : "ST",
+              subject: t.subject
             }))
           
           if (tutoringTestimonials.length > 0) {
-            setTestimonialCards(tutoringTestimonials)
-            setSelectedTestimonial(tutoringTestimonials[0])
+            const combinedTestimonials = [...fallbackTestimonials, ...tutoringTestimonials];
+            setTestimonialCards(combinedTestimonials)
+            setSelectedTestimonial(combinedTestimonials[0])
+          } else {
+            setTestimonialCards(fallbackTestimonials)
+            setSelectedTestimonial(fallbackTestimonials[0])
           }
         }
       } catch (error) {
@@ -527,6 +541,12 @@ function TestimonialsSection() {
                       {activeTestimonial.designation}
                     </p>
 
+                    {activeTestimonial.subject && (
+                      <p className="text-sm font-medium text-yellow-300">
+                        {activeTestimonial.subject}
+                      </p>
+                    )}
+
                     {activeTestimonial.rating && (
                       <div className="flex justify-center gap-1 pt-1">
                         {[...Array(activeTestimonial.rating)].map((_, idx) => (
@@ -629,6 +649,12 @@ function TestimonialsSection() {
                 <div className="font-semibold theme-text-light">{selectedTestimonial.name}</div>
                 <div className="text-yellow-400 text-sm font-medium">{selectedTestimonial.designation}</div>
               </div>
+
+              {selectedTestimonial.subject && (
+                <div className="text-yellow-300 text-sm font-medium mb-2">
+                  {selectedTestimonial.subject}
+                </div>
+              )}
 
               {/* Rating Stars - Only show if rating exists */}
               {selectedTestimonial.rating && (
