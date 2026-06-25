@@ -77,10 +77,10 @@ const programTiers = [
       "Certificate of Completion",
       "Paper Submission at STEM Competition"
     ],
-    fees: {
-      ic: "$2500",
-      gp: "From $1000"
-    },
+    // fees: {
+    //   ic: "$2500",
+    //   gp: "From $1000"
+    // },
     color: "from-orange-500 to-orange-600",
     illustration: "/learning-journey-cartoon.png",
   },
@@ -95,10 +95,10 @@ const programTiers = [
       "Letter of Recommendation",
       "Publish to high school level journal"
     ],
-    fees: {
-      ic: "$3500",
-      gp: "From $2500"
-    },
+    // fees: {
+    //   ic: "$3500",
+    //   gp: "From $2500"
+    // },
     color: "from-blue-500 to-blue-600",
     illustration: "/progress-mountain-climb.png",
   },
@@ -112,10 +112,10 @@ const programTiers = [
       "All ELEVATE Deliverables",
       "Publish to College Level Journal"
     ],
-    fees: {
-      ic: "$5000",
-      gp: "From $3500"
-    },
+    // fees: {
+    //   ic: "$5000",
+    //   gp: "From $3500"
+    // },
     color: "from-purple-500 to-purple-600",
     illustration: "/successful-celebration.png",
   },
@@ -872,17 +872,17 @@ export default function AESExplorersPage() {
                            <div className="relative p-4 bg-slate-700/50 rounded-xl border border-slate-600/30 backdrop-blur-sm">
                              <div className="flex justify-between items-center">
                                <span className="text-sm font-semibold text-cyan-200">Individual Contributor</span>
-                               <div className="text-right">
+                               {/* <div className="text-right">
                                  <span className="text-xl font-bold text-cyan-300">{tier.fees.ic}</span>
-                               </div>
+                               </div> */}
                              </div>
                            </div>
                            <div className="relative p-4 bg-slate-700/50 rounded-xl border border-slate-600/30 backdrop-blur-sm">
                              <div className="flex justify-between items-center">
                                <span className="text-sm font-semibold text-cyan-200">Group Project</span>
-                               <div className="text-right">
+                               {/* <div className="text-right">
                                  <span className="text-xl font-bold text-cyan-300">{tier.fees.gp}</span>
-                               </div>
+                               </div> */}
                              </div>
                            </div>
                          </div>
