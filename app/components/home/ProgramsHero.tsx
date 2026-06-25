@@ -6,6 +6,8 @@ import { Lightbulb, Telescope, Zap, Trophy } from "lucide-react";
 import { BannerItem } from "./banner-item";
 import { GridBackground } from "./grid-background";
 import { HeroSliderAlways, type Slide } from "./HeroSliderAlways";
+import { StudentSpotlights } from "./student-spotlights";
+import { UsaboSpotlight } from "./usabo";
 
 export function ProgramsHero() {
   useEffect(() => {
@@ -186,6 +188,20 @@ export function ProgramsHero() {
     ),
   };
 
+  const spotlightsSlide: Slide = {
+      title: "Student Spotlights",
+      customContent: <StudentSpotlights />,
+      imageSrc: "/program-image/banner-explorers.png",
+      imageAlt: "AcharyaES student spotlights",
+    };
+
+    const usabospotlightsSlide: Slide = {
+      title: "USABO Spotlights",
+      customContent: <UsaboSpotlight />,
+      imageSrc: "/program-image/banner-explorers.png",
+      imageAlt: "AcharyaES USABO spotlights",
+    };
+
   const programSlides: Slide[] = [
     {
       title: "College Admissions 2026",
@@ -271,7 +287,7 @@ export function ProgramsHero() {
     },
   ];
 
-  const slides: Slide[] = [programsSlide, ...programSlides];
+  const slides: Slide[] = [programsSlide, spotlightsSlide, usabospotlightsSlide, ...programSlides];
 
   return (
     <HeroSliderAlways
