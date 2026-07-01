@@ -44,7 +44,7 @@ export function UsaboSpotlight() {
               <div className="flex items-center gap-3">
                 <Medal className="h-7 w-7 text-emerald-400" />
                 <span className="bg-gradient-to-r from-emerald-300 via-emerald-400 to-teal-500 bg-clip-text text-2xl font-extrabold uppercase tracking-[0.18em] text-transparent sm:text-3xl">
-                  USABO`&apos;`26 SEMI-FINALIST
+                  USABO&apos;26 SEMI-FINALIST
                 </span>
               </div>
 

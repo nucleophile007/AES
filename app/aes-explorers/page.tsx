@@ -864,29 +864,29 @@ export default function AESExplorersPage() {
                        </div>
 
                                                {/* Pricing */}
-                        <div className="space-y-4">
+                        {/* <div className="space-y-4">
                           <h4 className="font-bold text-cyan-300 text-lg border-b border-slate-600/50 pb-2">
                             Pricing:
                           </h4>
                          <div className="space-y-3">
                            <div className="relative p-4 bg-slate-700/50 rounded-xl border border-slate-600/30 backdrop-blur-sm">
                              <div className="flex justify-between items-center">
-                               <span className="text-sm font-semibold text-cyan-200">Individual Contributor</span>
+                               <span className="text-sm font-semibold text-cyan-200">Individual Contributor</span> */}
                                {/* <div className="text-right">
                                  <span className="text-xl font-bold text-cyan-300">{tier.fees.ic}</span>
                                </div> */}
-                             </div>
+                             {/* </div>
                            </div>
                            <div className="relative p-4 bg-slate-700/50 rounded-xl border border-slate-600/30 backdrop-blur-sm">
                              <div className="flex justify-between items-center">
-                               <span className="text-sm font-semibold text-cyan-200">Group Project</span>
+                               <span className="text-sm font-semibold text-cyan-200">Group Project</span> */}
                                {/* <div className="text-right">
                                  <span className="text-xl font-bold text-cyan-300">{tier.fees.gp}</span>
                                </div> */}
-                             </div>
+                             {/* </div>
                            </div>
                          </div>
-                       </div>
+                       </div> */}
                      </div>
                    </CardContent>
                 </Card>
