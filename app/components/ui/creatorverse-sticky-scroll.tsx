@@ -2,11 +2,14 @@
 
 import React, { useEffect, useRef } from "react"
 import { motion, useScroll } from "framer-motion"
+import { LucideIcon } from "lucide-react"
 
 interface CreatorverseStickyScrollProps {
   content: Array<{
+    shortTitle?: string
     title: string
     description: string
+    sectionIcon?: LucideIcon
     content?: React.ReactNode | any
   }>
   offset?: number
@@ -41,20 +44,20 @@ export const CreatorverseStickyScroll: React.FC<CreatorverseStickyScrollProps> =
         return (
           <div
             key={`scroll-${index}`}
-            className="relative h-screen w-full flex items-center justify-center overflow-hidden"
+            className="relative min-h-[85vh] w-full flex items-center justify-center overflow-hidden"
           >
-            <div className="sticky top-0 h-screen w-full flex items-center justify-center theme-bg-dark">
-              <div className="w-full h-full flex items-center justify-center px-8 md:px-16">
+            <div className="sticky top-0 min-h-[85vh] w-full flex items-center justify-center theme-bg-dark py-10 md:py-14">
+              <div className="w-full flex flex-col gap-10 md:flex-row md:items-center md:justify-center px-5 sm:px-8 md:px-16">
                 {imageOnLeft && (
                   <motion.div
-                    className="flex-1 flex items-center justify-center h-full pr-8"
+                    className="flex-1 flex items-center justify-center md:pr-8"
                     initial={{ opacity: 0, x: -50 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.8 }}
                     viewport={{ once: false }}
                   >
                     <div
-                      className={`w-full h-4/5 rounded-2xl bg-gradient-to-br ${linearGradients[index]} backdrop-blur-sm border border-yellow-400/20 overflow-hidden shadow-2xl flex items-center justify-center`}
+                      className={`w-full max-w-2xl overflow-hidden rounded-2xl bg-gradient-to-br ${linearGradients[index]} backdrop-blur-sm border border-yellow-400/20 shadow-2xl flex min-h-[300px] md:min-h-[520px] items-center justify-center`}
                     >
                       {item.content}
                     </div>
@@ -62,26 +65,36 @@ export const CreatorverseStickyScroll: React.FC<CreatorverseStickyScrollProps> =
                 )}
 
                 <motion.div
-                  className={`${imageOnLeft ? "flex-1 pl-8" : "flex-1 pr-8"} max-w-xl z-10`}
+                  className={`${imageOnLeft ? "flex-1 md:pl-8" : "flex-1 md:pr-8"} max-w-2xl z-10`}
                   initial={{ opacity: 0, x: imageOnLeft ? 50 : -50 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.8, delay: 0.2 }}
                   viewport={{ once: false }}
                 >
-                  <h2 className="text-5xl font-bold theme-text-light mb-6">{item.title}</h2>
+                  {item.shortTitle && (
+                    <div className="mb-4 inline-flex items-center rounded-full border border-yellow-400/25 bg-yellow-400/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-yellow-400">
+                      {item.shortTitle}
+                    </div>
+                  )}
+                  {item.sectionIcon && (
+                    <div className="mb-5 inline-flex h-16 w-16 items-center justify-center rounded-2xl border border-yellow-400/20 bg-yellow-400/10 text-yellow-400 shadow-lg shadow-yellow-500/10">
+                      <item.sectionIcon className="h-8 w-8" />
+                    </div>
+                  )}
+                  <h2 className="text-4xl md:text-5xl font-bold theme-text-light mb-5">{item.title}</h2>
                   <p className="text-lg theme-text-muted leading-relaxed">{item.description}</p>
                 </motion.div>
 
                 {!imageOnLeft && (
                   <motion.div
-                    className="flex-1 flex items-center justify-center h-full pl-8"
+                    className="flex-1 flex items-center justify-center md:pl-8"
                     initial={{ opacity: 0, x: 50 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.8 }}
                     viewport={{ once: false }}
                   >
                     <div
-                      className={`w-full h-4/5 rounded-2xl bg-gradient-to-br ${linearGradients[index]} backdrop-blur-sm border border-yellow-400/20 overflow-hidden shadow-2xl flex items-center justify-center`}
+                      className={`w-full max-w-2xl overflow-hidden rounded-2xl bg-gradient-to-br ${linearGradients[index]} backdrop-blur-sm border border-yellow-400/20 shadow-2xl flex min-h-[300px] md:min-h-[520px] items-center justify-center`}
                     >
                       {item.content}
                     </div>
@@ -95,5 +108,3 @@ export const CreatorverseStickyScroll: React.FC<CreatorverseStickyScrollProps> =
     </div>
   )
 }
-
-

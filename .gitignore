@@ -51,3 +51,8 @@ import-database.mjs
 /.tmp.driveupload/
 /.tmp.drivedownload/
 .md
+.cjs
+.py
+.txt
+.log
+.mjs

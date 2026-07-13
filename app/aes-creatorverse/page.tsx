@@ -2,42 +2,14 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, BookOpen, Award, Star, Globe, Clock, Target, TrendingUp, Lightbulb, Briefcase, Heart, Zap, Mic, PenTool, Video, Megaphone } from "lucide-react";
+import { Users, Award, BookOpen, FileText, GraduationCap, Handshake, Headphones, Instagram, Megaphone, Mic, PenTool, Podcast, ScrollText, ShieldCheck, Sparkles, Star, TrendingUp, Video } from "lucide-react";
 import Footer from "@/components/home/Footer";
 import Link from "next/link";
 import Chatbot from "@/components/home/Chatbot";
 import Header from "@/components/home/Header";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
-import FocusSkillsSticky from "@/components/ui/focus-skills-sticky";
-
-const focusSkills = [
-  {
-    icon: BookOpen,
-    title: "Reading",
-    description: "Reviewer for Student Newsletters/Journals, Content copy writer for digital media campaigns, Start a review blog, YouTube channel, or Instagram Reels on book summaries, reading challenges, or author interviews.",
-    color: "from-blue-500 to-blue-600",
-  },
-  {
-    icon: PenTool,
-    title: "Writing",
-    description: "Run a blog/Publish a book based on Student's field of interests, Content creator or freelance writer, School newspaper editor or club president, Youth ambassador or Writing tutor for younger students.",
-    color: "from-green-500 to-green-600",
-  },
-  {
-    icon: Mic,
-    title: "Speaking",
-    description: "Debate or public speaking team leader, Student council spokesperson or representative, Podcast or YouTube host, Delivers motivational talks, TED-style speeches, or event emceeing.",
-    color: "from-purple-500 to-purple-600",
-  },
-  {
-    icon: Megaphone,
-    title: "Leadership/Community Engagement",
-    description: "Organizes community drives, campaigns, workshops, or fundraisers, Facilitates town halls, youth forums, or service projects, Club president or student council leader, Volunteer coordinator or outreach ambassador.",
-    color: "from-orange-500 to-orange-600",
-  },
-];
 
 const programFeatures = [
   {
@@ -62,94 +34,71 @@ const programFeatures = [
   },
 ];
 
-const programPackages = [
+const focusSkillIcons = [
   {
-    name: "3 Month Program",
-    timeline: "June - Aug",
-    duration: "3 months",
-    fees: "Starting from $1000",
-    features: [
-      "Basic profile assessment and mapping",
-      "Core skill development in chosen area",
-      "Initial content creation guidance",
-      "Basic audience building strategies",
-      "Monthly progress reviews"
-    ],
-    color: "from-green-500 to-green-600",
-  },
-  {
-    name: "5 Month Program",
-    timeline: "Aug - Dec / Jan - May",
-    duration: "5 months",
-    fees: "Starting from $1500",
-    features: [
-      "All 3-month program features",
-      "Advanced content strategy development",
-      "Enhanced audience engagement techniques",
-      "Personal brand refinement",
-      "Competition and event participation",
-      "Bi-weekly mentorship sessions"
-    ],
-    color: "from-blue-500 to-blue-600",
-  },
-  {
-    name: "10 Month Program",
-    timeline: "Aug - May",
-    duration: "10 months",
-    fees: "Starting from $2500",
-    features: [
-      "All 5-month program features",
-      "Comprehensive brand establishment",
-      "Leadership role development",
-      "Community project implementation",
-      "Portfolio and resume building",
-      "Weekly personalized coaching",
-      "End-of-program showcase opportunity"
-    ],
-    color: "from-purple-500 to-purple-600",
-  },
-];
-
-const successExamples = [
-  {
-    category: "Reading",
-    examples: [
-      "Book review blog with 5,000+ monthly readers",
-      "YouTube channel with 10,000+ subscribers",
-      "Instagram Reels reaching 50,000+ views",
-      "Student newsletter editor position"
-    ],
     icon: BookOpen,
+    label: "Reading & Analysis",
+    description:
+      "Develop your critical thinking and analytical skills. Reviewer for Student Newsletters/Journals, Content copy writer for digital media campaigns, Start a review blog, YouTube channel, or Instagram Reels on book summaries, reading challenges, or author interviews.",
+    examples: [
+      { label: "Literary Critic", icon: ScrollText },
+      { label: "Copywriting & Strategy", icon: FileText },
+      { label: "Editorial Publishing", icon: BookOpen },
+      { label: "Digital Broadcasting", icon: Video },
+      { label: "Short-form Storytelling", icon: Instagram },
+      { label: "Audio Script Editing", icon: Headphones },
+      { label: "Journalistic Interviewing", icon: Mic },
+    ],
   },
   {
-    category: "Writing",
-    examples: [
-      "Published author of young adult fiction",
-      "Freelance writer for major publications",
-      "School newspaper editor-in-chief",
-      "Youth ambassador for literacy programs"
-    ],
     icon: PenTool,
+    label: "Writing & Publishing",
+    description:
+      "Express your creativity and share your ideas with the world. Run a blog/Publish a book based on Student's field of interests, Content creator or freelance writer, School newspaper editor or club president, Youth ambassador or Writing tutor for younger students.",
+    examples: [
+      { label: "Digital Publishing", icon: PenTool },
+      { label: "Published Author", icon: BookOpen },
+      { label: "Digital Strategist", icon: Sparkles },
+      { label: "Freelance Journalism", icon: FileText },
+      { label: "Student Editorial Board", icon: ScrollText },
+      { label: "Executive Leadership", icon: ShieldCheck },
+      { label: "Community Leadership", icon: Handshake },
+      { label: "Writing Mentorship", icon: GraduationCap },
+    ],
   },
   {
-    category: "Speaking",
-    examples: [
-      "TEDx speaker at regional conference",
-      "Podcast host with 1,000+ listeners",
-      "Debate team captain and tournament winner",
-      "Student council president"
-    ],
     icon: Mic,
+    label: "Speaking & Broadcasting",
+    description:
+      "Express your creativity and share your ideas with the world. Run a blog/Publish a book based on Student's field of interests, Content creator or freelance writer, School newspaper editor or club president, Youth ambassador or Writing tutor for younger students.",
+    examples: [
+      { label: "Debate & Oratory", icon: Mic },
+      { label: "Public Speaking Lead", icon: Megaphone },
+      { label: "Official Spokesperson", icon: Users },
+      { label: "Council Delegation", icon: Handshake },
+      { label: "Podcast Production", icon: Podcast },
+      { label: "Video Hosting", icon: Video },
+      { label: "Keynote Presentations", icon: Sparkles },
+      { label: "Event Facilitation", icon: Mic },
+    ],
   },
   {
-    category: "Leadership",
-    examples: [
-      "Community service project leader",
-      "Environmental campaign organizer",
-      "Youth forum facilitator",
-      "Volunteer coordinator for major events"
-    ],
     icon: Megaphone,
+    label: "Leadership & Impact",
+    description:
+      "Make an impact by leading and inspiring your community. Organizes community drives, campaigns, workshops, or fundraisers, Facilitates town halls, youth forums, or service projects, Club president or student council leader, Volunteer coordinator or outreach ambassador.",
+    examples: [
+      { label: "Community Initiatives", icon: Users },
+      { label: "Executive President", icon: ShieldCheck },
+      { label: "Campaign Management", icon: Megaphone },
+      { label: "Skill Workshops", icon: GraduationCap },
+      { label: "Philanthropy & Fundraising", icon: Handshake },
+      { label: "Civic Town Halls", icon: Users },
+      { label: "Youth Policy Forums", icon: Mic },
+      { label: "Social Impact Projects", icon: Sparkles },
+      { label: "Volunteer Coordination", icon: Handshake },
+      { label: "Global Outreach", icon: Megaphone },
+    ],
   },
 ];
 
@@ -171,10 +120,6 @@ const faqs = [
     answer: "We assess your innate talents, interests, and future career goals to create a customized social profile map. This guides your development path and helps you build a unique personal brand that aligns with your aspirations.",
   },
   {
-    question: "What are the different program packages?",
-    answer: "We offer three packages: 3-month (basic skill development), 5-month (advanced strategies and brand building), and 10-month (comprehensive leadership and community impact). Each package builds upon the previous one.",
-  },
-  {
     question: "What kind of support do I receive?",
     answer: "You'll receive step-by-step coaching from SMEs, digital media enthusiasts, and social skills experts. This includes regular mentorship sessions, progress tracking, and guidance on content creation and audience development.",
   },
@@ -187,7 +132,7 @@ export default function AESCreatorversePage() {
       {/* Hero Section */}
       <section
         id="home"
-        className="py-16 lg:py-24 theme-bg-dark relative overflow-hidden"
+        className="pt-16 pb-10 lg:pt-24 lg:pb-12 theme-bg-dark relative overflow-hidden"
       >
         {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
@@ -234,26 +179,81 @@ export default function AESCreatorversePage() {
         </div>
       </section>
 
-      {/* Focus Skills Section (Sticky Alternating) */}
-      <section className="py-20 theme-bg-dark">
+      {/* Focus Skills Section */}
+      <section className="pt-20 pb-20 theme-bg-dark">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-12"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Focus Skills</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light">Our Focus Skills</h2>
+            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Focus Areas</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light">Creative Horizons</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto mt-4">
               Develop essential skills in four key areas that will help you build your digital presence and community impact.
             </p>
           </motion.div>
-          <div className="relative">
-            <FocusSkillsSticky />
+          <div className="grid gap-10 lg:gap-12 mt-16 max-w-7xl mx-auto">
+            {focusSkillIcons.map((skill, index) => (
+              <motion.div
+                key={skill.label}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="group relative"
+              >
+                {/* Decorative background glow that activates on hover */}
+                <div className="absolute -inset-1 rounded-[2rem] bg-gradient-to-r from-yellow-400/20 via-amber-500/20 to-orange-500/20 opacity-0 blur-xl transition duration-700 group-hover:opacity-100 mix-blend-screen"></div>
+                
+                {/* Main Card */}
+                <div className="relative flex flex-col lg:flex-row gap-8 lg:gap-12 rounded-[2rem] bg-[#131b2f]/90 backdrop-blur-xl border border-white/5 p-8 lg:p-12 transition-all duration-500 hover:border-yellow-400/20 hover:bg-[#151e32]/95 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_20px_40px_rgba(250,204,21,0.07)] overflow-hidden">
+                  
+                  {/* Subtle inner gradient */}
+                  <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-yellow-400/5 blur-3xl transition-opacity duration-500 group-hover:opacity-100 opacity-50 pointer-events-none"></div>
+
+                  {/* Left Column - Category Info */}
+                  <div className="flex-shrink-0 lg:w-[35%] flex flex-col items-center text-center lg:items-start lg:text-left relative z-10">
+                    <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-yellow-300 via-yellow-400 to-amber-600 text-[#0f172a] shadow-[0_0_40px_-10px_rgba(250,204,21,0.6)] transform transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 group-hover:shadow-[0_0_50px_-5px_rgba(250,204,21,0.8)]">
+                      <skill.icon className="h-10 w-10" />
+                    </div>
+                    <h3 className="mb-4 text-3xl lg:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-300 group-hover:from-yellow-200 group-hover:to-amber-400 transition-all duration-500">
+                      {skill.label}
+                    </h3>
+                    <div className="h-1.5 w-16 rounded-full bg-gradient-to-r from-yellow-400 to-amber-600 mb-6 lg:mx-0 mx-auto opacity-70 group-hover:opacity-100 group-hover:w-24 transition-all duration-500" />
+                    <p className="text-slate-400 text-base lg:text-lg leading-relaxed max-w-sm group-hover:text-slate-300 transition-colors duration-300">
+                      {skill.description}
+                    </p>
+                  </div>
+
+                  {/* Right Column - Pills Grid */}
+                  <div className="flex-grow flex items-center relative z-10">
+                    <div className="flex flex-wrap gap-3 lg:gap-4 justify-center lg:justify-start w-full">
+                      {skill.examples.map((example, i) => (
+                        <motion.div
+                          key={example.label}
+                          initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                          whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: i * 0.05 + 0.2, duration: 0.4 }}
+                          className="group/pill flex items-center gap-3.5 rounded-full bg-[#1e293b]/60 backdrop-blur-sm border border-slate-700/50 hover:bg-[#1e293b] hover:border-yellow-400/40 py-2.5 lg:py-3 pl-2.5 lg:pl-3 pr-5 lg:pr-6 transition-all duration-300 shadow-sm hover:shadow-[0_8px_20px_-6px_rgba(250,204,21,0.25)] hover:-translate-y-1 cursor-default"
+                        >
+                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-700/80 to-slate-800/80 group-hover/pill:from-yellow-400/20 group-hover/pill:to-amber-500/20 text-slate-300 group-hover/pill:text-yellow-400 ring-1 ring-white/5 group-hover/pill:ring-yellow-400/40 transition-all duration-300">
+                            <example.icon className="h-5 w-5" />
+                          </div>
+                          <span className="whitespace-nowrap text-sm lg:text-base font-semibold text-slate-300 group-hover/pill:text-white transition-colors duration-300">
+                            {example.label}
+                          </span>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
-
       {/* Program Features Section */}
       <section className="py-20 theme-bg-dark">
         <div className="container mx-auto px-4">
@@ -292,65 +292,6 @@ export default function AESCreatorversePage() {
           </div>
         </div>
       </section>
-
-      
-
-      {/* Program Packages Section */}
-      <section className="py-20 theme-bg-dark">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="text-center mb-16"
-          >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Program Packages</Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Choose Your Creative Journey</h2>
-            <p className="text-xl theme-text-muted max-w-3xl mx-auto">Flexible packages designed to match your goals and timeline.</p>
-          </motion.div>
-          <div className="grid md:grid-cols-1 lg:grid-cols-3 gap-8">
-            {programPackages.map((pkg, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <Card className="h-full flex flex-col bg-[#1a2236]/90 backdrop-blur-sm border-2 border-yellow-400/20 hover:border-yellow-400/40 hover:shadow-xl transition-all duration-300 group rounded-2xl">
-                  <CardHeader className="flex flex-col items-center pt-8 pb-4">
-                    <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${pkg.color} flex items-center justify-center mb-4 group-hover:scale-105 transition-transform`}>
-                      <h3 className="text-lg font-bold text-white text-center">{pkg.name}</h3>
-                    </div>
-                    <CardTitle className="text-xl font-semibold text-center mb-2 theme-text-light">{pkg.name}</CardTitle>
-                    <Badge className="bg-yellow-400/10 text-yellow-400 border-yellow-400/20 text-xs px-3 py-1 rounded-full font-semibold">{pkg.timeline}</Badge>
-                  </CardHeader>
-                  <CardContent className="flex-1 flex flex-col pb-8">
-                    <div className="space-y-4 mb-6">
-                      <div className="text-center">
-                        <h4 className="font-bold text-yellow-400 text-2xl mb-1">{pkg.fees}</h4>
-                        <p className="text-sm theme-text-muted">{pkg.duration} program</p>
-                      </div>
-                      <div className="space-y-3">
-                        <h4 className="font-semibold theme-text-light">Features:</h4>
-                        <ul className="space-y-2">
-                          {pkg.features.map((feature, index) => (
-                            <li key={index} className="flex items-start gap-2 text-sm theme-text-muted">
-                              <div className="w-2 h-2 rounded-full bg-yellow-400 mt-2 flex-shrink-0"></div>
-                              <span>{feature}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-
 
       {/* FAQ Section */}
       <section className="py-20 theme-bg-dark">

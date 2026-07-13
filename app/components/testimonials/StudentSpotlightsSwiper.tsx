@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
-import { ChevronLeft, ChevronRight, Quote } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 
 export type StudentSpotlight = {
@@ -67,7 +67,7 @@ export default function StudentSpotlightsSwiper({
               className="flex-[0_0_100%] min-w-0 px-2 md:px-6"
             >
               <div 
-                className={`transition-all duration-700 mx-auto w-full max-w-6xl rounded-3xl overflow-hidden min-h-[40vh] md:h-[400px] relative
+                className={`transition-all duration-700 mx-auto w-full max-w-6xl rounded-3xl overflow-hidden min-h-[40vh] md:min-h-[400px] relative
                   ${
                     index === selectedIndex 
                       ? "border border-yellow-400/30 bg-[#121b2e] shadow-[0_0_50px_-12px_rgba(250,204,21,0.15)] opacity-100 scale-100" 
@@ -79,30 +79,44 @@ export default function StudentSpotlightsSwiper({
                 <div className="absolute bottom-0 left-0 -ml-32 -mb-32 w-96 h-96 rounded-full bg-yellow-500/5 blur-[80px] pointer-events-none" />
                 
                 <div className="flex flex-col md:flex-row p-6 md:p-10 gap-8 h-full relative z-10">
-                  {/* Left Column: Event & Student */}
-                  <div className="md:w-5/12 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-700/50 pb-8 md:pb-0 md:pr-8">
-                    {/* Event Info */}
-                    <div className="flex items-start gap-5">
-                      {item.competitionLogo && (
-                        <div className="h-16 w-16 md:h-20 md:w-20 flex-shrink-0 rounded-2xl overflow-hidden border border-white/10 bg-white/5 p-2 shadow-lg backdrop-blur-sm">
-                          <Image
-                            src={item.competitionLogo}
-                            alt="Competition logo"
-                            width={80}
-                            height={80}
-                            className="h-full w-full object-contain drop-shadow-md"
-                          />
+                  <div className="md:w-6/12 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-700/50 pb-8 md:pb-0 md:pr-8">
+                    <div className="space-y-6">
+                      <div className="inline-flex items-center rounded-full border border-yellow-400/25 bg-yellow-400/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.3em] text-yellow-400">
+                        Competition Spotlight
+                      </div>
+                      <div className="flex items-start gap-5">
+                        {item.competitionLogo && (
+                          <div className="h-20 w-20 md:h-24 md:w-24 flex-shrink-0 rounded-3xl overflow-hidden border border-white/10 bg-white/5 p-3 shadow-lg backdrop-blur-sm">
+                            <Image
+                              src={item.competitionLogo}
+                              alt="Competition logo"
+                              width={96}
+                              height={96}
+                              className="h-full w-full object-contain drop-shadow-md"
+                            />
+                          </div>
+                        )}
+                        <div className="pt-1">
+                          <p className="text-[10px] md:text-[11px] uppercase tracking-[0.25em] text-yellow-500 font-bold mb-2">{item.date}</p>
+                          <h3 className="text-2xl md:text-3xl font-bold leading-snug text-slate-100">
+                            {item.event}
+                          </h3>
+                          <p className="mt-3 text-sm md:text-base text-slate-300 leading-relaxed">
+                            {item.student} represented AES with distinction in this competition.
+                          </p>
                         </div>
-                      )}
-                      <div className="pt-1">
-                        <p className="text-[10px] md:text-[11px] uppercase tracking-[0.25em] text-yellow-500 font-bold mb-2">{item.date}</p>
-                        <h3 className="text-xl md:text-2xl font-bold leading-snug text-slate-100 line-clamp-3">
-                          {item.event}
-                        </h3>
+                      </div>
+
+                      <div className="rounded-2xl border border-cyan-400/15 bg-cyan-400/5 p-5">
+                        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">
+                          Research Topic
+                        </p>
+                        <p className="mt-3 text-base md:text-lg italic leading-relaxed text-slate-200">
+                          {item.topic}
+                        </p>
                       </div>
                     </div>
 
-                    {/* Student Info */}
                     <div className="mt-8 flex items-center gap-4 bg-white/5 rounded-2xl p-4 border border-white/5 backdrop-blur-sm">
                       {item.schoolLogo && (
                         <div className="h-14 w-14 rounded-full border border-slate-600/60 bg-[#0f172a] p-2 shadow-inner flex-shrink-0">
@@ -124,10 +138,7 @@ export default function StudentSpotlightsSwiper({
                     </div>
                   </div>
 
-                  {/* Right Column: Achievement & Quote */}
-                  <div className="md:w-7/12 flex flex-col justify-center md:pl-6 relative">
-                    <Quote className="absolute top-0 right-0 w-32 h-32 text-white/[0.02] -rotate-12 pointer-events-none" />
-                    
+                  <div className="md:w-6/12 flex flex-col justify-center md:pl-6 relative">
                     <p
                       className="leading-relaxed text-slate-200 text-lg md:text-[1.35rem] mb-8 font-serif"
                     >
@@ -137,14 +148,13 @@ export default function StudentSpotlightsSwiper({
                       </span>
                       with the topic 
                       <span className="block mt-4 italic text-cyan-300 font-medium leading-snug border-l-2 border-cyan-500/30 pl-4">
-                        “{item.topic}”
+                        {item.topic}
                       </span>
                     </p>
 
-                    <div className="relative">
-                      <Quote className="absolute -left-2 -top-2 w-5 h-5 text-yellow-500/40" />
+                    <div>
                       <p
-                        className="text-slate-300/90 leading-relaxed text-base md:text-lg pl-6"
+                        className="text-slate-300/90 leading-relaxed text-base md:text-lg"
                         style={{ fontFamily: '"Kalam", cursive', letterSpacing: '0.4px' }}
                       >
                         {item.quote}
