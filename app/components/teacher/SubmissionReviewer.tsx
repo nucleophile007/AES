@@ -475,13 +475,14 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
 
     autoRecommendationInFlightRef.current.add(selectedReportSubmission.id);
     handleReportAction(selectedReportSubmission, "generateTeacherRecommendation", selectedReportPresentation);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isReportDialogOpen,
     selectedReportSubmission,
     selectedReportData,
     selectedReportPresentation,
     reportActionSubmissionId,
-  ]); // eslint-disable-line react-hooks/exhaustive-deps
+  ]);
 
   const createPresentationSeed = (submission: Submission, parsed: ParsedMcqSubmission) => {
     const fallback = createDefaultReportPresentation({

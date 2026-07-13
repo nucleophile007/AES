@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -45,6 +46,8 @@ interface QuestionStat {
   selectedAnswers?: string[];
   scoreAwarded?: number;
   status?: string;
+  topic?: string;
+  subTopic?: string;
 }
 
 interface PremiumMcqReportProps {
@@ -436,6 +439,7 @@ export default function PremiumMcqReport({
           <thead>
             <tr>
               <th className="w-[60px]">Q#</th>
+              <th>Topic</th>
               <th>Sub-Topic Focus</th>
               <th className="w-[110px]">Difficulty</th>
               <th className="w-[70px] text-center">Key</th>
@@ -450,10 +454,11 @@ export default function PremiumMcqReport({
               return (
                 <tr key={index}>
                   <td className="num">{question.questionNumber ?? index + 1}</td>
-                  <td>{question.sectionName || "—"}</td>
+                  <td>{question.topic || "-"}</td>
+                  <td>{question.subTopic || "-"}</td>
                   <td>{capitalize(question.difficulty || "medium")}</td>
-                  <td className="text-center font-bold num">{(question.correctAnswers || []).join(", ") || "—"}</td>
-                  <td className="text-center num">{(question.selectedAnswers || []).join(", ") || "—"}</td>
+                  <td className="text-center font-bold num">{(question.correctAnswers || []).join(", ") || "-"}</td>
+                  <td className="text-center num">{(question.selectedAnswers || []).join(", ") || "-"}</td>
                   <td className="text-center">
                     {isCorrect ? (
                       <Check className="inline-block" size={18} strokeWidth={3} style={{ color: "var(--green)" }} />
