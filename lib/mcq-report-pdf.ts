@@ -44,6 +44,8 @@ type QuestionStat = {
   selectedAnswers?: string[];
   scoreAwarded?: number;
   status?: string;
+  topic?: string;
+  subTopic?: string;
 };
 
 export interface McqReportPdfInput {
@@ -455,8 +457,8 @@ export async function generateMcqReportPdfBytes(input: McqReportPdfInput): Promi
   page = await makePage();
   y = PAGE_HEIGHT - MARGIN;
   y = drawSectionHeader(page, "DETAILED ITEM ANALYSIS", MARGIN, y, PAGE_WIDTH - MARGIN * 2, bodyBoldFont) - 4;
-  const colWidths = [34, 150, 72, 104, 104, 40, 40];
-  const headers = ["Q#", "Topic / Sub-topic", "Difficulty", "Correct Answer", "Student Answer", "Score", "Status"];
+  const colWidths = [34, 75, 75, 72, 104, 104, 40, 40];
+  const headers = ["Q#", "Topic", "Sub-topic", "Difficulty", "Correct Answer", "Student Answer", "Score", "Status"];
 
   const drawTableHeader = (topY: number) => {
     let x = MARGIN;
@@ -484,7 +486,8 @@ export async function generateMcqReportPdfBytes(input: McqReportPdfInput): Promi
     let x = MARGIN;
     const cells = [
       question.questionNumber || String(index + 1),
-      question.sectionName || "Topic",
+      question.topic || "-",
+      question.subTopic || "-",
       (question.difficulty || "medium").toUpperCase(),
       (question.correctAnswers || []).join(", ") || "-",
       (question.selectedAnswers || []).join(", ") || "-",
@@ -497,7 +500,7 @@ export async function generateMcqReportPdfBytes(input: McqReportPdfInput): Promi
         x: x + 4,
         y: rowTop - 12,
         size: 7.4,
-        font: cellIndex === 0 || cellIndex === 5 ? bodyBoldFont : bodyFont,
+        font: cellIndex === 0 || cellIndex === 6 ? bodyBoldFont : bodyFont,
         color: TEXT,
         maxWidth: width - 8,
       });

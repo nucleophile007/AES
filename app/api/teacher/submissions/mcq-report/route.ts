@@ -36,6 +36,8 @@ interface McqQuestionConfig {
   optionCount?: number;
   difficulty?: Difficulty;
   correctAnswers: string[];
+  topicId?: string | null;
+  subtopicId?: string | null;
 }
 
 interface McqConfigStored {
@@ -43,6 +45,7 @@ interface McqConfigStored {
   title?: string;
   numberingStyle?: string;
   sections: McqSectionConfig[];
+  topics?: Array<{ id: string; name: string; subtopics?: Array<{ id: string; name: string }> }>;
   questions: McqQuestionConfig[];
 }
 
@@ -234,14 +237,35 @@ const normalizeMcqConfig = (config: unknown): McqConfigStored | null => {
       optionCount: Math.max(2, Math.min(8, Number(current.optionCount) || 4)),
       difficulty: current.difficulty === "easy" || current.difficulty === "hard" ? current.difficulty : "medium",
       correctAnswers: normalizeAnswerArray(current.correctAnswers),
+      topicId: typeof current.topicId === "string" && current.topicId ? current.topicId : null,
+      subtopicId: typeof current.subtopicId === "string" && current.subtopicId ? current.subtopicId : null,
     } satisfies McqQuestionConfig;
   });
 
   if (questions.length === 0) return null;
+  const rawTopics = Array.isArray(raw.topics) ? raw.topics : [];
+  const topics = rawTopics.map((topic) => {
+    const t = (topic || {}) as Record<string, unknown>;
+    const rawSubtopics = Array.isArray(t.subtopics) ? t.subtopics : [];
+    const subtopics = rawSubtopics.map((subtopic) => {
+      const s = (subtopic || {}) as Record<string, unknown>;
+      return {
+        id: typeof s.id === "string" && s.id ? s.id : "unknown-subtopic",
+        name: typeof s.name === "string" && s.name ? s.name : "Subtopic",
+      };
+    });
+    return {
+      id: typeof t.id === "string" && t.id ? t.id : "unknown-topic",
+      name: typeof t.name === "string" && t.name ? t.name : "Topic",
+      subtopics,
+    };
+  });
+
   return {
     title: typeof raw.title === "string" ? raw.title : "MCQ + PDF Assessment",
     numberingStyle: typeof raw.numberingStyle === "string" ? raw.numberingStyle : "numeric",
     sections,
+    topics: topics.length > 0 ? topics : undefined,
     questions,
   };
 };
@@ -838,6 +862,19 @@ export async function POST(request: NextRequest) {
     let rawScore = 0;
     let maxScore = 0;
 
+    const topicNameById = new Map<string, string>();
+    const subtopicNameById = new Map<string, string>();
+    if (mcqConfig.topics) {
+      mcqConfig.topics.forEach((topic) => {
+        topicNameById.set(topic.id, topic.name);
+        if (topic.subtopics) {
+          topic.subtopics.forEach((subtopic) => {
+            subtopicNameById.set(subtopic.id, subtopic.name);
+          });
+        }
+      });
+    }
+
     const questionStats = mcqConfig.questions.map((question, index) => {
       const selectedAnswers = consideredAttempt.answersByQuestionId[question.id] || [];
       const result = evaluateQuestion(question, selectedAnswers);
@@ -918,6 +955,8 @@ export async function POST(request: NextRequest) {
         questionNumber: formatQuestionNumber(index, mcqConfig.numberingStyle),
         sectionId: question.sectionId,
         sectionName,
+        topic: question.topicId ? topicNameById.get(question.topicId) : undefined,
+        subTopic: question.subtopicId ? subtopicNameById.get(question.subtopicId) : undefined,
         difficulty,
         type: question.type,
         marks: question.marks,
