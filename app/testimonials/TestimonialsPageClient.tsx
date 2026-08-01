@@ -64,7 +64,7 @@ const studentSpotlights: StudentSpotlight[] = [
     id: "sac-2026-shivam",
     event: "Sac STEM Fair",
     date: "March 2026",
-    student: "Shivam Sharma",
+    student: "",
     gradeSchool: "Current Sophomore, Folsom High School",
     topic: "Evaluating Predictive Models for Heart Disease: A Comparative Study of Feature Selection and Neural Architectures (AI/ML)",
     achievement: "Recognition: First time participant at Sac STEM Fair",

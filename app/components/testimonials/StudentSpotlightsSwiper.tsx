@@ -117,9 +117,11 @@ export default function StudentSpotlightsSwiper({
                       )}
                       <div>
                         <p className="text-lg md:text-xl font-bold bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
-                          {item.student}
+                          {item.student ? item.student : item.gradeSchool}
                         </p>
-                        <p className="text-xs text-slate-400 mt-1 line-clamp-1">{item.gradeSchool}</p>
+                        {item.student ? (
+                          <p className="text-xs text-slate-400 mt-1 line-clamp-1">{item.gradeSchool}</p>
+                        ) : null}
                       </div>
                     </div>
                   </div>
