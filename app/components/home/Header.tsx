@@ -102,6 +102,8 @@ export default function Header() {
                   <div id="mobile-programs-menu" className="pl-6 space-y-2">
                     <Link href="/academictutoring" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">Academic Tutoring</Link>
                     <Link href="/collegeprep" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">College Prep</Link>
+                    <Link href="/aes-explorers" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">AES Explorers</Link>
+                    <Link href="/aes-champions" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">AES Champions</Link>
                     {/* Keep mobile menu aligned with desktop nav (sat coaching currently hidden on desktop) */}
                     {/* <Link href="/satcoaching" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">SAT Coaching</Link> */}
                   </div>
@@ -122,8 +124,6 @@ export default function Header() {
                 </button>
                 {openDropdown === 'profile' && (
                   <div id="mobile-profile-menu" className="pl-6 space-y-2">
-                    <Link href="/aes-explorers" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">AES Explorers</Link>
-                    <Link href="/aes-champions" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">AES Champions</Link>
                     <Link href="/aes-creatorverse" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">AES Creatorverse</Link>
                     {/* <Link href="/mathcompetition" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">Math Competition</Link>
                     <Link href="/researchprogram" className="block text-base font-medium text-yellow-400/80 hover:text-yellow-300 transition-colors duration-300 py-1 px-4 rounded-lg hover:bg-white/5">Research Programs</Link> */}
