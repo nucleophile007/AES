@@ -292,7 +292,7 @@ export function StudentSpotlights() {
                 <div className="flex flex-col gap-6 p-6 sm:flex-row sm:p-8">
                   {/* Left: logo block */}
                   <div className="flex flex-shrink-0 flex-col items-center gap-3 sm:w-56">
-                     <div className="h-32 w-32 overflow-hidden rounded-full">
+                     <div className="h-48 w-48 overflow-hidden rounded-full">
                      <Image
                         src={s.logo}
                         alt={s.competition}

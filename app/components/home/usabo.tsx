@@ -23,7 +23,7 @@ export function UsaboSpotlight() {
           <div className="flex flex-col gap-6 p-6 sm:flex-row sm:p-8">
             {/* Left: logo block */}
             <div className="flex flex-shrink-0 flex-col items-center gap-3 sm:w-56">
-              <div className="h-32 w-32 overflow-hidden rounded-full">
+              <div className="h-48 w-48 overflow-hidden rounded-full">
               <Image
               src='/program-image/usabo2.jpeg'
               alt='usabo'
@@ -34,7 +34,7 @@ export function UsaboSpotlight() {
               </div>
               <div className="text-center">
                
-                <p className="mt-1 text-3xl font-bold text-emerald-400">USABO</p>
+                <p className="mt-2 text-3xl font-bold text-emerald-400">USABO</p>
                 <p className="mt-1 text-xs text-white/40">2025</p>
               </div>
             </div>
