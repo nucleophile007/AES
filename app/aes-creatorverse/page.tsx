@@ -177,7 +177,7 @@ export default function AESCreatorversePage() {
         <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} className="text-center">
             <Badge className="mb-4 border-yellow-400/30 bg-yellow-400/10 text-yellow-300">AES CREATORVERSE</Badge>
-            <h1 className="bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-500 bg-clip-text text-5xl font-black text-transparent sm:text-6xl lg:text-8xl">
+            <h1 className="bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-500 bg-clip-text text-5xl font-black text-transparent sm:text-6xl lg:text-7xl">
               AES CREATORVERSE
             </h1>
             <h2 className="mt-2 text-3xl font-bold text-sky-300 sm:text-4xl lg:text-6xl">Creative Profile Building Program</h2>
@@ -186,7 +186,7 @@ export default function AESCreatorversePage() {
               raise your voice through digital media, and host shows of your interest.
             </p>
 
-            <blockquote className="mx-auto mt-10 max-w-3xl border-l-4 border-yellow-400 pl-4 text-xl italic text-yellow-300 sm:text-4xl">
+            <blockquote className="mx-auto mt-10 max-w-2xl border-l-4 border-yellow-400 pl-4 text-l italic text-yellow-300 sm:text-4xl">
               &quot;Where ACHARYA leads, creativity flows beyond horizons&quot;
               <span className="mt-2 block text-sm text-yellow-300">- AES Motto</span>
             </blockquote>
@@ -609,10 +609,7 @@ export default function AESCreatorversePage() {
       {/* </div>
       </div>
       </section> */}
-      <section
-  id="packages"
-  className="relative overflow-hidden py-28 bg-[#111B30]"
->
+       <section id="launch-tracks" className="relative overflow-hidden py-24 theme-bg-dark">
   {/* Background Effects */}
   <div className="absolute inset-0 overflow-hidden">
     <div className="absolute -left-32 top-20 h-96 w-96 rounded-full bg-cyan-500/10 blur-3xl" />
@@ -632,13 +629,12 @@ export default function AESCreatorversePage() {
       className="mx-auto mb-20 max-w-3xl text-center"
     >
 
-      <Badge className="mb-5 rounded-full border border-amber-400/20 bg-amber-400/10 px-5 py-2 text-amber-300">
-
+      <Badge className="mb-4 border-yellow-400/20 bg-yellow-400/10 text-yellow-400">
         Flexible Learning
 
       </Badge>
 
-      <h2 className="text-5xl font-black text-white">
+      <h2 className="text-7xl font-black theme-text-light">
 
         Program Packages
 
@@ -646,7 +642,7 @@ export default function AESCreatorversePage() {
 
       <p className="mt-6 text-lg leading-8 text-slate-400">
 
-        Whether you're looking for a quick summer experience,
+        Whether you`&apos;`re looking for a quick summer experience,
         a semester-long journey, or a comprehensive long-term
         program, choose the package that best fits your goals.
 
@@ -1190,7 +1186,7 @@ Apply
   <div className="text-center mb-12">
     <div className="inline-flex items-center gap-3 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-6 py-3 backdrop-blur-xl">
       <BookOpen className="h-7 w-7 text-cyan-300" />
-      <span className="text-3xl font-bold text-cyan-200">
+      <span className="text-2xl font-bold text-cyan-200">
         Reading
       </span>
     </div>
@@ -1280,7 +1276,7 @@ Apply
   <div className="text-center mb-12">
     <div className="inline-flex items-center gap-3 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-6 py-3 backdrop-blur-xl">
       <PenTool className="h-7 w-7 text-emerald-300" />
-      <span className="text-3xl font-bold text-emerald-200">
+      <span className="text-2xl font-bold text-emerald-200">
         Writing
       </span>
     </div>
@@ -1377,7 +1373,7 @@ Apply
   <div className="text-center mb-12">
     <div className="inline-flex items-center gap-3 rounded-full border border-fuchsia-400/30 bg-fuchsia-500/10 px-6 py-3 backdrop-blur-xl">
       <Mic className="h-7 w-7 text-fuchsia-300" />
-      <span className="text-3xl font-bold text-fuchsia-200">
+      <span className="text-2xl font-bold text-fuchsia-200">
         Speech
       </span>
     </div>
@@ -1458,7 +1454,7 @@ Apply
   <div className="text-center mb-12">
     <div className="inline-flex items-center gap-3 rounded-full border border-orange-400/30 bg-orange-500/10 px-6 py-3 backdrop-blur-xl">
       <Megaphone className="h-7 w-7 text-orange-300" />
-      <span className="text-3xl font-bold text-orange-200">
+      <span className="text-2xl font-bold text-orange-200">
         Leadership
       </span>
     </div>
