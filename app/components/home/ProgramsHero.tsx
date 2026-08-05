@@ -257,34 +257,34 @@ export function ProgramsHero() {
         </div>
       ),
     },
-    {
-      title: "AP Bridge Summer Program",
-      cta: { label: "Register Now", href: "/events/register/ap-bridge" },
-      imageSrc: "/program-image/ap-bridge-summer-program.png",
-      imageAlt: "AP Bridge Summer Program poster",
-      visualStyle: "poster",
-      hideContent: true,
-      showCtaWhenHidden: true,
-    },
+    // {
+    //   title: "AP Bridge Summer Program",
+    //   cta: { label: "Register Now", href: "/events/register/ap-bridge" },
+    //   imageSrc: "/program-image/ap-bridge-summer-program.png",
+    //   imageAlt: "AP Bridge Summer Program poster",
+    //   visualStyle: "poster",
+    //   hideContent: true,
+    //   showCtaWhenHidden: true,
+    // },
  
-    {
-      title: "AES Explorers Summer Camp",
-      cta: { label: "Register Now", href: "/events/register/aes-explorers" },
-      imageSrc: "/program-image/aes-explorers-summer-camp.png",
-      imageAlt: "AES Explorers summer camp poster",
-      visualStyle: "poster",
-      hideContent: true,
-      showCtaWhenHidden: true,
-    },
-    {
-      title: "AES Champions Math Competition Prep",
-      cta: { label: "Register Now", href: "/events/register/aes-champions" },
-      imageSrc: "/program-image/math-new-event.png",
-      imageAlt: "AES Champions Math Competition Prep poster",
-      visualStyle: "poster",
-      hideContent: true,
-      showCtaWhenHidden: true,
-    },
+    // {
+    //   title: "AES Explorers Summer Camp",
+    //   cta: { label: "Register Now", href: "/events/register/aes-explorers" },
+    //   imageSrc: "/program-image/aes-explorers-summer-camp.png",
+    //   imageAlt: "AES Explorers summer camp poster",
+    //   visualStyle: "poster",
+    //   hideContent: true,
+    //   showCtaWhenHidden: true,
+    // },
+    // {
+    //   title: "AES Champions Math Competition Prep",
+    //   cta: { label: "Register Now", href: "/events/register/aes-champions" },
+    //   imageSrc: "/program-image/math-new-event.png",
+    //   imageAlt: "AES Champions Math Competition Prep poster",
+    //   visualStyle: "poster",
+    //   hideContent: true,
+    //   showCtaWhenHidden: true,
+    // },
   ];
 
   const slides: Slide[] = [programsSlide, spotlightsSlide, usabospotlightsSlide, ...programSlides];
