@@ -202,7 +202,7 @@ export default function AESCreatorversePage() {
         </div>
       </section>
 
-      <section id="launch-tracks" className="relative overflow-hidden py-24 theme-bg-dark">
+      <section id="launch-tracks" className="relative overflow-hidden py-5 theme-bg-dark">
 
   {/* Background */}
   <div className="absolute inset-0">
@@ -609,7 +609,398 @@ export default function AESCreatorversePage() {
       {/* </div>
       </div>
       </section> */}
-       <section id="launch-tracks" className="relative overflow-hidden py-24 theme-bg-dark">
+
+      <section className="relative overflow-hidden border-y border-white/10 bg-[#16233D] py-24">
+  {/* Background */}
+  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.08),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(251,191,36,0.08),transparent_40%)]" />
+
+  <div className="absolute left-0 top-0 h-full w-full opacity-30">
+    <div className="absolute -left-20 top-16 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
+    <div className="absolute right-0 top-40 h-64 w-64 rounded-full bg-yellow-500/10 blur-3xl" />
+    <div className="absolute bottom-10 left-1/3 h-56 w-56 rounded-full bg-fuchsia-500/10 blur-3xl" />
+  </div>
+
+  <div className="container relative z-10 mx-auto max-w-7xl px-6">
+
+    {/* Heading */}
+    <motion.div
+      initial={{ opacity: 0, y: 25 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      className="mb-20 text-center"
+    >
+      <Badge className="mb-4 border-yellow-400/20 bg-yellow-400/10 text-yellow-400">
+        Build Your Creative Identity
+      </Badge>
+
+       <h2 className="text-7xl font-black theme-text-light">
+        Social Profile Program
+      </h2>
+
+      <p className="mx-auto max-w-3xl text-xl leading-8 text-slate-400">
+        Choose your passion and explore exciting opportunities that help
+        build your personal brand, portfolio and public profile.
+      </p>
+    </motion.div>
+
+   {/* ================= READING ================= */}
+
+        {/* ================= READING ================= */}
+
+<motion.div
+  initial={{ opacity: 0, y: 30 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.6 }}
+  className="mb-24"
+>
+  <div className="text-center mb-12">
+    <div className="inline-flex items-center gap-3 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-6 py-3 backdrop-blur-xl">
+      <BookOpen className="h-7 w-7 text-cyan-300" />
+      <span className="text-2xl font-bold text-cyan-200">
+        Reading
+      </span>
+    </div>
+
+    <p className="mt-5 max-w-2xl mx-auto text-lg text-slate-400">
+      Transform your passion for reading into creative opportunities through
+      publishing, reviewing and digital storytelling.
+    </p>
+  </div>
+
+  <div className="flex justify-center gap-6 overflow-x-auto pb-3 xl:overflow-visible">
+
+    {[
+      {
+        icon: Newspaper,
+        title: "Reviewer",
+        color: "from-sky-400 to-cyan-500",
+      },
+      {
+        icon: PenTool,
+        title: "Content Writer",
+        color: "from-amber-400 to-orange-500",
+      },
+      {
+        icon: BookOpen,
+        title: "Book Blog",
+        color: "from-fuchsia-500 to-pink-500",
+      },
+      {
+        icon: Youtube,
+        title: "YouTube",
+        color: "from-red-400 to-rose-500",
+      },
+      {
+        icon: Instagram,
+        title: "Instagram",
+        color: "from-emerald-400 to-teal-500",
+      },
+      {
+        icon: Headphones,
+        title: "Podcast",
+        color: "from-violet-500 to-purple-500",
+      },
+      {
+        icon: Mic,
+        title: "Interviews",
+        color: "from-yellow-400 to-amber-500",
+      },
+    ].map((item) => (
+      <motion.div
+        key={item.title}
+        whileHover={{
+          y: -10,
+          scale: 1.08,
+        }}
+        transition={{ type: "spring", stiffness: 250 }}
+        className="group w-[105px] lg:w-[115px] xl:w-[120px] cursor-pointer flex-shrink-0"
+      >
+        <div
+          className={`relative mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br ${item.color} shadow-2xl transition-all duration-300 group-hover:shadow-cyan-400/40`}
+        >
+          {/* Gloss Effect */}
+          <div className="absolute left-5 top-5 h-6 w-6 rounded-full bg-white/30 blur-sm" />
+
+          {/* Border */}
+          <div className="absolute inset-0 rounded-full border border-white/30" />
+
+          <item.icon className="h-10 w-10 text-white drop-shadow-lg" />
+        </div>
+
+        <p className="mt-3 text-center text-xs lg:text-sm font-semibold leading-4 text-slate-100 transition-colors group-hover:text-cyan-300">
+          {item.title}
+        </p>
+      </motion.div>
+    ))}
+  </div>
+</motion.div>
+    {/* ================= WRITING ================= */}
+
+<motion.div
+  initial={{ opacity: 0, y: 30 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.6 }}
+  className="mb-24"
+>
+  {/* Heading */}
+  <div className="text-center mb-12">
+    <div className="inline-flex items-center gap-3 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-6 py-3 backdrop-blur-xl">
+      <PenTool className="h-7 w-7 text-emerald-300" />
+      <span className="text-2xl font-bold text-emerald-200">
+        Writing
+      </span>
+    </div>
+
+    <p className="mt-5 text-slate-400 max-w-2xl mx-auto text-lg">
+      Express your ideas through storytelling, publishing and digital content.
+    </p>
+  </div>
+
+  {/* Opportunities */}
+  <div className="flex justify-center gap-6 overflow-x-auto pb-3 xl:overflow-visible">
+
+    {[
+      {
+        icon: PenTool,
+        title: "Blog Writer",
+        color: "from-cyan-400 to-blue-500",
+      },
+      {
+        icon: BookOpen,
+        title: "Book Author",
+        color: "from-amber-400 to-orange-500",
+      },
+      {
+        icon: Sparkles,
+        title: "Content Creator",
+        color: "from-fuchsia-500 to-pink-500",
+      },
+      {
+        icon: Briefcase,
+        title: "Freelance Writer",
+        color: "from-emerald-400 to-teal-500",
+      },
+      {
+        icon: Newspaper,
+        title: "Student Editor",
+        color: "from-violet-500 to-purple-500",
+      },
+      {
+        icon: Users,
+        title: "Club President",
+        color: "from-red-400 to-rose-500",
+      },
+      {
+        icon: Megaphone,
+        title: "Youth Ambassador",
+        color: "from-sky-400 to-cyan-500",
+      },
+      {
+        icon: GraduationCap,
+        title: "Writing Tutor",
+        color: "from-yellow-400 to-amber-500",
+      },
+    ].map((item) => (
+      <motion.div
+        key={item.title}
+        whileHover={{
+          y: -10,
+          scale: 1.08,
+        }}
+        transition={{ type: "spring", stiffness: 250 }}
+        className="group w-[105px] lg:w-[115px] xl:w-[120px] cursor-pointer flex-shrink-0"
+      >
+        {/* Bubble */}
+        <div
+          className={`relative mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br ${item.color} shadow-2xl transition-all duration-300 group-hover:shadow-cyan-400/40`}
+        >
+          {/* Gloss */}
+          <div className="absolute left-5 top-5 h-6 w-6 rounded-full bg-white/30 blur-sm" />
+
+          {/* Ring */}
+          <div className="absolute inset-0 rounded-full border border-white/30" />
+
+          <item.icon className="h-10 w-10 text-white drop-shadow-lg" />
+        </div>
+
+        {/* Label */}
+        <p className="mt-3 text-center text-xs lg:text-sm font-semibold leading-4 text-slate-100 transition-colors group-hover:text-cyan-300">
+          {item.title}
+        </p>
+      </motion.div>
+    ))}
+  </div>
+</motion.div>
+
+  {/* ================= SPEECH ================= */}
+
+<motion.div
+  initial={{ opacity: 0, y: 30 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.6 }}
+  className="mb-24"
+>
+  <div className="text-center mb-12">
+    <div className="inline-flex items-center gap-3 rounded-full border border-fuchsia-400/30 bg-fuchsia-500/10 px-6 py-3 backdrop-blur-xl">
+      <Mic className="h-7 w-7 text-fuchsia-300" />
+      <span className="text-2xl font-bold text-fuchsia-200">
+        Speech
+      </span>
+    </div>
+
+    <p className="mt-5 text-slate-400 max-w-2xl mx-auto text-lg">
+      Develop confidence, communication and public speaking through impactful opportunities.
+    </p>
+  </div>
+
+  <div className="flex justify-center gap-6 overflow-x-auto pb-3 xl:overflow-visible">
+
+    {[
+      {
+        icon: Users,
+        title: "Debate Team",
+        color: "from-sky-400 to-cyan-500",
+      },
+      {
+        icon: Megaphone,
+        title: "Council Spokesperson",
+        color: "from-amber-400 to-orange-500",
+      },
+      {
+        icon: Headphones,
+        title: "Podcast Host",
+        color: "from-fuchsia-500 to-pink-500",
+      },
+      {
+        icon: Video,
+        title: "YouTube Host",
+        color: "from-red-400 to-rose-500",
+      },
+      {
+        icon: Mic,
+        title: "TED Speaker",
+        color: "from-emerald-400 to-teal-500",
+      },
+      {
+        icon: Sparkles,
+        title: "Event Emcee",
+        color: "from-violet-500 to-purple-500",
+      },
+    ].map((item) => (
+      <motion.div
+        key={item.title}
+        whileHover={{
+          y: -10,
+          scale: 1.08,
+        }}
+        transition={{ type: "spring", stiffness: 250 }}
+        className="group w-[105px] lg:w-[115px] xl:w-[120px] cursor-pointer flex-shrink-0"
+      >
+        <div
+          className={`relative mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br ${item.color} shadow-2xl transition-all duration-300 group-hover:shadow-fuchsia-400/40`}
+        >
+          <div className="absolute left-5 top-5 h-6 w-6 rounded-full bg-white/30 blur-sm" />
+
+          <div className="absolute inset-0 rounded-full border border-white/30" />
+
+          <item.icon className="h-10 w-10 text-white drop-shadow-lg" />
+        </div>
+
+        <p className="mt-3 text-center text-xs lg:text-sm font-semibold leading-4 text-slate-100 transition-colors group-hover:text-fuchsia-300">
+          {item.title}
+        </p>
+      </motion.div>
+    ))}
+  </div>
+</motion.div>
+
+   {/* ================= LEADERSHIP ================= */}
+
+<motion.div
+  initial={{ opacity: 0, y: 30 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.6 }}
+>
+  <div className="text-center mb-12">
+    <div className="inline-flex items-center gap-3 rounded-full border border-orange-400/30 bg-orange-500/10 px-6 py-3 backdrop-blur-xl">
+      <Megaphone className="h-7 w-7 text-orange-300" />
+      <span className="text-2xl font-bold text-orange-200">
+        Leadership
+      </span>
+    </div>
+
+    <p className="mt-5 text-slate-400 max-w-2xl mx-auto text-lg">
+      Inspire teams, lead initiatives and create meaningful impact within your community.
+    </p>
+  </div>
+
+  <div className="flex justify-center gap-6 overflow-x-auto pb-3 xl:overflow-visible">
+
+    {[
+      {
+        icon: Users,
+        title: "Community Drives",
+        color: "from-sky-400 to-cyan-500",
+      },
+      {
+        icon: Megaphone,
+        title: "Campaign Organizer",
+        color: "from-red-400 to-rose-500",
+      },
+      {
+        icon: FlaskConical,
+        title: "Workshop Facilitator",
+        color: "from-emerald-400 to-teal-500",
+      },
+      {
+        icon: Briefcase,
+        title: "Fundraiser Lead",
+        color: "from-violet-500 to-purple-500",
+      },
+      {
+        icon: GraduationCap,
+        title: "Student Council",
+        color: "from-amber-400 to-orange-500",
+      },
+      {
+        icon: Sparkles,
+        title: "Volunteer Coordinator",
+        color: "from-fuchsia-500 to-pink-500",
+      },
+    ].map((item) => (
+      <motion.div
+        key={item.title}
+        whileHover={{
+          y: -10,
+          scale: 1.08,
+        }}
+        transition={{ type: "spring", stiffness: 250 }}
+        className="group w-[105px] lg:w-[115px] xl:w-[120px] cursor-pointer flex-shrink-0"
+      >
+        <div
+          className={`relative mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br ${item.color} shadow-2xl transition-all duration-300 group-hover:shadow-orange-400/40`}
+        >
+          <div className="absolute left-5 top-5 h-6 w-6 rounded-full bg-white/30 blur-sm" />
+
+          <div className="absolute inset-0 rounded-full border border-white/30" />
+
+          <item.icon className="h-10 w-10 text-white drop-shadow-lg" />
+        </div>
+
+        <p className="mt-3 text-center text-xs lg:text-sm font-semibold leading-4 text-slate-100 transition-colors group-hover:text-orange-300">
+          {item.title}
+        </p>
+      </motion.div>
+    ))}
+  </div>
+</motion.div>
+
+  </div>
+</section>
+
+
+
+    <section id="launch-tracks" className="relative overflow-hidden py-5 theme-bg-dark">
   {/* Background Effects */}
   <div className="absolute inset-0 overflow-hidden">
     <div className="absolute -left-32 top-20 h-96 w-96 rounded-full bg-cyan-500/10 blur-3xl" />
@@ -1139,395 +1530,6 @@ Apply
   </div>
 
 </section>
-
-      <section className="relative overflow-hidden border-y border-white/10 bg-[#16233D] py-24">
-  {/* Background */}
-  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.08),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(251,191,36,0.08),transparent_40%)]" />
-
-  <div className="absolute left-0 top-0 h-full w-full opacity-30">
-    <div className="absolute -left-20 top-16 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
-    <div className="absolute right-0 top-40 h-64 w-64 rounded-full bg-yellow-500/10 blur-3xl" />
-    <div className="absolute bottom-10 left-1/3 h-56 w-56 rounded-full bg-fuchsia-500/10 blur-3xl" />
-  </div>
-
-  <div className="container relative z-10 mx-auto max-w-7xl px-6">
-
-    {/* Heading */}
-    <motion.div
-      initial={{ opacity: 0, y: 25 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-      className="mb-20 text-center"
-    >
-      <Badge className="mb-4 border-yellow-400/20 bg-yellow-400/10 text-yellow-400">
-        Build Your Creative Identity
-      </Badge>
-
-       <h2 className="text-7xl font-black theme-text-light">
-        Social Profile Program
-      </h2>
-
-      <p className="mx-auto max-w-3xl text-xl leading-8 text-slate-400">
-        Choose your passion and explore exciting opportunities that help
-        build your personal brand, portfolio and public profile.
-      </p>
-    </motion.div>
-
-   {/* ================= READING ================= */}
-
-        {/* ================= READING ================= */}
-
-<motion.div
-  initial={{ opacity: 0, y: 30 }}
-  whileInView={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.6 }}
-  className="mb-24"
->
-  <div className="text-center mb-12">
-    <div className="inline-flex items-center gap-3 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-6 py-3 backdrop-blur-xl">
-      <BookOpen className="h-7 w-7 text-cyan-300" />
-      <span className="text-2xl font-bold text-cyan-200">
-        Reading
-      </span>
-    </div>
-
-    <p className="mt-5 max-w-2xl mx-auto text-lg text-slate-400">
-      Transform your passion for reading into creative opportunities through
-      publishing, reviewing and digital storytelling.
-    </p>
-  </div>
-
-  <div className="flex justify-center gap-6 overflow-x-auto pb-3 xl:overflow-visible">
-
-    {[
-      {
-        icon: Newspaper,
-        title: "Reviewer",
-        color: "from-sky-400 to-cyan-500",
-      },
-      {
-        icon: PenTool,
-        title: "Content Writer",
-        color: "from-amber-400 to-orange-500",
-      },
-      {
-        icon: BookOpen,
-        title: "Book Blog",
-        color: "from-fuchsia-500 to-pink-500",
-      },
-      {
-        icon: Youtube,
-        title: "YouTube",
-        color: "from-red-400 to-rose-500",
-      },
-      {
-        icon: Instagram,
-        title: "Instagram",
-        color: "from-emerald-400 to-teal-500",
-      },
-      {
-        icon: Headphones,
-        title: "Podcast",
-        color: "from-violet-500 to-purple-500",
-      },
-      {
-        icon: Mic,
-        title: "Interviews",
-        color: "from-yellow-400 to-amber-500",
-      },
-    ].map((item) => (
-      <motion.div
-        key={item.title}
-        whileHover={{
-          y: -10,
-          scale: 1.08,
-        }}
-        transition={{ type: "spring", stiffness: 250 }}
-        className="group w-[105px] lg:w-[115px] xl:w-[120px] cursor-pointer flex-shrink-0"
-      >
-        <div
-          className={`relative mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br ${item.color} shadow-2xl transition-all duration-300 group-hover:shadow-cyan-400/40`}
-        >
-          {/* Gloss Effect */}
-          <div className="absolute left-5 top-5 h-6 w-6 rounded-full bg-white/30 blur-sm" />
-
-          {/* Border */}
-          <div className="absolute inset-0 rounded-full border border-white/30" />
-
-          <item.icon className="h-10 w-10 text-white drop-shadow-lg" />
-        </div>
-
-        <p className="mt-3 text-center text-xs lg:text-sm font-semibold leading-4 text-slate-100 transition-colors group-hover:text-cyan-300">
-          {item.title}
-        </p>
-      </motion.div>
-    ))}
-  </div>
-</motion.div>
-    {/* ================= WRITING ================= */}
-
-<motion.div
-  initial={{ opacity: 0, y: 30 }}
-  whileInView={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.6 }}
-  className="mb-24"
->
-  {/* Heading */}
-  <div className="text-center mb-12">
-    <div className="inline-flex items-center gap-3 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-6 py-3 backdrop-blur-xl">
-      <PenTool className="h-7 w-7 text-emerald-300" />
-      <span className="text-2xl font-bold text-emerald-200">
-        Writing
-      </span>
-    </div>
-
-    <p className="mt-5 text-slate-400 max-w-2xl mx-auto text-lg">
-      Express your ideas through storytelling, publishing and digital content.
-    </p>
-  </div>
-
-  {/* Opportunities */}
-  <div className="flex justify-center gap-6 overflow-x-auto pb-3 xl:overflow-visible">
-
-    {[
-      {
-        icon: PenTool,
-        title: "Blog Writer",
-        color: "from-cyan-400 to-blue-500",
-      },
-      {
-        icon: BookOpen,
-        title: "Book Author",
-        color: "from-amber-400 to-orange-500",
-      },
-      {
-        icon: Sparkles,
-        title: "Content Creator",
-        color: "from-fuchsia-500 to-pink-500",
-      },
-      {
-        icon: Briefcase,
-        title: "Freelance Writer",
-        color: "from-emerald-400 to-teal-500",
-      },
-      {
-        icon: Newspaper,
-        title: "Student Editor",
-        color: "from-violet-500 to-purple-500",
-      },
-      {
-        icon: Users,
-        title: "Club President",
-        color: "from-red-400 to-rose-500",
-      },
-      {
-        icon: Megaphone,
-        title: "Youth Ambassador",
-        color: "from-sky-400 to-cyan-500",
-      },
-      {
-        icon: GraduationCap,
-        title: "Writing Tutor",
-        color: "from-yellow-400 to-amber-500",
-      },
-    ].map((item) => (
-      <motion.div
-        key={item.title}
-        whileHover={{
-          y: -10,
-          scale: 1.08,
-        }}
-        transition={{ type: "spring", stiffness: 250 }}
-        className="group w-[105px] lg:w-[115px] xl:w-[120px] cursor-pointer flex-shrink-0"
-      >
-        {/* Bubble */}
-        <div
-          className={`relative mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br ${item.color} shadow-2xl transition-all duration-300 group-hover:shadow-cyan-400/40`}
-        >
-          {/* Gloss */}
-          <div className="absolute left-5 top-5 h-6 w-6 rounded-full bg-white/30 blur-sm" />
-
-          {/* Ring */}
-          <div className="absolute inset-0 rounded-full border border-white/30" />
-
-          <item.icon className="h-10 w-10 text-white drop-shadow-lg" />
-        </div>
-
-        {/* Label */}
-        <p className="mt-3 text-center text-xs lg:text-sm font-semibold leading-4 text-slate-100 transition-colors group-hover:text-cyan-300">
-          {item.title}
-        </p>
-      </motion.div>
-    ))}
-  </div>
-</motion.div>
-
-  {/* ================= SPEECH ================= */}
-
-<motion.div
-  initial={{ opacity: 0, y: 30 }}
-  whileInView={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.6 }}
-  className="mb-24"
->
-  <div className="text-center mb-12">
-    <div className="inline-flex items-center gap-3 rounded-full border border-fuchsia-400/30 bg-fuchsia-500/10 px-6 py-3 backdrop-blur-xl">
-      <Mic className="h-7 w-7 text-fuchsia-300" />
-      <span className="text-2xl font-bold text-fuchsia-200">
-        Speech
-      </span>
-    </div>
-
-    <p className="mt-5 text-slate-400 max-w-2xl mx-auto text-lg">
-      Develop confidence, communication and public speaking through impactful opportunities.
-    </p>
-  </div>
-
-  <div className="flex justify-center gap-6 overflow-x-auto pb-3 xl:overflow-visible">
-
-    {[
-      {
-        icon: Users,
-        title: "Debate Team",
-        color: "from-sky-400 to-cyan-500",
-      },
-      {
-        icon: Megaphone,
-        title: "Council Spokesperson",
-        color: "from-amber-400 to-orange-500",
-      },
-      {
-        icon: Headphones,
-        title: "Podcast Host",
-        color: "from-fuchsia-500 to-pink-500",
-      },
-      {
-        icon: Video,
-        title: "YouTube Host",
-        color: "from-red-400 to-rose-500",
-      },
-      {
-        icon: Mic,
-        title: "TED Speaker",
-        color: "from-emerald-400 to-teal-500",
-      },
-      {
-        icon: Sparkles,
-        title: "Event Emcee",
-        color: "from-violet-500 to-purple-500",
-      },
-    ].map((item) => (
-      <motion.div
-        key={item.title}
-        whileHover={{
-          y: -10,
-          scale: 1.08,
-        }}
-        transition={{ type: "spring", stiffness: 250 }}
-        className="group w-[105px] lg:w-[115px] xl:w-[120px] cursor-pointer flex-shrink-0"
-      >
-        <div
-          className={`relative mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br ${item.color} shadow-2xl transition-all duration-300 group-hover:shadow-fuchsia-400/40`}
-        >
-          <div className="absolute left-5 top-5 h-6 w-6 rounded-full bg-white/30 blur-sm" />
-
-          <div className="absolute inset-0 rounded-full border border-white/30" />
-
-          <item.icon className="h-10 w-10 text-white drop-shadow-lg" />
-        </div>
-
-        <p className="mt-3 text-center text-xs lg:text-sm font-semibold leading-4 text-slate-100 transition-colors group-hover:text-fuchsia-300">
-          {item.title}
-        </p>
-      </motion.div>
-    ))}
-  </div>
-</motion.div>
-
-   {/* ================= LEADERSHIP ================= */}
-
-<motion.div
-  initial={{ opacity: 0, y: 30 }}
-  whileInView={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.6 }}
->
-  <div className="text-center mb-12">
-    <div className="inline-flex items-center gap-3 rounded-full border border-orange-400/30 bg-orange-500/10 px-6 py-3 backdrop-blur-xl">
-      <Megaphone className="h-7 w-7 text-orange-300" />
-      <span className="text-2xl font-bold text-orange-200">
-        Leadership
-      </span>
-    </div>
-
-    <p className="mt-5 text-slate-400 max-w-2xl mx-auto text-lg">
-      Inspire teams, lead initiatives and create meaningful impact within your community.
-    </p>
-  </div>
-
-  <div className="flex justify-center gap-6 overflow-x-auto pb-3 xl:overflow-visible">
-
-    {[
-      {
-        icon: Users,
-        title: "Community Drives",
-        color: "from-sky-400 to-cyan-500",
-      },
-      {
-        icon: Megaphone,
-        title: "Campaign Organizer",
-        color: "from-red-400 to-rose-500",
-      },
-      {
-        icon: FlaskConical,
-        title: "Workshop Facilitator",
-        color: "from-emerald-400 to-teal-500",
-      },
-      {
-        icon: Briefcase,
-        title: "Fundraiser Lead",
-        color: "from-violet-500 to-purple-500",
-      },
-      {
-        icon: GraduationCap,
-        title: "Student Council",
-        color: "from-amber-400 to-orange-500",
-      },
-      {
-        icon: Sparkles,
-        title: "Volunteer Coordinator",
-        color: "from-fuchsia-500 to-pink-500",
-      },
-    ].map((item) => (
-      <motion.div
-        key={item.title}
-        whileHover={{
-          y: -10,
-          scale: 1.08,
-        }}
-        transition={{ type: "spring", stiffness: 250 }}
-        className="group w-[105px] lg:w-[115px] xl:w-[120px] cursor-pointer flex-shrink-0"
-      >
-        <div
-          className={`relative mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br ${item.color} shadow-2xl transition-all duration-300 group-hover:shadow-orange-400/40`}
-        >
-          <div className="absolute left-5 top-5 h-6 w-6 rounded-full bg-white/30 blur-sm" />
-
-          <div className="absolute inset-0 rounded-full border border-white/30" />
-
-          <item.icon className="h-10 w-10 text-white drop-shadow-lg" />
-        </div>
-
-        <p className="mt-3 text-center text-xs lg:text-sm font-semibold leading-4 text-slate-100 transition-colors group-hover:text-orange-300">
-          {item.title}
-        </p>
-      </motion.div>
-    ))}
-  </div>
-</motion.div>
-
-  </div>
-</section>
-
       <section className="py-20 theme-bg-dark">
         <div className="container mx-auto px-4">
           <motion.div
