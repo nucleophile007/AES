@@ -37,10 +37,10 @@ const launchTracks = [
     accent: "from-cyan-400 via-sky-400 to-blue-500",
     glow: "shadow-cyan-500/20",
     points: [
-      "Research assistantships with university labs",
-      "Robotics, AI and data-science project sprints",
-      "Startup and engineering-firm shadowing",
-      "Science fair and journal submission support",
+      "Research assistantships ",
+      "Robotics, AI and data-science projects",
+      "Startup Shadowing",
+      "Technical Workshops",
     ],
   },
   {
@@ -50,10 +50,10 @@ const launchTracks = [
     accent: "from-emerald-400 via-teal-400 to-cyan-500",
     glow: "shadow-emerald-500/20",
     points: [
-      "Hospital and clinic shadowing placements",
-      "Public health and community screening drives",
-      "Biomedical research and lab technique training",
-      "Medical writing and case-study portfolio",
+      "Hospital Shadowing",
+      "Community Health Camps",
+      "Biomedical Research",
+      "Medical Case Writing",
     ],
   },
   {
@@ -63,10 +63,10 @@ const launchTracks = [
     accent: "from-amber-400 via-orange-400 to-rose-500",
     glow: "shadow-amber-500/20",
     points: [
-      "Law firm and policy think-tank internships",
-      "Business analytics and consulting simulations",
-      "Model UN, moot court and debate coaching",
-      "Entrepreneurship venture build with mentors",
+      "Business Consulting Projects",
+      "Model UN & Policy Labs",
+      "Moot Court & Legal Research",
+      "Entrepreneurship Incubation",
     ],
   },
 ];
@@ -165,6 +165,15 @@ const faqs = [
 ];
 
 export default function AESCreatorversePage() {
+  const [flippedCards, setFlippedCards] = React.useState<Record<string, boolean>>({});
+
+  const toggleTrack = (title: string) => {
+    setFlippedCards((previous) => ({
+      ...previous,
+      [title]: !previous[title],
+    }));
+  };
+
   return (
     <main className="min-h-screen theme-bg-dark flex flex-col">
       <Header />
@@ -238,369 +247,125 @@ export default function AESCreatorversePage() {
 
 
     <div className="grid gap-10 lg:grid-cols-3">
-
-      {/* ===================================================== */}
-      {/* ENGINEERING */}
-      {/* ===================================================== */}
-
-      <motion.div
-
-        whileHover={{
-          y: -12,
-        }}
-
-        className="group relative overflow-hidden rounded-[32px]
-        border border-cyan-400/20
-        bg-gradient-to-br
-        from-[#18233c]
-        to-[#121926]
-        p-10"
-
-      >
-
-        {/* glow */}
-
-        <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-cyan-500/20 blur-3xl transition-all duration-500 group-hover:scale-125" />
-
-        {/* number */}
-
-
-        {/* floating icon */}
-
-        <motion.div
-
-          whileHover={{
-            rotate: 8,
-            scale: 1.08
-          }}
-
-          className="relative mx-auto mb-8 flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 via-sky-500 to-blue-600 shadow-[0_0_50px_rgba(34,211,238,.35)]"
-
-        >
-
-          <Atom className="h-14 w-14 text-white"/>
-
-        </motion.div>
-
-
-        <h3 className="text-center text-3xl font-black text-white">
-
-          Engineering &
-          <br/>
-          Sciences
-
-        </h3>
-
-
-        <p className="mt-3 text-center uppercase tracking-[0.35em] text-xs text-cyan-300">
-
-          BUILD • TEST • PUBLISH
-
-        </p>
-
-
-        <div className="my-8 h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent"/>
-
-
-        <div className="space-y-4">
-
-          <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10">
-
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/20">
-
-              🔬
-
-            </div>
-
-            <span className="text-slate-200">
-
-              Research Assistantships
-
-            </span>
-
-          </div>
-
-
-
-          <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10">
-
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/20">
-
-              🤖
-
-            </div>
-
-            <span className="text-slate-200">
-
-              Robotics & AI Projects
-
-            </span>
-
-          </div>
-
-
-
-          <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10">
-
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/20">
-
-              🚀
-
-            </div>
-
-            <span className="text-slate-200">
-
-              Startup Shadowing
-
-            </span>
-
-          </div>
-
-
-
-          <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10">
-
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20">
-
-              📑
-
-            </div>
-
-            <span className="text-slate-200">
-
-              Journal Publication Support
-
-            </span>
-
-          </div>
-
-        </div>
-
-
-        <div className="mt-8 flex items-center justify-between">
-
-          <div className="flex gap-2">
-
-            <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-xs text-cyan-300">
-
-              Internship
-
-            </span>
-
-            <span className="rounded-full bg-yellow-500/15 px-3 py-1 text-xs text-yellow-300">
-
-              Mentor
-
-            </span>
-
-          </div>
-
-
-          <button className="font-semibold text-cyan-300 transition group-hover:translate-x-1">
-
-            Explore →
-
-          </button>
-
-        </div>
-
-      </motion.div>
-            {/* ===================================================== */}
-      {/* PRE-MED */}
-      {/* ===================================================== */}
-
-      <motion.div
-        whileHover={{ y: -12 }}
-        className="group relative overflow-hidden rounded-[32px]
-        border border-emerald-400/20
-        bg-gradient-to-br
-        from-[#18233c]
-        to-[#121926]
-        p-10"
-      >
-        <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-emerald-500/20 blur-3xl transition-all duration-500 group-hover:scale-125" />
-
-        {/* <div className="absolute right-8 top-6 text-7xl font-black text-white/5">
-          02
-        </div> */}
-
-        <motion.div
-          whileHover={{ rotate: -8, scale: 1.08 }}
-          className="relative mx-auto mb-8 flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 shadow-[0_0_50px_rgba(16,185,129,.35)]"
-        >
-          <Stethoscope className="h-14 w-14 text-white" />
-        </motion.div>
-
-        <h3 className="text-center text-3xl font-black text-white">
-          Pre-Med
-        </h3>
-
-        <p className="mt-3 text-center uppercase tracking-[0.35em] text-xs text-emerald-300">
-          CLINIC • RESEARCH • CARE
-        </p>
-
-        <div className="my-8 h-px bg-gradient-to-r from-transparent via-emerald-400/30 to-transparent" />
-
-        <div className="space-y-4">
-
-          <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20">
-              🏥
-            </div>
-            <span className="text-slate-200">
-              Hospital Shadowing
-            </span>
-          </div>
-
-          <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/20">
-              🧬
-            </div>
-            <span className="text-slate-200">
-              Biomedical Research
-            </span>
-          </div>
-
-          <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-pink-500/20">
-              ❤️
-            </div>
-            <span className="text-slate-200">
-              Community Health Camps
-            </span>
-          </div>
-
-          <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/20">
-              📋
-            </div>
-            <span className="text-slate-200">
-              Medical Case Writing
-            </span>
-          </div>
-
-        </div>
-
-        <div className="mt-8 flex items-center justify-between">
-
-          <div className="flex gap-2">
-            <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs text-emerald-300">
-              Clinical
-            </span>
-
-            <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-xs text-cyan-300">
-              Research
-            </span>
-          </div>
-
-          <button className="font-semibold text-emerald-300 transition group-hover:translate-x-1">
-            Explore →
-          </button>
-
-        </div>
-
-      </motion.div>
-
-      {/* ===================================================== */}
-      {/* LAW */}
-      {/* ===================================================== */}
-
-      <motion.div
-        whileHover={{ y: -12 }}
-        className="group relative overflow-hidden rounded-[32px]
-        border border-amber-400/20
-        bg-gradient-to-br
-        from-[#18233c]
-        to-[#121926]
-        p-10"
-      >
-        <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-amber-500/20 blur-3xl transition-all duration-500 group-hover:scale-125" />
-
-        {/* <div className="absolute right-8 top-6 text-7xl font-black text-white/5">
-          03
-        </div> */}
-
-        <motion.div
-          whileHover={{ rotate: 8, scale: 1.08 }}
-          className="relative mx-auto mb-8 flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 via-orange-500 to-amber-600 shadow-[0_0_50px_rgba(245,158,11,.35)]"
-        >
-          <Scale className="h-14 w-14 text-white" />
-        </motion.div>
-
-        <h3 className="text-center text-3xl font-black text-white">
-          Law, Humanities
-          <br />
-          & Business
-        </h3>
-
-        <p className="mt-3 text-center uppercase tracking-[0.35em] text-xs text-amber-300">
-          LEAD • ARGUE • BUILD
-        </p>
-
-        <div className="my-8 h-px bg-gradient-to-r from-transparent via-amber-400/30 to-transparent" />
-
-        <div className="space-y-4">
-
-          <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/20">
-              ⚖️
-            </div>
-            <span className="text-slate-200">
-              Moot Court & Legal Research
-            </span>
-          </div>
-
-          <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/20">
-              💼
-            </div>
-            <span className="text-slate-200">
-              Business Consulting Projects
-            </span>
-          </div>
-
-          <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/20">
-              🌍
-            </div>
-            <span className="text-slate-200">
-              Model UN & Policy Labs
-            </span>
-          </div>
-
-          <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/20">
-              🚀
-            </div>
-            <span className="text-slate-200">
-              Entrepreneurship Incubation
-            </span>
-          </div>
-
-        </div>
-
-        <div className="mt-8 flex items-center justify-between">
-
-          <div className="flex gap-2">
-
-            <span className="rounded-full bg-amber-500/15 px-3 py-1 text-xs text-amber-300">
-              Leadership
-            </span>
-
-            <span className="rounded-full bg-orange-500/15 px-3 py-1 text-xs text-orange-300">
-              Strategy
-            </span>
-
-          </div>
-
-          <button className="font-semibold text-amber-300 transition group-hover:translate-x-1">
-            Explore →
-          </button>
-
-        </div>
-
-      </motion.div>
-
+      {launchTracks.map((track) => {
+        const Icon = track.icon;
+        const isFlipped = Boolean(flippedCards[track.title]);
+
+        return (
+          <motion.div
+            key={track.title}
+            whileHover={{ y: -12 }}
+            className="group relative perspective-1000"
+          >
+            <motion.div
+              animate={{ rotateY: isFlipped ? 180 : 0 }}
+              transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
+              className="relative h-[820px] w-full transform-style-preserve-3d"
+            >
+              <div className="absolute inset-0 overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-br from-[#18233c] to-[#121926] p-10 backface-hidden">
+                <div className={`absolute -right-16 -top-16 h-56 w-56 rounded-full ${track.glow} bg-gradient-to-br ${track.accent} blur-3xl transition-all duration-500 group-hover:scale-125`} />
+
+                <motion.div
+                  whileHover={{ rotate: track.title === "Engineering and Sciences" ? 8 : track.title === "Pre-Med" ? -8 : 8, scale: 1.08 }}
+                  className={`relative mx-auto mb-8 flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br ${track.accent} shadow-[0_0_50px_rgba(34,211,238,.35)]`}
+                >
+                  <Icon className="h-14 w-14 text-white" />
+                </motion.div>
+
+                <h3 className="text-center text-3xl font-black text-white">
+                  {track.title === "Engineering and Sciences" ? (
+                    <>
+                      Engineering &
+                      <br />
+                      Sciences
+                    </>
+                  ) : track.title === "Law, Humanities and Business" ? (
+                    <>
+                      Law, Humanities
+                      <br />
+                      & Business
+                    </>
+                  ) : (
+                    track.title
+                  )}
+                </h3>
+
+                <p className={`mt-3 text-center uppercase tracking-[0.35em] text-xs ${track.title === "Engineering and Sciences" ? "text-cyan-300" : track.title === "Pre-Med" ? "text-emerald-300" : "text-amber-300"}`}>
+                  {track.tagline.toUpperCase()}
+                </p>
+
+                <div className="my-8 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+
+                <div className="space-y-4">
+                  {track.points.slice(0, 4).map((point) => (
+                    <div key={point} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10">
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${track.title === "Engineering and Sciences" ? "bg-cyan-500/20" : track.title === "Pre-Med" ? "bg-emerald-500/20" : "bg-amber-500/20"}`}>
+                        {track.title === "Engineering and Sciences" ? "🔬" : track.title === "Pre-Med" ? "🏥" : "⚖️"}
+                      </div>
+                      <span className="text-slate-200">{point}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-8 flex items-center justify-between">
+                  <div className="flex gap-2">
+                    <span className={`rounded-full px-3 py-1 text-xs ${track.title === "Engineering and Sciences" ? "bg-cyan-500/15 text-cyan-300" : track.title === "Pre-Med" ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`}>
+                      {track.title === "Engineering and Sciences" ? "Internship" : track.title === "Pre-Med" ? "Clinical" : "Leadership"}
+                    </span>
+                    <span className={`rounded-full px-3 py-1 text-xs ${track.title === "Engineering and Sciences" ? "bg-yellow-500/15 text-yellow-300" : track.title === "Pre-Med" ? "bg-cyan-500/15 text-cyan-300" : "bg-orange-500/15 text-orange-300"}`}>
+                      {track.title === "Engineering and Sciences" ? "Mentor" : track.title === "Pre-Med" ? "Research" : "Strategy"}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => toggleTrack(track.title)}
+                    className={`font-semibold transition group-hover:translate-x-1 ${track.title === "Engineering and Sciences" ? "text-cyan-300" : track.title === "Pre-Med" ? "text-emerald-300" : "text-amber-300"}`}
+                  >
+                    Explore →
+                  </button>
+                </div>
+              </div>
+
+              <div className="absolute inset-0 rotate-y-180 overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-br from-[#18233c] to-[#121926] p-8 backface-hidden">
+                <div className="flex h-full flex-col">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div className={`rounded-full bg-gradient-to-r ${track.accent} px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white`}>
+                      {track.title}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => toggleTrack(track.title)}
+                      className="text-sm font-semibold text-slate-200 transition hover:text-white"
+                    >
+                      ← Back
+                    </button>
+                  </div>
+
+                  <p className="mb-5 text-sm uppercase tracking-[0.35em] text-slate-300">
+                    {track.tagline}
+                  </p>
+
+                  <div className="space-y-3">
+                    {track.points.map((point) => (
+                      <div key={point} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-3">
+                        <span className="mt-0.5 h-2.5 w-2.5 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
+                        <span className="text-sm text-slate-200">{point}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-auto pt-6">
+                    <div className={`inline-flex rounded-full border border-white/10 bg-gradient-to-r ${track.accent} px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white`}>
+                      Track Details
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        );
+      })}
     </div>
 
   </div>
@@ -654,12 +419,9 @@ export default function AESCreatorversePage() {
   className="mb-24"
 >
   <div className="text-center mb-12">
-    <div className="inline-flex items-center gap-3 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-6 py-3 backdrop-blur-xl">
-      <BookOpen className="h-7 w-7 text-cyan-300" />
-      <span className="text-2xl font-bold text-cyan-200">
-        Reading
-      </span>
-    </div>
+    <h3 className="text-3xl font-black tracking-tight text-cyan-200 sm:text-4xl lg:text-5xl">
+      Reading
+    </h3>
 
     <p className="mt-5 max-w-2xl mx-auto text-lg text-slate-400">
       Transform your passion for reading into creative opportunities through
@@ -670,41 +432,26 @@ export default function AESCreatorversePage() {
   <div className="flex justify-center gap-6 overflow-x-auto pb-3 xl:overflow-visible">
 
     {[
-      {
-        icon: Newspaper,
-        title: "Reviewer",
-        color: "from-sky-400 to-cyan-500",
-      },
-      {
-        icon: PenTool,
-        title: "Content Writer",
-        color: "from-amber-400 to-orange-500",
-      },
-      {
-        icon: BookOpen,
-        title: "Book Blog",
-        color: "from-fuchsia-500 to-pink-500",
-      },
-      {
-        icon: Youtube,
-        title: "YouTube",
-        color: "from-red-400 to-rose-500",
-      },
-      {
-        icon: Instagram,
-        title: "Instagram",
-        color: "from-emerald-400 to-teal-500",
-      },
-      {
-        icon: Headphones,
-        title: "Podcast",
-        color: "from-violet-500 to-purple-500",
-      },
-      {
-        icon: Mic,
-        title: "Interviews",
-        color: "from-yellow-400 to-amber-500",
-      },
+     {
+  title: "Reviewer",
+  image: "https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&w=900&q=80",
+},
+{
+  title: "Content Writer",
+  image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80",
+},
+{
+  title: "Book Blog",
+  image: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=900&q=80",
+},
+{
+  title: "Podcast",
+  image: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=900&q=80",
+},
+{
+  title: "Interviews",
+  image: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=900&q=80",
+},
     ].map((item) => (
       <motion.div
         key={item.title}
@@ -715,16 +462,13 @@ export default function AESCreatorversePage() {
         transition={{ type: "spring", stiffness: 250 }}
         className="group w-[105px] lg:w-[115px] xl:w-[120px] cursor-pointer flex-shrink-0"
       >
-        <div
-          className={`relative mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br ${item.color} shadow-2xl transition-all duration-300 group-hover:shadow-cyan-400/40`}
-        >
-          {/* Gloss Effect */}
-          <div className="absolute left-5 top-5 h-6 w-6 rounded-full bg-white/30 blur-sm" />
-
-          {/* Border */}
-          <div className="absolute inset-0 rounded-full border border-white/30" />
-
-          <item.icon className="h-10 w-10 text-white drop-shadow-lg" />
+        <div className="relative mx-auto h-28 w-28 overflow-hidden rounded-full border border-white/30 shadow-2xl transition-all duration-300 group-hover:shadow-cyan-400/40">
+          <img
+            src={item.image}
+            alt={item.title}
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-transparent to-slate-950/30" />
         </div>
 
         <p className="mt-3 text-center text-xs lg:text-sm font-semibold leading-4 text-slate-100 transition-colors group-hover:text-cyan-300">
@@ -742,64 +486,43 @@ export default function AESCreatorversePage() {
   transition={{ duration: 0.6 }}
   className="mb-24"
 >
-  {/* Heading */}
   <div className="text-center mb-12">
-    <div className="inline-flex items-center gap-3 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-6 py-3 backdrop-blur-xl">
-      <PenTool className="h-7 w-7 text-emerald-300" />
-      <span className="text-2xl font-bold text-emerald-200">
-        Writing
-      </span>
-    </div>
+    <h3 className="text-3xl font-black tracking-tight text-emerald-200 sm:text-4xl lg:text-5xl">
+      Writing
+    </h3>
 
     <p className="mt-5 text-slate-400 max-w-2xl mx-auto text-lg">
       Express your ideas through storytelling, publishing and digital content.
     </p>
   </div>
 
-  {/* Opportunities */}
   <div className="flex justify-center gap-6 overflow-x-auto pb-3 xl:overflow-visible">
 
     {[
       {
-        icon: PenTool,
-        title: "Blog Writer",
-        color: "from-cyan-400 to-blue-500",
-      },
-      {
-        icon: BookOpen,
-        title: "Book Author",
-        color: "from-amber-400 to-orange-500",
-      },
-      {
-        icon: Sparkles,
-        title: "Content Creator",
-        color: "from-fuchsia-500 to-pink-500",
-      },
-      {
-        icon: Briefcase,
-        title: "Freelance Writer",
-        color: "from-emerald-400 to-teal-500",
-      },
-      {
-        icon: Newspaper,
-        title: "Student Editor",
-        color: "from-violet-500 to-purple-500",
-      },
-      {
-        icon: Users,
-        title: "Club President",
-        color: "from-red-400 to-rose-500",
-      },
-      {
-        icon: Megaphone,
-        title: "Youth Ambassador",
-        color: "from-sky-400 to-cyan-500",
-      },
-      {
-        icon: GraduationCap,
-        title: "Writing Tutor",
-        color: "from-yellow-400 to-amber-500",
-      },
+  title: "Blog Writer",
+  image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80",
+},
+{
+  title: "Book Author",
+  image: "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&w=900&q=80",
+},
+{
+  title: "Freelance Writer",
+  image: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=900&q=80",
+},
+{
+  title: "Student Editor",
+  image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80",
+},
+{
+  title: "Local Magazine Editor",
+  image: "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=900&q=80",
+},
+{
+  title: "Writing Tutor",
+  image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=900&q=80",
+},
     ].map((item) => (
       <motion.div
         key={item.title}
@@ -810,21 +533,16 @@ export default function AESCreatorversePage() {
         transition={{ type: "spring", stiffness: 250 }}
         className="group w-[105px] lg:w-[115px] xl:w-[120px] cursor-pointer flex-shrink-0"
       >
-        {/* Bubble */}
-        <div
-          className={`relative mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br ${item.color} shadow-2xl transition-all duration-300 group-hover:shadow-cyan-400/40`}
-        >
-          {/* Gloss */}
-          <div className="absolute left-5 top-5 h-6 w-6 rounded-full bg-white/30 blur-sm" />
-
-          {/* Ring */}
-          <div className="absolute inset-0 rounded-full border border-white/30" />
-
-          <item.icon className="h-10 w-10 text-white drop-shadow-lg" />
+        <div className="relative mx-auto h-28 w-28 overflow-hidden rounded-full border border-white/30 shadow-2xl transition-all duration-300 group-hover:shadow-emerald-400/40">
+          <img
+            src={item.image}
+            alt={item.title}
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-slate-950/30" />
         </div>
 
-        {/* Label */}
-        <p className="mt-3 text-center text-xs lg:text-sm font-semibold leading-4 text-slate-100 transition-colors group-hover:text-cyan-300">
+        <p className="mt-3 text-center text-xs lg:text-sm font-semibold leading-4 text-slate-100 transition-colors group-hover:text-emerald-300">
           {item.title}
         </p>
       </motion.div>
@@ -841,12 +559,9 @@ export default function AESCreatorversePage() {
   className="mb-24"
 >
   <div className="text-center mb-12">
-    <div className="inline-flex items-center gap-3 rounded-full border border-fuchsia-400/30 bg-fuchsia-500/10 px-6 py-3 backdrop-blur-xl">
-      <Mic className="h-7 w-7 text-fuchsia-300" />
-      <span className="text-2xl font-bold text-fuchsia-200">
-        Speech
-      </span>
-    </div>
+    <h3 className="text-3xl font-black tracking-tight text-fuchsia-200 sm:text-4xl lg:text-5xl">
+      Speaking
+    </h3>
 
     <p className="mt-5 text-slate-400 max-w-2xl mx-auto text-lg">
       Develop confidence, communication and public speaking through impactful opportunities.
@@ -857,35 +572,29 @@ export default function AESCreatorversePage() {
 
     {[
       {
-        icon: Users,
-        title: "Debate Team",
-        color: "from-sky-400 to-cyan-500",
-      },
-      {
-        icon: Megaphone,
-        title: "Council Spokesperson",
-        color: "from-amber-400 to-orange-500",
-      },
-      {
-        icon: Headphones,
-        title: "Podcast Host",
-        color: "from-fuchsia-500 to-pink-500",
-      },
-      {
-        icon: Video,
-        title: "YouTube Host",
-        color: "from-red-400 to-rose-500",
-      },
-      {
-        icon: Mic,
-        title: "TED Speaker",
-        color: "from-emerald-400 to-teal-500",
-      },
-      {
-        icon: Sparkles,
-        title: "Event Emcee",
-        color: "from-violet-500 to-purple-500",
-      },
+  title: "Debate Team",
+  image: "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=900&q=80",
+},
+{
+  title: "Council Spokesperson",
+  image: "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=900&q=80",
+},
+{
+  title: "Podcast Host",
+  image: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=900&q=80",
+},
+{
+  title: "YouTube Host",
+  image: "https://images.unsplash.com/photo-1586899028174-e7098604235b?auto=format&fit=crop&w=900&q=80",
+},
+{
+  title: "TED Speaker",
+  image: "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=900&q=80",
+},
+{
+  title: "Event Emcee",
+  image: "https://images.unsplash.com/photo-1505236858219-8359eb29e329?auto=format&fit=crop&w=900&q=80",
+},
     ].map((item) => (
       <motion.div
         key={item.title}
@@ -896,14 +605,13 @@ export default function AESCreatorversePage() {
         transition={{ type: "spring", stiffness: 250 }}
         className="group w-[105px] lg:w-[115px] xl:w-[120px] cursor-pointer flex-shrink-0"
       >
-        <div
-          className={`relative mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br ${item.color} shadow-2xl transition-all duration-300 group-hover:shadow-fuchsia-400/40`}
-        >
-          <div className="absolute left-5 top-5 h-6 w-6 rounded-full bg-white/30 blur-sm" />
-
-          <div className="absolute inset-0 rounded-full border border-white/30" />
-
-          <item.icon className="h-10 w-10 text-white drop-shadow-lg" />
+        <div className="relative mx-auto h-28 w-28 overflow-hidden rounded-full border border-white/30 shadow-2xl transition-all duration-300 group-hover:shadow-fuchsia-400/40">
+          <img
+            src={item.image}
+            alt={item.title}
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-500/10 via-transparent to-slate-950/30" />
         </div>
 
         <p className="mt-3 text-center text-xs lg:text-sm font-semibold leading-4 text-slate-100 transition-colors group-hover:text-fuchsia-300">
@@ -922,12 +630,9 @@ export default function AESCreatorversePage() {
   transition={{ duration: 0.6 }}
 >
   <div className="text-center mb-12">
-    <div className="inline-flex items-center gap-3 rounded-full border border-orange-400/30 bg-orange-500/10 px-6 py-3 backdrop-blur-xl">
-      <Megaphone className="h-7 w-7 text-orange-300" />
-      <span className="text-2xl font-bold text-orange-200">
-        Leadership
-      </span>
-    </div>
+    <h3 className="text-3xl font-black tracking-tight text-orange-200 sm:text-4xl lg:text-5xl">
+      Leadership
+    </h3>
 
     <p className="mt-5 text-slate-400 max-w-2xl mx-auto text-lg">
       Inspire teams, lead initiatives and create meaningful impact within your community.
@@ -938,35 +643,29 @@ export default function AESCreatorversePage() {
 
     {[
       {
-        icon: Users,
-        title: "Community Drives",
-        color: "from-sky-400 to-cyan-500",
-      },
-      {
-        icon: Megaphone,
-        title: "Campaign Organizer",
-        color: "from-red-400 to-rose-500",
-      },
-      {
-        icon: FlaskConical,
-        title: "Workshop Facilitator",
-        color: "from-emerald-400 to-teal-500",
-      },
-      {
-        icon: Briefcase,
-        title: "Fundraiser Lead",
-        color: "from-violet-500 to-purple-500",
-      },
-      {
-        icon: GraduationCap,
-        title: "Student Council",
-        color: "from-amber-400 to-orange-500",
-      },
-      {
-        icon: Sparkles,
-        title: "Volunteer Coordinator",
-        color: "from-fuchsia-500 to-pink-500",
-      },
+  title: "Community Drives",
+  image: "https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?auto=format&fit=crop&w=900&q=80",
+},
+{
+  title: "Campaign Organizer",
+  image: "https://images.unsplash.com/photo-1531058020387-3be344556be6?auto=format&fit=crop&w=900&q=80",
+},
+{
+  title: "Workshop Facilitator",
+  image: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=900&q=80",
+},
+{
+  title: "Fundraiser Lead",
+  image: "https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?auto=format&fit=crop&w=900&q=80",
+},
+{
+  title: "Student Council",
+  image: "https://images.unsplash.com/photo-1529390079861-591de354faf5?auto=format&fit=crop&w=900&q=80",
+},
+{
+  title: "Volunteer Coordinator",
+  image: "https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&w=900&q=80",
+},
     ].map((item) => (
       <motion.div
         key={item.title}
@@ -977,14 +676,13 @@ export default function AESCreatorversePage() {
         transition={{ type: "spring", stiffness: 250 }}
         className="group w-[105px] lg:w-[115px] xl:w-[120px] cursor-pointer flex-shrink-0"
       >
-        <div
-          className={`relative mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br ${item.color} shadow-2xl transition-all duration-300 group-hover:shadow-orange-400/40`}
-        >
-          <div className="absolute left-5 top-5 h-6 w-6 rounded-full bg-white/30 blur-sm" />
-
-          <div className="absolute inset-0 rounded-full border border-white/30" />
-
-          <item.icon className="h-10 w-10 text-white drop-shadow-lg" />
+        <div className="relative mx-auto h-28 w-28 overflow-hidden rounded-full border border-white/30 shadow-2xl transition-all duration-300 group-hover:shadow-orange-400/40">
+          <img
+            src={item.image}
+            alt={item.title}
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-transparent to-slate-950/30" />
         </div>
 
         <p className="mt-3 text-center text-xs lg:text-sm font-semibold leading-4 text-slate-100 transition-colors group-hover:text-orange-300">
