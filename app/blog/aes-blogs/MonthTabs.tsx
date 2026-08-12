@@ -1,6 +1,5 @@
 "use client";
 import React, { useMemo } from "react";
-import { Badge } from "@/components/ui/badge";
 
 interface Blog {
   id: number;
@@ -53,11 +52,6 @@ export default function MonthTabs({ selectedYear, selectedMonth, onMonthSelect, 
           >
             <div className="flex items-center gap-2">
               <span>All Months</span>
-              {totalBlogs > 0 && (
-                <Badge className="bg-yellow-400/20 text-yellow-400 border-0 text-xs">
-                  {totalBlogs}
-                </Badge>
-              )}
             </div>
           </button>
 
@@ -86,13 +80,6 @@ export default function MonthTabs({ selectedYear, selectedMonth, onMonthSelect, 
               >
                 <div className="relative z-10 flex items-center gap-2">
                   <span>{monthName}</span>
-                  {blogCount > 0 && (
-                    <Badge 
-                      className="border-0 text-xs bg-yellow-400/20 text-yellow-400"
-                    >
-                      {blogCount}
-                    </Badge>
-                  )}
                 </div>
               </button>
             );

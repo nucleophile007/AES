@@ -1,6 +1,5 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Calendar, MessageCircle, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
@@ -20,9 +19,6 @@ export default function CTASection() {
       
       <div className="container mx-auto text-center relative z-10">
         <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
-          <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-            Get Started Today
-          </Badge>
           
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold theme-text-light leading-tight">
             Ready to Transform Your Child&apos;s 

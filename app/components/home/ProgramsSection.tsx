@@ -1,7 +1,6 @@
 "use client";
 import React from "react";
 import { motion } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -147,9 +146,6 @@ export default function ProgramsSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12 sm:mb-16"
         >
-          <Badge className="mb-4 bg-brand-blue/10 text-brand-blue text-xs sm:text-sm">
-            Our Programs
-          </Badge>
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-text-dark mb-4 sm:mb-6">
             Enhanced Program & Service Showcasing
           </h2>
@@ -172,11 +168,6 @@ export default function ProgramsSection() {
                 <div className="p-1 w-full flex">
                   <Card className="w-full flex flex-col hover:shadow-xl transition-all duration-300 border-2 hover:border-brand-blue/20 group relative">
                     <CardHeader className="pb-4">
-                      {program.badge && (
-                        <Badge className="absolute -top-2 -right-2 bg-brand-orange text-white text-xs">
-                          {program.badge}
-                        </Badge>
-                      )}
                       <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br ${program.color} flex items-center justify-center mb-3 sm:mb-4`}>
                         <program.icon className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
                       </div>

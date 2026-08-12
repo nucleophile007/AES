@@ -1,7 +1,6 @@
 "use client";
 import React from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, BookOpen, Calculator, FlaskConical, Atom, Trophy, Star, Globe, Clock, ArrowRight, CheckIcon, ChevronDown, ChevronLeft, ChevronRight, FileText, Target } from "lucide-react";
@@ -712,9 +711,6 @@ export default function AcademicTutoringPage() {
         </div>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-8 sm:pt-12">
           <div className="text-center mb-12 animate-slide-in-bottom">
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-              ✨ Academic Tutoring
-            </Badge>
             <h1 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">
               Empowering Every Learner Through Personalized Tutoring
             </h1>
@@ -750,7 +746,6 @@ export default function AcademicTutoringPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Our Programs</Badge>
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Subjects We Offer</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">
               Comprehensive tutoring across all major subjects with specialized expertise in advanced coursework.
@@ -886,7 +881,6 @@ export default function AcademicTutoringPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Why Choose Us</Badge>
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Our Tutoring Advantage</h2>
           </motion.div>
           
@@ -923,7 +917,6 @@ export default function AcademicTutoringPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Learning Approach</Badge>
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Stay ahead with our personalized tutoring</h2>
           </motion.div>
           
@@ -956,9 +949,6 @@ export default function AcademicTutoringPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-              ✨ Learning Approach
-            </Badge>
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">
               Stay ahead with our personalized tutoring
             </h2>
@@ -1152,7 +1142,6 @@ export default function AcademicTutoringPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Success Metrics</Badge>
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Our Track Record of Excellence</h2>
           </motion.div>
           
@@ -1208,7 +1197,6 @@ export default function AcademicTutoringPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Student Success</Badge>
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">What Parents & Students Say</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">Hear from our successful students and their parents about their AES tutoring experience.</p>
           </motion.div>
@@ -1245,9 +1233,6 @@ export default function AcademicTutoringPage() {
             transition={{ duration: 0.8 }}
             className="max-w-4xl mx-auto space-y-6 sm:space-y-8"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-              🚀 Start Your Journey Today
-            </Badge>
             
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold theme-text-light leading-tight">
               Ready to Begin?
@@ -1324,7 +1309,6 @@ export default function AcademicTutoringPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">FAQ</Badge>
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Frequently Asked Questions</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">
               Find answers to common questions about our tutoring services, scheduling, and more.

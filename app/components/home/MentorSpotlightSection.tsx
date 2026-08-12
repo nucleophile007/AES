@@ -1,7 +1,6 @@
 "use client";
 import React from "react";
 import { motion } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Users, GraduationCap, BookOpen, Star, Calculator, Atom } from "lucide-react";
 
@@ -94,9 +93,6 @@ export default function MentorSpotlightSection() {
           whileInView={{ opacity: 1, y: 0 }}
           className="text-center mb-16"
         >
-          <Badge className="mb-4 bg-brand-blue/10 text-brand-blue">
-            Our Expert Team
-          </Badge>
           <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">
             Elite Educators & Industry Professionals
           </h2>

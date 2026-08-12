@@ -145,45 +145,19 @@ export function ProgramsHero() {
           <div className="h-[calc(100svh-5rem)] sm:h-[calc(100svh-6rem)] w-full relative z-20 flex flex-col justify-between pb-4 sm:pb-6">
             {/* Header */}
             <div className="flex-shrink-0 space-y-3 sm:space-y-4 flex flex-col items-center">
-              <div className="flex items-center gap-2 rounded-full border border-yellow-400/40 bg-yellow-400/15 px-4 py-2 backdrop-blur-sm mb-5 w-fit">
-                <div className="h-1.5 w-1.5 rounded-full bg-yellow-400" />
-                <span className="text-xs sm:text-sm font-semibold uppercase tracking-[0.15em] text-yellow-200">Transform Your Journey</span>
-              </div>
-              {/* <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black bg-gradient-to-r from-white via-yellow-100 to-amber-200 bg-clip-text text-transparent text-balance leading-tight drop-shadow-[0_2px_12px_rgba(250,204,21,0.3)]">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black bg-gradient-to-r from-white via-yellow-100 to-amber-200 bg-clip-text text-transparent text-balance leading-tight drop-shadow-[0_2px_12px_rgba(250,204,21,0.3)]">
                 Our Programs
               </h1>
               <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-200 text-balance max-w-2xl leading-relaxed font-medium">
-                Choose your path to excellence with our comprehensive suite of academic programs designed to unlock your potential
-              </p> */}
+                Explore tutoring, research, competitions, and admissions guidance through structured pathways built around student goals.
+              </p>
             </div>
-
-            {/* Banner Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-5 lg:gap-6 flex-1 w-full overflow-hidden">
-              {banners.map((banner, index) => (
-                <div 
-                  key={index} 
-                  className="overflow-hidden rounded-lg"
-                >
-                  <BannerItem
-                    title={banner.title}
-                    tagline={banner.tagline}
-                    features={banner.features}
-                    textColor="text-white"
-                    accentColor="bg-yellow-400"
-                    image={banner.image}
-                    href={banner.href}
-                    priority={true}
-                    objectPosition={index === 3 ? "object-cover lg:object-[center_35%] xl:object-[center_40%]" : "object-cover object-center"}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Decorative corner elements */}
         <div className="absolute top-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full filter blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full filter blur-3xl translate-x-1/2 translate-y-1/2 pointer-events-none" />
+        </div>
       </section>
     ),
   };

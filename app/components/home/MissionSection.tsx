@@ -1,7 +1,6 @@
 "use client";
 import React from "react";
 import { motion } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
 import { CheckCircle } from "lucide-react";
 
 export default function MissionSection() {

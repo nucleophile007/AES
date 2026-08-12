@@ -1,7 +1,6 @@
 "use client";
 import React from "react";
 import { motion } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -73,59 +72,64 @@ const launchTracks = [
 
 const packages = [
   {
-    name: "SUMMER",
-    timeline: "8 WEEK / 4 WEEK (June - Mid Aug)",
-    duration: "8 week / 4 week",
-    accent: "from-emerald-400 to-teal-500",
-    image: "https://images.unsplash.com/photo-1511988617509-a57c8a288659?auto=format&fit=crop&w=1200&q=80",
-    sessionDetails: [
-      { label: "Mentor Sessions", value: "8 / 10" },
-      { label: "Tech Writer Sessions", value: "1" },
-      { label: "Director Sessions", value: "-" },
-    ],
-    features: [
-      "Intensive full-time internship placement",
-      "Track-specific skill bootcamp",
-      "Capstone project and certificate",
-    ],
-  },
-  {
-    name: "FALL / SPRING",
-    timeline: "5 month",
-    duration: "5 month",
-    featured: true,
-    accent: "from-yellow-400 to-amber-500",
-    image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80",
-    sessionDetails: [
-      { label: "Mentor Sessions", value: "16" },
-      { label: "Tech Writer Sessions", value: "2" },
-      { label: "Director Sessions", value: "2" },
-    ],
-    features: [
-      "Everything in the Summer package",
-      "Semester-long part-time internship",
-      "Portfolio and resume building",
-      "Competition and conference participation",
-      "Bi-weekly mentorship sessions",
+    name: "SUMMER PROGRAM",
+    timeline: "4 or 8 weeks",
+    durationValue: "4 or 8",
+    durationUnit: "Weeks",
+    subtitle: "Fast-track internship path",
+    image: "/aes-creatorverse/summer.png",
+    cardClass: "border-amber-400/25 hover:border-amber-300/50 hover:shadow-amber-400/20",
+    badgeClass: "bg-amber-400 text-slate-950",
+    accentTextClass: "text-amber-300",
+    dividerClass: "via-amber-400/40",
+    buttonClass: "from-amber-400 to-orange-500 text-slate-950 hover:from-amber-300 hover:to-orange-400",
+    stages: [
+      { title: "Preparatory Sessions", detail: "Track briefing, skill prep, and project match.", dotClass: "bg-cyan-400" },
+      { title: "Executive Stage", detail: "Guided launch review before placement.", dotClass: "bg-violet-400" },
+      { title: "Internship Sprint", detail: "Short-format industry exposure.", dotClass: "bg-orange-400" },
+      { title: "Deliverables", detail: "Certificate, recommendation, or letter of experience.", dotClass: "bg-emerald-400" },
     ],
   },
   {
-    name: "LONG TERM",
-    timeline: "10 month",
-    duration: "10 month",
-    accent: "from-violet-400 to-fuchsia-500",
-    image: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=1200&q=80",
-    sessionDetails: [
-      { label: "Mentor Sessions", value: "34" },
-      { label: "Tech Writer Sessions", value: "3" },
-      { label: "Director Sessions", value: "3" },
+    name: "SEMESTER PROGRAM",
+    timeline: "5 months",
+    durationValue: "5",
+    durationUnit: "Months",
+    subtitle: "Balanced school-year pathway",
+    image: "/aes-creatorverse/fall.png",
+    tag: "Most Popular",
+    cardClass: "border-cyan-400 shadow-[0_0_35px_rgba(34,211,238,.15)] hover:shadow-cyan-400/20",
+    badgeClass: "bg-cyan-400 text-slate-950",
+    tagClass: "bg-cyan-400/15 text-cyan-200 ring-1 ring-cyan-300/30",
+    accentTextClass: "text-cyan-300",
+    dividerClass: "via-cyan-400/40",
+    buttonClass: "from-cyan-400 to-blue-500 text-slate-950 hover:from-cyan-300 hover:to-blue-400",
+    stages: [
+      { title: "Preparatory Sessions", detail: "Five-month prep rhythm with project checkpoints.", dotClass: "bg-cyan-400" },
+      { title: "Industry Internship", detail: "Part-time workplace exposure during the semester.", dotClass: "bg-violet-400" },
+      { title: "Executive Stage", detail: "Applied review, portfolio check, and showcase.", dotClass: "bg-orange-400" },
+      { title: "Deliverables", detail: "Certificate, recommendation, or letter of experience.", dotClass: "bg-emerald-400" },
     ],
-    features: [
-      "Everything in the Fall / Spring package",
-      "Multi-placement rotation across partners",
-      "Leadership role and community project",
-      "Recommendation letter pathway",
-      "End-of-program showcase",
+  },
+  {
+    name: "LONG YEAR PROGRAM",
+    timeline: "10 months",
+    durationValue: "10",
+    durationUnit: "Months",
+    subtitle: "Complete journey-long year program",
+    image: "/aes-creatorverse/3.png",
+    tag: "Complete Journey",
+    cardClass: "border-violet-400/35 hover:border-violet-300/60 hover:shadow-violet-400/20",
+    badgeClass: "bg-violet-500 text-white",
+    tagClass: "bg-violet-400/15 text-violet-200 ring-1 ring-violet-300/30",
+    accentTextClass: "text-violet-300",
+    dividerClass: "via-violet-400/40",
+    buttonClass: "from-violet-500 to-fuchsia-500 text-white hover:from-violet-400 hover:to-fuchsia-400",
+    stages: [
+      { title: "Preparatory Sessions", detail: "Ten-month roadmap with skill-building checkpoints.", dotClass: "bg-violet-400" },
+      { title: "Long Internship", detail: "Extended industry experience and project ownership.", dotClass: "bg-cyan-400" },
+      { title: "Executive Stage", detail: "Advanced showcase, review, and final profile presentation.", dotClass: "bg-orange-400" },
+      { title: "Deliverables", detail: "Certificate, recommendation, or letter of experience.", dotClass: "bg-emerald-400" },
     ],
   },
 ];
@@ -145,7 +149,7 @@ const faqs = [
   {
     question: "What packages are available?",
     answer:
-      "Summer (8 week or 4 week), Fall/Spring (5 months) and Long Term (10 months). Each package builds on the previous one in depth, placement time and mentorship.",
+      "Summer Program (8 week or 4 week), Semester Program (5 months) and Long Year Program (10 months). Each package builds on the previous one in depth, placement time, preparatory sessions, executive stage and deliverables.",
   },
   {
     question: "What is the Social Profile Program?",
@@ -176,7 +180,6 @@ export default function AESCreatorversePage() {
         </div>
         <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} className="text-center">
-            <Badge className="mb-4 border-yellow-400/30 bg-yellow-400/10 text-yellow-300">AES CREATORVERSE</Badge>
             <h1 className="bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-500 bg-clip-text text-5xl font-black text-transparent sm:text-6xl lg:text-7xl">
               AES CREATORVERSE
             </h1>
@@ -220,9 +223,6 @@ export default function AESCreatorversePage() {
       className="mb-20 text-center"
     >
 
-      <Badge className="mb-4 border-yellow-400/20 bg-yellow-400/10 text-yellow-400">
-        Career Tracks
-      </Badge>
 
       <h2 className="text-7xl font-black theme-text-light">
         AES Launch Pad
@@ -379,21 +379,6 @@ export default function AESCreatorversePage() {
 
         <div className="mt-8 flex items-center justify-between">
 
-          <div className="flex gap-2">
-
-            <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-xs text-cyan-300">
-
-              Internship
-
-            </span>
-
-            <span className="rounded-full bg-yellow-500/15 px-3 py-1 text-xs text-yellow-300">
-
-              Mentor
-
-            </span>
-
-          </div>
 
 
           <button className="font-semibold text-cyan-300 transition group-hover:translate-x-1">
@@ -483,15 +468,6 @@ export default function AESCreatorversePage() {
 
         <div className="mt-8 flex items-center justify-between">
 
-          <div className="flex gap-2">
-            <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs text-emerald-300">
-              Clinical
-            </span>
-
-            <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-xs text-cyan-300">
-              Research
-            </span>
-          </div>
 
           <button className="font-semibold text-emerald-300 transition group-hover:translate-x-1">
             Explore →
@@ -581,17 +557,6 @@ export default function AESCreatorversePage() {
 
         <div className="mt-8 flex items-center justify-between">
 
-          <div className="flex gap-2">
-
-            <span className="rounded-full bg-amber-500/15 px-3 py-1 text-xs text-amber-300">
-              Leadership
-            </span>
-
-            <span className="rounded-full bg-orange-500/15 px-3 py-1 text-xs text-orange-300">
-              Strategy
-            </span>
-
-          </div>
 
           <button className="font-semibold text-amber-300 transition group-hover:translate-x-1">
             Explore →
@@ -629,9 +594,7 @@ export default function AESCreatorversePage() {
       transition={{ duration: 0.6 }}
       className="mb-20 text-center"
     >
-      <Badge className="mb-4 border-yellow-400/20 bg-yellow-400/10 text-yellow-400">
-        Build Your Creative Identity
-      </Badge>
+
 
        <h2 className="text-7xl font-black theme-text-light">
         Social Profile Program
@@ -654,12 +617,7 @@ export default function AESCreatorversePage() {
   className="mb-24"
 >
   <div className="text-center mb-12">
-    <div className="inline-flex items-center gap-3 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-6 py-3 backdrop-blur-xl">
-      <BookOpen className="h-7 w-7 text-cyan-300" />
-      <span className="text-2xl font-bold text-cyan-200">
-        Reading
-      </span>
-    </div>
+    <h3 className="text-3xl font-bold text-cyan-200">Reading</h3>
 
     <p className="mt-5 max-w-2xl mx-auto text-lg text-slate-400">
       Transform your passion for reading into creative opportunities through
@@ -744,12 +702,7 @@ export default function AESCreatorversePage() {
 >
   {/* Heading */}
   <div className="text-center mb-12">
-    <div className="inline-flex items-center gap-3 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-6 py-3 backdrop-blur-xl">
-      <PenTool className="h-7 w-7 text-emerald-300" />
-      <span className="text-2xl font-bold text-emerald-200">
-        Writing
-      </span>
-    </div>
+    <h3 className="text-3xl font-bold text-emerald-200">Writing</h3>
 
     <p className="mt-5 text-slate-400 max-w-2xl mx-auto text-lg">
       Express your ideas through storytelling, publishing and digital content.
@@ -841,12 +794,7 @@ export default function AESCreatorversePage() {
   className="mb-24"
 >
   <div className="text-center mb-12">
-    <div className="inline-flex items-center gap-3 rounded-full border border-fuchsia-400/30 bg-fuchsia-500/10 px-6 py-3 backdrop-blur-xl">
-      <Mic className="h-7 w-7 text-fuchsia-300" />
-      <span className="text-2xl font-bold text-fuchsia-200">
-        Speech
-      </span>
-    </div>
+    <h3 className="text-3xl font-bold text-fuchsia-200">Speech</h3>
 
     <p className="mt-5 text-slate-400 max-w-2xl mx-auto text-lg">
       Develop confidence, communication and public speaking through impactful opportunities.
@@ -922,12 +870,7 @@ export default function AESCreatorversePage() {
   transition={{ duration: 0.6 }}
 >
   <div className="text-center mb-12">
-    <div className="inline-flex items-center gap-3 rounded-full border border-orange-400/30 bg-orange-500/10 px-6 py-3 backdrop-blur-xl">
-      <Megaphone className="h-7 w-7 text-orange-300" />
-      <span className="text-2xl font-bold text-orange-200">
-        Leadership
-      </span>
-    </div>
+    <h3 className="text-3xl font-bold text-orange-200">Leadership</h3>
 
     <p className="mt-5 text-slate-400 max-w-2xl mx-auto text-lg">
       Inspire teams, lead initiatives and create meaningful impact within your community.
@@ -1000,7 +943,7 @@ export default function AESCreatorversePage() {
 
 
 
-    <section id="launch-tracks" className="relative overflow-hidden py-5 theme-bg-dark">
+    <section id="program-packages" className="relative overflow-hidden py-20 sm:py-24 lg:py-28 theme-bg-dark">
   {/* Background Effects */}
   <div className="absolute inset-0 overflow-hidden">
     <div className="absolute -left-32 top-20 h-96 w-96 rounded-full bg-cyan-500/10 blur-3xl" />
@@ -1017,25 +960,20 @@ export default function AESCreatorversePage() {
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="mx-auto mb-20 max-w-3xl text-center"
+      className="mx-auto mb-14 max-w-3xl text-center lg:mb-16"
     >
 
-      <Badge className="mb-4 border-yellow-400/20 bg-yellow-400/10 text-yellow-400">
-        Flexible Learning
 
-      </Badge>
-
-      <h2 className="text-7xl font-black theme-text-light">
+      <h2 className="text-4xl font-black theme-text-light sm:text-5xl lg:text-6xl">
 
         Program Packages
 
       </h2>
 
-      <p className="mt-6 text-lg leading-8 text-slate-400">
+      <p className="mt-5 text-base leading-7 text-slate-400 sm:text-lg">
 
-        Whether you`&apos;`re looking for a quick summer experience,
-        a semester-long journey, or a comprehensive long-term
-        program, choose the package that best fits your goals.
+        Choose the format that matches your calendar: a focused summer sprint,
+        a semester pathway, or the complete 10-month journey.
 
       </p>
 
@@ -1044,16 +982,17 @@ export default function AESCreatorversePage() {
 
     {/* Cards */}
 
-    <div className="grid gap-10 lg:grid-cols-3">
+    <div className="grid items-stretch gap-6 lg:grid-cols-3 lg:gap-8 xl:pr-16">
 
       <motion.div
   whileHover={{
-    y: -10,
-    scale: 1.02,
+    y: -8,
+    scale: 1.01,
   }}
   transition={{ type: "spring", stiffness: 220 }}
+  className="h-full"
 >
-  <Card className="group overflow-hidden rounded-[28px] border border-amber-400/20 bg-gradient-to-b from-[#192540] to-[#111827] shadow-2xl transition-all duration-500 hover:border-amber-300/40 hover:shadow-amber-400/20">
+  <Card className="group flex h-full flex-col overflow-hidden rounded-lg border border-amber-400/25 bg-gradient-to-b from-[#192540] to-[#111827] shadow-2xl transition-all duration-500 hover:border-amber-300/50 hover:shadow-amber-400/20">
 
     {/* Image */}
 
@@ -1061,28 +1000,29 @@ export default function AESCreatorversePage() {
 
       <img
         src="/aes-creatorverse/summer.png"
-        className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+        alt="Summer Program students"
+        className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
       />
 
-      <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#111827]/20 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#111827]/35 to-transparent" />
 
-      <div className="absolute left-6 top-6 rounded-full bg-amber-400 px-4 py-1 text-xs font-bold text-slate-900">
+      <div className="absolute left-5 top-5 rounded-md bg-amber-400 px-3 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-slate-950">
 
-        SUMMER
+        SUMMER PROGRAM
 
       </div>
 
     </div>
 
-    <CardContent className="p-7">
+    <CardContent className="flex flex-1 flex-col p-6 sm:p-7">
 
       {/* Duration */}
 
       <div className="flex items-end gap-3">
 
-        <span className="text-6xl font-black text-white">
+        <span className="text-5xl font-black leading-none text-white lg:text-6xl">
 
-          8
+          4 or 8
 
         </span>
 
@@ -1094,9 +1034,9 @@ export default function AESCreatorversePage() {
 
           </p>
 
-          <p className="text-sm text-slate-400">
+          <p className="text-sm font-medium text-amber-300">
 
-            Intensive Program
+            Fast-track internship path
 
           </p>
 
@@ -1126,13 +1066,13 @@ export default function AESCreatorversePage() {
 
             <p className="font-semibold text-white">
 
-              Mentor Sessions
+              Preparatory Sessions
 
             </p>
 
             <p className="text-sm text-slate-400">
 
-              8 live sessions
+              Track briefing, skill prep, and project match.
 
             </p>
 
@@ -1154,13 +1094,13 @@ export default function AESCreatorversePage() {
 
             <p className="font-semibold text-white">
 
-              Internship
+              Executive Stage
 
             </p>
 
             <p className="text-sm text-slate-400">
 
-              Industry exposure
+              Guided launch review before placement.
 
             </p>
 
@@ -1182,13 +1122,13 @@ export default function AESCreatorversePage() {
 
             <p className="font-semibold text-white">
 
-              Portfolio
+              Internship Sprint
 
             </p>
 
             <p className="text-sm text-slate-400">
 
-              Real-world projects
+              Short-format industry exposure.
 
             </p>
 
@@ -1208,13 +1148,13 @@ export default function AESCreatorversePage() {
 
             <p className="font-semibold text-white">
 
-              Certificate
+              Deliverables
 
             </p>
 
             <p className="text-sm text-slate-400">
 
-              Completion credential
+              Certificate, recommendation, or letter of experience.
 
             </p>
 
@@ -1226,9 +1166,9 @@ export default function AESCreatorversePage() {
 
       {/* Bottom */}
 
-      <div className="mt-8">
+      <div className="mt-auto pt-8">
 
-        <Button className="w-full rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 py-6 text-base font-bold text-slate-900 hover:opacity-90">
+        <Button className="w-full rounded-lg bg-gradient-to-r from-amber-400 to-orange-500 py-6 text-base font-bold text-slate-950 hover:from-amber-300 hover:to-orange-400">
 
           Apply 
 
@@ -1244,16 +1184,13 @@ export default function AESCreatorversePage() {
 
 
       <motion.div
-  whileHover={{ y: -10, scale: 1.02 }}
+  whileHover={{ y: -8, scale: 1.01 }}
   transition={{ type: "spring", stiffness: 220 }}
+  className="h-full"
 >
-  <Card className="group relative overflow-hidden rounded-[28px] border-2 border-cyan-400 bg-gradient-to-b from-[#192540] to-[#111827] shadow-[0_0_35px_rgba(34,211,238,.15)]">
+  <Card className="group relative flex h-full flex-col overflow-hidden rounded-lg border-2 border-cyan-400 bg-gradient-to-b from-[#192540] to-[#111827] shadow-[0_0_35px_rgba(34,211,238,.15)] transition-all duration-500 hover:shadow-cyan-400/20"><div className="absolute right-5 top-5 z-10 rounded-md bg-cyan-400/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-cyan-200 ring-1 ring-cyan-300/30">
 
-    {/* Popular Badge */}
-
-    <div className="absolute right-5 top-5 rounded-full bg-cyan-400 px-4 py-1 text-xs font-bold text-slate-900">
-
-      ⭐ MOST POPULAR
+      Most Popular
 
     </div>
 
@@ -1261,18 +1198,23 @@ export default function AESCreatorversePage() {
 
       <img
         src="/aes-creatorverse/fall.png"
-        className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+        alt="Semester Program campus pathway"
+        className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
       />
 
-      <div className="absolute inset-0 bg-gradient-to-t from-[#111827] to-transparent"/>
+      <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#111827]/35 to-transparent"/>
+
+      <div className="absolute left-5 top-5 rounded-md bg-cyan-400 px-3 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-slate-950">
+        SEMESTER PROGRAM
+      </div>
 
     </div>
 
-    <CardContent className="p-7">
+    <CardContent className="flex flex-1 flex-col p-6 sm:p-7">
 
       <div className="flex items-end gap-3">
 
-        <span className="text-6xl font-black text-white">
+        <span className="text-5xl font-black leading-none text-white lg:text-6xl">
 
           5
 
@@ -1286,9 +1228,9 @@ export default function AESCreatorversePage() {
 
           </p>
 
-          <p className="text-sm text-cyan-300">
+          <p className="text-sm font-medium text-cyan-300">
 
-            Semester Program
+            Balanced school-year pathway
 
           </p>
 
@@ -1308,10 +1250,10 @@ export default function AESCreatorversePage() {
 
     <div>
       <p className="font-semibold text-white">
-        Mentor Sessions
+        Preparatory Sessions
       </p>
       <p className="text-sm text-slate-400">
-        16 expert sessions
+        Five-month prep rhythm with project checkpoints.
       </p>
     </div>
 
@@ -1329,7 +1271,7 @@ export default function AESCreatorversePage() {
         Industry Internship
       </p>
       <p className="text-sm text-slate-400">
-        Practical workplace exposure
+        Part-time workplace exposure during the semester.
       </p>
     </div>
 
@@ -1344,10 +1286,10 @@ export default function AESCreatorversePage() {
 
     <div>
       <p className="font-semibold text-white">
-        Portfolio Development
+        Executive Stage
       </p>
       <p className="text-sm text-slate-400">
-        Build real project portfolio
+        Applied review, portfolio check, and showcase.
       </p>
     </div>
 
@@ -1361,10 +1303,10 @@ export default function AESCreatorversePage() {
 
     <div>
       <p className="font-semibold text-white">
-        Career Guidance
+        Deliverables
       </p>
       <p className="text-sm text-slate-400">
-        Resume & interview preparation
+        Certificate, recommendation, or letter of experience.
       </p>
     </div>
 
@@ -1372,11 +1314,13 @@ export default function AESCreatorversePage() {
 
 </div>
 
-      <Button className="mt-8 w-full rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 py-6 text-base font-bold text-slate-900">
+      <div className="mt-auto pt-8">
+      <Button className="w-full rounded-lg bg-gradient-to-r from-cyan-400 to-blue-500 py-6 text-base font-bold text-slate-950 hover:from-cyan-300 hover:to-blue-400">
 
         Apply
 
       </Button>
+      </div>
 
     </CardContent>
 
@@ -1385,34 +1329,40 @@ export default function AESCreatorversePage() {
 
 
       <motion.div
-whileHover={{y:-10,scale:1.02}}
+whileHover={{y:-8,scale:1.01}}
 transition={{type:"spring",stiffness:220}}
+className="h-full"
 >
 
-<Card className="group overflow-hidden rounded-[28px] border border-violet-400/30 bg-gradient-to-b from-[#192540] to-[#111827]">
+<Card className="group flex h-full flex-col overflow-hidden rounded-lg border border-violet-400/35 bg-gradient-to-b from-[#192540] to-[#111827] shadow-2xl transition-all duration-500 hover:border-violet-300/60 hover:shadow-violet-400/20">
 
 <div className="relative h-44 overflow-hidden">
 
 <img
 src="/aes-creatorverse/3.png"
-className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+alt="Long Year Program mountain journey"
+className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
 />
 
-<div className="absolute inset-0 bg-gradient-to-t from-[#111827] to-transparent"/>
+<div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#111827]/35 to-transparent"/>
 
-<div className="absolute left-5 top-5 rounded-full bg-violet-500 px-4 py-1 text-xs font-bold">
+<div className="absolute left-5 top-5 rounded-md bg-violet-500 px-3 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-white">
 
-PREMIUM
+LONG YEAR PROGRAM
 
+</div>
+
+<div className="absolute right-5 top-5 rounded-md bg-violet-400/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-violet-200 ring-1 ring-violet-300/30">
+Complete Journey
 </div>
 
 </div>
 
-<CardContent className="p-7">
+<CardContent className="flex flex-1 flex-col p-6 sm:p-7">
 
 <div className="flex items-end gap-3">
 
-<span className="text-6xl font-black text-white">
+<span className="text-5xl font-black leading-none text-white lg:text-6xl">
 
 10
 
@@ -1426,9 +1376,9 @@ Months
 
 </p>
 
-<p className="text-sm text-violet-300">
+<p className="text-sm font-medium text-violet-300">
 
-Complete Journey
+Complete journey-long year program
 
 </p>
 
@@ -1449,10 +1399,10 @@ Complete Journey
 
     <div>
       <p className="font-semibold text-white">
-        Mentor Sessions
+        Preparatory Sessions
       </p>
       <p className="text-sm text-slate-400">
-        34 expert sessions
+        Ten-month roadmap with skill-building checkpoints.
       </p>
     </div>
 
@@ -1470,7 +1420,7 @@ Complete Journey
         Long Internship
       </p>
       <p className="text-sm text-slate-400">
-        Extended industry experience
+        Extended industry experience and project ownership.
       </p>
     </div>
 
@@ -1485,10 +1435,10 @@ Complete Journey
 
     <div>
       <p className="font-semibold text-white">
-        Research Project
+        Executive Stage
       </p>
       <p className="text-sm text-slate-400">
-        Publishable capstone work
+        Advanced showcase, review, and final profile presentation.
       </p>
     </div>
 
@@ -1502,10 +1452,10 @@ Complete Journey
 
     <div>
       <p className="font-semibold text-white">
-        Placement Assistance
+        Deliverables
       </p>
       <p className="text-sm text-slate-400">
-        Career & placement support
+        Certificate, recommendation, or letter of experience.
       </p>
     </div>
 
@@ -1513,11 +1463,13 @@ Complete Journey
 
 </div>
 
-<Button className="mt-8 w-full rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 py-6 text-base font-bold">
+<div className="mt-auto pt-8">
+<Button className="w-full rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-500 py-6 text-base font-bold text-white hover:from-violet-400 hover:to-fuchsia-400">
 
 Apply
 
 </Button>
+</div>
 
 </CardContent>
 
@@ -1537,7 +1489,6 @@ Apply
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 border-yellow-400/20 bg-yellow-400/10 text-yellow-400">FAQ</Badge>
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Frequently Asked Questions</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">Answers about AES Creator Verse, tracks and social profile options.</p>
           </motion.div>
@@ -1581,9 +1532,6 @@ Apply
             transition={{ duration: 0.8 }}
             className="max-w-4xl mx-auto theme-text-light space-y-6 sm:space-y-8"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-              Start Your Journey
-            </Badge>
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold theme-text-light leading-tight">
               Ready to launch your profile?
             </h2>

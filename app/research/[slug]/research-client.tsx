@@ -9,7 +9,6 @@ import { AuthorSection } from "@/app/components/research/author-section"
 import { TableOfContents } from "@/app/components/research/table-of-contents"
 import { ArticleContent } from "@/app/components/research/article-content"
 import { AccessModal } from "@/app/components/research/access-modal"
-import { Sparkles } from "lucide-react"
 import { toast } from "sonner"
 
 interface ResearchClientProps {
@@ -165,14 +164,6 @@ export default function ResearchClient({ research }: ResearchClientProps) {
           </div>
 
           <div className="py-12 lg:py-16">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-yellow-400/10 border border-yellow-400/20 rounded-full text-xs font-medium text-yellow-400">
-                <Sparkles className="w-3 h-3" />
-                Featured Research
-              </span>
-              <span className="text-xs theme-text-muted">Published</span>
-            </div>
-
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-semibold theme-text-light mb-6">
               {research.title}
             </h1>

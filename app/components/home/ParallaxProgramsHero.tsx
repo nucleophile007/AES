@@ -40,9 +40,6 @@ export function ParallaxProgramsHero() {
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#0b0f1f]/60 via-[#0b0f1f]/40 to-[#0b0f1f]/85" />
 
       <div className="relative z-20 mx-auto flex w-full max-w-4xl flex-col items-center gap-5 px-6 text-center">
-        <span className="inline-flex items-center rounded-full border border-yellow-400/30 bg-yellow-400/10 px-4 py-1.5 text-sm font-semibold text-yellow-300">
-          Four pathways. One AcharyaES.
-        </span>
         <h1 className="text-3xl font-semibold tracking-tight text-blue-200 drop-shadow-[0_4px_20px_rgba(59,130,246,0.35)] md:text-4xl">
           Discover our programs
         </h1>

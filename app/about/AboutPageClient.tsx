@@ -3,7 +3,6 @@
 import React from 'react';
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Users, BookOpen, Target, Trophy, Linkedin, Globe, Mail, GraduationCap, Star, Calculator, Atom } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -104,9 +103,6 @@ export default function AboutPageClient({ mentors }: AboutPageClientProps) {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
             <div className="text-left space-y-8 animate-slide-in-bottom">
-              <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-                📖 About Us
-              </Badge>
               <div>
                 <h1 className="text-4xl lg:text-5xl font-black bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent mb-4 animate-slide-in-bottom">
                   About Acharya
@@ -479,9 +475,6 @@ export default function AboutPageClient({ mentors }: AboutPageClientProps) {
               transition={{ duration: 1, delay: 0.2 }}
               className="inline-block mb-6"
             >
-              <Badge className="bg-yellow-400/10 text-yellow-400 border-yellow-400/30 px-5 py-2 text-sm font-medium">
-                Our Expert Team
-              </Badge>
             </motion.div>
 
             <motion.h3
@@ -740,9 +733,6 @@ export default function AboutPageClient({ mentors }: AboutPageClientProps) {
             transition={{ duration: 0.8 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-blue-400/10 text-blue-400 border-blue-400/30 px-5 py-2 text-sm font-medium">
-              Web Development Team
-            </Badge>
             <h3 className="text-4xl lg:text-5xl font-bold text-white mb-6">
               Our Web Team
             </h3>
@@ -822,24 +812,6 @@ export default function AboutPageClient({ mentors }: AboutPageClientProps) {
                       </p>
                     </motion.div>
 
-                    {/* Specialties */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.6, delay: index * 0.2 + 0.8 }}
-                    >
-                      <div className="flex flex-wrap gap-2">
-                        {member.specialties.map((specialty, idx) => (
-                          <Badge
-                            key={idx}
-                            className="bg-blue-400/10 text-blue-400 border-blue-400/30 hover:bg-blue-400/20 transition-colors text-xs"
-                          >
-                            {specialty}
-                          </Badge>
-                        ))}
-                      </div>
-                    </motion.div>
                   </div>
                 </div>
               </motion.div>

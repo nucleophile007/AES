@@ -6,7 +6,6 @@ import Footer from "@/components/home/Footer";
 import Chatbot from "@/components/home/Chatbot";
 import { Calendar, Clock, MapPin, ArrowRight, Users, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 
 interface Event {
@@ -172,9 +171,6 @@ export default function EventsPage() {
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
-              <Badge className="mb-5 bg-yellow-400/10 text-yellow-300 border-yellow-300/30 hover:bg-yellow-400/20 px-4 py-1 text-sm">
-                Community & Learning
-              </Badge>
               <h1 className="bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-500 bg-clip-text text-5xl font-black text-transparent sm:text-6xl lg:text-7xl">
                 EVENTS
               </h1>
@@ -219,10 +215,8 @@ export default function EventsPage() {
                     <Image src={event.image} alt={event.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
                     {event.isFeatured && (
                       <div className="absolute top-3 right-3">
-                        <Badge className="bg-yellow-400 text-gray-900 border-0 font-semibold">Featured</Badge>
                       </div>
                     )}
-                    <Badge className="absolute top-3 left-3 bg-slate-900/80 backdrop-blur-sm text-white border-slate-600">{event.category}</Badge>
                   </div>
                   <div className="p-6 flex-1 flex flex-col">
                     <h3 className="text-xl font-bold theme-text-light mb-3 group-hover:text-yellow-400 transition-colors line-clamp-2">{event.title}</h3>
@@ -278,7 +272,6 @@ export default function EventsPage() {
                     <div className="text-sm text-blue-400 mb-2 font-medium">{getEventDateLabel(event)}</div>
                     <h3 className="text-xl font-bold theme-text-light mb-3">{event.title}</h3>
                     <p className="text-slate-400 mb-4 line-clamp-3">{event.description}</p>
-                    <Badge className="bg-slate-700 text-slate-300 border-slate-600">{event.category}</Badge>
                   </div>
                 </div>
               ))}

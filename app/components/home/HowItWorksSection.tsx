@@ -1,7 +1,6 @@
 "use client";
 import React from "react";
 import { motion } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
 import { Target, BookOpen, GraduationCap } from "lucide-react";
 
 const steps = [
@@ -44,9 +43,6 @@ export default function HowItWorksSection() {
           whileInView={{ opacity: 1, y: 0 }}
           className="text-center mb-12 sm:mb-16"
         >
-          <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-            How It Works
-          </Badge>
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold theme-text-light mb-4 sm:mb-6">
             Your Journey to Academic Excellence
           </h2>
