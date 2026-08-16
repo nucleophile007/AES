@@ -6,7 +6,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import RegistrationCloseButton from "@/components/events/RegistrationCloseButton";
 import type { Metadata } from "next";
-import { ArrowRight, CalendarDays, CheckCircle2, Clock3, MapPin, Sparkles, Trophy } from "lucide-react";
+import { ArrowRight, CalendarDays, CheckCircle2, Clock3, MapPin, Trophy } from "lucide-react";
 
 type EventFormConfig = {
   title: string;
@@ -260,11 +260,7 @@ export default async function EventRegistrationPage({
         <div className="relative mx-auto w-full max-w-7xl space-y-10 px-4 pb-12 sm:px-6 md:px-8">
           {id !== "aes-champions" && id !== "ap-bridge" && id !== "aes-explorers" && (
             <div className="mx-auto max-w-4xl text-center text-white">
-              <div className="inline-flex items-center gap-2 rounded-full border border-yellow-300/20 bg-yellow-300/10 px-4 py-2 text-sm uppercase tracking-[0.22em] text-yellow-200">
-                <Sparkles className="h-4 w-4" />
-                {eventConfig.eyebrow}
-              </div>
-              <h1 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
+              <h1 className="text-3xl font-black tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
                 {eventConfig.title.replace(" Registration", "")}
               </h1>
               <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-slate-200 sm:text-lg sm:leading-8">

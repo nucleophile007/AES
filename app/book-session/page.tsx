@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Calendar, Clock, User, CheckCircle, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import Header from '@/components/home/Header'
 import Footer from '@/components/home/Footer'
@@ -441,9 +440,6 @@ export default function BookSessionPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-8"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-              📅 Book Your Session
-            </Badge>
             <h1 className="text-3xl lg:text-4xl font-bold theme-text-light mb-4">
               Schedule Your Free Discovery Session
             </h1>

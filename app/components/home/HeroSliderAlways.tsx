@@ -186,17 +186,6 @@ export function HeroSliderAlways({
                       : "max-w-2xl ml-8 md:ml-16 mt-8 md:mt-16"
                   )}
                 >
-                  {activeSlide.subtitle && (
-                    <div
-                      className={`hero-badge mb-4 md:mb-6 ${
-                        isPosterSlide
-                          ? "bg-black/45 border-white/25 text-white/95 font-semibold text-xs md:text-sm px-4 py-2 backdrop-blur-md tracking-[0.12em] uppercase"
-                          : "bg-gradient-to-r from-yellow-400/20 to-amber-500/20 border-yellow-400/30 text-yellow-200"
-                      }`}
-                    >
-                      {activeSlide.subtitle}
-                    </div>
-                  )}
                   <h1
                     className={`font-bold bg-gradient-to-r ${
                       isPosterSlide

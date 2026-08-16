@@ -560,24 +560,6 @@ function ResearchShowcaseContent() {
                         </span>
 
                         <Link href={`/research/${item.slug}`} className="block">
-                          {item.category && (
-                            <div className="mb-2">
-                              <span
-                                className={`inline-block px-3 py-1 rounded-full text-[11px] tracking-wide font-semibold backdrop-blur-sm border ${
-                                  item.category === "IGNITE"
-                                    ? "bg-orange-500/10 text-orange-400 border-orange-400/20"
-                                    : item.category === "ELEVATE"
-                                    ? "bg-blue-500/10 text-blue-400 border-blue-400/20"
-                                    : item.category === "TRANSFORM"
-                                    ? "bg-purple-500/10 text-purple-400 border-purple-400/20"
-                                    : "bg-slate-500/10 text-slate-400 border-slate-400/20"
-                                }`}
-                              >
-                                {item.category}
-                              </span>
-                            </div>
-                          )}
-
                           <h2 className="text-xl sm:text-2xl font-semibold theme-text-light leading-snug group-hover:text-yellow-400 transition-colors duration-300">
                             {item.title}
                           </h2>

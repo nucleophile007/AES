@@ -9,15 +9,6 @@ export function UsaboSpotlight() {
       <div className="pointer-events-none absolute bottom-0 left-0 h-96 w-96 rounded-full bg-emerald-500/5 blur-3xl" />
 
       <div className="relative z-10 mx-auto w-full max-w-6xl">
-        <div className="mb-8 flex justify-center">
-          <div className="inline-flex items-center gap-3 rounded-full border border-emerald-500/40 bg-[#0f1422] px-6 py-2.5">
-            <span className="text-emerald-400">★</span>
-            <span className="text-sm font-bold tracking-[0.25em] text-emerald-400">
-              STUDENT SPOTLIGHT
-            </span>
-            <span className="text-emerald-400">★</span>
-          </div>
-        </div>
 
         <div className="relative overflow-hidden rounded-2xl border border-emerald-500/40 bg-gradient-to-br from-[#0f1422] to-[#0a0e1a] shadow-[0_0_60px_-15px_rgba(16,185,129,0.35)]">
           <div className="flex flex-col gap-6 p-6 sm:flex-row sm:p-8">

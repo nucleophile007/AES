@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play, X } from "lucide-react";
 import Image from "next/image";
@@ -33,9 +32,6 @@ export default function HeroSection() {
             className="space-y-6 sm:space-y-8"
           >
             <div className="space-y-4 sm:space-y-6">
-              <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20 text-base px-3 py-1">
-                ✨ Excellence in Education Since 2023
-              </Badge>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold theme-text-light mb-6 leading-tight">
                 Nurture Your Child&apos;s
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500">

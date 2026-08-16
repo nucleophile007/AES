@@ -1,7 +1,6 @@
 "use client";
 import React, { memo } from "react";
 import { motion } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
 import { ProgramCarousel } from "./ProgramCarousel";
 
 // Enhanced animation variants for better UX
@@ -31,20 +30,6 @@ const itemVariants = {
   }
 };
 
-const badgeVariants = {
-  hidden: { scale: 0, rotate: -180, opacity: 0 },
-  visible: { 
-    scale: 1, 
-    rotate: 0,
-    opacity: 1,
-    transition: { 
-      type: "spring" as const,
-      stiffness: 200,
-      damping: 15,
-      delay: 0.3
-    }
-  }
-};
 
 const carouselVariants = {
   hidden: { opacity: 0, y: 50, scale: 0.98 },
@@ -82,17 +67,6 @@ const ProgramsSection = memo(() => {
           viewport={{ once: true, amount: 0.2 }}
           className="text-center mb-8 sm:mb-12 lg:mb-16"
         >
-          <motion.div variants={badgeVariants} className="mb-3 sm:mb-4">
-            {/* <Badge 
-              className="bg-yellow-400/10 text-yellow-400 border-yellow-400/20 text-sm sm:text-base px-3 py-1.5 sm:px-4 sm:py-2"
-              aria-label="Premium programs badge"
-            >
-              ✨ Our Premium Programs
-            </Badge> */}
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-            Our Premium Programs
-          </Badge>
-          </motion.div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold theme-text-light mb-4 sm:mb-6">
             Unlock Your Child&apos;s Academic Edge
           </h2>

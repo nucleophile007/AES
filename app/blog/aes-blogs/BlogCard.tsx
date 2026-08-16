@@ -1,7 +1,6 @@
 "use client";
 import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { ExternalLink, BookOpen } from "lucide-react";
 import Image from "next/image";
 
@@ -84,12 +83,6 @@ export default function BlogCard({ blog }: BlogCardProps) {
                 {studentName}
               </h4>
               
-              {studentGrade && (
-                <Badge className="bg-blue-400/20 text-blue-400 border-blue-400/30 hover:bg-blue-400/30">
-                  Grade {studentGrade}
-                </Badge>
-              )}
-              
               {studentSchool && (
                 <p className="text-sm text-slate-400 leading-relaxed">
                   {studentSchool}
@@ -111,9 +104,6 @@ export default function BlogCard({ blog }: BlogCardProps) {
               {/* Publication Date Badge */}
               <div className="flex items-center gap-2">
                 <BookOpen className="h-4 w-4 text-yellow-400" />
-                <Badge className="bg-yellow-400/10 text-yellow-400 border-yellow-400/30">
-                  {publicationDate}
-                </Badge>
               </div>
 
               {/* Blog Title */}

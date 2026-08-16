@@ -198,13 +198,6 @@ export const AnimatedTestimonials = ({
                 transition={{ duration: 0.15, ease: "easeOut" }}
                 className="flex flex-col h-full justify-center"
               >
-                {/* Badge */}
-                <div className={`${isShort ? "mb-8" : "mb-4"}`}>
-                  <span className="inline-block rounded-full bg-yellow-400 px-4 py-2 text-sm font-semibold text-slate-900 shadow-md">
-                    {sectionLabels[activeSection]}
-                  </span>
-                </div>
-
                 {/* Name - ADAPTIVE SPACING */}
                 <div className={`flex items-start ${isShort ? "mb-6" : "mb-4"}`}>
                   <h3 className="text-2xl md:text-3xl font-bold text-sky-300 leading-tight">

@@ -3,7 +3,6 @@ import React from "react";
 import { motion } from "framer-motion";
 import useSWR from "swr";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Trophy, Linkedin, Globe, Mail } from "lucide-react";
 import { FacultyGridSkeleton } from "@/components/ui/MentorSkeleton";
@@ -90,9 +89,6 @@ export default function FacultySection() {
                   <CardDescription className="font-medium text-brand-teal">
                     {member.role}
                   </CardDescription>
-                  <Badge className="bg-brand-orange/10 text-brand-orange border-brand-orange/20 text-xs">
-                    {member.experience || "Expert"}
-                  </Badge>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
@@ -102,21 +98,6 @@ export default function FacultySection() {
                       </p>
                       <p className="text-xs text-text-light">{member.education}</p>
                       <p className="text-xs text-brand-blue font-medium">{member.institution}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-text-dark mb-2">Specialties</p>
-                      <div className="flex flex-wrap gap-1">
-                        {member.specialties.slice(0, 3).map((specialty, i) => (
-                          <Badge key={i} variant="secondary" className="text-xs">
-                            {specialty}
-                          </Badge>
-                        ))}
-                        {member.specialties.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{member.specialties.length - 3} more
-                          </Badge>
-                        )}
-                      </div>
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-text-dark mb-2">Key Achievements</p>
