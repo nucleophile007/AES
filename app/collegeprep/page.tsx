@@ -1141,7 +1141,6 @@ export default function CollegePrepPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center w-full mb-6"
           >
-            {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">College Admissions</Badge> */}
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold theme-text-light mb-3">Where ACHARYA Students Got Admitted</h2>
             <p className="text-base lg:text-lg theme-text-muted">
               A proud showcase of universities and colleges our students earned admission to.
@@ -1256,9 +1255,6 @@ export default function CollegePrepPage() {
         </div>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-0">
           <div className="text-center mb-12 animate-slide-in-bottom">
-            {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-              🎓 College Prep
-            </Badge> */}
             <h1 className="text-5xl lg:text-6xl font-black bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent mb-3 animate-slide-in-bottom">
               UACHIEVE
             </h1>
@@ -1295,7 +1291,6 @@ export default function CollegePrepPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-20"
           >
-            {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Our Approach</Badge> */}
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">How We Guide Your College Journey</h2>
             <p className="text-xl theme-text-muted max-w-4xl mx-auto">
               The 3-Pillar Approach: We help students build standout profiles, showcase intellectual curiosity, and achieve competitive excellence through research, competitions, and strategic planning.
@@ -1313,7 +1308,6 @@ export default function CollegePrepPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Program Highlights</Badge> */}
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">What Sets Our College Prep Apart</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">From profile enrichment to essay guidance, we help students build a profile that stands out to top colleges.</p>
           </motion.div>
@@ -1458,9 +1452,6 @@ export default function CollegePrepPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-20"
           >
-            {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20 px-4 py-2 text-sm font-semibold">
-              🚀 Strategic College Prep Journey
-            </Badge> */}
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">
             Proven Path to College Success
             </h2>
@@ -2240,9 +2231,6 @@ export default function CollegePrepPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-              📊 Data Insights
-            </Badge> */}
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">
               College Prep Analytics Dashboard
             </h2>
@@ -2284,7 +2272,6 @@ export default function CollegePrepPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Student Success</Badge>
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">What Parents & Students Say</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">Hear from our successful students and their parents about their UACHIEVE experience.</p>
           </motion.div> */}
@@ -2309,7 +2296,6 @@ export default function CollegePrepPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Student Success</Badge> */}
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">What Parents & Students Say</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">Hear from our successful students and their parents about their AES tutoring experience.</p>
           </motion.div>
@@ -2346,9 +2332,6 @@ export default function CollegePrepPage() {
             transition={{ duration: 0.8 }}
             className="max-w-4xl mx-auto space-y-6 sm:space-y-8"
           >
-            {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-              🚀 Start Your Journey Today
-            </Badge> */}
             
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold theme-text-light leading-tight">
               Ready to Discover Your Potential?

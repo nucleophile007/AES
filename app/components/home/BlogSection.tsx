@@ -55,7 +55,6 @@ export default function BlogSection() {
           whileInView={{ opacity: 1, y: 0 }}
           className="text-center mb-16"
         >
-          <Badge className="mb-4 bg-brand-blue/10 text-brand-blue">AES Blog</Badge>
           <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">Student Presentations, Research & Insights</h2>
           <p className="text-xl text-text-light max-w-3xl mx-auto">Explore student achievements, research publications, and educational insights from our founder and faculty</p>
         </motion.div>
@@ -113,7 +112,6 @@ export default function BlogSection() {
         >
           <div className="grid lg:grid-cols-3 gap-8 items-center">
             <div className="lg:col-span-2">
-              <Badge className="mb-4 bg-brand-green/10 text-brand-green">Featured Article</Badge>
               <h3 className="text-2xl font-bold text-text-dark mb-4">&quot;The Evolution of Educational Technology: Lessons from a Decade of Teaching&quot;</h3>
               <p className="text-text-light mb-6">A comprehensive analysis of how educational technology has transformed learning outcomes, featuring insights from our 15+ years of experience in personalized education and research-driven teaching methodologies.</p>
               <div className="flex items-center space-x-4 mb-4">

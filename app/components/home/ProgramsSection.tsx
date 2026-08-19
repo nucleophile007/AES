@@ -147,9 +147,6 @@ export default function ProgramsSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12 sm:mb-16"
         >
-          <Badge className="mb-4 bg-brand-blue/10 text-brand-blue text-xs sm:text-sm">
-            Our Programs
-          </Badge>
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-text-dark mb-4 sm:mb-6">
             Enhanced Program & Service Showcasing
           </h2>
