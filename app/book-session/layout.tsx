@@ -4,7 +4,7 @@ import React from "react";
 export const metadata: Metadata = {
   title: "Book a Free Consultation | ACHARYA Educational Services",
   description:
-    "Schedule a free discovery session to explore academic tutoring, SAT coaching, math competition training, and student research programs tailored to your goals.",
+    "Schedule a free discovery session to explore academic tutoring, math competition training, and student research programs tailored to your goals.",
   alternates: {
     canonical: "./",
   },

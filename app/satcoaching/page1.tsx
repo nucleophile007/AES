@@ -291,9 +291,6 @@ export default function SATCoachingPage() {
         </div>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-12 animate-slide-in-bottom">
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-              🎯 SAT & PSAT Coaching
-            </Badge>
             <h1 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">
               Boost Your SAT & PSAT Scores with Expert Coaching
             </h1>
@@ -333,7 +330,6 @@ export default function SATCoachingPage() {
 
            <div className="max-w-6xl mx-auto relative z-10">
              <div className="text-center mb-16">
-               <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">Program Highlights</Badge>
                <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">What Sets Our SAT Prep Apart</h2>
                <p className="text-xl theme-text-muted max-w-3xl mx-auto">
                  From diagnostic testing to expert feedback, our program is designed for real results.
@@ -531,7 +527,6 @@ export default function SATCoachingPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">Our Approach</Badge>
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">How We Achieve Your SAT Success</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">
               Our approach is designed to help students build confidence, master test strategies, and achieve their target SAT score.
@@ -632,7 +627,6 @@ export default function SATCoachingPage() {
              whileInView={{ opacity: 1, y: 0 }}
              className="text-center mb-16"
            >
-             <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">SAT Prep Journey</Badge>
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Pathways to Choose</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">Mentor-based coaching & self-study coaching packages designed for your learning style.</p>
            </motion.div>
@@ -862,7 +856,6 @@ export default function SATCoachingPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">Success Stories</Badge>
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Student Success Stories</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">Hear from our successful students about their SAT prep journey and score improvements.</p>
           </motion.div>
@@ -937,9 +930,6 @@ export default function SATCoachingPage() {
             transition={{ duration: 0.8 }}
             className="max-w-4xl mx-auto space-y-6 sm:space-y-8"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-              🚀 Start Your SAT Journey Today
-            </Badge>
             
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold theme-text-light leading-tight">
               Ready to Crush the SAT & PSAT?
@@ -1014,7 +1004,6 @@ export default function SATCoachingPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">FAQ</Badge>
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Frequently Asked Questions</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">Find answers to common questions about our SAT/PSAT coaching, practice tests, and more.</p>
           </motion.div>

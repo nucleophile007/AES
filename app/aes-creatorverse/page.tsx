@@ -185,7 +185,6 @@ export default function AESCreatorversePage() {
         </div>
         <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} className="text-center">
-            <Badge className="mb-4 border-yellow-400/30 bg-yellow-400/10 text-yellow-300">AES CREATORVERSE</Badge>
             <h1 className="bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-500 bg-clip-text text-5xl font-black text-transparent sm:text-6xl lg:text-7xl">
               AES CREATORVERSE
             </h1>
@@ -229,9 +228,6 @@ export default function AESCreatorversePage() {
       className="mb-20 text-center"
     >
 
-      <Badge className="mb-4 border-yellow-400/20 bg-yellow-400/10 text-yellow-400">
-        Career Tracks
-      </Badge>
 
       <h2 className="text-7xl font-black theme-text-light">
         AES Launch Pad
@@ -394,9 +390,6 @@ export default function AESCreatorversePage() {
       transition={{ duration: 0.6 }}
       className="mb-20 text-center"
     >
-      <Badge className="mb-4 border-yellow-400/20 bg-yellow-400/10 text-yellow-400">
-        Build Your Creative Identity
-      </Badge>
 
        <h2 className="text-7xl font-black theme-text-light">
         Social Profile Program
@@ -718,10 +711,6 @@ export default function AESCreatorversePage() {
       className="mx-auto mb-20 max-w-3xl text-center"
     >
 
-      <Badge className="mb-4 border-yellow-400/20 bg-yellow-400/10 text-yellow-400">
-        Flexible Learning
-
-      </Badge>
 
       <h2 className="text-7xl font-black theme-text-light">
 
@@ -1235,7 +1224,6 @@ Apply
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 border-yellow-400/20 bg-yellow-400/10 text-yellow-400">FAQ</Badge>
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Frequently Asked Questions</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">Answers about AES Creator Verse, tracks and social profile options.</p>
           </motion.div>
@@ -1279,9 +1267,6 @@ Apply
             transition={{ duration: 0.8 }}
             className="max-w-4xl mx-auto theme-text-light space-y-6 sm:space-y-8"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-              Start Your Journey
-            </Badge>
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold theme-text-light leading-tight">
               Ready to launch your profile?
             </h2>

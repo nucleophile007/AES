@@ -35,9 +35,6 @@ export default function TeamPhilosophySection() {
           <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-3xl"></div>
           <div className="relative z-10 text-center p-12 space-y-8">
             <div className="space-y-4">
-              <Badge className="mb-4 bg-brand-blue/10 text-brand-blue border-brand-blue/20">
-                Our Philosophy
-              </Badge>
               <h3 className="text-3xl lg:text-4xl font-bold text-text-dark">
                 Our Teaching Philosophy
               </h3>
