@@ -149,9 +149,9 @@ export default function FeaturesGridSection() {
       <div className="container mx-auto relative z-10">
         {/* Header */}
         <div className="text-center mb-12">
-          <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
+          {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
             Why Choose Us
-          </Badge>
+          </Badge> */}
           <h2 className="text-4xl md:text-5xl font-bold theme-text-light mb-4">
             Why Choose ACHARYA?
           </h2>

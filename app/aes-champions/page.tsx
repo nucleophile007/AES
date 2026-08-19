@@ -486,10 +486,10 @@ export default function AESChampionsPage() {
         
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-12 animate-slide-in-bottom">
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
+            {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
               🏆 AES CHAMPIONS
-            </Badge>
-            <h1 className="text-6xl lg:text-7xl font-black bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent mb-4 animate-slide-in-bottom">
+            </Badge> */}
+            <h1 className="mt-4 text-6xl lg:text-7xl font-black bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent mb-4 animate-slide-in-bottom">
               AES CHAMPIONS
             </h1>
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">
@@ -533,11 +533,11 @@ export default function AESChampionsPage() {
              transition={{ duration: 0.8 }}
              className="text-center mb-20"
            >
-             <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-yellow-400/20 via-amber-400/20 to-yellow-400/20 backdrop-blur-sm border border-yellow-400/30 rounded-full mb-6 shadow-lg shadow-yellow-400/10">
+             {/* <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-yellow-400/20 via-amber-400/20 to-yellow-400/20 backdrop-blur-sm border border-yellow-400/30 rounded-full mb-6 shadow-lg shadow-yellow-400/10">
                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
                <span className="text-yellow-400 font-bold text-sm tracking-wide">COMPETITION TRACKS</span>
                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-             </div>
+             </div> */}
              
                            <h2 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black theme-text-light mb-8 leading-tight">
                 <span className="theme-text-light leading-tight text-blue-400">Competition</span>
@@ -797,11 +797,11 @@ export default function AESChampionsPage() {
             transition={{ duration: 0.8 }}
             className="text-center mb-20"
           >
-            <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-yellow-400/20 via-amber-400/20 to-yellow-400/20 backdrop-blur-sm border border-yellow-400/30 rounded-full mb-6 shadow-lg shadow-yellow-400/10">
+            {/* <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-yellow-400/20 via-amber-400/20 to-yellow-400/20 backdrop-blur-sm border border-yellow-400/30 rounded-full mb-6 shadow-lg shadow-yellow-400/10">
               <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
               <span className="text-yellow-400 font-bold text-sm tracking-wide">AES CHAMPIONS PROGRAMS</span>
               <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-            </div>
+            </div> */}
             
             <h2 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black theme-text-light mb-8 leading-tight">
               Pathways to Excellence
@@ -1425,7 +1425,7 @@ export default function AESChampionsPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Program Overview</Badge>
+            {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Program Overview</Badge> */}
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Your Pathway to National & International Success</h2>
           </motion.div>
 
@@ -1504,7 +1504,7 @@ export default function AESChampionsPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-              <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Competition Programs</Badge>
+              {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Competition Programs</Badge> */}
             <h2 className="text-3xl lg:text-5xl font-bold theme-text-light mb-4 leading-tight">
               Choose Your 
               <span className="theme-text-light leading-tight text-blue-400"> Competition Track</span>
@@ -1661,7 +1661,7 @@ export default function AESChampionsPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Program Deliverables</Badge>
+            {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Program Deliverables</Badge> */}
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">What You&apos;ll Achieve</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">Comprehensive skill development for competitive excellence and beyond.</p>
           </motion.div>
@@ -1714,7 +1714,7 @@ export default function AESChampionsPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Student Success</Badge>
+            {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Student Success</Badge> */}
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">What Our Champions Say</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">Hear from students who have excelled in competitions through AES CHAMPIONS.</p>
           </motion.div>
@@ -1739,7 +1739,7 @@ export default function AESChampionsPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">FAQ</Badge>
+            {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">FAQ</Badge> */}
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Frequently Asked Questions</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">Find answers to common questions about the AES CHAMPIONS program.</p>
           </motion.div>
@@ -1788,9 +1788,9 @@ export default function AESChampionsPage() {
             transition={{ duration: 0.8 }}
             className="max-w-4xl mx-auto theme-text-light space-y-6 sm:space-y-8"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
+            {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
               🚀 Start Your Champion Journey
-            </Badge>
+            </Badge> */}
             
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold theme-text-light leading-tight">
               Ready to Become a Champion?

@@ -475,9 +475,9 @@ export default function AESExplorersPage() {
          
          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
            <div className="text-center mb-12 animate-slide-in-bottom">
-             <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
+             {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
                🔬 AES EXPLORERS
-             </Badge>
+             </Badge> */}
              <h1 className="text-6xl lg:text-7xl font-black bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent mb-4 animate-slide-in-bottom">
                AES EXPLORERS
              </h1>
@@ -532,9 +532,9 @@ export default function AESExplorersPage() {
                <div className="w-full h-1 bg-gradient-to-r from-yellow-400/20 via-yellow-400 to-yellow-400/20 rounded-full mb-8"></div>
                
                <div className="text-center mb-8">
-                 <Badge className="mb-6 bg-gradient-to-r from-yellow-400/20 to-amber-500/20 text-yellow-300 border-yellow-400/30 px-6 py-2 text-lg">
+                 {/* <Badge className="mb-6 bg-gradient-to-r from-yellow-400/20 to-amber-500/20 text-yellow-300 border-yellow-400/30 px-6 py-2 text-lg">
                    Why Research?
-                 </Badge>
+                 </Badge> */}
                  <h2 className="text-5xl lg:text-6xl font-black bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent mb-8 leading-tight">
                    Research Excellence
                  </h2>
@@ -608,9 +608,9 @@ export default function AESExplorersPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 className="text-center mb-20"
               >
-                <Badge className="mb-6 bg-gradient-to-r from-yellow-400/20 to-amber-500/20 text-yellow-300 border-yellow-400/30 px-6 py-2 text-lg">
+                {/* <Badge className="mb-6 bg-gradient-to-r from-yellow-400/20 to-amber-500/20 text-yellow-300 border-yellow-400/30 px-6 py-2 text-lg">
                   🔬 Research Domains
-                </Badge>
+                </Badge> */}
                 <h2 className="text-5xl lg:text-6xl font-black theme-text-light mb-8 leading-tight">
                   Choose Your
                   <span className="theme-text-light leading-tight text-blue-400">
@@ -671,7 +671,7 @@ export default function AESExplorersPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Program Information</Badge>
+            {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Program Information</Badge> */}
                          <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Research Excellence at Your Fingertips</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">
               Personalized research problems based on student interests, conducted entirely online with expert mentorship from leading academics and industry professionals.
@@ -710,7 +710,7 @@ export default function AESExplorersPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Enrollment Options</Badge>
+            {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Enrollment Options</Badge> */}
                          <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Choose Your Research Journey</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">Flexible enrollment options to match your learning style and goals.</p>
           </motion.div>
@@ -757,7 +757,7 @@ export default function AESExplorersPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Program Tiers</Badge>
+            {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Program Tiers</Badge> */}
                          <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-4 leading-tight">
                Three Levels of 
                <span className="theme-text-light leading-tight text-blue-400"> Research Excellence</span>
@@ -904,7 +904,7 @@ export default function AESExplorersPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Student Success</Badge>
+            {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">Student Success</Badge> */}
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">What Our Researchers Say</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">Hear from students who have conducted research through AES EXPLORERS.</p>
           </motion.div>
@@ -929,7 +929,7 @@ export default function AESExplorersPage() {
             whileInView={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">FAQ</Badge>
+            {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400">FAQ</Badge> */}
             <h2 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">Frequently Asked Questions</h2>
             <p className="text-xl theme-text-muted max-w-3xl mx-auto">Find answers to common questions about the AES EXPLORERS program.</p>
           </motion.div>
@@ -978,9 +978,9 @@ export default function AESExplorersPage() {
             transition={{ duration: 0.8 }}
             className="max-w-4xl mx-auto theme-text-light space-y-6 sm:space-y-8"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
+            {/* <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
               🚀 Start Your Research Journey
-            </Badge>
+            </Badge> */}
             
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold theme-text-light leading-tight">
               Ready to Start Your Research Journey?

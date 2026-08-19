@@ -145,10 +145,10 @@ export function ProgramsHero() {
           <div className="h-[calc(100svh-5rem)] sm:h-[calc(100svh-6rem)] w-full relative z-20 flex flex-col justify-between pb-4 sm:pb-6">
             {/* Header */}
             <div className="flex-shrink-0 space-y-3 sm:space-y-4 flex flex-col items-center">
-              <div className="flex items-center gap-2 rounded-full border border-yellow-400/40 bg-yellow-400/15 px-4 py-2 backdrop-blur-sm mb-5 w-fit">
+              {/* <div className="flex items-center gap-2 rounded-full border border-yellow-400/40 bg-yellow-400/15 px-4 py-2 backdrop-blur-sm mb-5 w-fit">
                 <div className="h-1.5 w-1.5 rounded-full bg-yellow-400" />
                 <span className="text-xs sm:text-sm font-semibold uppercase tracking-[0.15em] text-yellow-200">Transform Your Journey</span>
-              </div>
+              </div> */}
               {/* <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black bg-gradient-to-r from-white via-yellow-100 to-amber-200 bg-clip-text text-transparent text-balance leading-tight drop-shadow-[0_2px_12px_rgba(250,204,21,0.3)]">
                 Our Programs
               </h1>
@@ -160,8 +160,8 @@ export function ProgramsHero() {
             {/* Banner Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-5 lg:gap-6 flex-1 w-full overflow-hidden">
               {banners.map((banner, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className="overflow-hidden rounded-lg"
                 >
                   <BannerItem
@@ -189,18 +189,18 @@ export function ProgramsHero() {
   };
 
   const spotlightsSlide: Slide = {
-      title: "Student Spotlights",
-      customContent: <StudentSpotlights />,
-      imageSrc: "/program-image/banner-explorers.png",
-      imageAlt: "AcharyaES student spotlights",
-    };
+    title: "Student Spotlights",
+    customContent: <StudentSpotlights />,
+    imageSrc: "/program-image/banner-explorers.png",
+    imageAlt: "AcharyaES student spotlights",
+  };
 
-    const usabospotlightsSlide: Slide = {
-      title: "USABO Spotlights",
-      customContent: <UsaboSpotlight />,
-      imageSrc: "/program-image/banner-explorers.png",
-      imageAlt: "AcharyaES USABO spotlights",
-    };
+  const usabospotlightsSlide: Slide = {
+    title: "USABO Spotlights",
+    customContent: <UsaboSpotlight />,
+    imageSrc: "/program-image/banner-explorers.png",
+    imageAlt: "AcharyaES USABO spotlights",
+  };
 
   const programSlides: Slide[] = [
     {
@@ -266,7 +266,7 @@ export function ProgramsHero() {
     //   hideContent: true,
     //   showCtaWhenHidden: true,
     // },
- 
+
     // {
     //   title: "AES Explorers Summer Camp",
     //   cta: { label: "Register Now", href: "/events/register/aes-explorers" },

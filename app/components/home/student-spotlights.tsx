@@ -270,7 +270,7 @@ export function StudentSpotlights() {
       <div className="pointer-events-none absolute bottom-0 left-0 h-96 w-96 rounded-full bg-blue-500/5 blur-3xl" />
 
       <div className="relative z-10 mx-auto w-full max-w-6xl">
-        <div className="mb-8 flex justify-center">
+        <div className="mb-20 flex justify-center">
           {/* <div className="inline-flex items-center gap-3 rounded-full border border-amber-500/40 bg-[#0f1422] px-6 py-2.5">
             <span className="text-amber-400">★</span>
             <span className="text-sm font-bold tracking-[0.25em] text-amber-400">
