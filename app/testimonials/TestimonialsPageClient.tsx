@@ -144,9 +144,6 @@ export default function TestimonialsPageClient({
             transition={{ duration: 0.6 }}
             className="text-center mb-8"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20 px-4 py-2 text-lg font-semibold">
-              Student Spotlights
-            </Badge>
             <h2 className="text-3xl md:text-4xl font-bold theme-text-light mb-2">
               Recent Student Achievements
             </h2>

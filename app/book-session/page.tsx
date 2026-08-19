@@ -275,7 +275,6 @@ export default function BookSessionPage() {
   // Program options
   const programOptions = [
     "Academic Tutoring",
-    "SAT Coaching", 
     "College Prep",
     "Olympiads",
     "Research Program"
@@ -384,7 +383,7 @@ export default function BookSessionPage() {
     formData.programInterested
 
   const canSubmit = canProceedStep1 && formData.selectedDate && formData.selectedTime
-  const showAllHalfHourSlots = ["Academic Tutoring", "SAT Coaching"].includes(formData.programInterested)
+  const showAllHalfHourSlots = ["Academic Tutoring", "Olympiads", "Research Program"].includes(formData.programInterested)
 
   if (showSuccessModal) {
     return (
@@ -441,9 +440,6 @@ export default function BookSessionPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-8"
           >
-            <Badge className="mb-4 bg-yellow-400/10 text-yellow-400 border-yellow-400/20">
-              📅 Book Your Session
-            </Badge>
             <h1 className="text-3xl lg:text-4xl font-bold theme-text-light mb-4">
               Schedule Your Free Discovery Session
             </h1>

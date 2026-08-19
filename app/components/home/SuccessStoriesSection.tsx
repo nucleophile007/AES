@@ -209,7 +209,6 @@ export default function SuccessStoriesSection() {
           whileInView={{ opacity: 1, y: 0 }}
           className="text-center mb-16"
         >
-          <Badge className="mb-4 bg-brand-green/10 text-brand-green">Success Stories</Badge>
           <h2 className="text-4xl lg:text-5xl font-bold text-text-dark mb-6">Student Outcomes & Alumni Success</h2>
           <p className="text-xl text-text-light max-w-3xl mx-auto">Discover how our students excel across all our programs</p>
         </motion.div>

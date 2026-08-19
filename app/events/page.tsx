@@ -172,9 +172,6 @@ export default function EventsPage() {
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
-              <Badge className="mb-5 bg-yellow-400/10 text-yellow-300 border-yellow-300/30 hover:bg-yellow-400/20 px-4 py-1 text-sm">
-                Community & Learning
-              </Badge>
               <h1 className="bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-500 bg-clip-text text-5xl font-black text-transparent sm:text-6xl lg:text-7xl">
                 EVENTS
               </h1>
