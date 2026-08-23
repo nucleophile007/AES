@@ -110,9 +110,9 @@ interface ParsedMcqSubmission {
       answeredCount?: number;
       unansweredCount?: number;
     };
-    sectionStats?: Array<{
-      sectionId?: string;
-      sectionName?: string;
+    topicStats?: Array<{
+      topicId: string;
+      topicName: string;
       questionCount?: number;
       answeredCount?: number;
       correctCount?: number;
@@ -223,10 +223,10 @@ const parseMcqSubmission = (content: string | null): ParsedMcqSubmission | null 
         ];
     const fallbackPresentation = createDefaultReportPresentation({
       testTitle: parsed.testTitle || "MCQ + PDF Assessment",
-      sectionStats: parsed.report?.sectionStats || [],
+      topicStats: parsed.report?.topicStats || [],
     });
     const reportPresentation = parsed.report
-      ? normalizeReportPresentation(parsed.reportPresentation, fallbackPresentation, parsed.report.sectionStats || [])
+      ? normalizeReportPresentation(parsed.reportPresentation, fallbackPresentation, parsed.report.topicStats || [])
       : undefined;
 
     return {
@@ -269,6 +269,7 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
   const [filters, setFilters] = useState({
     status: 'all',
     assignment: 'all',
+    student: 'all',
     search: ''
   });
 
@@ -314,6 +315,11 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
     // Filter by assignment
     if (filters.assignment !== 'all') {
       filtered = filtered.filter(s => s.assignment.id.toString() === filters.assignment);
+    }
+
+    // Filter by student
+    if (filters.student !== 'all') {
+      filtered = filtered.filter(s => s.student.id.toString() === filters.student);
     }
 
     // Filter by search (student name or assignment title)
@@ -489,9 +495,9 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
       studentName: submission.student.name,
       assignmentTitle: submission.assignment.title,
       testTitle: parsed.testTitle,
-      sectionStats: parsed.report?.sectionStats || [],
+      topicStats: parsed.report?.topicStats || [],
     });
-    return normalizeReportPresentation(parsed.reportPresentation, fallback, parsed.report?.sectionStats || []);
+    return normalizeReportPresentation(parsed.reportPresentation, fallback, parsed.report?.topicStats || []);
   };
 
   const openReportDialog = (submission: Submission) => {
@@ -595,6 +601,11 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
     new Set(submissions.map(s => s.assignment.id))
   ).map(id => submissions.find(s => s.assignment.id === id)?.assignment).filter(Boolean);
 
+  // Get unique students for filter
+  const uniqueStudents = Array.from(
+    new Set(submissions.map(s => s.student.id))
+  ).map(id => submissions.find(s => s.student.id === id)?.student).filter(Boolean);
+
   if (loading) {
     return (
       <div className="space-y-4 p-2">
@@ -675,7 +686,24 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
               </Select>
             </div>
 
-            <div className="md:col-span-2">
+            <div>
+              <Label>Student</Label>
+              <Select value={filters.student} onValueChange={(value) => setFilters({...filters, student: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Students</SelectItem>
+                  {uniqueStudents.map((student) => (
+                    <SelectItem key={student!.id} value={student!.id.toString()}>
+                      {student!.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
               <Label>Search</Label>
               <Input
                 placeholder="Search by student name or assignment..."
@@ -799,10 +827,11 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                             Partial {parsedMcqSubmission?.report?.scoreSummary?.partialCount ?? 0} •
                             Wrong {parsedMcqSubmission?.report?.scoreSummary?.wrongCount ?? 0}
                           </p>
-                          {(parsedMcqSubmission?.report?.sectionStats || []).slice(0, 3).map((section, index) => (
-                            <p key={`section-stat-${submission.id}-${index}`}>
-                              {section.sectionName || "Section"}: {section.score ?? 0}/{section.maxScore ?? 0} ({section.percentage ?? 0}%)
-                            </p>
+                          {(parsedMcqSubmission?.report?.topicStats || []).slice(0, 3).map((topic, index) => (
+                            <div key={topic.topicId || index} className="flex items-center justify-between">
+                              <span className="truncate text-slate-600">{topic.topicName || "Topic"}</span>
+                              <span className="font-medium text-slate-900">{topic.score}/{topic.maxScore}</span>
+                            </div>
                           ))}
                         </div>
                       )}
@@ -1113,14 +1142,14 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                     )}
                     <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Topic Insights</p>
-                      {(selectedReportData.report.sectionStats || []).map((section, index) => {
-                        const sectionId = section.sectionId || `section-${index + 1}`;
+                      {(selectedReportData.report.topicStats || []).map((topic, index) => {
+                        const topicId = topic.topicId || `topic-${index + 1}`;
                         return (
-                          <div key={`ai-topic-${sectionId}`}>
-                            <Label htmlFor={`ai-topic-${sectionId}`}>{section.sectionName || `Section ${index + 1}`}</Label>
+                          <div key={`ai-topic-${topicId}`}>
+                            <Label htmlFor={`ai-topic-${topicId}`}>{topic.topicName || `Topic ${index + 1}`}</Label>
                             <Textarea
-                              id={`ai-topic-${sectionId}`}
-                              value={selectedReportPresentation.aiTopicInsights?.[sectionId] || ""}
+                              id={`ai-topic-${topicId}`}
+                              value={selectedReportPresentation.aiTopicInsights?.[topicId] || ""}
                               onChange={(e) => {
                                 setSelectedReportPresentation((prev) => {
                                   if (!prev) return prev;
@@ -1128,7 +1157,7 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                                     ...prev,
                                     aiTopicInsights: {
                                       ...(prev.aiTopicInsights || {}),
-                                      [sectionId]: e.target.value,
+                                      [topicId]: e.target.value,
                                     },
                                     updatedAt: new Date().toISOString(),
                                     mode: prev.mode === "confirmed" ? "draft" : prev.mode,
@@ -1205,15 +1234,15 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                     </div> */}
                     <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Proficiency Labels</p>
-                      {(selectedReportData.report.sectionStats || []).map((section, index) => {
-                        const sectionId = section.sectionId || `section-${index + 1}`;
+                      {(selectedReportData.report.topicStats || []).map((topic, index) => {
+                        const topicId = topic.topicId || `topic-${index + 1}`;
                         return (
-                          <div key={`label-${sectionId}`}>
-                            <Label htmlFor={`mastery-${sectionId}`}>{section.sectionName || `Section ${index + 1}`}</Label>
+                          <div key={`label-${topicId}`}>
+                            <Label htmlFor={`mastery-${topicId}`}>{topic.topicName || `Topic ${index + 1}`}</Label>
                             <Input
-                              id={`mastery-${sectionId}`}
-                              value={selectedReportPresentation.masteryLabels[sectionId] || ""}
-                              onChange={(e) => updateMasteryLabel(sectionId, e.target.value)}
+                              id={`mastery-${topicId}`}
+                              value={selectedReportPresentation.masteryLabels[topicId] || ""}
+                              onChange={(e) => updateMasteryLabel(topicId, e.target.value)}
                               placeholder="Advanced / Developing / Needs Support"
                             />
                           </div>

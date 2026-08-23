@@ -1,8 +1,8 @@
 export type ReportMode = "draft" | "confirmed";
 
-export interface McqReportSectionStat {
-  sectionId?: string;
-  sectionName?: string;
+export interface McqReportTopicStat {
+  topicId?: string;
+  topicName?: string;
   percentage?: number;
 }
 
@@ -12,9 +12,9 @@ export interface McqReportPresentation {
   instituteName: string;
   reportTitle: string;
   reportType: string;
-  sectionTitleNarrative: string;
-  sectionTitleMastery: string;
-  sectionTitleDifficulty: string;
+  topicTitleNarrative: string;
+  topicTitleMastery: string;
+  topicTitleDifficulty: string;
   aiNarrative: string;
   strengths: string;
   weaknesses: string;
@@ -46,7 +46,7 @@ interface CreateDefaultPresentationOptions {
   studentName?: string;
   assignmentTitle?: string;
   testTitle?: string;
-  sectionStats?: McqReportSectionStat[];
+  topicStats?: McqReportTopicStat[];
 }
 
 const DEFAULT_INSTITUTE_NAME = "AES Elite Coaching";
@@ -62,14 +62,14 @@ const toMode = (value: unknown): ReportMode => {
 
 const normalizeMasteryLabels = (
   value: unknown,
-  sectionStats: McqReportSectionStat[]
+  topicStats: McqReportTopicStat[]
 ): Record<string, string> => {
   const source = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
   const next: Record<string, string> = {};
 
-  sectionStats.forEach((section, index) => {
-    const id = section.sectionId || `section-${index + 1}`;
-    const percentage = Number(section.percentage) || 0;
+  topicStats.forEach((topic, index) => {
+    const id = topic.topicId || `topic-${index + 1}`;
+    const percentage = Number(topic.percentage) || 0;
     const defaultTier = percentage >= 80 ? "Advanced" : percentage >= 60 ? "Developing" : "Needs Support";
     const label = toText(source[id], defaultTier);
     next[id] = label || defaultTier;
@@ -85,7 +85,7 @@ export const createDefaultReportPresentation = (
   const studentName = toText(options.studentName, "Student");
   const assignmentTitle = toText(options.assignmentTitle, "Assessment");
   const testTitle = toText(options.testTitle, "MCQ Diagnostic");
-  const sectionStats = Array.isArray(options.sectionStats) ? options.sectionStats : [];
+  const topicStats = Array.isArray(options.topicStats) ? options.topicStats : [];
 
   return {
     version: 1,
@@ -93,9 +93,9 @@ export const createDefaultReportPresentation = (
     instituteName: DEFAULT_INSTITUTE_NAME,
     reportTitle: "Premium AI Diagnostic Report",
     reportType: `${testTitle} Performance Analysis`,
-    sectionTitleNarrative: "Performance Narrative",
-    sectionTitleMastery: "Topic Mastery Experience",
-    sectionTitleDifficulty: "Difficulty Intelligence",
+    topicTitleNarrative: "Performance Narrative",
+    topicTitleMastery: "Topic Mastery Experience",
+    topicTitleDifficulty: "Difficulty Intelligence",
     aiNarrative: `${studentName} completed ${assignmentTitle}. This narrative should be refined by the mentor before student release.`,
     difficultyReviews: {
       easy: `Easy Tier (83% Mastery): Solid grasp of core operations. Only one error (Q18), likely due\nto a minor oversight in factor listing.`,
@@ -115,8 +115,8 @@ export const createDefaultReportPresentation = (
     teacherRecommendation: "",
     nextAction: "Complete two guided revision sessions and one timed mixed-paper within 7 days.",
     mentorComments: "Mentor to personalize recommendations before confirmation.",
-    topicInsights: "Prioritize weak sections first, then consolidate medium-confidence areas.",
-    masteryLabels: normalizeMasteryLabels({}, sectionStats),
+    topicInsights: "Prioritize weak topics first, then consolidate medium-confidence areas.",
+    masteryLabels: normalizeMasteryLabels({}, topicStats),
     updatedAt: now,
     confirmedAt: null,
     confirmedByTeacherId: null,
@@ -126,7 +126,7 @@ export const createDefaultReportPresentation = (
 export const normalizeReportPresentation = (
   value: unknown,
   fallback: McqReportPresentation,
-  sectionStats: McqReportSectionStat[] = []
+  topicStats: McqReportTopicStat[] = []
 ): McqReportPresentation => {
   const source = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
 
@@ -136,9 +136,9 @@ export const normalizeReportPresentation = (
     instituteName: toText(source.instituteName, fallback.instituteName),
     reportTitle: toText(source.reportTitle, fallback.reportTitle),
     reportType: toText(source.reportType, fallback.reportType),
-    sectionTitleNarrative: toText(source.sectionTitleNarrative, fallback.sectionTitleNarrative),
-    sectionTitleMastery: toText(source.sectionTitleMastery, fallback.sectionTitleMastery),
-    sectionTitleDifficulty: toText(source.sectionTitleDifficulty, fallback.sectionTitleDifficulty),
+    topicTitleNarrative: toText(source.topicTitleNarrative, fallback.topicTitleNarrative),
+    topicTitleMastery: toText(source.topicTitleMastery, fallback.topicTitleMastery),
+    topicTitleDifficulty: toText(source.topicTitleDifficulty, fallback.topicTitleDifficulty),
     aiNarrative: toText(source.aiNarrative, fallback.aiNarrative),
     strengths: toText(source.strengths, fallback.strengths),
     weaknesses: toText(source.weaknesses, fallback.weaknesses),
@@ -162,7 +162,7 @@ export const normalizeReportPresentation = (
     aiTopicInsights: (source as any).aiTopicInsights && typeof (source as any).aiTopicInsights === 'object'
       ? (source as any).aiTopicInsights as Record<string, string>
       : (fallback as any).aiTopicInsights || {},
-    masteryLabels: normalizeMasteryLabels(source.masteryLabels ?? fallback.masteryLabels, sectionStats),
+    masteryLabels: normalizeMasteryLabels(source.masteryLabels ?? fallback.masteryLabels, topicStats),
     updatedAt: toText(source.updatedAt, fallback.updatedAt) || new Date().toISOString(),
     confirmedAt: toText(source.confirmedAt, fallback.confirmedAt || "") || null,
     confirmedByTeacherId: Number.isFinite(Number(source.confirmedByTeacherId))

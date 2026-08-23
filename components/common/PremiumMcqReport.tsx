@@ -18,8 +18,8 @@ interface ScoreSummary {
 }
 
 interface SectionStat {
-  sectionId?: string;
-  sectionName?: string;
+  topicId?: string;
+  topicName?: string;
   questionCount?: number;
   correctCount?: number;
   wrongCount?: number;
@@ -40,7 +40,7 @@ interface DifficultyStat {
 
 interface QuestionStat {
   questionNumber?: string | number;
-  sectionName?: string;
+  topicName?: string;
   difficulty?: string;
   correctAnswers?: string[];
   selectedAnswers?: string[];
@@ -54,7 +54,7 @@ interface PremiumMcqReportProps {
   report: {
     assessmentType?: string;
     scoreSummary?: ScoreSummary;
-    sectionStats?: SectionStat[];
+    topicStats?: SectionStat[];
     difficultyStats?: DifficultyStat[];
     questionStats?: QuestionStat[];
     generatedAt?: string;
@@ -144,7 +144,7 @@ export default function PremiumMcqReport({
   onUpdatePresentation,
 }: PremiumMcqReportProps) {
   const summary = report.scoreSummary || {};
-  const sectionStats = report.sectionStats || [];
+  const topicStats = report.topicStats || [];
   const difficultyStats = report.difficultyStats || [];
   const questionStats = report.questionStats || [];
 
@@ -152,13 +152,13 @@ export default function PremiumMcqReport({
   const overallMastery = masteryWord(overallPct);
   const strengths = toBulletList(presentation.strengths);
   const weaknesses = toBulletList(presentation.weaknesses);
-  const narrativeTitle = presentation.sectionTitleNarrative === "AI Performance Narrative" ? "Performance Narrative" : presentation.sectionTitleNarrative;
+  const narrativeTitle = presentation.topicTitleNarrative === "AI Performance Narrative" ? "Performance Narrative" : presentation.topicTitleNarrative;
   const showGapAnalysis = report.assessmentType === "simple-assignment";
   const totalPages = showGapAnalysis ? 4 : 3;
 
-  const excellent = sectionStats.filter((section) => pct(section.percentage) >= 75);
-  const developing = sectionStats.filter((section) => pct(section.percentage) >= 50 && pct(section.percentage) < 75);
-  const critical = sectionStats.filter((section) => pct(section.percentage) < 50);
+  const excellent = topicStats.filter((section) => pct(section.percentage) >= 75);
+  const developing = topicStats.filter((section) => pct(section.percentage) >= 50 && pct(section.percentage) < 75);
+  const critical = topicStats.filter((section) => pct(section.percentage) < 50);
 
   return (
     <div className={cn("w-full", className)}>
@@ -267,11 +267,11 @@ export default function PremiumMcqReport({
                   column.items.map((section, itemIndex) => {
                     const percentage = pct(section.percentage);
                     return (
-                      <div key={section.sectionId || itemIndex} className={cn("text-center", itemIndex > 0 && "mt-4 pt-4 border-t border-slate-200")}>
-                        <div className="serif-display font-bold text-[1rem] text-[var(--ink)]">{section.sectionName || `Section ${itemIndex + 1}`}</div>
+                      <div key={section.topicId || itemIndex} className={cn("text-center", itemIndex > 0 && "mt-4 pt-4 border-t border-slate-200")}>
+                        <div className="serif-display font-bold text-[1rem] text-[var(--ink)]">{section.topicName || `Section ${itemIndex + 1}`}</div>
                         <div className="text-[0.9rem] text-[var(--muted-ink)] mt-1 leading-snug">
-                              {presentation.aiTopicInsights && presentation.aiTopicInsights[section.sectionId || `section-${itemIndex + 1}`]
-                                ? presentation.aiTopicInsights[section.sectionId || `section-${itemIndex + 1}`]
+                              {presentation.aiTopicInsights && presentation.aiTopicInsights[section.topicId || `section-${itemIndex + 1}`]
+                                ? presentation.aiTopicInsights[section.topicId || `section-${itemIndex + 1}`]
                                 : percentage >= 80
                                 ? "Strong conceptual understanding and high execution consistency."
                                 : percentage >= 50
@@ -280,7 +280,7 @@ export default function PremiumMcqReport({
                         </div>
                         <div className="mt-3">
                           <span className={cn("inline-flex rounded border px-2 py-1 text-[11px] font-medium", column.textClass)}>
-                            {presentation.masteryLabels[section.sectionId || `section-${itemIndex + 1}`] || "Developing"}
+                            {presentation.masteryLabels[section.topicId || `section-${itemIndex + 1}`] || "Developing"}
                           </span>
                         </div>
                       </div>

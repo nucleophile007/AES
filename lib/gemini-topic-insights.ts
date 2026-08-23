@@ -1,6 +1,6 @@
-export interface SectionLike {
-  sectionId?: string;
-  sectionName?: string;
+export interface TopicLike {
+  topicId?: string;
+  topicName?: string;
   percentage?: number;
   questionCount?: number;
   correctCount?: number;
@@ -12,14 +12,14 @@ interface GenerateTopicInsightsInput {
   studentName: string;
   assignmentTitle: string;
   testTitle: string;
-  sections: SectionLike[];
+  topics: TopicLike[];
 }
 
 const normalizeText = (v: unknown) => (typeof v === "string" ? v.trim() : "");
 
-const buildFallback = (section: SectionLike) => {
-  const pct = Math.round(Number(section.percentage) || 0);
-  const name = section.sectionName || "Topic";
+const buildFallback = (topic: TopicLike) => {
+  const pct = Math.round(Number(topic.percentage) || 0);
+  const name = topic.topicName || "Topic";
   if (pct >= 80) return `${name}: strong mastery (${pct}%). Continue mixed practice to maintain transfer.`;
   if (pct >= 60) return `${name}: developing mastery (${pct}%). Focus on varied application to build consistency.`;
   if (pct >= 40) return `${name}: partial understanding (${pct}%). Reinforce core concepts with scaffolded problems.`;
@@ -48,19 +48,19 @@ export async function generateGeminiTopicInsights(input: GenerateTopicInsightsIn
     "";
 
   const fallback: TopicInsightsResult = {};
-  input.sections.forEach((s, idx) => {
-    const id = s.sectionId || `section-${idx + 1}`;
-    fallback[id] = buildFallback(s);
+  input.topics.forEach((t, idx) => {
+    const id = t.topicId || `topic-${idx + 1}`;
+    fallback[id] = buildFallback(t);
   });
 
   if (!apiKey) return fallback;
 
   const model = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 
-  const sectionsContext = input.sections
-    .map((s, idx) => {
-      const id = s.sectionId || `section-${idx + 1}`;
-      return `${id}: ${s.sectionName || "Topic"} (${Math.round(Number(s.percentage) || 0)}% mastery, ${Number(s.correctCount)||0}/${Number(s.questionCount)||0} correct)`;
+  const topicsContext = input.topics
+    .map((t, idx) => {
+      const id = t.topicId || `topic-${idx + 1}`;
+      return `${id}: ${t.topicName || "Topic"} (${Math.round(Number(t.percentage) || 0)}% mastery, ${Number(t.correctCount)||0}/${Number(t.questionCount)||0} correct)`;
     })
     .join("\n");
 
@@ -72,15 +72,15 @@ export async function generateGeminiTopicInsights(input: GenerateTopicInsightsIn
           {
             text: [
               `You are an educational analyst.`,
-              `Return only a single JSON object mapping section ids to a one-sentence insight string.`,
-              `Keys should be the section id (e.g. section-1) and values should be 1 short sentence each.`,
+              `Return only a single JSON object mapping topic ids to a one-sentence insight string.`,
+              `Keys should be the topic id (e.g. topic-1) and values should be 1 short sentence each.`,
               `Do not include markdown or bullet points.`,
               `Context:`,
               `Student: ${input.studentName}`,
               `Assignment: ${input.assignmentTitle}`,
               `Test: ${input.testTitle}`,
-              `Sections:`,
-              sectionsContext,
+              `Topics:`,
+              topicsContext,
             ].join("\n"),
           },
         ],
@@ -112,8 +112,8 @@ export async function generateGeminiTopicInsights(input: GenerateTopicInsightsIn
     const parsed = parseGeminiJson(text);
 
     const result: TopicInsightsResult = {};
-    input.sections.forEach((s, idx) => {
-      const id = s.sectionId || `section-${idx + 1}`;
+    input.topics.forEach((t, idx) => {
+      const id = t.topicId || `topic-${idx + 1}`;
       result[id] = parsed[id] || fallback[id];
     });
 

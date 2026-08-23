@@ -3,7 +3,7 @@ export interface GapAnalysisInput {
   assignmentTitle: string;
   testTitle: string;
   scoreSummary: Record<string, unknown>;
-  sectionStats: Array<Record<string, unknown>>;
+  topicStats: Array<Record<string, unknown>>;
   difficultyStats: Array<Record<string, unknown>>;
 }
 
@@ -17,11 +17,11 @@ const normalizeText = (value: unknown) => (typeof value === "string" ? value.tri
 
 const buildFallback = (input: GapAnalysisInput): GapAnalysisResult => {
   const percentage = Math.round(Number(input.scoreSummary?.percentage) || 0);
-  const weakSections = input.sectionStats
-    .filter((section) => Number(section.percentage) < 60)
-    .map((section) => normalizeText(section.sectionName) || "target topic")
+  const weakTopics = input.topicStats
+    .filter((topic) => Number(topic.percentage) < 60)
+    .map((topic) => normalizeText(topic.topicName) || "target topic")
     .slice(0, 3);
-  const focus = weakSections.length > 0 ? weakSections.join(", ") : "mixed application and error review";
+  const focus = weakTopics.length > 0 ? weakTopics.join(", ") : "mixed application and error review";
 
   return {
     conceptualGaps: `The main gaps appear in ${focus}, with overall mastery at ${percentage}%. The student needs stronger transfer from familiar examples to mixed problem formats.`,
@@ -70,7 +70,7 @@ export async function generateGeminiGapAnalysis(input: GapAnalysisInput): Promis
               `Assignment: ${input.assignmentTitle}`,
               `Test: ${input.testTitle}`,
               `Score summary: ${JSON.stringify(input.scoreSummary)}`,
-              `Topic stats: ${JSON.stringify(input.sectionStats)}`,
+              `Topic stats: ${JSON.stringify(input.topicStats)}`,
               `Difficulty stats: ${JSON.stringify(input.difficultyStats)}`,
             ].join("\n"),
           },

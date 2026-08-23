@@ -15,9 +15,9 @@ type ScoreSummary = {
   unansweredCount?: number;
 };
 
-type SectionStat = {
-  sectionId?: string;
-  sectionName?: string;
+type TopicStat = {
+  topicId?: string;
+  topicName?: string;
   questionCount?: number;
   correctCount?: number;
   wrongCount?: number;
@@ -51,7 +51,7 @@ type QuestionStat = {
 export interface McqReportPdfInput {
   report: {
     scoreSummary?: ScoreSummary;
-    sectionStats?: SectionStat[];
+    topicStats?: TopicStat[];
     difficultyStats?: DifficultyStat[];
     questionStats?: QuestionStat[];
     generatedAt?: string;
@@ -245,10 +245,10 @@ const drawSectionHeader = (page: PDFPage, title: string, x: number, yTop: number
   return yTop - 24;
 };
 
-const drawSectionInsights = (
+const drawTopicInsights = (
   page: PDFPage,
   title: string,
-  sections: SectionStat[],
+  topics: TopicStat[],
   presentation: McqReportPresentation,
   x: number,
   yTop: number,
@@ -261,14 +261,14 @@ const drawSectionInsights = (
   page.drawText(title, { x: x + 8, y: yTop - 15, size: 9, font: fonts.title, color: rgb(1, 1, 1) });
 
   let cursor = yTop - 28;
-  const perItem = Math.max(1, Math.floor((height - 28) / Math.max(1, sections.length)));
-  sections.forEach((section) => {
-    const name = section.sectionName || "Section";
-    const id = section.sectionId || "";
+  const perItem = Math.max(1, Math.floor((height - 28) / Math.max(1, topics.length)));
+  topics.forEach((topic) => {
+    const name = topic.topicName || "Topic";
+    const id = topic.topicId || "";
     const insight = presentation.aiTopicInsights && id ? presentation.aiTopicInsights[id] : "";
-    const fallback = insight || (percentValue(section.percentage) >= 80
+    const fallback = insight || (percentValue(topic.percentage) >= 80
       ? "Strong conceptual understanding and high execution consistency."
-      : percentValue(section.percentage) >= 50
+      : percentValue(topic.percentage) >= 50
       ? "Developing understanding with room for stronger application."
       : "Major conceptual struggles detected requiring focused revision.");
 
@@ -310,7 +310,7 @@ export async function generateMcqReportPdfBytes(input: McqReportPdfInput): Promi
 
   const { report, presentation } = input;
   const summary = report.scoreSummary || {};
-  const sectionStats = report.sectionStats || [];
+  const topicStats = report.topicStats || [];
   const difficultyStats = report.difficultyStats || [];
   const questionStats = report.questionStats || [];
   const strengths = toTextLines(presentation.strengths);
@@ -342,7 +342,7 @@ export async function generateMcqReportPdfBytes(input: McqReportPdfInput): Promi
   y -= 72;
   page.drawRectangle({ x: MARGIN, y: y - 98, width: PAGE_WIDTH - MARGIN * 2, height: 98, borderWidth: 1, borderColor: BORDER });
   page.drawRectangle({ x: MARGIN, y: y - 18, width: PAGE_WIDTH - MARGIN * 2, height: 18, color: NAVY });
-  page.drawText(narrativeTitle(presentation.sectionTitleNarrative), { x: MARGIN + 8, y: y - 13, size: 10, font: bodyBoldFont, color: rgb(1, 1, 1) });
+  page.drawText(narrativeTitle(presentation.topicTitleNarrative), { x: MARGIN + 8, y: y - 13, size: 10, font: bodyBoldFont, color: rgb(1, 1, 1) });
   const narrative = drawWrappedText(page, presentation.aiNarrative, MARGIN + 8, y - 28, PAGE_WIDTH - MARGIN * 2 - 16, serifFont, 9.5, 13, TEXT);
   y = narrative - 6;
 
@@ -357,20 +357,20 @@ export async function generateMcqReportPdfBytes(input: McqReportPdfInput): Promi
   drawWrappedText(page, presentation.interpretationText, MARGIN + 8, y - 28, PAGE_WIDTH - MARGIN * 2 - 16, bodyFont, 9, 12, TEXT);
   y -= 72;
 
-  const topicTitle = drawSectionHeader(page, presentation.sectionTitleMastery, MARGIN, y, PAGE_WIDTH - MARGIN * 2, bodyBoldFont);
+  const topicTitle = drawSectionHeader(page, presentation.topicTitleMastery, MARGIN, y, PAGE_WIDTH - MARGIN * 2, bodyBoldFont);
   y = topicTitle - 4;
   const topicBoxWidth = (PAGE_WIDTH - MARGIN * 2 - 10) / 3;
   const topicBoxHeight = 128;
-  const excellent = sectionStats.filter((section) => percentValue(section.percentage) >= 80);
-  const developing = sectionStats.filter((section) => percentValue(section.percentage) >= 60 && percentValue(section.percentage) < 80);
-  const critical = sectionStats.filter((section) => percentValue(section.percentage) < 60);
-  drawSectionInsights(page, "EXCELLENT", excellent, presentation, MARGIN, y, topicBoxWidth, topicBoxHeight, { body: bodyFont, bodyBold: bodyBoldFont, title: bodyBoldFont });
-  drawSectionInsights(page, "DEVELOPING", developing, presentation, MARGIN + topicBoxWidth + 5, y, topicBoxWidth, topicBoxHeight, { body: bodyFont, bodyBold: bodyBoldFont, title: bodyBoldFont });
-  drawSectionInsights(page, "CRITICAL", critical, presentation, MARGIN + (topicBoxWidth + 5) * 2, y, topicBoxWidth, topicBoxHeight, { body: bodyFont, bodyBold: bodyBoldFont, title: bodyBoldFont });
+  const excellent = topicStats.filter((topic) => percentValue(topic.percentage) >= 80);
+  const developing = topicStats.filter((topic) => percentValue(topic.percentage) >= 60 && percentValue(topic.percentage) < 80);
+  const critical = topicStats.filter((topic) => percentValue(topic.percentage) < 60);
+  drawTopicInsights(page, "EXCELLENT", excellent, presentation, MARGIN, y, topicBoxWidth, topicBoxHeight, { body: bodyFont, bodyBold: bodyBoldFont, title: bodyBoldFont });
+  drawTopicInsights(page, "DEVELOPING", developing, presentation, MARGIN + topicBoxWidth + 5, y, topicBoxWidth, topicBoxHeight, { body: bodyFont, bodyBold: bodyBoldFont, title: bodyBoldFont });
+  drawTopicInsights(page, "CRITICAL", critical, presentation, MARGIN + (topicBoxWidth + 5) * 2, y, topicBoxWidth, topicBoxHeight, { body: bodyFont, bodyBold: bodyBoldFont, title: bodyBoldFont });
 
   page = await makePage();
   y = await drawPageChrome(page, pdfDoc, { body: bodyFont, bodyBold: bodyBoldFont, title: titleFont }, presentation, input.studentName, input.testTitle);
-  y = drawSectionHeader(page, presentation.sectionTitleDifficulty, MARGIN, y, PAGE_WIDTH - MARGIN * 2, bodyBoldFont) - 2;
+  y = drawSectionHeader(page, presentation.topicTitleDifficulty, MARGIN, y, PAGE_WIDTH - MARGIN * 2, bodyBoldFont) - 2;
   difficultyStats.forEach((difficulty, index) => {
     const boxHeight = 58;
     page.drawRectangle({ x: MARGIN, y: y - boxHeight, width: PAGE_WIDTH - MARGIN * 2, height: boxHeight, borderColor: BORDER, borderWidth: 1 });

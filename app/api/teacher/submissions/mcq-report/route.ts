@@ -471,12 +471,12 @@ const buildFeedbackReportText = (report: any, presentation?: McqReportPresentati
     lines.push("");
   }
 
-  lines.push("Section Breakdown:");
-  report.sectionStats.forEach((section: any) => {
-    const sectionLabel = section.sectionId && presentation?.masteryLabels?.[section.sectionId]
-      ? `${section.sectionName} [${presentation.masteryLabels[section.sectionId]}]`
-      : section.sectionName;
-    lines.push(`- ${sectionLabel}: ${section.score}/${section.maxScore} (${section.percentage}%)`);
+  lines.push("Topic Breakdown:");
+  report.topicStats?.forEach((topic: any) => {
+    const topicLabel = topic.topicId && presentation?.masteryLabels?.[topic.topicId]
+      ? `${topic.topicName} [${presentation.masteryLabels[topic.topicId]}]`
+      : topic.topicName;
+    lines.push(`- ${topicLabel}: ${topic.score}/${topic.maxScore} (${topic.percentage}%)`);
   });
   lines.push("");
   lines.push(`Questions: ${report.scoreSummary.answeredCount} answered, ${report.scoreSummary.correctCount} correct, ${report.scoreSummary.partialCount} partial, ${report.scoreSummary.wrongCount} wrong.`);
@@ -572,17 +572,17 @@ export async function POST(request: NextRequest) {
         studentName: submission.student.name,
         assignmentTitle: submission.assignment.title,
         testTitle: String(parsedContent.testTitle || "MCQ + PDF Assessment"),
-        sectionStats: Array.isArray(existingReport.sectionStats) ? (existingReport.sectionStats as any[]) : [],
+        topicStats: Array.isArray(existingReport.topicStats) ? (existingReport.topicStats as any[]) : [],
       });
       const currentPresentation = normalizeReportPresentation(
         parsedContent.reportPresentation,
         fallbackPresentation,
-        Array.isArray(existingReport.sectionStats) ? (existingReport.sectionStats as any[]) : []
+        Array.isArray(existingReport.topicStats) ? (existingReport.topicStats as any[]) : []
       );
       const mergedPresentation = normalizeReportPresentation(
         incomingPresentation,
         currentPresentation,
-        Array.isArray(existingReport.sectionStats) ? (existingReport.sectionStats as any[]) : []
+        Array.isArray(existingReport.topicStats) ? (existingReport.topicStats as any[]) : []
       );
       const isSimpleAssignmentReport =
         parsedContent.assessmentType === "simple-assignment" ||
@@ -599,7 +599,7 @@ export async function POST(request: NextRequest) {
         studentName: submission.student.name,
         assignmentTitle: submission.assignment.title,
         testTitle: String(parsedContent.testTitle || "MCQ + PDF Assessment"),
-        sections: Array.isArray(existingReport.sectionStats) ? (existingReport.sectionStats as any[]) : [],
+        topics: Array.isArray(existingReport.topicStats) ? (existingReport.topicStats as any[]) : [],
       });
       const gapAnalysis = isSimpleAssignmentReport && (
         !mergedPresentation.conceptualGaps ||
@@ -613,7 +613,7 @@ export async function POST(request: NextRequest) {
             scoreSummary: typeof existingReport.scoreSummary === "object" && existingReport.scoreSummary
               ? existingReport.scoreSummary as Record<string, unknown>
               : {},
-            sectionStats: Array.isArray(existingReport.sectionStats) ? existingReport.sectionStats as Array<Record<string, unknown>> : [],
+            topicStats: Array.isArray(existingReport.topicStats) ? existingReport.topicStats as Array<Record<string, unknown>> : [],
             difficultyStats: Array.isArray(existingReport.difficultyStats) ? existingReport.difficultyStats as Array<Record<string, unknown>> : [],
           })
         : null;
@@ -626,7 +626,7 @@ export async function POST(request: NextRequest) {
             scoreSummary: typeof existingReport.scoreSummary === "object" && existingReport.scoreSummary
               ? existingReport.scoreSummary as Record<string, unknown>
               : {},
-            sectionStats: Array.isArray(existingReport.sectionStats) ? existingReport.sectionStats as Array<Record<string, unknown>> : [],
+            topicStats: Array.isArray(existingReport.topicStats) ? existingReport.topicStats as Array<Record<string, unknown>> : [],
             difficultyStats: Array.isArray(existingReport.difficultyStats) ? existingReport.difficultyStats as Array<Record<string, unknown>> : [],
             questionStats: Array.isArray(existingReport.questionStats) ? existingReport.questionStats as Array<Record<string, unknown>> : [],
             timingSummary: typeof existingReport.timingSummary === "object" && existingReport.timingSummary
@@ -816,7 +816,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Requested attempt not found." }, { status: 400 });
     }
 
-    const sectionNameById = new Map(mcqConfig.sections.map((section) => [section.id, section.name]));
+    const topicNameById = new Map<string, string>();
+    const subtopicNameById = new Map<string, string>();
+    if (mcqConfig.topics) {
+      mcqConfig.topics.forEach((topic) => {
+        topicNameById.set(topic.id, topic.name);
+        if (topic.subtopics) {
+          topic.subtopics.forEach((subtopic) => {
+            subtopicNameById.set(subtopic.id, subtopic.name);
+          });
+        }
+      });
+    }
     const questionTimingById = new Map(
       (consideredAttempt.questions || []).map((question) => [
         question.questionId,
@@ -829,9 +840,9 @@ export async function POST(request: NextRequest) {
         },
       ])
     );
-    const sectionStatsMap = new Map<string, {
-      sectionId: string;
-      sectionName: string;
+    const topicStatsMap = new Map<string, {
+      topicId: string;
+      topicName: string;
       questionCount: number;
       answeredCount: number;
       correctCount: number;
@@ -862,24 +873,14 @@ export async function POST(request: NextRequest) {
     let rawScore = 0;
     let maxScore = 0;
 
-    const topicNameById = new Map<string, string>();
-    const subtopicNameById = new Map<string, string>();
-    if (mcqConfig.topics) {
-      mcqConfig.topics.forEach((topic) => {
-        topicNameById.set(topic.id, topic.name);
-        if (topic.subtopics) {
-          topic.subtopics.forEach((subtopic) => {
-            subtopicNameById.set(subtopic.id, subtopic.name);
-          });
-        }
-      });
-    }
+    // removed topicNameById init since moved above
 
     const questionStats = mcqConfig.questions.map((question, index) => {
       const selectedAnswers = consideredAttempt.answersByQuestionId[question.id] || [];
       const result = evaluateQuestion(question, selectedAnswers);
       const difficulty: Difficulty = question.difficulty || "medium";
-      const sectionName = sectionNameById.get(question.sectionId) || "Section";
+      const topicId = question.topicId || "general";
+      const topicName = question.topicId ? topicNameById.get(question.topicId) || "Topic" : "General";
       const questionMax = Math.max(0, question.marks);
       const questionTiming = questionTimingById.get(question.id) || {
         timeSpentMs: 0,
@@ -891,9 +892,9 @@ export async function POST(request: NextRequest) {
       maxScore += questionMax;
       rawScore += result.score;
 
-      const sectionStat = sectionStatsMap.get(question.sectionId) || {
-        sectionId: question.sectionId,
-        sectionName,
+      const topicStat = topicStatsMap.get(topicId) || {
+        topicId,
+        topicName,
         questionCount: 0,
         answeredCount: 0,
         correctCount: 0,
@@ -904,10 +905,10 @@ export async function POST(request: NextRequest) {
         maxScore: 0,
         timeSpentMs: 0,
       };
-      sectionStat.questionCount += 1;
-      sectionStat.score = round2(sectionStat.score + result.score);
-      sectionStat.maxScore = round2(sectionStat.maxScore + questionMax);
-      sectionStat.timeSpentMs += questionTiming.timeSpentMs;
+      topicStat.questionCount += 1;
+      topicStat.score = round2(topicStat.score + result.score);
+      topicStat.maxScore = round2(topicStat.maxScore + questionMax);
+      topicStat.timeSpentMs += questionTiming.timeSpentMs;
 
       const difficultyStat = difficultyStatsMap.get(difficulty) || {
         difficulty,
@@ -926,36 +927,35 @@ export async function POST(request: NextRequest) {
 
       if (result.status === "unanswered") {
         unansweredCount += 1;
-        sectionStat.unansweredCount += 1;
+        topicStat.unansweredCount += 1;
         difficultyStat.unansweredCount += 1;
       } else {
         answeredCount += 1;
-        sectionStat.answeredCount += 1;
+        topicStat.answeredCount += 1;
         difficultyStat.answeredCount += 1;
         if (result.status === "correct") {
           correctCount += 1;
-          sectionStat.correctCount += 1;
+          topicStat.correctCount += 1;
           difficultyStat.correctCount += 1;
         } else if (result.status === "partial") {
           partialCount += 1;
-          sectionStat.partialCount += 1;
+          topicStat.partialCount += 1;
           difficultyStat.partialCount += 1;
         } else {
           wrongCount += 1;
-          sectionStat.wrongCount += 1;
+          topicStat.wrongCount += 1;
           difficultyStat.wrongCount += 1;
         }
       }
 
-      sectionStatsMap.set(question.sectionId, sectionStat);
+      topicStatsMap.set(topicId, topicStat);
       difficultyStatsMap.set(difficulty, difficultyStat);
 
       return {
         questionId: question.id,
         questionNumber: formatQuestionNumber(index, mcqConfig.numberingStyle),
-        sectionId: question.sectionId,
-        sectionName,
-        topic: question.topicId ? topicNameById.get(question.topicId) : undefined,
+        topicId: question.topicId || "general",
+        topicName: topicName,
         subTopic: question.subtopicId ? subtopicNameById.get(question.subtopicId) : undefined,
         difficulty,
         type: question.type,
@@ -983,9 +983,9 @@ export async function POST(request: NextRequest) {
       0
     );
 
-    const sectionStats = Array.from(sectionStatsMap.values()).map((section) => ({
-      ...section,
-      percentage: section.maxScore > 0 ? round2((section.score / section.maxScore) * 100) : 0,
+    const topicStats = Array.from(topicStatsMap.values()).map((topic) => ({
+      ...topic,
+      percentage: topic.maxScore > 0 ? round2((topic.score / topic.maxScore) * 100) : 0,
     }));
     const difficultyStats = Array.from(difficultyStatsMap.values()).map((difficulty) => ({
       ...difficulty,
@@ -1045,7 +1045,7 @@ export async function POST(request: NextRequest) {
         partialCount,
         wrongCount,
       },
-      sectionStats,
+      topicStats,
       difficultyStats,
       questionStats,
     };
@@ -1054,12 +1054,12 @@ export async function POST(request: NextRequest) {
       studentName: submission.student.name,
       assignmentTitle: submission.assignment.title,
       testTitle: String(parsed.testTitle || "MCQ + PDF Assessment"),
-      sectionStats,
+      topicStats,
     });
     const reportPresentation = normalizeReportPresentation(
       (parsed as Record<string, unknown>).reportPresentation,
       fallbackPresentation,
-      sectionStats
+      topicStats
     );
     const aiDifficultyReviews = await generateGeminiDifficultyReviews({
       studentName: submission.student.name,
@@ -1071,7 +1071,7 @@ export async function POST(request: NextRequest) {
       studentName: submission.student.name,
       assignmentTitle: submission.assignment.title,
       testTitle: String(parsed.testTitle || "MCQ + PDF Assessment"),
-      sections: sectionStats,
+      topics: topicStats,
     });
     const gapAnalysis = report.assessmentType === "simple-assignment"
       ? await generateGeminiGapAnalysis({
@@ -1079,7 +1079,7 @@ export async function POST(request: NextRequest) {
           assignmentTitle: submission.assignment.title,
           testTitle: String(parsed.testTitle || "MCQ Test"),
           scoreSummary: report.scoreSummary,
-          sectionStats,
+          topicStats,
           difficultyStats,
         })
       : null;
@@ -1088,7 +1088,7 @@ export async function POST(request: NextRequest) {
       assignmentTitle: submission.assignment.title,
       testTitle: String(parsed.testTitle || "MCQ Test"),
       scoreSummary: report.scoreSummary,
-      sectionStats,
+      topicStats,
       difficultyStats,
       questionStats,
       timingSummary: report.timingSummary,
