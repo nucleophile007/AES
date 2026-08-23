@@ -32,6 +32,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import ParentScheduleView from "../components/parent/ParentScheduleView";
+import ParentMeetingMinutes from "@/components/parent/ParentMeetingMinutes";
 import { cn } from "@/lib/utils";
 import {
   Users,
@@ -110,7 +111,8 @@ type ParentDashboardTab =
   | "profile-building"
   | "testimonial"
   | "chat"
-  | "calendar";
+  | "calendar"
+  | "meeting-minutes";
 
 const createParentTabLoadingState = (): Record<ParentDashboardTab, boolean> => ({
   progress: false,
@@ -119,6 +121,7 @@ const createParentTabLoadingState = (): Record<ParentDashboardTab, boolean> => (
   testimonial: false,
   chat: false,
   calendar: false,
+  "meeting-minutes": false,
 });
 
 const createParentTabReadyState = (): Record<ParentDashboardTab, boolean> => ({
@@ -128,6 +131,7 @@ const createParentTabReadyState = (): Record<ParentDashboardTab, boolean> => ({
   testimonial: true,
   chat: false,
   calendar: true,
+  "meeting-minutes": false,
 });
 
 // Admin Meet Calendar Component
@@ -634,6 +638,8 @@ export default function ParentDashboard() {
         const contacts = await loadChatContacts();
         const primaryContact = selectedChatContact ?? contacts[0] ?? null;
         await loadChatMessagesForContact(primaryContact);
+      } else if (tab === "meeting-minutes") {
+        await fetch('/api/parent/meeting-minutes');
       }
       setTabReadyState((prev) => ({ ...prev, [tab]: true }));
     } finally {
@@ -897,6 +903,12 @@ export default function ParentDashboard() {
       icon: CalendarDays,
       isActive: activeTab === "calendar",
       onClick: () => setActiveTab("calendar"),
+    },
+    {
+      title: "Meeting Minutes",
+      icon: FileText,
+      isActive: activeTab === "meeting-minutes",
+      onClick: () => setActiveTab("meeting-minutes"),
     },
   ];
 
@@ -1760,6 +1772,11 @@ export default function ParentDashboard() {
                     <ParentScheduleView parentEmail={parentEmail} />
                   </CardContent>
                 </Card>
+              </motion.div>
+            )}
+            {activeTab === "meeting-minutes" && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+                <ParentMeetingMinutes />
               </motion.div>
             )}
               </>

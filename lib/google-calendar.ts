@@ -49,6 +49,35 @@ export function getCalendarClient(accessToken: string, refreshToken?: string): c
   return google.calendar({ version: 'v3', auth });
 }
 
+export async function listCalendarEvents(
+  accessToken: string,
+  refreshToken: string | undefined,
+  timeMin: Date,
+  timeMax: Date
+): Promise<calendar_v3.Schema$Event[]> {
+  const calendar = getCalendarClient(accessToken, refreshToken);
+  const response = await calendar.events.list({
+    calendarId: 'primary',
+    timeMin: timeMin.toISOString(),
+    timeMax: timeMax.toISOString(),
+    singleEvents: true,
+    orderBy: 'startTime',
+    showDeleted: false,
+    maxResults: 250,
+  });
+  return response.data.items || [];
+}
+
+export async function getCalendarEvent(
+  accessToken: string,
+  refreshToken: string | undefined,
+  eventId: string
+): Promise<calendar_v3.Schema$Event> {
+  const calendar = getCalendarClient(accessToken, refreshToken);
+  const response = await calendar.events.get({ calendarId: 'primary', eventId });
+  return response.data;
+}
+
 /**
  * Create an event in Google Calendar
  */

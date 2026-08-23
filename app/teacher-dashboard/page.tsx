@@ -39,6 +39,7 @@ import SubmissionReviewer from "@/components/teacher/SubmissionReviewer";
 import CustomChatDialog from "../../components/CustomChatDialog";
 import StudentProgressModal from "../../components/teacher/RealStudentProgressModal";
 import ProgressReportManager from "@/components/teacher/ProgressReportManager";
+import MeetingMinutesManager from "@/components/teacher/MeetingMinutesManager";
 import DashboardLoadingSkeleton, { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
 import {
   User,
@@ -227,7 +228,8 @@ type TeacherDashboardTab =
   | "submissions"
   | "resources"
   | "progress"
-  | "schedule";
+  | "schedule"
+  | "meeting-minutes";
 
 const TEACHER_DASHBOARD_TABS: TeacherDashboardTab[] = [
   "students",
@@ -236,6 +238,7 @@ const TEACHER_DASHBOARD_TABS: TeacherDashboardTab[] = [
   "resources",
   "progress",
   "schedule",
+  "meeting-minutes",
 ];
 
 export default function TeacherDashboard() {
@@ -339,6 +342,7 @@ export default function TeacherDashboard() {
     resources: false,
     progress: false,
     schedule: false,
+    "meeting-minutes": false,
   });
   const router = useRouter();
   const pathname = usePathname();
@@ -1043,7 +1047,7 @@ export default function TeacherDashboard() {
 
   const warmTabData = async (tab: TeacherDashboardTab) => {
     if (!teacherEmail) return;
-    if (tab === "progress" || tab === "schedule") return;
+    if (tab === "progress" || tab === "schedule" || tab === "meeting-minutes") return;
 
     setTabLoadingState((prev) => ({ ...prev, [tab]: true }));
     try {
@@ -1326,6 +1330,11 @@ export default function TeacherDashboard() {
       icon: Calendar,
       value: "schedule",
     },
+    {
+      title: "Meeting Minutes",
+      icon: FileText,
+      value: "meeting-minutes",
+    },
   ];
 
   const tabMeta: Record<string, { title: string; description: string; icon: React.ComponentType<{ className?: string }> }> = {
@@ -1358,6 +1367,11 @@ export default function TeacherDashboard() {
       title: "Schedule",
       description: "Plan upcoming sessions and coordinate teaching availability.",
       icon: Calendar,
+    },
+    "meeting-minutes": {
+      title: "Meeting Minutes",
+      description: "Assign, review, and approve minutes for completed meetings.",
+      icon: FileText,
     },
   };
 
@@ -2754,6 +2768,12 @@ export default function TeacherDashboard() {
                   })()}
                   </CardContent>
                 </Card>
+              </motion.div>
+            )}
+
+            {activeTab === "meeting-minutes" && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+                <MeetingMinutesManager />
               </motion.div>
             )}
 
