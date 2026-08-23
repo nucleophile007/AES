@@ -80,6 +80,7 @@ import { cn } from "@/lib/utils";
 import ResourceLibrary from "@/components/student/ResourceLibrary";
 import MentorMessages from "../../components/student/MentorMessages";
 import StudentScheduleView from "@/components/student/StudentScheduleView";
+import StudentMeetingMinutes from "@/components/student/StudentMeetingMinutes";
 import ProgressReportList from "@/components/common/ProgressReportList";
 import DashboardLoadingSkeleton, { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
 import { getUserTimezone, formatDateTime, formatDate } from "@/lib/timezone";
@@ -701,7 +702,8 @@ type StudentDashboardTab =
   | "schedule"
   | "progress"
   | "resources"
-  | "messages";
+  | "messages"
+  | "meeting-minutes";
 
 const createStudentTabLoadingState = (): Record<StudentDashboardTab, boolean> => ({
   overview: false,
@@ -712,6 +714,7 @@ const createStudentTabLoadingState = (): Record<StudentDashboardTab, boolean> =>
   progress: false,
   resources: false,
   messages: false,
+  "meeting-minutes": false,
 });
 
 const createStudentTabReadyState = (): Record<StudentDashboardTab, boolean> => ({
@@ -723,6 +726,7 @@ const createStudentTabReadyState = (): Record<StudentDashboardTab, boolean> => (
   progress: false,
   resources: false,
   messages: false,
+  "meeting-minutes": false,
 });
 
 export default function StudentDashboard() {
@@ -925,6 +929,7 @@ export default function StudentDashboard() {
       "progress",
       "resources",
       "messages",
+      "meeting-minutes",
     ]);
     if (tab && allowedTabs.has(tab as StudentDashboardTab)) {
       setActiveTab(tab as StudentDashboardTab);
@@ -962,6 +967,8 @@ export default function StudentDashboard() {
         ]);
       } else if (tab === "messages") {
         await fetch(`/api/student/mentors?studentEmail=${encodeURIComponent(studentEmail)}`);
+      } else if (tab === "meeting-minutes") {
+        await fetch('/api/student/meeting-minutes');
       }
       setTabReadyState((prev) => ({ ...prev, [tab]: true }));
     } catch (prefetchError) {
@@ -1324,6 +1331,13 @@ export default function StudentDashboard() {
       isActive: activeTab === "messages",
       onClick: () => setActiveTab("messages"),
       badge: messageUnreadCount,
+    },
+    {
+      title: "Meeting Minutes",
+      url: "#",
+      icon: FileText,
+      isActive: activeTab === "meeting-minutes",
+      onClick: () => setActiveTab("meeting-minutes"),
     },
   ];
 
@@ -1915,6 +1929,11 @@ export default function StudentDashboard() {
       title: "Messages",
       description: "Stay connected with mentors and instructors.",
       icon: MessageCircle,
+    },
+    "meeting-minutes": {
+      title: "Meeting Minutes",
+      description: "Submit your notes and view teacher-approved meeting minutes.",
+      icon: FileText,
     },
   };
 
@@ -3138,6 +3157,8 @@ export default function StudentDashboard() {
                     {studentEmail && <StudentScheduleView studentEmail={studentEmail} />}
                   </div>
                 )}
+
+                {activeTab === "meeting-minutes" && <StudentMeetingMinutes />}
 
                 {activeTab === "progress" && (
                   <div className="space-y-6">
