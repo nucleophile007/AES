@@ -36,22 +36,15 @@ type QuestionType = "single" | "multiple";
 type OptionLabelStyle = "alpha-upper" | "numeric" | "roman-lower" | "custom";
 type QuestionNumberingStyle = "numeric" | "alpha-upper" | "roman-lower" | "roman-upper";
 type Difficulty = "easy" | "medium" | "hard";
-type BulkTargetMode = "range" | "section";
-type AutoFormulaMode = "per-question" | "section" | "difficulty";
+type BulkTargetMode = "range" | "topic";
+type AutoFormulaMode = "per-question" | "topic" | "difficulty";
 type AssessmentType = "mock-test" | "simple-assignment";
 
 interface AutoTimeFormula {
   mode: AutoFormulaMode;
   defaultMinutesPerQuestion: number;
-  sectionMinutesPerQuestion: Record<string, number>;
+  topicMinutesPerQuestion: Record<string, number>;
   difficultyMinutesPerQuestion: Record<Difficulty, number>;
-}
-
-interface McqSection {
-  id: string;
-  name: string;
-  rangeExpression: string;
-  color: string;
 }
 
 interface McqSubtopic {
@@ -62,14 +55,15 @@ interface McqSubtopic {
 interface McqTopic {
   id: string;
   name: string;
+  rangeExpression?: string;
+  color?: string;
   subtopics: McqSubtopic[];
 }
 
 interface McqQuestion {
   id: string;
-  sectionId: string;
-  topicId: string | null;
-  subtopicId: string | null;
+  topicId: string;
+  subtopicId: string;
   type: QuestionType;
   marks: number;
   negativeEnabled: boolean;
@@ -92,7 +86,6 @@ interface McqPdfConfig {
   recommendedTimeMode: "auto" | "manual";
   recommendedTimeMinutes: number;
   autoTimeFormula: AutoTimeFormula;
-  sections: McqSection[];
   topics: McqTopic[];
   questions: McqQuestion[];
   createdAt: string;
@@ -149,7 +142,7 @@ const createId = () => {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 };
 
-const getSectionColor = (index: number) => SECTION_COLORS[index % SECTION_COLORS.length];
+const getTopicColor = (index: number) => SECTION_COLORS[index % SECTION_COLORS.length];
 
 const toRoman = (num: number) => {
   if (num <= 0) return "";
@@ -191,22 +184,22 @@ const clampAutoMinutesValue = (value: unknown, fallback: number) => {
   return Math.max(0.1, Math.min(60, numeric));
 };
 
-const createDefaultAutoTimeFormula = (sectionId = ""): AutoTimeFormula => ({
+const createDefaultAutoTimeFormula = (topicId = ""): AutoTimeFormula => ({
   mode: "per-question",
   defaultMinutesPerQuestion: AUTO_RECOMMENDED_PER_QUESTION,
-  sectionMinutesPerQuestion: sectionId ? { [sectionId]: AUTO_RECOMMENDED_PER_QUESTION } : {},
+  topicMinutesPerQuestion: topicId ? { [topicId]: AUTO_RECOMMENDED_PER_QUESTION } : {},
   difficultyMinutesPerQuestion: { ...DEFAULT_DIFFICULTY_MINUTES },
 });
 
 const getAutoRecommendedTimeMinutes = (questions: McqQuestion[], formula: AutoTimeFormula) => {
   if (questions.length === 0) return 1;
-  const sectionRateMap = formula.sectionMinutesPerQuestion || {};
+  const topicRateMap = formula.topicMinutesPerQuestion || {};
   const difficultyRateMap = formula.difficultyMinutesPerQuestion || DEFAULT_DIFFICULTY_MINUTES;
   const fallbackRate = clampAutoMinutesValue(formula.defaultMinutesPerQuestion, AUTO_RECOMMENDED_PER_QUESTION);
 
   const total = questions.reduce((sum, question) => {
-    if (formula.mode === "section") {
-      return sum + clampAutoMinutesValue(sectionRateMap[question.sectionId], fallbackRate);
+    if (formula.mode === "topic") {
+      return sum + clampAutoMinutesValue(topicRateMap[question.topicId], fallbackRate);
     }
     if (formula.mode === "difficulty") {
       return sum + clampAutoMinutesValue(difficultyRateMap[question.difficulty], fallbackRate);
@@ -232,18 +225,18 @@ const getOptionLabels = (question: McqQuestion) => {
   });
 };
 
-const createDefaultSection = (index = 0): McqSection => ({
+const createDefaultTopic = (index = 0): McqTopic => ({
   id: createId(),
-  name: `Section ${index + 1}`,
+  name: `Topic ${index + 1}`,
   rangeExpression: "",
-  color: getSectionColor(index),
+  color: getTopicColor(index),
+  subtopics: [],
 });
 
-const createQuestionFromSection = (section: McqSection): McqQuestion => ({
+const createQuestionFromTopic = (topic: McqTopic): McqQuestion => ({
   id: createId(),
-  sectionId: section.id,
-  topicId: null,
-  subtopicId: null,
+  topicId: topic.id,
+  subtopicId: "",
   type: "single",
   marks: 4,
   negativeEnabled: false,
@@ -257,10 +250,10 @@ const createQuestionFromSection = (section: McqSection): McqQuestion => ({
 });
 
 const createDefaultConfig = (): McqPdfConfig => {
-  const section = createDefaultSection(0);
+  const topic = createDefaultTopic(0);
   const defaultQuestionCount = 10;
-  const autoTimeFormula = createDefaultAutoTimeFormula(section.id);
-  const questions = Array.from({ length: defaultQuestionCount }, () => createQuestionFromSection(section));
+  const autoTimeFormula = createDefaultAutoTimeFormula(topic.id);
+  const questions = Array.from({ length: defaultQuestionCount }, () => createQuestionFromTopic(topic));
   return {
     version: 1,
     status: "draft",
@@ -271,8 +264,7 @@ const createDefaultConfig = (): McqPdfConfig => {
     recommendedTimeMode: "auto",
     recommendedTimeMinutes: getAutoRecommendedTimeMinutes(questions, autoTimeFormula),
     autoTimeFormula,
-    sections: [section],
-    topics: [],
+    topics: [topic],
     questions,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -294,10 +286,10 @@ const formatRate = (value: number) => {
 };
 
 const sanitizeQuestionForType = (question: McqQuestion): McqQuestion => {
-  const normalizedTopicId = question.topicId && question.topicId.trim() ? question.topicId : null;
+  const normalizedTopicId = question.topicId && question.topicId.trim() ? question.topicId : "";
   const normalizedSubtopicId = normalizedTopicId && question.subtopicId && question.subtopicId.trim()
     ? question.subtopicId
-    : null;
+    : "";
 
   if (question.type === "single") {
     return {
@@ -377,22 +369,7 @@ const sanitizeRangeExpression = (expression: string, totalQuestions: number) => 
 const normalizeImportedConfig = (input: unknown): McqPdfConfig => {
   const fallback = createDefaultConfig();
   const raw = (input || {}) as Record<string, unknown>;
-  const rawSections = Array.isArray(raw.sections) ? raw.sections : [];
 
-  const sections: McqSection[] = rawSections.length > 0
-    ? rawSections.map((section, idx) => {
-        const s = (section || {}) as Record<string, unknown>;
-        return {
-          id: typeof s.id === "string" && s.id ? s.id : createId(),
-          name: typeof s.name === "string" && s.name.trim() ? s.name.trim() : `Section ${idx + 1}`,
-          rangeExpression: typeof s.rangeExpression === "string" ? s.rangeExpression : "",
-          color: typeof s.color === "string" && s.color ? s.color : getSectionColor(idx),
-        };
-      })
-    : fallback.sections;
-
-  const sectionIdSet = new Set(sections.map((section) => section.id));
-  const firstSection = sections[0];
   const rawTopics = Array.isArray(raw.topics) ? raw.topics : [];
   const topics: McqTopic[] = rawTopics
     .map((topic) => {
@@ -416,11 +393,17 @@ const normalizeImportedConfig = (input: unknown): McqPdfConfig => {
       return {
         id: typeof current.id === "string" && current.id ? current.id : createId(),
         name: topicName,
+        rangeExpression: typeof current.rangeExpression === "string" ? current.rangeExpression : "",
+        color: typeof current.color === "string" && current.color ? current.color : getTopicColor(0),
         subtopics,
-      };
+      } as McqTopic;
     })
     .filter((topic): topic is McqTopic => Boolean(topic));
-  const subtopicIdByTopicId = new Map(topics.map((topic) => [topic.id, new Set(topic.subtopics.map((subtopic) => subtopic.id))]));
+
+  const finalTopics = topics.length > 0 ? topics : fallback.topics;
+  const firstTopic = finalTopics[0];
+  const topicIdSet = new Set(finalTopics.map((t) => t.id));
+  const subtopicIdByTopicId = new Map(finalTopics.map((topic) => [topic.id, new Set(topic.subtopics.map((subtopic) => subtopic.id))]));
   const rawQuestions = Array.isArray(raw.questions) ? raw.questions : [];
 
   const questions: McqQuestion[] = rawQuestions.length > 0
@@ -428,16 +411,14 @@ const normalizeImportedConfig = (input: unknown): McqPdfConfig => {
         const q = (question || {}) as Record<string, unknown>;
         const optionCountRaw = Number(q.optionCount);
         const optionCount = Number.isFinite(optionCountRaw) ? Math.max(2, Math.min(8, Math.floor(optionCountRaw))) : 4;
-        const sectionIdRaw = typeof q.sectionId === "string" ? q.sectionId : "";
         const negativeMarks = Math.max(0, Number.isFinite(Number(q.negativeMarks)) ? Number(q.negativeMarks) : 0);
         const topicIdRaw = typeof q.topicId === "string" ? q.topicId : "";
-        const topicId = subtopicIdByTopicId.has(topicIdRaw) ? topicIdRaw : null;
+        const topicId = topicIdSet.has(topicIdRaw) ? topicIdRaw : firstTopic.id;
         const subtopicIdRaw = typeof q.subtopicId === "string" ? q.subtopicId : "";
-        const subtopicId = topicId && subtopicIdByTopicId.get(topicId)?.has(subtopicIdRaw) ? subtopicIdRaw : null;
+        const subtopicId = topicId && subtopicIdByTopicId.get(topicId)?.has(subtopicIdRaw) ? subtopicIdRaw : "";
 
         return sanitizeQuestionForType({
           id: typeof q.id === "string" && q.id ? q.id : createId(),
-          sectionId: sectionIdSet.has(sectionIdRaw) ? sectionIdRaw : firstSection.id,
           topicId,
           subtopicId,
           type: q.type === "multiple" ? "multiple" : "single",
@@ -454,22 +435,23 @@ const normalizeImportedConfig = (input: unknown): McqPdfConfig => {
           correctAnswers: Array.isArray(q.correctAnswers) ? q.correctAnswers.map((item) => String(item)).filter(Boolean) : [],
         });
       })
-    : [createQuestionFromSection(firstSection)];
+    : [createQuestionFromTopic(firstTopic)];
+
   const rawFormula = (raw.autoTimeFormula || {}) as Record<string, unknown>;
-  const rawSectionFormula = (rawFormula.sectionMinutesPerQuestion || {}) as Record<string, unknown>;
+  const rawTopicFormula = (rawFormula.topicMinutesPerQuestion || {}) as Record<string, unknown>;
   const rawDifficultyFormula = (rawFormula.difficultyMinutesPerQuestion || {}) as Record<string, unknown>;
-  const defaultFormula = createDefaultAutoTimeFormula(firstSection.id);
-  const formulaMode: AutoFormulaMode = rawFormula.mode === "section" || rawFormula.mode === "difficulty" ? rawFormula.mode : "per-question";
-  const sectionMinutesPerQuestion = Object.fromEntries(
-    sections.map((section) => [
-      section.id,
-      clampAutoMinutesValue(rawSectionFormula[section.id], defaultFormula.defaultMinutesPerQuestion),
+  const defaultFormula = createDefaultAutoTimeFormula(firstTopic.id);
+  const formulaMode: AutoFormulaMode = rawFormula.mode === "topic" || rawFormula.mode === "difficulty" ? rawFormula.mode : "per-question";
+  const topicMinutesPerQuestion = Object.fromEntries(
+    finalTopics.map((topic) => [
+      topic.id,
+      clampAutoMinutesValue(rawTopicFormula[topic.id], defaultFormula.defaultMinutesPerQuestion),
     ])
   );
   const autoTimeFormula: AutoTimeFormula = {
     mode: formulaMode,
     defaultMinutesPerQuestion: clampAutoMinutesValue(rawFormula.defaultMinutesPerQuestion, defaultFormula.defaultMinutesPerQuestion),
-    sectionMinutesPerQuestion,
+    topicMinutesPerQuestion,
     difficultyMinutesPerQuestion: {
       easy: clampAutoMinutesValue(rawDifficultyFormula.easy, defaultFormula.difficultyMinutesPerQuestion.easy),
       medium: clampAutoMinutesValue(rawDifficultyFormula.medium, defaultFormula.difficultyMinutesPerQuestion.medium),
@@ -499,8 +481,7 @@ const normalizeImportedConfig = (input: unknown): McqPdfConfig => {
     recommendedTimeMode: recommendedMode,
     recommendedTimeMinutes,
     autoTimeFormula,
-    sections,
-    topics,
+    topics: finalTopics,
     questions,
     createdAt: typeof raw.createdAt === "string" ? raw.createdAt : new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -538,32 +519,32 @@ export default function McqPdfAssignmentModal({
 
   const [bulkTypeMode, setBulkTypeMode] = useState<BulkTargetMode>("range");
   const [bulkTypeRange, setBulkTypeRange] = useState("");
-  const [bulkTypeSectionIds, setBulkTypeSectionIds] = useState<string[]>([]);
+  const [bulkTypeTopicIds, setBulkTypeTopicIds] = useState<string[]>([]);
   const [bulkTypeValue, setBulkTypeValue] = useState<QuestionType>("single");
 
   const [bulkScoringMode, setBulkScoringMode] = useState<BulkTargetMode>("range");
   const [bulkScoringRange, setBulkScoringRange] = useState("");
-  const [bulkScoringSectionIds, setBulkScoringSectionIds] = useState<string[]>([]);
+  const [bulkScoringTopicIds, setBulkScoringTopicIds] = useState<string[]>([]);
   const [bulkMarks, setBulkMarks] = useState(4);
   const [bulkNegativeMarks, setBulkNegativeMarks] = useState(0);
   const [bulkPartialMode, setBulkPartialMode] = useState<BulkTargetMode>("range");
   const [bulkPartialRange, setBulkPartialRange] = useState("");
-  const [bulkPartialSectionIds, setBulkPartialSectionIds] = useState<string[]>([]);
+  const [bulkPartialTopicIds, setBulkPartialTopicIds] = useState<string[]>([]);
   const [bulkPartialAction, setBulkPartialAction] = useState<"enable" | "disable">("enable");
 
   const [bulkOptionCountMode, setBulkOptionCountMode] = useState<BulkTargetMode>("range");
   const [bulkOptionCountRange, setBulkOptionCountRange] = useState("");
-  const [bulkOptionCountSectionIds, setBulkOptionCountSectionIds] = useState<string[]>([]);
+  const [bulkOptionCountTopicIds, setBulkOptionCountTopicIds] = useState<string[]>([]);
   const [bulkOptionCount, setBulkOptionCount] = useState(4);
 
   const [bulkOptionLabelMode, setBulkOptionLabelMode] = useState<BulkTargetMode>("range");
   const [bulkOptionLabelRange, setBulkOptionLabelRange] = useState("");
-  const [bulkOptionLabelSectionIds, setBulkOptionLabelSectionIds] = useState<string[]>([]);
+  const [bulkOptionLabelTopicIds, setBulkOptionLabelTopicIds] = useState<string[]>([]);
   const [bulkOptionLabelStyle, setBulkOptionLabelStyle] = useState<OptionLabelStyle>("alpha-upper");
 
   const [bulkDifficultyMode, setBulkDifficultyMode] = useState<BulkTargetMode>("range");
   const [bulkDifficultyRange, setBulkDifficultyRange] = useState("");
-  const [bulkDifficultySectionIds, setBulkDifficultySectionIds] = useState<string[]>([]);
+  const [bulkDifficultyTopicIds, setBulkDifficultyTopicIds] = useState<string[]>([]);
   const [bulkDifficulty, setBulkDifficulty] = useState<Difficulty>("medium");
 
   const [manualQuestionCount, setManualQuestionCount] = useState(10);
@@ -580,11 +561,6 @@ export default function McqPdfAssignmentModal({
   const autosaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const sectionById = useMemo(() => {
-    const map = new Map<string, McqSection>();
-    config.sections.forEach((section) => map.set(section.id, section));
-    return map;
-  }, [config.sections]);
   const topicById = useMemo(() => {
     const map = new Map<string, McqTopic>();
     config.topics.forEach((topic) => map.set(topic.id, topic));
@@ -593,24 +569,24 @@ export default function McqPdfAssignmentModal({
   const selectedTopic = selectedTopicId ? topicById.get(selectedTopicId) || null : null;
   const selectedRangeTopic = topicRangeTopicId !== NO_TOPIC_VALUE ? topicById.get(topicRangeTopicId) || null : null;
 
-  const pruneSectionSelections = useCallback((selectedIds: string[]) => {
-    const validSectionIds = new Set(config.sections.map((section) => section.id));
-    return selectedIds.filter((id) => validSectionIds.has(id));
-  }, [config.sections]);
+  const pruneTopicSelections = useCallback((selectedIds: string[]) => {
+    const validTopicIds = new Set(config.topics.map((topic) => topic.id));
+    return selectedIds.filter((id) => validTopicIds.has(id));
+  }, [config.topics]);
 
-  const toggleSectionSelection = useCallback((selectedIds: string[], sectionId: string) => (
-    selectedIds.includes(sectionId)
-      ? selectedIds.filter((id) => id !== sectionId)
-      : [...selectedIds, sectionId]
+  const toggleTopicSelection = useCallback((selectedIds: string[], topicId: string) => (
+    selectedIds.includes(topicId)
+      ? selectedIds.filter((id) => id !== topicId)
+      : [...selectedIds, topicId]
   ), []);
 
-  const getSectionSelectionLabel = useCallback((selectedIds: string[]) => {
-    const cleaned = pruneSectionSelections(selectedIds);
-    if (cleaned.length === 0) return "Select sections";
-    const names = cleaned.map((id) => sectionById.get(id)?.name || "Section");
+  const getTopicSelectionLabel = useCallback((selectedIds: string[]) => {
+    const cleaned = pruneTopicSelections(selectedIds);
+    if (cleaned.length === 0) return "Select topics";
+    const names = cleaned.map((id) => topicById.get(id)?.name || "Topic");
     if (names.length <= 2) return names.join(", ");
-    return `${names.length} sections selected`;
-  }, [pruneSectionSelections, sectionById]);
+    return `${names.length} topics selected`;
+  }, [pruneTopicSelections, topicById]);
 
   const selectedQuestion = useMemo(() => {
     if (!selectedQuestionId) return config.questions[0] || null;
@@ -631,16 +607,16 @@ export default function McqPdfAssignmentModal({
   const assessmentNounLower = assessmentTypeShortLabel.toLowerCase();
   const autoFormulaSummary = useMemo(() => {
     const formula = config.autoTimeFormula;
-    if (formula.mode === "section") {
-      return config.sections
-        .map((section) => `${section.name}: ${formatRate(clampAutoMinutesValue(formula.sectionMinutesPerQuestion[section.id], formula.defaultMinutesPerQuestion))}`)
+    if (formula.mode === "topic") {
+      return config.topics
+        .map((topic) => `${topic.name}: ${formatRate(clampAutoMinutesValue(formula.topicMinutesPerQuestion[topic.id], formula.defaultMinutesPerQuestion))}`)
         .join(" | ");
     }
     if (formula.mode === "difficulty") {
       return `Easy: ${formatRate(formula.difficultyMinutesPerQuestion.easy)} | Medium: ${formatRate(formula.difficultyMinutesPerQuestion.medium)} | Hard: ${formatRate(formula.difficultyMinutesPerQuestion.hard)}`;
     }
     return `${formatRate(formula.defaultMinutesPerQuestion)} min per question`;
-  }, [config.autoTimeFormula, config.sections]);
+  }, [config.autoTimeFormula, config.topics]);
   const previewQuestion = config.questions[previewCursor] || null;
 
   const answeredQuestionIds = useMemo(
@@ -717,27 +693,27 @@ export default function McqPdfAssignmentModal({
     setTopicRangeSubtopicId("");
     setBulkTypeMode("range");
     setBulkTypeRange("");
-    setBulkTypeSectionIds([]);
+    setBulkTypeTopicIds([]);
     setBulkScoringMode("range");
     setBulkScoringRange("");
-    setBulkScoringSectionIds([]);
+    setBulkScoringTopicIds([]);
     setBulkMarks(4);
     setBulkNegativeMarks(0);
     setBulkPartialMode("range");
     setBulkPartialRange("");
-    setBulkPartialSectionIds([]);
+    setBulkPartialTopicIds([]);
     setBulkPartialAction("enable");
     setBulkOptionCountMode("range");
     setBulkOptionCountRange("");
-    setBulkOptionCountSectionIds([]);
+    setBulkOptionCountTopicIds([]);
     setBulkOptionCount(4);
     setBulkOptionLabelMode("range");
     setBulkOptionLabelRange("");
-    setBulkOptionLabelSectionIds([]);
+    setBulkOptionLabelTopicIds([]);
     setBulkOptionLabelStyle("alpha-upper");
     setBulkDifficultyMode("range");
     setBulkDifficultyRange("");
-    setBulkDifficultySectionIds([]);
+    setBulkDifficultyTopicIds([]);
     setBulkDifficulty("medium");
     setLastAutoSavedAt("");
   }, [open, initialTemplateId]);
@@ -779,13 +755,13 @@ export default function McqPdfAssignmentModal({
   }, [open, config.assessmentType, previewStarted, previewTimerDecision, previewTimerMinutes, recommendedTimeMinutes, timerRemainingMs]);
 
   useEffect(() => {
-    setBulkTypeSectionIds((prev) => pruneSectionSelections(prev));
-    setBulkScoringSectionIds((prev) => pruneSectionSelections(prev));
-    setBulkPartialSectionIds((prev) => pruneSectionSelections(prev));
-    setBulkOptionCountSectionIds((prev) => pruneSectionSelections(prev));
-    setBulkOptionLabelSectionIds((prev) => pruneSectionSelections(prev));
-    setBulkDifficultySectionIds((prev) => pruneSectionSelections(prev));
-  }, [pruneSectionSelections]);
+    setBulkTypeTopicIds((prev) => pruneTopicSelections(prev));
+    setBulkScoringTopicIds((prev) => pruneTopicSelections(prev));
+    setBulkPartialTopicIds((prev) => pruneTopicSelections(prev));
+    setBulkOptionCountTopicIds((prev) => pruneTopicSelections(prev));
+    setBulkOptionLabelTopicIds((prev) => pruneTopicSelections(prev));
+    setBulkDifficultyTopicIds((prev) => pruneTopicSelections(prev));
+  }, [pruneTopicSelections]);
 
   useEffect(() => {
     if (selectedTopicId && !topicById.has(selectedTopicId)) {
@@ -917,10 +893,10 @@ export default function McqPdfAssignmentModal({
     const safeCount = Math.max(0, Math.floor(count));
     if (safeCount < 1) return;
     setConfig((prev) => {
-      const safeSections = prev.sections.length > 0 ? prev.sections : [createDefaultSection(0)];
-      const firstSection = safeSections[0];
-      const questions = [...prev.questions, ...Array.from({ length: safeCount }, () => createQuestionFromSection(firstSection))];
-      return { ...prev, sections: safeSections, questions, updatedAt: new Date().toISOString() };
+      const safeTopics = prev.topics.length > 0 ? prev.topics : [createDefaultTopic(0)];
+      const firstTopic = safeTopics[0];
+      const questions = [...prev.questions, ...Array.from({ length: safeCount }, () => createQuestionFromTopic(firstTopic))];
+      return { ...prev, topics: safeTopics, questions, updatedAt: new Date().toISOString() };
     });
   };
 
@@ -949,9 +925,9 @@ export default function McqPdfAssignmentModal({
     setConfig((prev) => ({
       ...prev,
       updatedAt: new Date().toISOString(),
-      sections: prev.sections.map((section) => ({
-        ...section,
-        rangeExpression: sanitizeRangeExpression(section.rangeExpression, nextCount),
+      topics: prev.topics.map((topic) => ({
+        ...topic,
+        rangeExpression: sanitizeRangeExpression(topic.rangeExpression || "", nextCount),
       })),
       questions: prev.questions.slice(0, nextCount),
     }));
@@ -985,53 +961,7 @@ export default function McqPdfAssignmentModal({
     });
   };
 
-  const addSection = () => {
-    const section = createDefaultSection(config.sections.length);
-    setConfig((prev) => ({
-      ...prev,
-      updatedAt: new Date().toISOString(),
-      sections: [...prev.sections, section],
-      autoTimeFormula: {
-        ...prev.autoTimeFormula,
-        sectionMinutesPerQuestion: {
-          ...prev.autoTimeFormula.sectionMinutesPerQuestion,
-          [section.id]: clampAutoMinutesValue(
-            prev.autoTimeFormula.defaultMinutesPerQuestion,
-            AUTO_RECOMMENDED_PER_QUESTION
-          ),
-        },
-      },
-    }));
-  };
 
-  const removeSection = (sectionId: string) => {
-    if (config.sections.length <= 1) {
-      toast({ title: "At least one section is required", description: "Use one section if you do not need multiple sections." });
-      return;
-    }
-
-    const fallback = config.sections.find((section) => section.id !== sectionId);
-    if (!fallback) return;
-
-    setConfig((prev) => ({
-      ...prev,
-      updatedAt: new Date().toISOString(),
-      sections: prev.sections.filter((section) => section.id !== sectionId),
-      autoTimeFormula: {
-        ...prev.autoTimeFormula,
-        sectionMinutesPerQuestion: Object.fromEntries(
-          Object.entries(prev.autoTimeFormula.sectionMinutesPerQuestion).filter(([id]) => id !== sectionId)
-        ),
-      },
-      questions: prev.questions.map((question) =>
-        question.sectionId === sectionId ? { ...question, sectionId: fallback.id } : question
-      ),
-    }));
-  };
-
-  const setSection = (sectionId: string, updater: (section: McqSection) => McqSection) => {
-    setConfig((prev) => ({ ...prev, updatedAt: new Date().toISOString(), sections: prev.sections.map((section) => (section.id === sectionId ? updater(section) : section)) }));
-  };
 
   const addTopic = () => {
     const name = topicNameInput.trim();
@@ -1066,7 +996,7 @@ export default function McqPdfAssignmentModal({
       topics: prev.topics.filter((topic) => topic.id !== topicId),
       questions: prev.questions.map((question) =>
         question.topicId === topicId
-          ? { ...question, topicId: null, subtopicId: null }
+          ? { ...question, topicId: "", subtopicId: "" }
           : question
       ),
     }));
@@ -1127,7 +1057,7 @@ export default function McqPdfAssignmentModal({
       ),
       questions: prev.questions.map((question) =>
         question.topicId === topicId && question.subtopicId === subtopicId
-          ? { ...question, subtopicId: null }
+          ? { ...question, subtopicId: "" }
           : question
       ),
     }));
@@ -1168,8 +1098,8 @@ export default function McqPdfAssignmentModal({
         indexSet.has(index)
           ? sanitizeQuestionForType({
               ...question,
-              topicId: topic ? topic.id : null,
-              subtopicId: topic && subtopic ? subtopic.id : null,
+              topicId: topic ? topic.id : "",
+              subtopicId: topic && subtopic ? subtopic.id : "",
             })
           : question
       )),
@@ -1198,49 +1128,49 @@ export default function McqPdfAssignmentModal({
     });
   };
 
-  const resolveBulkTargetIndexes = (mode: BulkTargetMode, range: string, sectionIds: string[]) => {
+  const resolveBulkTargetIndexes = (mode: BulkTargetMode, range: string, topicIds: string[]) => {
     if (mode === "range") {
       const parsed = parseRangeExpression(range, config.questions.length);
       if (parsed.indexes.length === 0) throw new Error("Provide at least one valid question range.");
       return parsed.indexes;
     }
 
-    const cleanedSectionIds = pruneSectionSelections(sectionIds);
-    if (cleanedSectionIds.length === 0) throw new Error("Select at least one section.");
+    const cleanedTopicIds = pruneTopicSelections(topicIds);
+    if (cleanedTopicIds.length === 0) throw new Error("Select at least one topic.");
 
-    const sectionSet = new Set(cleanedSectionIds);
+    const topicSet = new Set(cleanedTopicIds);
     const indexes = config.questions
       .map((q, i) => ({ q, i }))
-      .filter((item) => sectionSet.has(item.q.sectionId))
+      .filter((item) => topicSet.has(item.q.topicId))
       .map((item) => item.i);
-    if (indexes.length === 0) throw new Error("Selected section has no mapped questions.");
+    if (indexes.length === 0) throw new Error("Selected topic has no mapped questions.");
     return indexes;
   };
 
-  const applySectionMapping = () => {
+  const applyTopicMapping = () => {
     const ownership = new Map<number, string>();
     const coveredBy = new Map<number, string>();
 
     try {
-      for (const section of config.sections) {
-        if (!section.rangeExpression.trim()) continue;
-        const parsed = parseRangeExpression(section.rangeExpression, config.questions.length);
+      for (const topic of config.topics) {
+        if (!topic.rangeExpression?.trim()) continue;
+        const parsed = parseRangeExpression(topic.rangeExpression, config.questions.length);
         for (const idx of parsed.indexes) {
           const existing = coveredBy.get(idx);
-          if (existing && existing !== section.id) {
-            const sectionNameA = sectionById.get(existing)?.name || "Another section";
-            throw new Error(`Overlap at Q${idx + 1}: "${sectionNameA}" and "${section.name}".`);
+          if (existing && existing !== topic.id) {
+            const topicNameA = topicById.get(existing)?.name || "Another topic";
+            throw new Error(`Overlap at Q${idx + 1}: "${topicNameA}" and "${topic.name}".`);
           }
-          coveredBy.set(idx, section.id);
-          ownership.set(idx, section.id);
+          coveredBy.set(idx, topic.id);
+          ownership.set(idx, topic.id);
         }
       }
     } catch (error) {
-      toast({ variant: "destructive", title: "Section mapping failed", description: error instanceof Error ? error.message : "Invalid mapping." });
+      toast({ variant: "destructive", title: "Topic mapping failed", description: error instanceof Error ? error.message : "Invalid mapping." });
       return;
     }
 
-    const fallback = config.sections[0];
+    const fallback = config.topics[0];
     if (!fallback) return;
 
     const uncoveredCount = config.questions.filter((_, idx) => !ownership.has(idx)).length;
@@ -1248,24 +1178,24 @@ export default function McqPdfAssignmentModal({
     setConfig((prev) => ({
       ...prev,
       updatedAt: new Date().toISOString(),
-      sections: prev.sections.map((section) => {
-        if (!section.rangeExpression.trim()) return section;
+      topics: prev.topics.map((topic) => {
+        if (!topic.rangeExpression?.trim()) return topic;
         try {
-          return { ...section, rangeExpression: parseRangeExpression(section.rangeExpression, prev.questions.length).normalized };
+          return { ...topic, rangeExpression: parseRangeExpression(topic.rangeExpression, prev.questions.length).normalized };
         } catch {
-          return section;
+          return topic;
         }
       }),
-      questions: prev.questions.map((q, idx) => ({ ...q, sectionId: ownership.get(idx) || fallback.id })),
+      questions: prev.questions.map((q, idx) => ({ ...q, topicId: ownership.get(idx) || fallback.id })),
     }));
 
-    toast({ title: "Section ranges applied", description: uncoveredCount > 0 ? `${uncoveredCount} questions were assigned to ${fallback.name}.` : "All questions mapped." });
+    toast({ title: "Topic ranges applied", description: uncoveredCount > 0 ? `${uncoveredCount} questions were assigned to ${fallback.name}.` : "All questions mapped." });
   };
 
   const applyBulkType = () => {
     let indexes: number[] = [];
     try {
-      indexes = resolveBulkTargetIndexes(bulkTypeMode, bulkTypeRange, bulkTypeSectionIds);
+      indexes = resolveBulkTargetIndexes(bulkTypeMode, bulkTypeRange, bulkTypeTopicIds);
     } catch (error) {
       toast({ variant: "destructive", title: "Bulk update failed", description: error instanceof Error ? error.message : "Invalid target." });
       return;
@@ -1291,7 +1221,7 @@ export default function McqPdfAssignmentModal({
   const applyBulkScoring = () => {
     let indexes: number[] = [];
     try {
-      indexes = resolveBulkTargetIndexes(bulkScoringMode, bulkScoringRange, bulkScoringSectionIds);
+      indexes = resolveBulkTargetIndexes(bulkScoringMode, bulkScoringRange, bulkScoringTopicIds);
     } catch (error) {
       toast({ variant: "destructive", title: "Bulk update failed", description: error instanceof Error ? error.message : "Invalid target." });
       return;
@@ -1321,7 +1251,7 @@ export default function McqPdfAssignmentModal({
   const applyBulkPartialMarking = () => {
     let indexes: number[] = [];
     try {
-      indexes = resolveBulkTargetIndexes(bulkPartialMode, bulkPartialRange, bulkPartialSectionIds);
+      indexes = resolveBulkTargetIndexes(bulkPartialMode, bulkPartialRange, bulkPartialTopicIds);
     } catch (error) {
       toast({ variant: "destructive", title: "Bulk update failed", description: error instanceof Error ? error.message : "Invalid target." });
       return;
@@ -1354,10 +1284,10 @@ export default function McqPdfAssignmentModal({
     });
   };
 
-  const getBulkOptionTargetIndexes = (mode: BulkTargetMode, range: string, sectionIds: string[]) => {
+  const getBulkOptionTargetIndexes = (mode: BulkTargetMode, range: string, topicIds: string[]) => {
     let indexes: number[] = [];
     try {
-      indexes = resolveBulkTargetIndexes(mode, range, sectionIds);
+      indexes = resolveBulkTargetIndexes(mode, range, topicIds);
     } catch (error) {
       toast({ variant: "destructive", title: "Bulk update failed", description: error instanceof Error ? error.message : "Invalid target." });
       return null;
@@ -1366,7 +1296,7 @@ export default function McqPdfAssignmentModal({
   };
 
   const applyBulkOptionCount = () => {
-    const indexes = getBulkOptionTargetIndexes(bulkOptionCountMode, bulkOptionCountRange, bulkOptionCountSectionIds);
+    const indexes = getBulkOptionTargetIndexes(bulkOptionCountMode, bulkOptionCountRange, bulkOptionCountTopicIds);
     if (!indexes) return;
     const set = new Set(indexes);
     const count = Math.max(2, Math.min(8, bulkOptionCount));
@@ -1387,7 +1317,7 @@ export default function McqPdfAssignmentModal({
   };
 
   const applyBulkOptionLabelStyle = () => {
-    const indexes = getBulkOptionTargetIndexes(bulkOptionLabelMode, bulkOptionLabelRange, bulkOptionLabelSectionIds);
+    const indexes = getBulkOptionTargetIndexes(bulkOptionLabelMode, bulkOptionLabelRange, bulkOptionLabelTopicIds);
     if (!indexes) return;
     const set = new Set(indexes);
 
@@ -1407,7 +1337,7 @@ export default function McqPdfAssignmentModal({
   };
 
   const applyBulkDifficulty = () => {
-    const indexes = getBulkOptionTargetIndexes(bulkDifficultyMode, bulkDifficultyRange, bulkDifficultySectionIds);
+    const indexes = getBulkOptionTargetIndexes(bulkDifficultyMode, bulkDifficultyRange, bulkDifficultyTopicIds);
     if (!indexes) return;
     const set = new Set(indexes);
 
@@ -1446,27 +1376,27 @@ export default function McqPdfAssignmentModal({
     setTopicRangeSubtopicId("");
     setBulkTypeMode("range");
     setBulkTypeRange("");
-    setBulkTypeSectionIds([]);
+    setBulkTypeTopicIds([]);
     setBulkScoringMode("range");
     setBulkScoringRange("");
-    setBulkScoringSectionIds([]);
+    setBulkScoringTopicIds([]);
     setBulkMarks(4);
     setBulkNegativeMarks(0);
     setBulkPartialMode("range");
     setBulkPartialRange("");
-    setBulkPartialSectionIds([]);
+    setBulkPartialTopicIds([]);
     setBulkPartialAction("enable");
     setBulkOptionCountMode("range");
     setBulkOptionCountRange("");
-    setBulkOptionCountSectionIds([]);
+    setBulkOptionCountTopicIds([]);
     setBulkOptionCount(4);
     setBulkOptionLabelMode("range");
     setBulkOptionLabelRange("");
-    setBulkOptionLabelSectionIds([]);
+    setBulkOptionLabelTopicIds([]);
     setBulkOptionLabelStyle("alpha-upper");
     setBulkDifficultyMode("range");
     setBulkDifficultyRange("");
-    setBulkDifficultySectionIds([]);
+    setBulkDifficultyTopicIds([]);
     setBulkDifficulty("medium");
     setEditingTemplateId(null);
     setManualQuestionCount(nextDefault.questions.length);
@@ -1511,10 +1441,9 @@ export default function McqPdfAssignmentModal({
   };
 
   const exportAnswerKey = () => {
-    const lines = ["Question,Section,Topic,Subtopic,Type,Correct Answers,Marks,Negative Marking,Partial Marking,Difficulty"];
+    const lines = ["Question,Topic,Subtopic,Type,Correct Answers,Marks,Negative Marking,Partial Marking,Difficulty"];
     config.questions.forEach((question, idx) => {
       const questionLabel = formatQuestionNumber(idx, config.numberingStyle);
-      const sectionName = sectionById.get(question.sectionId)?.name || "Section";
       const topic = question.topicId ? topicById.get(question.topicId) || null : null;
       const subtopic = topic && question.subtopicId
         ? topic.subtopics.find((item) => item.id === question.subtopicId) || null
@@ -1523,7 +1452,6 @@ export default function McqPdfAssignmentModal({
       lines.push(
         [
           questionLabel,
-          sectionName,
           topic?.name || "",
           subtopic?.name || "",
           question.type,
@@ -1563,27 +1491,27 @@ export default function McqPdfAssignmentModal({
       setTopicRangeSubtopicId("");
       setBulkTypeMode("range");
       setBulkTypeRange("");
-      setBulkTypeSectionIds([]);
+      setBulkTypeTopicIds([]);
       setBulkScoringMode("range");
       setBulkScoringRange("");
-      setBulkScoringSectionIds([]);
+      setBulkScoringTopicIds([]);
       setBulkMarks(4);
       setBulkNegativeMarks(0);
       setBulkPartialMode("range");
       setBulkPartialRange("");
-      setBulkPartialSectionIds([]);
+      setBulkPartialTopicIds([]);
       setBulkPartialAction("enable");
       setBulkOptionCountMode("range");
       setBulkOptionCountRange("");
-      setBulkOptionCountSectionIds([]);
+      setBulkOptionCountTopicIds([]);
       setBulkOptionCount(4);
       setBulkOptionLabelMode("range");
       setBulkOptionLabelRange("");
-      setBulkOptionLabelSectionIds([]);
+      setBulkOptionLabelTopicIds([]);
       setBulkOptionLabelStyle("alpha-upper");
       setBulkDifficultyMode("range");
       setBulkDifficultyRange("");
-      setBulkDifficultySectionIds([]);
+      setBulkDifficultyTopicIds([]);
       setBulkDifficulty("medium");
       setPreviewCursor(0);
       setManualQuestionCount(normalized.questions.length);
@@ -1714,27 +1642,27 @@ export default function McqPdfAssignmentModal({
     setTopicRangeSubtopicId("");
     setBulkTypeMode("range");
     setBulkTypeRange("");
-    setBulkTypeSectionIds([]);
+    setBulkTypeTopicIds([]);
     setBulkScoringMode("range");
     setBulkScoringRange("");
-    setBulkScoringSectionIds([]);
+    setBulkScoringTopicIds([]);
     setBulkMarks(4);
     setBulkNegativeMarks(0);
     setBulkPartialMode("range");
     setBulkPartialRange("");
-    setBulkPartialSectionIds([]);
+    setBulkPartialTopicIds([]);
     setBulkPartialAction("enable");
     setBulkOptionCountMode("range");
     setBulkOptionCountRange("");
-    setBulkOptionCountSectionIds([]);
+    setBulkOptionCountTopicIds([]);
     setBulkOptionCount(4);
     setBulkOptionLabelMode("range");
     setBulkOptionLabelRange("");
-    setBulkOptionLabelSectionIds([]);
+    setBulkOptionLabelTopicIds([]);
     setBulkOptionLabelStyle("alpha-upper");
     setBulkDifficultyMode("range");
     setBulkDifficultyRange("");
-    setBulkDifficultySectionIds([]);
+    setBulkDifficultyTopicIds([]);
     setBulkDifficulty("medium");
     setManualQuestionCount(normalized.questions.length);
     toast({ title: `${getAssessmentTypeLabel(normalized.assessmentType)} loaded`, description: `Editing ${template.title}` });
@@ -2000,7 +1928,7 @@ export default function McqPdfAssignmentModal({
                                       </SelectTrigger>
                                       <SelectContent>
                                         <SelectItem value="per-question">Per question (same for all)</SelectItem>
-                                        <SelectItem value="section">By section</SelectItem>
+                                        <SelectItem value="topic">By topic</SelectItem>
                                         <SelectItem value="difficulty">By difficulty</SelectItem>
                                       </SelectContent>
                                     </Select>
@@ -2027,22 +1955,22 @@ export default function McqPdfAssignmentModal({
                                     </div>
                                   )}
 
-                                  {config.autoTimeFormula.mode === "section" && (
+                                  {config.autoTimeFormula.mode === "topic" && (
                                     <div className="grid gap-2 md:grid-cols-2">
-                                      {config.sections.map((section) => (
-                                        <div key={`formula-section-${section.id}`}>
-                                          <Label className="text-[11px] text-blue-100/90">{section.name} (min / question)</Label>
+                                      {config.topics.map((topic) => (
+                                        <div key={`formula-topic-${topic.id}`}>
+                                          <Label className="text-[11px] text-blue-100/90">{topic.name} (min / question)</Label>
                                           <Input
                                             type="number"
                                             min={0.1}
                                             max={60}
                                             step="0.1"
-                                            value={clampAutoMinutesValue(config.autoTimeFormula.sectionMinutesPerQuestion[section.id], config.autoTimeFormula.defaultMinutesPerQuestion)}
+                                            value={clampAutoMinutesValue(config.autoTimeFormula.topicMinutesPerQuestion[topic.id], config.autoTimeFormula.defaultMinutesPerQuestion)}
                                             onChange={(e) => {
                                               const value = clampAutoMinutesValue(e.target.value, config.autoTimeFormula.defaultMinutesPerQuestion);
                                               updateAutoTimeFormula((formula) => ({
                                                 ...formula,
-                                                sectionMinutesPerQuestion: { ...formula.sectionMinutesPerQuestion, [section.id]: value },
+                                                topicMinutesPerQuestion: { ...formula.topicMinutesPerQuestion, [topic.id]: value },
                                               }));
                                             }}
                                             className="h-8 border-blue-400/40 bg-slate-950 text-slate-100"
@@ -2107,32 +2035,7 @@ export default function McqPdfAssignmentModal({
                           </CardContent>
                         </Card>
 
-                        <Card className="border-slate-700 bg-slate-900/80">
-                          <CardContent className="space-y-3 p-4">
-                            <div className="flex items-center justify-between">
-                              <h4 className="text-sm font-semibold text-slate-200">Section Settings (Range Mapping)</h4>
-                              <div className="flex items-center gap-2">
-                                <Button type="button" size="sm" variant="outline" className="border-slate-600 bg-slate-950 text-slate-100 hover:bg-slate-800" onClick={addSection}>+ Add Section</Button>
-                                <Button type="button" size="sm" className="bg-blue-600 hover:bg-blue-500" onClick={applySectionMapping}>Apply Ranges</Button>
-                              </div>
-                            </div>
-                            <p className="text-xs text-slate-300">Use ranges like <code>1-2, 5-9</code>. Overlaps are blocked.</p>
-                            <div className="space-y-3">
-                              {config.sections.map((section) => (
-                                <div key={section.id} className="rounded-md border border-slate-700 bg-slate-950 p-3">
-                                  <div className="mb-2 grid gap-2 md:grid-cols-[1fr_1fr_auto] md:items-center">
-                                    <div className="flex items-center gap-2">
-                                      <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: section.color }} />
-                                      <Input value={section.name} onChange={(e) => setSection(section.id, (c) => ({ ...c, name: e.target.value }))} className="border-slate-700 bg-slate-900 text-slate-100" />
-                                    </div>
-                                    <Input value={section.rangeExpression} onChange={(e) => setSection(section.id, (c) => ({ ...c, rangeExpression: e.target.value }))} placeholder="1-2, 5-9" className="border-slate-700 bg-slate-900 text-slate-100" />
-                                    <Button type="button" variant="ghost" size="sm" className="text-red-300 hover:bg-red-500/10 hover:text-red-200" onClick={() => removeSection(section.id)}>Remove</Button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </CardContent>
-                        </Card>
+
 
                         <Card className="border-slate-700 bg-slate-900/80">
                           <CardContent className="space-y-4 p-4">
@@ -2268,7 +2171,7 @@ export default function McqPdfAssignmentModal({
                                   <SelectTrigger className="border-slate-700 bg-slate-900 text-slate-100"><SelectValue /></SelectTrigger>
                                   <SelectContent>
                                     <SelectItem value="range">By Range</SelectItem>
-                                    <SelectItem value="section">By Section</SelectItem>
+                                    <SelectItem value="topic">By Topic</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -2276,36 +2179,36 @@ export default function McqPdfAssignmentModal({
                                 <div><Label className="text-xs text-slate-300">Range</Label><Input value={bulkTypeRange} onChange={(e) => setBulkTypeRange(e.target.value)} placeholder="1-10, 12-15" className="border-slate-700 bg-slate-900 text-slate-100" /></div>
                               ) : (
                                 <div>
-                                  <Label className="text-xs text-slate-300">Sections</Label>
+                                  <Label className="text-xs text-slate-300">Topics</Label>
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                       <Button type="button" variant="outline" className="w-full justify-between border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800">
-                                        <span className="truncate">{getSectionSelectionLabel(bulkTypeSectionIds)}</span>
+                                        <span className="truncate">{getTopicSelectionLabel(bulkTypeTopicIds)}</span>
                                       </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-[220px] border-slate-700 bg-slate-950 text-slate-100">
                                       <DropdownMenuCheckboxItem
                                         className="pl-9 [&>span]:rounded-[3px] [&>span]:border [&>span]:border-slate-500 [&>span]:bg-slate-900 data-[state=checked]:[&>span]:border-blue-400 data-[state=checked]:[&>span]:bg-blue-500/25"
-                                        checked={config.sections.length > 0 && pruneSectionSelections(bulkTypeSectionIds).length === config.sections.length}
+                                        checked={config.topics.length > 0 && pruneTopicSelections(bulkTypeTopicIds).length === config.topics.length}
                                         onSelect={(event) => event.preventDefault()}
-                                        onCheckedChange={() => setBulkTypeSectionIds((prev) => {
-                                          const isAllSelected = config.sections.length > 0 && pruneSectionSelections(prev).length === config.sections.length;
-                                          return isAllSelected ? [] : config.sections.map((section) => section.id);
+                                        onCheckedChange={() => setBulkTypeTopicIds((prev) => {
+                                          const isAllSelected = config.topics.length > 0 && pruneTopicSelections(prev).length === config.topics.length;
+                                          return isAllSelected ? [] : config.topics.map((topic) => topic.id);
                                         })}
                                       >
                                         Select all
                                       </DropdownMenuCheckboxItem>
-                                      <DropdownMenuItem onSelect={(event) => { event.preventDefault(); setBulkTypeSectionIds([]); }}>Clear</DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={(event) => { event.preventDefault(); setBulkTypeTopicIds([]); }}>Clear</DropdownMenuItem>
                                       <DropdownMenuSeparator className="bg-slate-700" />
-                                      {config.sections.map((section) => (
+                                      {config.topics.map((topic) => (
                                         <DropdownMenuCheckboxItem
-                                          key={section.id}
+                                          key={topic.id}
                                           className="pl-9 [&>span]:rounded-[3px] [&>span]:border [&>span]:border-slate-500 [&>span]:bg-slate-900 data-[state=checked]:[&>span]:border-blue-400 data-[state=checked]:[&>span]:bg-blue-500/25"
-                                          checked={bulkTypeSectionIds.includes(section.id)}
+                                          checked={bulkTypeTopicIds.includes(topic.id)}
                                           onSelect={(event) => event.preventDefault()}
-                                          onCheckedChange={() => setBulkTypeSectionIds((prev) => toggleSectionSelection(prev, section.id))}
+                                          onCheckedChange={() => setBulkTypeTopicIds((prev) => toggleTopicSelection(prev, topic.id))}
                                         >
-                                          {section.name}
+                                          {topic.name}
                                         </DropdownMenuCheckboxItem>
                                       ))}
                                     </DropdownMenuContent>
@@ -2328,43 +2231,43 @@ export default function McqPdfAssignmentModal({
                                 <Label className="text-xs text-slate-300">Target Mode</Label>
                                 <Select value={bulkScoringMode} onValueChange={(v) => setBulkScoringMode(v as BulkTargetMode)}>
                                   <SelectTrigger className="border-slate-700 bg-slate-900 text-slate-100"><SelectValue /></SelectTrigger>
-                                  <SelectContent><SelectItem value="range">By Range</SelectItem><SelectItem value="section">By Section</SelectItem></SelectContent>
+                                  <SelectContent><SelectItem value="range">By Range</SelectItem><SelectItem value="topic">By Topic</SelectItem></SelectContent>
                                 </Select>
                               </div>
                               {bulkScoringMode === "range" ? (
                                 <div><Label className="text-xs text-slate-300">Range</Label><Input value={bulkScoringRange} onChange={(e) => setBulkScoringRange(e.target.value)} placeholder="1-10, 12-15" className="border-slate-700 bg-slate-900 text-slate-100" /></div>
                               ) : (
                                 <div>
-                                  <Label className="text-xs text-slate-300">Sections</Label>
+                                  <Label className="text-xs text-slate-300">Topics</Label>
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                       <Button type="button" variant="outline" className="w-full justify-between border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800">
-                                        <span className="truncate">{getSectionSelectionLabel(bulkScoringSectionIds)}</span>
+                                        <span className="truncate">{getTopicSelectionLabel(bulkScoringTopicIds)}</span>
                                       </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-[220px] border-slate-700 bg-slate-950 text-slate-100">
                                       <DropdownMenuCheckboxItem
                                         className="pl-9 [&>span]:rounded-[3px] [&>span]:border [&>span]:border-slate-500 [&>span]:bg-slate-900 data-[state=checked]:[&>span]:border-blue-400 data-[state=checked]:[&>span]:bg-blue-500/25"
-                                        checked={config.sections.length > 0 && pruneSectionSelections(bulkScoringSectionIds).length === config.sections.length}
+                                        checked={config.topics.length > 0 && pruneTopicSelections(bulkScoringTopicIds).length === config.topics.length}
                                         onSelect={(event) => event.preventDefault()}
-                                        onCheckedChange={() => setBulkScoringSectionIds((prev) => {
-                                          const isAllSelected = config.sections.length > 0 && pruneSectionSelections(prev).length === config.sections.length;
-                                          return isAllSelected ? [] : config.sections.map((section) => section.id);
+                                        onCheckedChange={() => setBulkScoringTopicIds((prev) => {
+                                          const isAllSelected = config.topics.length > 0 && pruneTopicSelections(prev).length === config.topics.length;
+                                          return isAllSelected ? [] : config.topics.map((topic) => topic.id);
                                         })}
                                       >
                                         Select all
                                       </DropdownMenuCheckboxItem>
-                                      <DropdownMenuItem onSelect={(event) => { event.preventDefault(); setBulkScoringSectionIds([]); }}>Clear</DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={(event) => { event.preventDefault(); setBulkScoringTopicIds([]); }}>Clear</DropdownMenuItem>
                                       <DropdownMenuSeparator className="bg-slate-700" />
-                                      {config.sections.map((section) => (
+                                      {config.topics.map((topic) => (
                                         <DropdownMenuCheckboxItem
-                                          key={section.id}
+                                          key={topic.id}
                                           className="pl-9 [&>span]:rounded-[3px] [&>span]:border [&>span]:border-slate-500 [&>span]:bg-slate-900 data-[state=checked]:[&>span]:border-blue-400 data-[state=checked]:[&>span]:bg-blue-500/25"
-                                          checked={bulkScoringSectionIds.includes(section.id)}
+                                          checked={bulkScoringTopicIds.includes(topic.id)}
                                           onSelect={(event) => event.preventDefault()}
-                                          onCheckedChange={() => setBulkScoringSectionIds((prev) => toggleSectionSelection(prev, section.id))}
+                                          onCheckedChange={() => setBulkScoringTopicIds((prev) => toggleTopicSelection(prev, topic.id))}
                                         >
-                                          {section.name}
+                                          {topic.name}
                                         </DropdownMenuCheckboxItem>
                                       ))}
                                     </DropdownMenuContent>
@@ -2388,43 +2291,43 @@ export default function McqPdfAssignmentModal({
                                 <Label className="text-xs text-slate-300">Target Mode</Label>
                                 <Select value={bulkPartialMode} onValueChange={(v) => setBulkPartialMode(v as BulkTargetMode)}>
                                   <SelectTrigger className="border-slate-700 bg-slate-900 text-slate-100"><SelectValue /></SelectTrigger>
-                                  <SelectContent><SelectItem value="range">By Range</SelectItem><SelectItem value="section">By Section</SelectItem></SelectContent>
+                                  <SelectContent><SelectItem value="range">By Range</SelectItem><SelectItem value="topic">By Topic</SelectItem></SelectContent>
                                 </Select>
                               </div>
                               {bulkPartialMode === "range" ? (
                                 <div><Label className="text-xs text-slate-300">Range</Label><Input value={bulkPartialRange} onChange={(e) => setBulkPartialRange(e.target.value)} placeholder="1-10, 12-15" className="border-slate-700 bg-slate-900 text-slate-100" /></div>
                               ) : (
                                 <div>
-                                  <Label className="text-xs text-slate-300">Sections</Label>
+                                  <Label className="text-xs text-slate-300">Topics</Label>
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                       <Button type="button" variant="outline" className="w-full justify-between border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800">
-                                        <span className="truncate">{getSectionSelectionLabel(bulkPartialSectionIds)}</span>
+                                        <span className="truncate">{getTopicSelectionLabel(bulkPartialTopicIds)}</span>
                                       </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-[220px] border-slate-700 bg-slate-950 text-slate-100">
                                       <DropdownMenuCheckboxItem
                                         className="pl-9 [&>span]:rounded-[3px] [&>span]:border [&>span]:border-slate-500 [&>span]:bg-slate-900 data-[state=checked]:[&>span]:border-blue-400 data-[state=checked]:[&>span]:bg-blue-500/25"
-                                        checked={config.sections.length > 0 && pruneSectionSelections(bulkPartialSectionIds).length === config.sections.length}
+                                        checked={config.topics.length > 0 && pruneTopicSelections(bulkPartialTopicIds).length === config.topics.length}
                                         onSelect={(event) => event.preventDefault()}
-                                        onCheckedChange={() => setBulkPartialSectionIds((prev) => {
-                                          const isAllSelected = config.sections.length > 0 && pruneSectionSelections(prev).length === config.sections.length;
-                                          return isAllSelected ? [] : config.sections.map((section) => section.id);
+                                        onCheckedChange={() => setBulkPartialTopicIds((prev) => {
+                                          const isAllSelected = config.topics.length > 0 && pruneTopicSelections(prev).length === config.topics.length;
+                                          return isAllSelected ? [] : config.topics.map((topic) => topic.id);
                                         })}
                                       >
                                         Select all
                                       </DropdownMenuCheckboxItem>
-                                      <DropdownMenuItem onSelect={(event) => { event.preventDefault(); setBulkPartialSectionIds([]); }}>Clear</DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={(event) => { event.preventDefault(); setBulkPartialTopicIds([]); }}>Clear</DropdownMenuItem>
                                       <DropdownMenuSeparator className="bg-slate-700" />
-                                      {config.sections.map((section) => (
+                                      {config.topics.map((topic) => (
                                         <DropdownMenuCheckboxItem
-                                          key={section.id}
+                                          key={topic.id}
                                           className="pl-9 [&>span]:rounded-[3px] [&>span]:border [&>span]:border-slate-500 [&>span]:bg-slate-900 data-[state=checked]:[&>span]:border-blue-400 data-[state=checked]:[&>span]:bg-blue-500/25"
-                                          checked={bulkPartialSectionIds.includes(section.id)}
+                                          checked={bulkPartialTopicIds.includes(topic.id)}
                                           onSelect={(event) => event.preventDefault()}
-                                          onCheckedChange={() => setBulkPartialSectionIds((prev) => toggleSectionSelection(prev, section.id))}
+                                          onCheckedChange={() => setBulkPartialTopicIds((prev) => toggleTopicSelection(prev, topic.id))}
                                         >
-                                          {section.name}
+                                          {topic.name}
                                         </DropdownMenuCheckboxItem>
                                       ))}
                                     </DropdownMenuContent>
@@ -2457,43 +2360,43 @@ export default function McqPdfAssignmentModal({
                                 <Label className="text-xs text-slate-300">Target Mode</Label>
                                 <Select value={bulkOptionCountMode} onValueChange={(v) => setBulkOptionCountMode(v as BulkTargetMode)}>
                                   <SelectTrigger className="border-slate-700 bg-slate-900 text-slate-100"><SelectValue /></SelectTrigger>
-                                  <SelectContent><SelectItem value="range">By Range</SelectItem><SelectItem value="section">By Section</SelectItem></SelectContent>
+                                  <SelectContent><SelectItem value="range">By Range</SelectItem><SelectItem value="topic">By Topic</SelectItem></SelectContent>
                                 </Select>
                               </div>
                               {bulkOptionCountMode === "range" ? (
                                 <div><Label className="text-xs text-slate-300">Range</Label><Input value={bulkOptionCountRange} onChange={(e) => setBulkOptionCountRange(e.target.value)} placeholder="1-10, 12-15" className="border-slate-700 bg-slate-900 text-slate-100" /></div>
                               ) : (
                                 <div>
-                                  <Label className="text-xs text-slate-300">Sections</Label>
+                                  <Label className="text-xs text-slate-300">Topics</Label>
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                       <Button type="button" variant="outline" className="w-full justify-between border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800">
-                                        <span className="truncate">{getSectionSelectionLabel(bulkOptionCountSectionIds)}</span>
+                                        <span className="truncate">{getTopicSelectionLabel(bulkOptionCountTopicIds)}</span>
                                       </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-[220px] border-slate-700 bg-slate-950 text-slate-100">
                                       <DropdownMenuCheckboxItem
                                         className="pl-9 [&>span]:rounded-[3px] [&>span]:border [&>span]:border-slate-500 [&>span]:bg-slate-900 data-[state=checked]:[&>span]:border-blue-400 data-[state=checked]:[&>span]:bg-blue-500/25"
-                                        checked={config.sections.length > 0 && pruneSectionSelections(bulkOptionCountSectionIds).length === config.sections.length}
+                                        checked={config.topics.length > 0 && pruneTopicSelections(bulkOptionCountTopicIds).length === config.topics.length}
                                         onSelect={(event) => event.preventDefault()}
-                                        onCheckedChange={() => setBulkOptionCountSectionIds((prev) => {
-                                          const isAllSelected = config.sections.length > 0 && pruneSectionSelections(prev).length === config.sections.length;
-                                          return isAllSelected ? [] : config.sections.map((section) => section.id);
+                                        onCheckedChange={() => setBulkOptionCountTopicIds((prev) => {
+                                          const isAllSelected = config.topics.length > 0 && pruneTopicSelections(prev).length === config.topics.length;
+                                          return isAllSelected ? [] : config.topics.map((topic) => topic.id);
                                         })}
                                       >
                                         Select all
                                       </DropdownMenuCheckboxItem>
-                                      <DropdownMenuItem onSelect={(event) => { event.preventDefault(); setBulkOptionCountSectionIds([]); }}>Clear</DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={(event) => { event.preventDefault(); setBulkOptionCountTopicIds([]); }}>Clear</DropdownMenuItem>
                                       <DropdownMenuSeparator className="bg-slate-700" />
-                                      {config.sections.map((section) => (
+                                      {config.topics.map((topic) => (
                                         <DropdownMenuCheckboxItem
-                                          key={section.id}
+                                          key={topic.id}
                                           className="pl-9 [&>span]:rounded-[3px] [&>span]:border [&>span]:border-slate-500 [&>span]:bg-slate-900 data-[state=checked]:[&>span]:border-blue-400 data-[state=checked]:[&>span]:bg-blue-500/25"
-                                          checked={bulkOptionCountSectionIds.includes(section.id)}
+                                          checked={bulkOptionCountTopicIds.includes(topic.id)}
                                           onSelect={(event) => event.preventDefault()}
-                                          onCheckedChange={() => setBulkOptionCountSectionIds((prev) => toggleSectionSelection(prev, section.id))}
+                                          onCheckedChange={() => setBulkOptionCountTopicIds((prev) => toggleTopicSelection(prev, topic.id))}
                                         >
-                                          {section.name}
+                                          {topic.name}
                                         </DropdownMenuCheckboxItem>
                                       ))}
                                     </DropdownMenuContent>
@@ -2516,43 +2419,43 @@ export default function McqPdfAssignmentModal({
                                 <Label className="text-xs text-slate-300">Target Mode</Label>
                                 <Select value={bulkOptionLabelMode} onValueChange={(v) => setBulkOptionLabelMode(v as BulkTargetMode)}>
                                   <SelectTrigger className="border-slate-700 bg-slate-900 text-slate-100"><SelectValue /></SelectTrigger>
-                                  <SelectContent><SelectItem value="range">By Range</SelectItem><SelectItem value="section">By Section</SelectItem></SelectContent>
+                                  <SelectContent><SelectItem value="range">By Range</SelectItem><SelectItem value="topic">By Topic</SelectItem></SelectContent>
                                 </Select>
                               </div>
                               {bulkOptionLabelMode === "range" ? (
                                 <div><Label className="text-xs text-slate-300">Range</Label><Input value={bulkOptionLabelRange} onChange={(e) => setBulkOptionLabelRange(e.target.value)} placeholder="1-10, 12-15" className="border-slate-700 bg-slate-900 text-slate-100" /></div>
                               ) : (
                                 <div>
-                                  <Label className="text-xs text-slate-300">Sections</Label>
+                                  <Label className="text-xs text-slate-300">Topics</Label>
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                       <Button type="button" variant="outline" className="w-full justify-between border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800">
-                                        <span className="truncate">{getSectionSelectionLabel(bulkOptionLabelSectionIds)}</span>
+                                        <span className="truncate">{getTopicSelectionLabel(bulkOptionLabelTopicIds)}</span>
                                       </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-[220px] border-slate-700 bg-slate-950 text-slate-100">
                                       <DropdownMenuCheckboxItem
                                         className="pl-9 [&>span]:rounded-[3px] [&>span]:border [&>span]:border-slate-500 [&>span]:bg-slate-900 data-[state=checked]:[&>span]:border-blue-400 data-[state=checked]:[&>span]:bg-blue-500/25"
-                                        checked={config.sections.length > 0 && pruneSectionSelections(bulkOptionLabelSectionIds).length === config.sections.length}
+                                        checked={config.topics.length > 0 && pruneTopicSelections(bulkOptionLabelTopicIds).length === config.topics.length}
                                         onSelect={(event) => event.preventDefault()}
-                                        onCheckedChange={() => setBulkOptionLabelSectionIds((prev) => {
-                                          const isAllSelected = config.sections.length > 0 && pruneSectionSelections(prev).length === config.sections.length;
-                                          return isAllSelected ? [] : config.sections.map((section) => section.id);
+                                        onCheckedChange={() => setBulkOptionLabelTopicIds((prev) => {
+                                          const isAllSelected = config.topics.length > 0 && pruneTopicSelections(prev).length === config.topics.length;
+                                          return isAllSelected ? [] : config.topics.map((topic) => topic.id);
                                         })}
                                       >
                                         Select all
                                       </DropdownMenuCheckboxItem>
-                                      <DropdownMenuItem onSelect={(event) => { event.preventDefault(); setBulkOptionLabelSectionIds([]); }}>Clear</DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={(event) => { event.preventDefault(); setBulkOptionLabelTopicIds([]); }}>Clear</DropdownMenuItem>
                                       <DropdownMenuSeparator className="bg-slate-700" />
-                                      {config.sections.map((section) => (
+                                      {config.topics.map((topic) => (
                                         <DropdownMenuCheckboxItem
-                                          key={section.id}
+                                          key={topic.id}
                                           className="pl-9 [&>span]:rounded-[3px] [&>span]:border [&>span]:border-slate-500 [&>span]:bg-slate-900 data-[state=checked]:[&>span]:border-blue-400 data-[state=checked]:[&>span]:bg-blue-500/25"
-                                          checked={bulkOptionLabelSectionIds.includes(section.id)}
+                                          checked={bulkOptionLabelTopicIds.includes(topic.id)}
                                           onSelect={(event) => event.preventDefault()}
-                                          onCheckedChange={() => setBulkOptionLabelSectionIds((prev) => toggleSectionSelection(prev, section.id))}
+                                          onCheckedChange={() => setBulkOptionLabelTopicIds((prev) => toggleTopicSelection(prev, topic.id))}
                                         >
-                                          {section.name}
+                                          {topic.name}
                                         </DropdownMenuCheckboxItem>
                                       ))}
                                     </DropdownMenuContent>
@@ -2575,43 +2478,43 @@ export default function McqPdfAssignmentModal({
                                 <Label className="text-xs text-slate-300">Target Mode</Label>
                                 <Select value={bulkDifficultyMode} onValueChange={(v) => setBulkDifficultyMode(v as BulkTargetMode)}>
                                   <SelectTrigger className="border-slate-700 bg-slate-900 text-slate-100"><SelectValue /></SelectTrigger>
-                                  <SelectContent><SelectItem value="range">By Range</SelectItem><SelectItem value="section">By Section</SelectItem></SelectContent>
+                                  <SelectContent><SelectItem value="range">By Range</SelectItem><SelectItem value="topic">By Topic</SelectItem></SelectContent>
                                 </Select>
                               </div>
                               {bulkDifficultyMode === "range" ? (
                                 <div><Label className="text-xs text-slate-300">Range</Label><Input value={bulkDifficultyRange} onChange={(e) => setBulkDifficultyRange(e.target.value)} placeholder="1-10, 12-15" className="border-slate-700 bg-slate-900 text-slate-100" /></div>
                               ) : (
                                 <div>
-                                  <Label className="text-xs text-slate-300">Sections</Label>
+                                  <Label className="text-xs text-slate-300">Topics</Label>
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                       <Button type="button" variant="outline" className="w-full justify-between border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800">
-                                        <span className="truncate">{getSectionSelectionLabel(bulkDifficultySectionIds)}</span>
+                                        <span className="truncate">{getTopicSelectionLabel(bulkDifficultyTopicIds)}</span>
                                       </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-[220px] border-slate-700 bg-slate-950 text-slate-100">
                                       <DropdownMenuCheckboxItem
                                         className="pl-9 [&>span]:rounded-[3px] [&>span]:border [&>span]:border-slate-500 [&>span]:bg-slate-900 data-[state=checked]:[&>span]:border-blue-400 data-[state=checked]:[&>span]:bg-blue-500/25"
-                                        checked={config.sections.length > 0 && pruneSectionSelections(bulkDifficultySectionIds).length === config.sections.length}
+                                        checked={config.topics.length > 0 && pruneTopicSelections(bulkDifficultyTopicIds).length === config.topics.length}
                                         onSelect={(event) => event.preventDefault()}
-                                        onCheckedChange={() => setBulkDifficultySectionIds((prev) => {
-                                          const isAllSelected = config.sections.length > 0 && pruneSectionSelections(prev).length === config.sections.length;
-                                          return isAllSelected ? [] : config.sections.map((section) => section.id);
+                                        onCheckedChange={() => setBulkDifficultyTopicIds((prev) => {
+                                          const isAllSelected = config.topics.length > 0 && pruneTopicSelections(prev).length === config.topics.length;
+                                          return isAllSelected ? [] : config.topics.map((topic) => topic.id);
                                         })}
                                       >
                                         Select all
                                       </DropdownMenuCheckboxItem>
-                                      <DropdownMenuItem onSelect={(event) => { event.preventDefault(); setBulkDifficultySectionIds([]); }}>Clear</DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={(event) => { event.preventDefault(); setBulkDifficultyTopicIds([]); }}>Clear</DropdownMenuItem>
                                       <DropdownMenuSeparator className="bg-slate-700" />
-                                      {config.sections.map((section) => (
+                                      {config.topics.map((topic) => (
                                         <DropdownMenuCheckboxItem
-                                          key={section.id}
+                                          key={topic.id}
                                           className="pl-9 [&>span]:rounded-[3px] [&>span]:border [&>span]:border-slate-500 [&>span]:bg-slate-900 data-[state=checked]:[&>span]:border-blue-400 data-[state=checked]:[&>span]:bg-blue-500/25"
-                                          checked={bulkDifficultySectionIds.includes(section.id)}
+                                          checked={bulkDifficultyTopicIds.includes(topic.id)}
                                           onSelect={(event) => event.preventDefault()}
-                                          onCheckedChange={() => setBulkDifficultySectionIds((prev) => toggleSectionSelection(prev, section.id))}
+                                          onCheckedChange={() => setBulkDifficultyTopicIds((prev) => toggleTopicSelection(prev, topic.id))}
                                         >
-                                          {section.name}
+                                          {topic.name}
                                         </DropdownMenuCheckboxItem>
                                       ))}
                                     </DropdownMenuContent>
@@ -2642,14 +2545,13 @@ export default function McqPdfAssignmentModal({
                                   {config.questions.map((question, idx) => {
                                     const qNo = formatQuestionNumber(idx, config.numberingStyle);
                                     const active = selectedQuestion?.id === question.id;
-                                    const section = sectionById.get(question.sectionId);
                                     const topic = question.topicId ? topicById.get(question.topicId) || null : null;
                                     const subtopic = topic && question.subtopicId
                                       ? topic.subtopics.find((item) => item.id === question.subtopicId) || null
                                       : null;
                                     return (
                                       <button type="button" key={question.id} onClick={() => { setSelectedQuestionId(question.id); setCustomOptionInput(question.customOptionLabels.join(", ")); }} className={`flex w-full items-center gap-2 rounded px-2 py-1 text-left text-xs transition ${active ? "bg-blue-600 text-white" : "bg-slate-900 text-slate-200 hover:bg-slate-800"}`}>
-                                        <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: section?.color || "#94a3b8" }} />
+                                        <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: topic?.color || "#94a3b8" }} />
                                         <span className="min-w-0">
                                           <span className="block">Q {qNo}</span>
                                           <span className={`block truncate text-[10px] ${active ? "text-blue-100" : "text-slate-400"}`}>
@@ -2665,7 +2567,6 @@ export default function McqPdfAssignmentModal({
                               {selectedQuestion && (
                                 <div className="space-y-3 rounded-md border border-slate-700 bg-slate-950 p-3">
                                   <div className="grid gap-3 md:grid-cols-2">
-                                    <div><Label className="text-xs text-slate-300">Section</Label><Select value={selectedQuestion.sectionId} onValueChange={(value) => setQuestion(selectedQuestion.id, (current) => ({ ...current, sectionId: value }))}><SelectTrigger className="border-slate-700 bg-slate-900 text-slate-100"><SelectValue /></SelectTrigger><SelectContent>{config.sections.map((section) => <SelectItem key={section.id} value={section.id}>{section.name}</SelectItem>)}</SelectContent></Select></div>
                                     <div><Label className="text-xs text-slate-300">Question Type</Label><Select value={selectedQuestion.type} onValueChange={(value) => setQuestion(selectedQuestion.id, (current) => ({ ...current, type: value as QuestionType }))}><SelectTrigger className="border-slate-700 bg-slate-900 text-slate-100"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="single">Single correct</SelectItem><SelectItem value="multiple">Multiple correct</SelectItem></SelectContent></Select></div>
                                     <div>
                                       <Label className="text-xs text-slate-300">Topic</Label>
@@ -2673,14 +2574,14 @@ export default function McqPdfAssignmentModal({
                                         value={selectedQuestion.topicId || NO_TOPIC_VALUE}
                                         onValueChange={(value) =>
                                           setQuestion(selectedQuestion.id, (current) => {
-                                            const topicId = value === NO_TOPIC_VALUE ? null : value;
-                                            return { ...current, topicId, subtopicId: null };
+                                            const topicId = value === NO_TOPIC_VALUE ? "" : value;
+                                            return { ...current, topicId, subtopicId: "" };
                                           })
                                         }
                                       >
                                         <SelectTrigger className="border-slate-700 bg-slate-900 text-slate-100"><SelectValue /></SelectTrigger>
                                         <SelectContent>
-                                          <SelectItem value={NO_TOPIC_VALUE}>No topic (null)</SelectItem>
+                                          <SelectItem value={NO_TOPIC_VALUE}>No topic</SelectItem>
                                           {config.topics.map((topic) => (
                                             <SelectItem key={topic.id} value={topic.id}>{topic.name}</SelectItem>
                                           ))}
@@ -2694,14 +2595,14 @@ export default function McqPdfAssignmentModal({
                                         onValueChange={(value) =>
                                           setQuestion(selectedQuestion.id, (current) => ({
                                             ...current,
-                                            subtopicId: value === NO_SUBTOPIC_VALUE ? null : value,
+                                            subtopicId: value === NO_SUBTOPIC_VALUE ? "" : value,
                                           }))
                                         }
                                         disabled={!selectedQuestion.topicId}
                                       >
                                         <SelectTrigger className="border-slate-700 bg-slate-900 text-slate-100"><SelectValue /></SelectTrigger>
                                         <SelectContent>
-                                          <SelectItem value={NO_SUBTOPIC_VALUE}>No subtopic (null)</SelectItem>
+                                          <SelectItem value={NO_SUBTOPIC_VALUE}>No subtopic</SelectItem>
                                           {(selectedQuestion.topicId ? topicById.get(selectedQuestion.topicId)?.subtopics || [] : []).map((subtopic) => (
                                             <SelectItem key={subtopic.id} value={subtopic.id}>{subtopic.name}</SelectItem>
                                           ))}
@@ -2757,8 +2658,6 @@ export default function McqPdfAssignmentModal({
                       <div className="space-y-3 pr-2">
                         {config.questions.map((question, idx) => {
                           const questionNumber = formatQuestionNumber(idx, config.numberingStyle);
-                          const section = sectionById.get(question.sectionId);
-                          const sectionName = section?.name || "Section";
                           const topic = question.topicId ? topicById.get(question.topicId) || null : null;
                           const subtopic = topic && question.subtopicId
                             ? topic.subtopics.find((item) => item.id === question.subtopicId) || null
@@ -2772,13 +2671,13 @@ export default function McqPdfAssignmentModal({
                                   <div>
                                       <p className="text-sm font-semibold text-slate-100">Question {questionNumber}</p>
                                       <p className="text-xs text-slate-300">
-                                        {sectionName} • {question.type === "single" ? "Single correct" : "Multiple correct"} • {question.marks} marks • Topic: {topic ? topic.name : "None"}
+                                        {question.type === "single" ? "Single correct" : "Multiple correct"} • {question.marks} marks • Topic: {topic ? topic.name : "None"}
                                         {topic ? ` • Subtopic: ${subtopic ? subtopic.name : "None"}` : ""}
                                         • Partial marking: {question.type === "multiple" && question.partialMarkingEnabled ? "On" : "Off"}
                                       </p>
                                   </div>
                                   <div className="flex items-center gap-2">
-                                    <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: section?.color || "#94a3b8" }} />
+                                    <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: topic?.color || "#94a3b8" }} />
                                       <Badge className="bg-slate-700 text-slate-100">{question.correctAnswers.length} selected</Badge>
                                   </div>
                                 </div>
@@ -2896,8 +2795,8 @@ export default function McqPdfAssignmentModal({
                               <CardContent className="flex h-full min-h-0 flex-col p-3">
                                 <div className="mb-3 flex items-center justify-between"><h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300">Question Nav</h4><ListChecks className="h-4 w-4 text-slate-300" /></div>
                                 <div className="mb-3 space-y-1 text-xs text-slate-300"><p><span className="inline-block h-2 w-2 rounded-full bg-green-400" /> Answered</p><p><span className="inline-block h-2 w-2 rounded-full bg-red-400" /> Not answered</p><p><span className="inline-block h-2 w-2 rounded-full bg-yellow-300" /> Marked review</p></div>
-                                <div className="mb-3 rounded-md border border-slate-700 bg-slate-950 p-2"><p className="mb-2 text-xs font-semibold text-slate-300">Section Colors</p><div className="space-y-1">{config.sections.map((section) => <div key={section.id} className="flex items-center gap-2 text-xs text-slate-200"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: section.color }} /><span>{section.name}</span></div>)}</div></div>
-                                <div className="min-h-0 flex-1 overflow-y-auto pr-1"><div className="grid grid-cols-4 gap-2 pr-2">{config.questions.map((question, idx) => { const answered = answeredQuestionIds.has(question.id); const marked = markedQuestionIds.has(question.id); const active = idx === previewCursor; const sectionColor = sectionById.get(question.sectionId)?.color || "#94a3b8"; const bgClass = marked ? "bg-yellow-400 text-slate-950" : answered ? "bg-green-500 text-white" : "bg-red-500 text-white"; return <button type="button" key={question.id} onClick={() => setPreviewCursor(idx)} className={`h-9 w-9 rounded-full border-2 text-xs font-semibold transition ${bgClass} ${active ? "ring-2 ring-white" : "opacity-90 hover:opacity-100"}`} style={{ borderColor: sectionColor }}>{formatQuestionNumber(idx, config.numberingStyle)}</button>; })}</div></div>
+                                <div className="mb-3 rounded-md border border-slate-700 bg-slate-950 p-2"><p className="mb-2 text-xs font-semibold text-slate-300">Topic Colors</p><div className="space-y-1">{config.topics.map((topic) => <div key={topic.id} className="flex items-center gap-2 text-xs text-slate-200"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: topic.color }} /><span>{topic.name}</span></div>)}</div></div>
+                                <div className="min-h-0 flex-1 overflow-y-auto pr-1"><div className="grid grid-cols-4 gap-2 pr-2">{config.questions.map((question, idx) => { const answered = answeredQuestionIds.has(question.id); const marked = markedQuestionIds.has(question.id); const active = idx === previewCursor; const topicColor = topicById.get(question.topicId)?.color || "#94a3b8"; const bgClass = marked ? "bg-yellow-400 text-slate-950" : answered ? "bg-green-500 text-white" : "bg-red-500 text-white"; return <button type="button" key={question.id} onClick={() => setPreviewCursor(idx)} className={`h-9 w-9 rounded-full border-2 text-xs font-semibold transition ${bgClass} ${active ? "ring-2 ring-white" : "opacity-90 hover:opacity-100"}`} style={{ borderColor: topicColor }}>{formatQuestionNumber(idx, config.numberingStyle)}</button>; })}</div></div>
                               </CardContent>
                             </Card>
                           </div>

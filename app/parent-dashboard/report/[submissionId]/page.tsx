@@ -35,9 +35,9 @@ interface ParsedReportPayload {
       finalScore?: number;
       maxScore?: number;
     };
-    sectionStats?: Array<{
-      sectionId?: string;
-      sectionName?: string;
+    topicStats?: Array<{
+      topicId?: string;
+      topicName?: string;
       percentage?: number;
     }>;
     difficultyStats?: Array<Record<string, unknown>>;
@@ -94,12 +94,12 @@ export default function ParentReportPdfPage() {
           studentName: data.submission.student?.name || "Student",
           assignmentTitle: data.submission.assignment?.title || "Assessment",
           testTitle: normalizedTestTitle,
-          sectionStats: parsed.report.sectionStats || [],
+          topicStats: parsed.report.topicStats || [],
         });
         const presentation = normalizeReportPresentation(
           parsed.reportPresentation,
           fallback,
-          parsed.report.sectionStats || []
+          parsed.report.topicStats || []
         );
 
         if (presentation.mode !== "confirmed") {

@@ -8,8 +8,8 @@ interface ScoreSummaryLike {
   unansweredCount?: number;
 }
 
-interface SectionStatLike {
-  sectionName?: string;
+interface TopicStatLike {
+  topicName?: string;
   questionCount?: number;
   correctCount?: number;
   score?: number;
@@ -31,8 +31,8 @@ interface DifficultyStatLike {
 
 interface QuestionStatLike {
   questionNumber?: string | number;
-  sectionId?: string;
-  sectionName?: string;
+  topicId?: string;
+  topicName?: string;
   difficulty?: string;
   type?: string;
   marks?: number;
@@ -64,7 +64,7 @@ interface GenerateTeacherRecommendationInput {
   assignmentTitle: string;
   testTitle: string;
   scoreSummary: ScoreSummaryLike;
-  sectionStats: SectionStatLike[];
+  topicStats: TopicStatLike[];
   difficultyStats: DifficultyStatLike[];
   questionStats?: QuestionStatLike[];
   timingSummary?: TimingSummaryLike;
@@ -74,16 +74,16 @@ const normalizeText = (value: unknown) => (typeof value === "string" ? value.tri
 
 const buildFallbackRecommendation = (input: GenerateTeacherRecommendationInput) => {
   const percentage = Math.round(Number(input.scoreSummary.percentage) || 0);
-  const weakestSection = [...input.sectionStats].sort((a, b) => (Number(a.percentage) || 0) - (Number(b.percentage) || 0))[0];
-  const strongestSection = [...input.sectionStats].sort((a, b) => (Number(b.percentage) || 0) - (Number(a.percentage) || 0))[0];
+  const weakestTopic = [...input.topicStats].sort((a, b) => (Number(a.percentage) || 0) - (Number(b.percentage) || 0))[0];
+  const strongestTopic = [...input.topicStats].sort((a, b) => (Number(b.percentage) || 0) - (Number(a.percentage) || 0))[0];
   const slowMisses = (input.questionStats || [])
     .filter((question) => String(question.status || "") !== "correct")
     .sort((a, b) => (Number(b.timeSpentMs) || 0) - (Number(a.timeSpentMs) || 0))
     .slice(0, 2)
-    .map((question) => question.sectionName)
+    .map((question) => question.topicName)
     .filter(Boolean);
-  const focus = weakestSection?.sectionName || "the lowest-scoring topic";
-  const strength = strongestSection?.sectionName || "the strongest topic";
+  const focus = weakestTopic?.topicName || "the lowest-scoring topic";
+  const strength = strongestTopic?.topicName || "the strongest topic";
   const timingFocus = slowMisses.length > 0
     ? ` Pair this with error review on questions where time investment did not translate into accuracy, especially around ${Array.from(new Set(slowMisses)).join(" and ")}.`
     : "";
@@ -102,8 +102,8 @@ const buildFallbackRecommendation = (input: GenerateTeacherRecommendationInput) 
 const buildQuestionEvidence = (questions: QuestionStatLike[] = []) => {
   return questions.map((question) => ({
     questionNumber: question.questionNumber,
-    topic: question.sectionName,
-    sectionId: question.sectionId,
+    topic: question.topicName,
+    topicId: question.topicId,
     difficulty: question.difficulty,
     questionType: question.type,
     marks: question.marks,
@@ -152,7 +152,7 @@ export async function generateGeminiTeacherRecommendation(
               "You are writing the Teacher's Recommendation section for an academic MCQ diagnostic report.",
               "Return only JSON with key teacherRecommendation.",
               "The value must be 2 concise paragraphs, 5-8 sentences total, no markdown and no bullet points.",
-              "Use all evidence: overall score, section/topic performance, difficulty performance, per-question outcome, selected-vs-correct answer behavior, visit count, and time spent per question.",
+              "Use all evidence: overall score, topic performance, difficulty performance, per-question outcome, selected-vs-correct answer behavior, visit count, and time spent per question.",
               "Infer patterns such as concept gaps, careless errors, overthinking, rushing, weak difficulty band, topic priority, elimination strategy, time management, and practice sequence.",
               "Do not explicitly mention raw percentages, exact scores, exact question numbers, exact seconds, JSON, tables, or that you analyzed data.",
               "Write as a mentor recommendation: specific, practical, polished, and editable before sharing with parents/students.",
@@ -161,7 +161,7 @@ export async function generateGeminiTeacherRecommendation(
               `Assignment: ${input.assignmentTitle}`,
               `Test: ${input.testTitle}`,
               `Score summary: ${JSON.stringify(input.scoreSummary)}`,
-              `Section stats: ${JSON.stringify(input.sectionStats)}`,
+              `Topic stats: ${JSON.stringify(input.topicStats)}`,
               `Difficulty stats: ${JSON.stringify(input.difficultyStats)}`,
               `Timing summary: ${JSON.stringify(input.timingSummary || {})}`,
               `Per-question evidence: ${JSON.stringify(buildQuestionEvidence(input.questionStats))}`,
