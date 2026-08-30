@@ -326,6 +326,11 @@ enum MeetingMinuteStatus {
   APPROVED
 }
 
+enum MeetingMinuteCreationMode {
+  STUDENT_ASSIGNED
+  MENTOR_DIRECT
+}
+
 model MeetingMinuteMeeting {
   id                    Int                    @id @default(autoincrement())
   teacherId             Int
@@ -356,6 +361,7 @@ model MeetingMinuteRequest {
   meetingId        Int
   studentId        Int
   status           MeetingMinuteStatus @default(ASSIGNED)
+  creationMode     MeetingMinuteCreationMode @default(STUDENT_ASSIGNED)
   studentMinutes   String?
   submittedAt      DateTime?
   teacherFinalText String?

@@ -12,7 +12,8 @@ import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 
 type Student = { id: number; name: string; email: string; requestStatus?: 'ASSIGNED' | 'SUBMITTED' | 'APPROVED' | null };
 type Meeting = { id: string; title: string; startDateTime: string; endDateTime: string; attendees: Student[]; unmatchedAttendees: Array<{ email: string; name: string }> };
-type ReviewRequest = { id: number; status: 'ASSIGNED' | 'SUBMITTED' | 'APPROVED'; studentMinutes: string | null; teacherFinalText: string | null; student: Student; meeting: { id: number; title: string; startDateTime: string } };
+type CreationMode = 'STUDENT_ASSIGNED' | 'MENTOR_DIRECT';
+type ReviewRequest = { id: number; status: 'ASSIGNED' | 'SUBMITTED' | 'APPROVED'; creationMode: CreationMode; studentMinutes: string | null; teacherFinalText: string | null; student: Student; meeting: { id: number; title: string; startDateTime: string } };
 
 const localDateKey = () => {
   const date = new Date();
@@ -28,6 +29,9 @@ export default function MeetingMinutesManager() {
   const [drafts, setDrafts] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [creationMode, setCreationMode] = useState<CreationMode>('STUDENT_ASSIGNED');
+  const [commonMinutes, setCommonMinutes] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedMeetings, setExpandedMeetings] = useState<Set<number>>(new Set());
   const [hiddenMeetings, setHiddenMeetings] = useState<Set<number>>(new Set());
@@ -57,7 +61,8 @@ export default function MeetingMinutesManager() {
   }, [load]);
   const activeMeeting = useMemo(() => meetings.find((meeting) => meeting.id === meetingId), [meetings, meetingId]);
   const availableAttendees = useMemo(() => activeMeeting?.attendees.filter((student) => !student.requestStatus) || [], [activeMeeting]);
-  useEffect(() => { setSelected([]); }, [meetingId]);
+  const selectableAttendees = creationMode === 'MENTOR_DIRECT' ? activeMeeting?.attendees || [] : availableAttendees;
+  useEffect(() => { setSelected([]); setCommonMinutes(''); setShowPreview(false); }, [meetingId, creationMode]);
   const groupedRequests = useMemo(() => {
     const groups = new Map<number, { meeting: ReviewRequest['meeting']; items: ReviewRequest[] }>();
     for (const item of requests) {
@@ -84,6 +89,33 @@ export default function MeetingMinutesManager() {
     finally { setSending(false); }
   };
 
+  const sendDirect = async (overrideExisting = false) => {
+    if (!meetingId || !selected.length || !commonMinutes.trim()) return;
+    if (!overrideExisting && !window.confirm(`Send one common set of final minutes to ${selected.length} selected student(s) and their parents? Students will not be asked to submit their own minutes.`)) return;
+    setSending(true);
+    try {
+      const response = await fetch('/api/teacher/meeting-minutes/direct', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ googleCalendarEventId: meetingId, studentIds: selected, minutes: commonMinutes, timezone, overrideExisting }),
+      });
+      const data = await response.json();
+      if (response.status === 409 && data.requiresConfirmation) {
+        const names = (data.conflicts || []).map((item: { studentName: string; status: string }) => `${item.studentName} (${item.status.toLowerCase()})`).join(', ');
+        if (window.confirm(`Existing student-assigned minutes will be replaced for: ${names}. Continue and send the mentor's common minutes?`)) {
+          setSending(false);
+          await sendDirect(true);
+        }
+        return;
+      }
+      if (!response.ok) throw new Error(data.error || 'Failed to send final minutes');
+      toast({ title: 'Final minutes sent', description: data.notificationWarning || `Common minutes saved for ${data.recipients} student(s); ${data.notification.sent} email(s) sent.` });
+      setSelected([]); setCommonMinutes(''); setShowPreview(false); await load();
+    } catch (err) {
+      toast({ variant: 'destructive', title: 'Could not send final minutes', description: err instanceof Error ? err.message : 'Try again.' });
+    } finally { setSending(false); }
+  };
+
   const saveReview = async (id: number, approve: boolean) => {
     try {
       const response = await fetch(`/api/teacher/meeting-minutes/requests/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ teacherFinalText: drafts[id], approve }) });
@@ -97,18 +129,31 @@ export default function MeetingMinutesManager() {
   return <div className="space-y-6">
     {error && <Card className="border-amber-300"><CardContent className="py-4"><p className="text-amber-800">{error}</p><Button className="mt-3" variant="outline" onClick={load}>Retry</Button></CardContent></Card>}
     <Card>
-      <CardHeader><CardTitle>Assign meeting minutes</CardTitle><CardDescription>Completed meetings organized by you in Google Calendar today.</CardDescription></CardHeader>
+      <CardHeader><CardTitle>Create meeting minutes</CardTitle><CardDescription>Completed meetings from today and yesterday. Assign personal minutes to students, or write one common set and send it directly.</CardDescription></CardHeader>
       <CardContent className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <button type="button" onClick={() => setCreationMode('STUDENT_ASSIGNED')} className={`rounded-xl border p-4 text-left transition ${creationMode === 'STUDENT_ASSIGNED' ? 'border-yellow-500 bg-yellow-50 ring-2 ring-yellow-200' : 'border-slate-200 hover:border-slate-400'}`}>
+            <span className="block font-semibold">Assign to students</span><span className="mt-1 block text-sm text-slate-500">Each student writes personal minutes for mentor review.</span>
+          </button>
+          <button type="button" onClick={() => setCreationMode('MENTOR_DIRECT')} className={`rounded-xl border p-4 text-left transition ${creationMode === 'MENTOR_DIRECT' ? 'border-yellow-500 bg-yellow-50 ring-2 ring-yellow-200' : 'border-slate-200 hover:border-slate-400'}`}>
+            <span className="block font-semibold">Write and send myself</span><span className="mt-1 block text-sm text-slate-500">Write one common final version for all selected attendees.</span>
+          </button>
+        </div>
         <select className="w-full rounded-md border border-slate-300 bg-white px-3 py-2" value={meetingId} onChange={(event) => setMeetingId(event.target.value)}>
           <option value="">Select a completed meeting</option>
           {meetings.map((meeting) => <option key={meeting.id} value={meeting.id}>{meeting.title} — {new Date(meeting.startDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</option>)}
         </select>
         {activeMeeting && <div className="space-y-3">
-          <div className="flex items-center gap-2"><Checkbox disabled={!availableAttendees.length} checked={selected.length === availableAttendees.length && availableAttendees.length > 0} onCheckedChange={(checked) => setSelected(checked ? availableAttendees.map((student) => student.id) : [])}/><span className="font-medium">Select all available students</span></div>
-          {activeMeeting.attendees.map((student) => <label key={student.id} className={`flex items-center justify-between gap-2 rounded border p-3 ${student.requestStatus ? 'bg-slate-50 text-slate-500' : ''}`}><span className="flex items-center gap-2"><Checkbox disabled={Boolean(student.requestStatus)} checked={selected.includes(student.id)} onCheckedChange={(checked) => setSelected((current) => checked ? Array.from(new Set([...current, student.id])) : current.filter((id) => id !== student.id))}/><span>{student.name} <span className="text-slate-500">({student.email})</span></span></span>{student.requestStatus && <Badge variant="secondary">Already sent · {student.requestStatus.toLowerCase()}</Badge>}</label>)}
+          <div className="flex items-center gap-2"><Checkbox disabled={!selectableAttendees.length} checked={selected.length === selectableAttendees.length && selectableAttendees.length > 0} onCheckedChange={(checked) => setSelected(checked ? selectableAttendees.map((student) => student.id) : [])}/><span className="font-medium">Select all {creationMode === 'MENTOR_DIRECT' ? 'meeting attendees' : 'available students'}</span></div>
+          {activeMeeting.attendees.map((student) => { const disabled = creationMode === 'STUDENT_ASSIGNED' && Boolean(student.requestStatus); return <label key={student.id} className={`flex items-center justify-between gap-2 rounded border p-3 ${disabled ? 'bg-slate-50 text-slate-500' : ''}`}><span className="flex items-center gap-2"><Checkbox disabled={disabled} checked={selected.includes(student.id)} onCheckedChange={(checked) => setSelected((current) => checked ? Array.from(new Set([...current, student.id])) : current.filter((id) => id !== student.id))}/><span>{student.name} <span className="text-slate-500">({student.email})</span></span></span>{student.requestStatus && <Badge variant="secondary">Existing · {student.requestStatus.toLowerCase()}</Badge>}</label>; })}
           {!activeMeeting.attendees.length && <p className="text-sm text-slate-500">No attendees match students assigned to your AES account.</p>}
           {!!activeMeeting.unmatchedAttendees.length && <p className="text-sm text-amber-700">{activeMeeting.unmatchedAttendees.length} attendee(s) are not matched to your AES students.</p>}
-          <Button disabled={!selected.length || sending} onClick={assign}>{sending ? 'Sending…' : `Send to ${selected.length} student(s)`}</Button>
+          {creationMode === 'STUDENT_ASSIGNED' ? <Button disabled={!selected.length || sending} onClick={assign}>{sending ? 'Sending…' : `Assign to ${selected.length} student(s)`}</Button> : <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div><div className="mb-2 flex items-center justify-between"><label className="font-medium">Common final meeting minutes</label><span className="text-xs text-slate-500">{commonMinutes.length}/20,000</span></div><Textarea rows={10} maxLength={20000} placeholder="Write the discussion points, decisions, action items, owners, and deadlines…" value={commonMinutes} onChange={(event) => { setCommonMinutes(event.target.value); setShowPreview(false); }}/></div>
+            {showPreview && <div className="rounded-lg border bg-white p-4"><p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Preview — common to all selected recipients</p><div className="whitespace-pre-wrap text-sm">{commonMinutes}</div></div>}
+            <div className="flex flex-wrap gap-2"><Button type="button" variant="outline" disabled={!commonMinutes.trim()} onClick={() => setShowPreview((current) => !current)}>{showPreview ? 'Hide preview' : 'Preview'}</Button><Button disabled={!selected.length || !commonMinutes.trim() || sending} onClick={() => void sendDirect()}>{sending ? 'Sending…' : `Send final minutes to ${selected.length} student(s)`}</Button></div>
+            <p className="text-xs text-amber-700">Students will not be asked to submit. The same final minutes will be sent to every selected student and parent.</p>
+          </div>}
         </div>}
       </CardContent>
     </Card>
@@ -124,7 +169,7 @@ export default function MeetingMinutesManager() {
           </div>
           {expanded && <div className="space-y-4 border-t bg-slate-50/50 p-5">{group.items.map((item) => <div key={item.id} className="space-y-3 rounded-lg border bg-white p-4">
             <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-semibold">{item.student.name} <span className="font-normal text-slate-500">({item.student.email})</span></p><Badge>{item.status}</Badge></div>
-            {item.status === 'ASSIGNED' ? <p className="text-sm text-slate-500">Waiting for the student to submit.</p> : <><div><p className="mb-1 text-sm font-medium">Original student submission</p><div className="whitespace-pre-wrap rounded bg-slate-50 p-3 text-sm">{item.studentMinutes}</div></div><div><p className="mb-1 text-sm font-medium">Tutor edits or additional points <span className="font-normal text-slate-500">(optional)</span></p><Textarea rows={7} placeholder="Leave unchanged to approve the student's submission as-is." value={drafts[item.id] || ''} onChange={(event) => setDrafts((current) => ({ ...current, [item.id]: event.target.value }))}/></div><div className="flex gap-2"><Button variant="outline" onClick={() => saveReview(item.id, false)}>Save edit</Button><Button onClick={() => saveReview(item.id, true)}>{item.status === 'APPROVED' ? 'Update approved minutes' : 'Approve'}</Button></div></>}
+            {item.creationMode === 'MENTOR_DIRECT' ? <div className="space-y-3"><Badge variant="secondary">Prepared by mentor · sent directly</Badge><div className="whitespace-pre-wrap rounded bg-emerald-50 p-3 text-sm">{item.teacherFinalText}</div></div> : item.status === 'ASSIGNED' ? <p className="text-sm text-slate-500">Waiting for the student to submit.</p> : <><div><p className="mb-1 text-sm font-medium">Original student submission</p><div className="whitespace-pre-wrap rounded bg-slate-50 p-3 text-sm">{item.studentMinutes}</div></div><div><p className="mb-1 text-sm font-medium">Tutor edits or additional points <span className="font-normal text-slate-500">(optional)</span></p><Textarea rows={7} placeholder="Leave unchanged to approve the student's submission as-is." value={drafts[item.id] || ''} onChange={(event) => setDrafts((current) => ({ ...current, [item.id]: event.target.value }))}/></div><div className="flex gap-2"><Button variant="outline" onClick={() => saveReview(item.id, false)}>Save edit</Button><Button onClick={() => saveReview(item.id, true)}>{item.status === 'APPROVED' ? 'Update approved minutes' : 'Approve'}</Button></div></>}
           </div>)}</div>}
         </div>; })}
       </CardContent>

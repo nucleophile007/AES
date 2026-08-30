@@ -54,7 +54,7 @@ export async function sendAcademicNotification(args: {
     ].filter(Boolean).join("\n\n");
 
     const detailHtml = details.length > 0
-      ? `<div style="margin:20px 0;padding:16px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0">${details.map((detail) => `<p style="margin:6px 0"><strong>${escapeEmailHtml(detail.label)}:</strong> ${escapeEmailHtml(detail.value || "")}</p>`).join("")}</div>`
+      ? `<div style="margin:20px 0;padding:16px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0">${details.map((detail) => `<p style="margin:6px 0;white-space:pre-wrap"><strong>${escapeEmailHtml(detail.label)}:</strong> ${escapeEmailHtml(detail.value || "")}</p>`).join("")}</div>`
       : "";
     const actionHtml = args.actionUrl
       ? `<p style="margin:24px 0"><a href="${escapeEmailHtml(args.actionUrl)}" style="display:inline-block;padding:11px 18px;border-radius:8px;background:#facc15;color:#0f172a;text-decoration:none;font-weight:700">${escapeEmailHtml(args.actionLabel || "View details")}</a></p>`

@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       },
     },
     select: {
-      id: true, status: true, teacherFinalText: true, approvedAt: true,
+      id: true, status: true, creationMode: true, teacherFinalText: true, approvedAt: true,
       student: { select: { id: true, name: true, email: true } },
       meeting: { select: { id: true, title: true, description: true, startDateTime: true, endDateTime: true, timezone: true, teacher: { select: { name: true, email: true } } } },
     },
