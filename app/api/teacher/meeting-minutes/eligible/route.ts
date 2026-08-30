@@ -21,6 +21,15 @@ export async function GET(request: NextRequest) {
     const timezone = request.nextUrl.searchParams.get('timezone') || 'America/Los_Angeles';
     if (!date) return NextResponse.json({ error: 'Date is required' }, { status: 400 });
     const bounds = zonedDayBounds(date, timezone);
+    const [year, month, day] = date.split('-').map(Number);
+    const previousDate = new Date(Date.UTC(year, month - 1, day));
+    previousDate.setUTCDate(previousDate.getUTCDate() - 1);
+    const previousDateKey = [
+      previousDate.getUTCFullYear(),
+      String(previousDate.getUTCMonth() + 1).padStart(2, '0'),
+      String(previousDate.getUTCDate()).padStart(2, '0'),
+    ].join('-');
+    const previousBounds = zonedDayBounds(previousDateKey, timezone);
 
     const credentials = await getTeacherCalendarCredentials(user.email);
     if (!credentials.teacher) return NextResponse.json({ error: 'Teacher not found' }, { status: 404 });
@@ -34,7 +43,7 @@ export async function GET(request: NextRequest) {
     const events = await listCalendarEvents(
       credentials.accessToken,
       credentials.teacher.googleRefreshToken || undefined,
-      bounds.start,
+      previousBounds.start,
       bounds.end
     );
     const attendeeEmails = Array.from(new Set(events.flatMap((event) =>
