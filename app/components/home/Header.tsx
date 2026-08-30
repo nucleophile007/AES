@@ -84,7 +84,7 @@ export default function Header() {
           <div className="container mx-auto px-4 py-6 space-y-4">
             <nav className="space-y-4">
               <Link href="/#home" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Home</Link>
-              <Link href="/about" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">About</Link>
+              <Link href="/our-team" className="block text-lg font-medium text-yellow-400/90 hover:text-yellow-300 transition-colors duration-300 py-2 px-4 rounded-lg hover:bg-white/10 backdrop-blur-sm">Our Team</Link>
 
               {/* Programs Dropdown */}
               <div className="space-y-2">

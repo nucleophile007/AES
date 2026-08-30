@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getApplicationUrl, sendAcademicNotification } from "@/lib/academic-notifications";
 
 export async function POST(request: Request) {
   try {
@@ -118,9 +119,43 @@ export async function POST(request: Request) {
       },
     });
 
-    // TODO: Send confirmation email to student and parent
-    // TODO: Send notification to admin
     // TODO: If payment required, initiate payment process
+    const eventDate = event.eventDate.toLocaleString('en-US');
+    const familyNotification = await sendAcademicNotification({
+      recipients: [
+        { email: studentEmail, name: studentName },
+        { email: parentEmail, name: parentName },
+      ],
+      subject: `Event registration received: ${event.title}`,
+      heading: event.requiresPayment ? 'Event registration received' : 'Event registration confirmed',
+      message: event.requiresPayment
+        ? `We received the registration for ${studentName}. Complete payment to confirm the event spot.`
+        : `${studentName} is registered for ${event.title}.`,
+      details: [
+        { label: 'Event', value: event.title },
+        { label: 'Date', value: eventDate },
+        { label: 'Time', value: event.eventTime },
+        { label: 'Location', value: event.location },
+        { label: 'Registration ID', value: String(registration.id) },
+        { label: 'Status', value: registrationStatus },
+      ],
+      actionLabel: 'View events',
+      actionUrl: getApplicationUrl('/events'),
+    });
+    const adminNotification = await sendAcademicNotification({
+      recipients: [{ email: process.env.ADMIN_EMAIL, name: 'ACHARYA Admin' }],
+      subject: `New event registration: ${event.title} — ${studentName}`,
+      heading: 'New event registration',
+      message: `${studentName} has registered for ${event.title}.`,
+      details: [
+        { label: 'Student', value: `${studentName} (${studentEmail})` },
+        { label: 'Parent', value: `${parentName} (${parentEmail})` },
+        { label: 'Event', value: event.title },
+        { label: 'Registration ID', value: String(registration.id) },
+        { label: 'Payment status', value: paymentStatus },
+      ],
+      replyTo: parentEmail,
+    });
 
     return NextResponse.json({
       success: true,
@@ -130,6 +165,11 @@ export async function POST(request: Request) {
         : "Registration successful! You will receive a confirmation email shortly.",
       requiresPayment: event.requiresPayment,
       paymentAmount,
+      notification: {
+        attempted: familyNotification.attempted + adminNotification.attempted,
+        sent: familyNotification.sent + adminNotification.sent,
+        failed: familyNotification.failed + adminNotification.failed,
+      },
     });
   } catch (error) {
     console.error("Registration error:", error);

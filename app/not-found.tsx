@@ -72,10 +72,10 @@ export default function NotFound() {
               Events
             </Link>
             <Link
-              href="/about"
+              href="/our-team"
               className="text-sm px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg theme-text-light transition-colors"
             >
-              About Us
+              Our Team
             </Link>
           </div>
         </div>

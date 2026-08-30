@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUserFromRequest, hasRole } from '../../../../lib/auth';
+import { getApplicationUrl, parentAssignmentEmailsEnabled, sendAcademicNotification } from '@/lib/academic-notifications';
 
 // GET: View submissions for teacher's assignments
 export async function GET(request: NextRequest) {
@@ -182,7 +183,7 @@ export async function PUT(request: NextRequest) {
           select: { id: true, title: true, totalPoints: true }
         },
         student: {
-          select: { id: true, name: true, email: true }
+          select: { id: true, name: true, email: true, parentName: true, parentEmail: true }
         }
       }
     });
@@ -228,15 +229,36 @@ export async function PUT(request: NextRequest) {
           select: { id: true, title: true, totalPoints: true }
         },
         student: {
-          select: { id: true, name: true, email: true }
+          select: { id: true, name: true, email: true, parentName: true, parentEmail: true }
         }
       }
     });
 
+    const gradeNotification = grade !== null
+      ? await sendAcademicNotification({
+          recipients: [
+            { email: updatedSubmission.student.email, name: updatedSubmission.student.name },
+            ...(parentAssignmentEmailsEnabled() ? [{ email: updatedSubmission.student.parentEmail, name: updatedSubmission.student.parentName }] : []),
+          ],
+          subject: `Assignment graded: ${updatedSubmission.assignment.title}`,
+          heading: 'Your assignment has been graded',
+          message: `${teacher.name || 'Your teacher'} has graded the assignment and shared feedback in the dashboard.`,
+          details: [
+            { label: 'Assignment', value: updatedSubmission.assignment.title },
+            { label: 'Score', value: `${updatedSubmission.grade}/${updatedSubmission.assignment.totalPoints}` },
+            { label: 'Feedback', value: updatedSubmission.feedback },
+          ],
+          actionLabel: 'View grade and feedback',
+          actionUrl: getApplicationUrl('/student-dashboard?tab=assignments'),
+          replyTo: teacher.email,
+        })
+      : { attempted: 0, sent: 0, failed: 0 };
+
     return NextResponse.json({
       success: true,
       submission: updatedSubmission,
-      message: 'Submission graded successfully'
+      message: 'Submission graded successfully',
+      notification: gradeNotification
     });
 
   } catch (error) {
@@ -306,7 +328,8 @@ export async function POST(request: NextRequest) {
             }
           },
           include: {
-            assignment: { select: { totalPoints: true } }
+            assignment: { select: { title: true, totalPoints: true } },
+            student: { select: { name: true, email: true, parentName: true, parentEmail: true } }
           }
         });
 
@@ -351,6 +374,26 @@ export async function POST(request: NextRequest) {
             status: grade !== null ? 'graded' : 'submitted'
           }
         });
+
+        if (grade !== null) {
+          await sendAcademicNotification({
+            recipients: [
+              { email: submission.student.email, name: submission.student.name },
+              ...(parentAssignmentEmailsEnabled() ? [{ email: submission.student.parentEmail, name: submission.student.parentName }] : []),
+            ],
+            subject: `Assignment graded: ${submission.assignment.title}`,
+            heading: 'Your assignment has been graded',
+            message: `${teacher.name || 'Your teacher'} has graded the assignment and shared feedback in the dashboard.`,
+            details: [
+              { label: 'Assignment', value: submission.assignment.title },
+              { label: 'Score', value: `${updated.grade}/${submission.assignment.totalPoints}` },
+              { label: 'Feedback', value: updated.feedback },
+            ],
+            actionLabel: 'View grade and feedback',
+            actionUrl: getApplicationUrl('/student-dashboard?tab=assignments'),
+            replyTo: teacher.email,
+          });
+        }
 
         results.push({ submissionId, success: true });
 
