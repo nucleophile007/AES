@@ -23,7 +23,7 @@ export function GET() {
     "",
     "Important pages:",
     `- Home: ${buildAbsoluteUrl("/")}`,
-    `- About: ${buildAbsoluteUrl("/about")}`,
+    `- Our Team: ${buildAbsoluteUrl("/our-team")}`,
     `- Blog: ${buildAbsoluteUrl("/blog")}`,
     `- Events: ${buildAbsoluteUrl("/events")}`,
     `- Contact: ${buildAbsoluteUrl("/contact")}`,

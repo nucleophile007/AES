@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { deleteR2File, extractFileKeyFromUrl } from '../../../../lib/r2';
 import { getUserFromRequest, hasRole } from '../../../../lib/auth';
+import { getApplicationUrl, sendAcademicNotification } from '@/lib/academic-notifications';
 
 // GET: Fetch submissions for a student or specific submission
 export async function GET(request: NextRequest) {
@@ -166,7 +167,8 @@ export async function POST(request: NextRequest) {
 
     // Find assignment
     const assignment = await prisma.assignment.findUnique({
-      where: { id: parseInt(assignmentId) }
+      where: { id: parseInt(assignmentId) },
+      include: { teacher: { select: { name: true, email: true } } }
     });
 
     if (!assignment) {
@@ -223,10 +225,27 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    const teacherNotification = await sendAcademicNotification({
+      recipients: [{ email: assignment.teacher.email, name: assignment.teacher.name }],
+      subject: `Assignment submitted: ${assignment.title}`,
+      heading: 'A student submitted an assignment',
+      message: `${student.name} submitted ${assignment.title}. It is ready for review.`,
+      details: [
+        { label: 'Student', value: student.name },
+        { label: 'Assignment', value: assignment.title },
+        { label: 'Submitted', value: submission.submittedAt.toLocaleString('en-US') },
+        { label: 'Status', value: submission.status },
+      ],
+      actionLabel: 'Review submissions',
+      actionUrl: getApplicationUrl('/teacher-dashboard?tab=submissions'),
+      replyTo: student.email,
+    });
+
     return NextResponse.json({
       success: true,
       submission,
-      message: 'Submission created successfully'
+      message: 'Submission created successfully',
+      notification: teacherNotification
     });
 
   } catch (error) {
@@ -292,7 +311,7 @@ export async function PUT(request: NextRequest) {
         }
       },
       include: {
-        assignment: true
+        assignment: { include: { teacher: { select: { name: true, email: true } } } }
       }
     });
 
@@ -366,10 +385,27 @@ export async function PUT(request: NextRequest) {
       }
     });
 
+    const teacherNotification = await sendAcademicNotification({
+      recipients: [{ email: existingSubmission.assignment.teacher.email, name: existingSubmission.assignment.teacher.name }],
+      subject: `Assignment resubmitted: ${existingSubmission.assignment.title}`,
+      heading: 'A student resubmitted an assignment',
+      message: `${student.name} submitted a new version of ${existingSubmission.assignment.title}.`,
+      details: [
+        { label: 'Student', value: student.name },
+        { label: 'Assignment', value: existingSubmission.assignment.title },
+        { label: 'Submission number', value: String(updatedSubmission.submissionNumber) },
+        { label: 'Status', value: updatedSubmission.status },
+      ],
+      actionLabel: 'Review submission',
+      actionUrl: getApplicationUrl('/teacher-dashboard?tab=submissions'),
+      replyTo: student.email,
+    });
+
     return NextResponse.json({
       success: true,
       submission: updatedSubmission,
-      message: 'Submission updated successfully'
+      message: 'Submission updated successfully',
+      notification: teacherNotification
     });
 
   } catch (error) {

@@ -62,6 +62,15 @@ export default function AboutPageClient({ mentors }: AboutPageClientProps) {
   const backgroundY = useTransform(scrollYProgress, [0, 1], [0, -50]);
   const backgroundOpacity = useTransform(scrollYProgress, [0, 0.5, 1], [0.3, 0.6, 0.3]);
 
+  const normalizeDepartment = (department: string) =>
+    department.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]/g, "");
+
+  const isTechAndCreativeWriting = (department: string) => {
+    const normalizedDepartment = normalizeDepartment(department);
+    return normalizedDepartment === "techcreativewriting" ||
+      normalizedDepartment === "techandcreativewriting";
+  };
+
   // Mentor categories
   const categories = [
     {
@@ -78,6 +87,11 @@ export default function AboutPageClient({ mentors }: AboutPageClientProps) {
       id: "law-humanities",
       label: "Law, Humanities & Social Sciences",
       mentors: mentors.filter(m => m.department === "law-humanities")
+    },
+    {
+      id: "tech-creative-writing",
+      label: "Tech & Creative Writing",
+      mentors: mentors.filter(m => isTechAndCreativeWriting(m.department))
     },
     {
       id: "associate",
@@ -511,7 +525,7 @@ export default function AboutPageClient({ mentors }: AboutPageClientProps) {
             />
           </motion.div>
 
-          {/* Filter Section - 4 Categories Only */}
+          {/* Department filters */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}

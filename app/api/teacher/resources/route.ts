@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUserFromRequest, hasRole } from '../../../../lib/auth';
+import { getApplicationUrl, sendAcademicNotification } from '@/lib/academic-notifications';
 
 // GET: List all resources for a teacher
 export async function GET(request: NextRequest) {
@@ -313,10 +314,28 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    const resourceNotification = studentIdsList.length > 0
+      ? await sendAcademicNotification({
+          recipients: createdResource?.studentAssignments.map(({ student }) => ({ email: student.email, name: student.name })) || [],
+          subject: `New learning resource: ${resource.title}`,
+          heading: 'A new resource has been shared',
+          message: `${teacher.name || 'Your teacher'} shared a new learning resource with you.`,
+          details: [
+            { label: 'Resource', value: resource.title },
+            { label: 'Subject', value: resource.subject },
+            { label: 'Type', value: resource.type },
+          ],
+          actionLabel: 'Open resources',
+          actionUrl: getApplicationUrl('/student-dashboard?tab=resources'),
+          replyTo: teacher.email,
+        })
+      : { attempted: 0, sent: 0, failed: 0 };
+
     return NextResponse.json({
       success: true,
       resource: createdResource,
-      message: 'Resource created successfully'
+      message: 'Resource created successfully',
+      notification: resourceNotification
     });
 
   } catch (error) {

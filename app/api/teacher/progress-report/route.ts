@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { getUserFromRequest, hasRole } from '../../../../lib/auth';
 import { prisma } from '../../../../lib/prisma';
+import { getApplicationUrl, sendAcademicNotification } from '@/lib/academic-notifications';
 
 export async function GET(request: NextRequest) {
     try {
@@ -222,6 +223,11 @@ export async function PUT(request: NextRequest) {
             where: {
                 id: parseInt(reportId),
                 teacherId: teacher.id
+            },
+            include: {
+                student: {
+                    include: { parentAccount: { select: { name: true, email: true } } }
+                }
             }
         });
 
@@ -296,6 +302,11 @@ export async function DELETE(request: NextRequest) {
             where: {
                 id: parseInt(reportId),
                 teacherId: teacher.id
+            },
+            include: {
+                student: {
+                    include: { parentAccount: { select: { name: true, email: true } } }
+                }
             }
         });
 
@@ -344,6 +355,11 @@ export async function PATCH(request: NextRequest) {
             where: {
                 id: parseInt(reportId),
                 teacherId: teacher.id
+            },
+            include: {
+                student: {
+                    include: { parentAccount: { select: { name: true, email: true } } }
+                }
             }
         });
 
@@ -372,7 +388,30 @@ export async function PATCH(request: NextRequest) {
             data: updateData
         });
 
-        return NextResponse.json({ success: true, report: updatedReport });
+        const notification = action === 'publish' && existingReport.status !== 'published'
+            ? await sendAcademicNotification({
+                recipients: [
+                    { email: existingReport.student.email, name: existingReport.student.name },
+                    {
+                        email: existingReport.student.parentAccount?.email || existingReport.student.parentEmail,
+                        name: existingReport.student.parentAccount?.name || existingReport.student.parentName,
+                    },
+                ],
+                subject: `Progress report published: ${existingReport.reportPeriod || existingReport.subject || 'Student progress'}`,
+                heading: 'A new progress report is available',
+                message: `${teacher.name || 'The teacher'} published a progress report for ${existingReport.student.name}.`,
+                details: [
+                    { label: 'Student', value: existingReport.student.name },
+                    { label: 'Report period', value: existingReport.reportPeriod },
+                    { label: 'Subject', value: existingReport.subject },
+                ],
+                actionLabel: 'View progress report',
+                actionUrl: getApplicationUrl('/student-dashboard?tab=progress'),
+                replyTo: teacher.email,
+            })
+            : { attempted: 0, sent: 0, failed: 0 };
+
+        return NextResponse.json({ success: true, report: updatedReport, notification });
 
     } catch (error: any) {
         console.error('Error updating report status:', error);

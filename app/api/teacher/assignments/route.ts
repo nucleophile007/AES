@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUserFromRequest, hasRole } from '../../../../lib/auth';
+import { getApplicationUrl, parentAssignmentEmailsEnabled, sendAcademicNotification } from '@/lib/academic-notifications';
+import { scheduleAssignmentReminderJobs } from '@/lib/assignment-reminders';
 
 // GET: List all assignments for a teacher
 export async function GET(request: NextRequest) {
@@ -53,12 +55,12 @@ export async function GET(request: NextRequest) {
       ...(limit ? { take: limit } : {}),
       include: {
         targetStudent: {
-          select: { id: true, name: true, email: true }
+          select: { id: true, name: true, email: true, parentName: true, parentEmail: true }
         },
         assignmentTargets: {
           include: {
             student: {
-              select: { id: true, name: true, email: true }
+              select: { id: true, name: true, email: true, parentName: true, parentEmail: true }
             }
           }
         },
@@ -357,12 +359,12 @@ export async function POST(request: NextRequest) {
       where: { id: assignment.id },
       include: {
         targetStudent: {
-          select: { id: true, name: true, email: true }
+          select: { id: true, name: true, email: true, parentName: true, parentEmail: true }
         },
         assignmentTargets: {
           include: {
             student: {
-              select: { id: true, name: true, email: true }
+              select: { id: true, name: true, email: true, parentName: true, parentEmail: true }
             }
           }
         },
@@ -381,11 +383,35 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    const dashboardUrl = getApplicationUrl('/student-dashboard?tab=assignments');
+    const assignmentNotification = await sendAcademicNotification({
+      recipients: students.flatMap((student) => [
+        { email: student.email, name: student.name },
+        ...(parentAssignmentEmailsEnabled() ? [{ email: student.parentEmail, name: student.parentName }] : []),
+      ]),
+      subject: `New assignment: ${assignment.title}`,
+      heading: 'A new assignment has been assigned',
+      message: `${teacher.name || 'Your teacher'} assigned new work. Please review the instructions and plan to submit it before the deadline.`,
+      details: [
+        { label: 'Assignment', value: assignment.title },
+        { label: 'Subject', value: assignment.subject },
+        { label: 'Due', value: parsedDueDate.toLocaleString('en-US', { timeZone: dueDateTimezone }) },
+        { label: 'Total points', value: String(assignment.totalPoints) },
+      ],
+      actionLabel: 'View assignment',
+      actionUrl: dashboardUrl,
+      replyTo: teacher.email,
+    });
+
+    const reminders = await scheduleAssignmentReminderJobs({ assignmentId: assignment.id, studentIds: targetStudentIds, dueDate: parsedDueDate });
+
     return NextResponse.json({
       success: true,
       assignment: finalAssignment,
       assignments: finalAssignment ? [finalAssignment] : [assignment],
-      message: targetStudentIds.length > 1 ? 'Assignments created successfully' : 'Assignment created successfully'
+      message: targetStudentIds.length > 1 ? 'Assignments created successfully' : 'Assignment created successfully',
+      notification: assignmentNotification,
+      reminders
     });
 
   } catch (error) {
@@ -639,12 +665,12 @@ export async function PATCH(request: NextRequest) {
       where: { id: parseInt(id) },
       include: {
         targetStudent: {
-          select: { id: true, name: true, email: true }
+          select: { id: true, name: true, email: true, parentName: true, parentEmail: true }
         },
         assignmentTargets: {
           include: {
             student: {
-              select: { id: true, name: true, email: true }
+              select: { id: true, name: true, email: true, parentName: true, parentEmail: true }
             }
           }
         },
@@ -656,10 +682,45 @@ export async function PATCH(request: NextRequest) {
       }
     });
 
+    const assignedStudents = finalAssignment
+      ? Array.from(new Map([
+          ...(finalAssignment.targetStudent ? [finalAssignment.targetStudent] : []),
+          ...finalAssignment.assignmentTargets.map((target) => target.student),
+        ].map((student) => [student.id, student])).values())
+      : [];
+    const notification = hasStudentSelection && finalAssignment
+      ? await sendAcademicNotification({
+          recipients: assignedStudents.flatMap((student) => [
+            { email: student.email, name: student.name },
+            ...(parentAssignmentEmailsEnabled() ? [{ email: student.parentEmail, name: student.parentName }] : []),
+          ]),
+          subject: `Assignment updated: ${finalAssignment.title}`,
+          heading: 'An assignment has been updated',
+          message: `${teacher.name || 'Your teacher'} updated an assignment assigned to you.`,
+          details: [
+            { label: 'Assignment', value: finalAssignment.title },
+            { label: 'Subject', value: finalAssignment.subject },
+            { label: 'Due', value: finalAssignment.dueDate.toLocaleString('en-US', { timeZone: finalAssignment.dueDateTimezone || 'America/Los_Angeles' }) },
+          ],
+          actionLabel: 'View assignment',
+          actionUrl: getApplicationUrl('/student-dashboard?tab=assignments'),
+          replyTo: teacher.email,
+        })
+      : { attempted: 0, sent: 0, failed: 0 };
+    const reminders = finalAssignment && (dueDate !== undefined || hasStudentSelection)
+      ? await scheduleAssignmentReminderJobs({
+          assignmentId: finalAssignment.id,
+          studentIds: assignedStudents.map((student) => student.id),
+          dueDate: finalAssignment.dueDate,
+        })
+      : { queued: 0, failed: 0, skipped: 0 };
+
     return NextResponse.json({
       success: true,
       assignment: finalAssignment,
-      message: 'Assignment updated successfully'
+      message: 'Assignment updated successfully',
+      notification,
+      reminders
     });
 
   } catch (error) {

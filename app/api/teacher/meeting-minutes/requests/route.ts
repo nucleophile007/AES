@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getCalendarEvent } from '@/lib/google-calendar';
 import { getTeacherCalendarCredentials } from '@/lib/teacher-calendar';
 import { getGoogleMeetingLink, googleEventDateTimes, isEligibleGoogleMeeting, normalizeEmail } from '@/lib/meeting-minutes';
+import { getApplicationUrl, sendAcademicNotification } from '@/lib/academic-notifications';
 
 export async function GET(request: NextRequest) {
   const user = await getUserFromRequest(request);
@@ -65,16 +66,31 @@ export async function POST(request: NextRequest) {
         },
       });
       let created = 0;
+      const createdStudentIds: number[] = [];
       for (const student of validStudents) {
         const existing = await tx.meetingMinuteRequest.findUnique({ where: { meetingId_studentId: { meetingId: meeting.id, studentId: student.id } }, select: { id: true } });
         if (!existing) {
           await tx.meetingMinuteRequest.create({ data: { meetingId: meeting.id, studentId: student.id } });
           created++;
+          createdStudentIds.push(student.id);
         }
       }
-      return { meetingId: meeting.id, created, existing: validStudents.length - created };
+      return { meetingId: meeting.id, created, existing: validStudents.length - created, createdStudentIds };
     });
-    return NextResponse.json({ success: true, ...result });
+    const notification = await sendAcademicNotification({
+      recipients: validStudents.filter((student) => result.createdStudentIds.includes(student.id)).map((student) => ({ email: student.email, name: student.name })),
+      subject: `Meeting minutes assigned: ${event.summary || 'Completed meeting'}`,
+      heading: 'Meeting minutes have been assigned',
+      message: 'Your teacher asked you to write and submit the minutes for a completed meeting.',
+      details: [
+        { label: 'Meeting', value: event.summary || 'Untitled meeting' },
+        { label: 'Date', value: times.start.toLocaleString('en-US', { timeZone: timezone }) },
+      ],
+      actionLabel: 'Write meeting minutes',
+      actionUrl: getApplicationUrl('/student-dashboard?tab=meeting-minutes'),
+      replyTo: credentials.teacher.email,
+    });
+    return NextResponse.json({ success: true, ...result, notification });
   } catch (error) {
     console.error('Meeting minute assignment failed:', error);
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to assign meeting minutes' }, { status: 500 });
