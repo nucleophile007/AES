@@ -86,20 +86,10 @@ export default function ProgramPackages() {
                   <div className="flex gap-4">
                     <div className="flex flex-col items-center">
                       <div className="h-3 w-3 rounded-full bg-orange-400" />
-                      <div className="h-10 w-[2px] bg-white/10" />
                     </div>
                     <div>
                       <p className="font-semibold text-white">Executive Stage</p>
                       <p className="text-sm text-slate-400">Project execution</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex flex-col items-center">
-                      <div className="h-3 w-3 rounded-full bg-emerald-400" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-white">Deliverables</p>
-                      <p className="text-sm text-slate-400">Certificate, Recommendation, or Letter of Experience</p>
                     </div>
                   </div>
                 </div>
@@ -166,20 +156,10 @@ export default function ProgramPackages() {
                   <div className="flex gap-4">
                     <div className="flex flex-col items-center">
                       <div className="h-3 w-3 rounded-full bg-orange-400" />
-                      <div className="h-10 w-[2px] bg-white/10" />
                     </div>
                     <div>
                       <p className="font-semibold text-white">Executive Stage</p>
                       <p className="text-sm text-slate-400">Advanced project execution</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex flex-col items-center">
-                      <div className="h-3 w-3 rounded-full bg-emerald-400" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-white">Deliverables</p>
-                      <p className="text-sm text-slate-400">Certificate, Recommendation, or Letter of Experience</p>
                     </div>
                   </div>
                 </div>
@@ -246,20 +226,10 @@ export default function ProgramPackages() {
                   <div className="flex gap-4">
                     <div className="flex flex-col items-center">
                       <div className="h-3 w-3 rounded-full bg-orange-400" />
-                      <div className="h-10 w-[2px] bg-white/10" />
                     </div>
                     <div>
                       <p className="font-semibold text-white">Executive Stage</p>
                       <p className="text-sm text-slate-400">Leadership & advanced execution</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex flex-col items-center">
-                      <div className="h-3 w-3 rounded-full bg-emerald-400" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-white">Deliverables</p>
-                      <p className="text-sm text-slate-400">Certificate, Recommendation, or Letter of Experience</p>
                     </div>
                   </div>
                 </div>

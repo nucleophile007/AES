@@ -382,7 +382,7 @@ export default function AESCreatorversePage() {
     <div className="absolute bottom-10 left-1/3 h-56 w-56 rounded-full bg-fuchsia-500/10 blur-3xl" />
   </div>
 
-  <div className="container relative z-10 mx-auto max-w-7xl px-6">
+  <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6">
 
     {/* Heading */}
     <motion.div
@@ -413,7 +413,7 @@ export default function AESCreatorversePage() {
   className="mb-24"
 >
   <div className="text-center mb-12">
-    <h3 className="text-3xl font-black tracking-tight text-cyan-200 sm:text-4xl lg:text-5xl">
+    <h3 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-cyan-200">
       Reading
     </h3>
 
@@ -423,7 +423,7 @@ export default function AESCreatorversePage() {
     </p>
   </div>
 
-  <div className="flex justify-center gap-6 overflow-x-auto pb-3 xl:overflow-visible">
+  <div className="flex flex-wrap lg:flex-nowrap justify-center lg:justify-between items-start gap-3 sm:gap-4 md:gap-5 lg:gap-6 xl:gap-8 w-full max-w-7xl mx-auto px-2 sm:px-4 pb-3">
 
     {[
      {
@@ -454,18 +454,18 @@ export default function AESCreatorversePage() {
           scale: 1.08,
         }}
         transition={{ type: "spring", stiffness: 250 }}
-        className="group w-[105px] lg:w-[115px] xl:w-[120px] cursor-pointer flex-shrink-0"
+        className="group w-24 sm:w-28 md:w-32 lg:w-34 xl:w-36 cursor-pointer flex-shrink-0 flex flex-col items-center"
       >
-        <div className="relative mx-auto h-28 w-28 overflow-hidden rounded-full border border-white/30 shadow-2xl transition-all duration-300 group-hover:shadow-cyan-400/40">
+        <div className="relative mx-auto h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 lg:h-34 lg:w-34 xl:h-36 xl:w-36 overflow-hidden rounded-full border-2 border-white/30 shadow-2xl transition-all duration-300 group-hover:shadow-cyan-400/50 group-hover:border-cyan-300">
           <img
             src={item.image}
             alt={item.title}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-transparent to-slate-950/30" />
         </div>
 
-        <p className="mt-3 text-center text-xs lg:text-sm font-semibold leading-4 text-slate-100 transition-colors group-hover:text-cyan-300">
+        <p className="mt-3 text-center text-xs sm:text-sm md:text-base font-bold leading-tight text-slate-100 transition-colors group-hover:text-cyan-300">
           {item.title}
         </p>
       </motion.div>
@@ -481,7 +481,7 @@ export default function AESCreatorversePage() {
   className="mb-24"
 >
   <div className="text-center mb-12">
-    <h3 className="text-3xl font-black tracking-tight text-emerald-200 sm:text-4xl lg:text-5xl">
+    <h3 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-emerald-200">
       Writing
     </h3>
 
@@ -490,7 +490,7 @@ export default function AESCreatorversePage() {
     </p>
   </div>
 
-  <div className="flex justify-center gap-6 overflow-x-auto pb-3 xl:overflow-visible">
+  <div className="flex flex-wrap lg:flex-nowrap justify-center lg:justify-between items-start gap-3 sm:gap-4 md:gap-5 lg:gap-6 xl:gap-8 w-full max-w-7xl mx-auto px-2 sm:px-4 pb-3">
 
     {[
       {
@@ -525,18 +525,18 @@ export default function AESCreatorversePage() {
           scale: 1.08,
         }}
         transition={{ type: "spring", stiffness: 250 }}
-        className="group w-[105px] lg:w-[115px] xl:w-[120px] cursor-pointer flex-shrink-0"
+        className="group w-24 sm:w-28 md:w-32 lg:w-34 xl:w-36 cursor-pointer flex-shrink-0 flex flex-col items-center"
       >
-        <div className="relative mx-auto h-28 w-28 overflow-hidden rounded-full border border-white/30 shadow-2xl transition-all duration-300 group-hover:shadow-emerald-400/40">
+        <div className="relative mx-auto h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 lg:h-34 lg:w-34 xl:h-36 xl:w-36 overflow-hidden rounded-full border-2 border-white/30 shadow-2xl transition-all duration-300 group-hover:shadow-emerald-400/50 group-hover:border-emerald-300">
           <img
             src={item.image}
             alt={item.title}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-slate-950/30" />
         </div>
 
-        <p className="mt-3 text-center text-xs lg:text-sm font-semibold leading-4 text-slate-100 transition-colors group-hover:text-emerald-300">
+        <p className="mt-3 text-center text-xs sm:text-sm md:text-base font-bold leading-tight text-slate-100 transition-colors group-hover:text-emerald-300">
           {item.title}
         </p>
       </motion.div>
@@ -553,7 +553,7 @@ export default function AESCreatorversePage() {
   className="mb-24"
 >
   <div className="text-center mb-12">
-    <h3 className="text-3xl font-black tracking-tight text-fuchsia-200 sm:text-4xl lg:text-5xl">
+    <h3 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-fuchsia-200">
       Speaking
     </h3>
 
@@ -562,7 +562,7 @@ export default function AESCreatorversePage() {
     </p>
   </div>
 
-  <div className="flex justify-center gap-6 overflow-x-auto pb-3 xl:overflow-visible">
+  <div className="flex flex-wrap lg:flex-nowrap justify-center lg:justify-between items-start gap-3 sm:gap-4 md:gap-5 lg:gap-6 xl:gap-8 w-full max-w-7xl mx-auto px-2 sm:px-4 pb-3">
 
     {[
       {
@@ -597,18 +597,18 @@ export default function AESCreatorversePage() {
           scale: 1.08,
         }}
         transition={{ type: "spring", stiffness: 250 }}
-        className="group w-[105px] lg:w-[115px] xl:w-[120px] cursor-pointer flex-shrink-0"
+        className="group w-24 sm:w-28 md:w-32 lg:w-34 xl:w-36 cursor-pointer flex-shrink-0 flex flex-col items-center"
       >
-        <div className="relative mx-auto h-28 w-28 overflow-hidden rounded-full border border-white/30 shadow-2xl transition-all duration-300 group-hover:shadow-fuchsia-400/40">
+        <div className="relative mx-auto h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 lg:h-34 lg:w-34 xl:h-36 xl:w-36 overflow-hidden rounded-full border-2 border-white/30 shadow-2xl transition-all duration-300 group-hover:shadow-fuchsia-400/50 group-hover:border-fuchsia-300">
           <img
             src={item.image}
             alt={item.title}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-500/10 via-transparent to-slate-950/30" />
         </div>
 
-        <p className="mt-3 text-center text-xs lg:text-sm font-semibold leading-4 text-slate-100 transition-colors group-hover:text-fuchsia-300">
+        <p className="mt-3 text-center text-xs sm:text-sm md:text-base font-bold leading-tight text-slate-100 transition-colors group-hover:text-fuchsia-300">
           {item.title}
         </p>
       </motion.div>
@@ -624,7 +624,7 @@ export default function AESCreatorversePage() {
   transition={{ duration: 0.6 }}
 >
   <div className="text-center mb-12">
-    <h3 className="text-3xl font-black tracking-tight text-orange-200 sm:text-4xl lg:text-5xl">
+    <h3 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-orange-200">
       Leadership
     </h3>
 
@@ -633,7 +633,7 @@ export default function AESCreatorversePage() {
     </p>
   </div>
 
-  <div className="flex justify-center gap-6 overflow-x-auto pb-3 xl:overflow-visible">
+  <div className="flex flex-wrap lg:flex-nowrap justify-center lg:justify-between items-start gap-3 sm:gap-4 md:gap-5 lg:gap-6 xl:gap-8 w-full max-w-7xl mx-auto px-2 sm:px-4 pb-3">
 
     {[
       {
@@ -668,18 +668,18 @@ export default function AESCreatorversePage() {
           scale: 1.08,
         }}
         transition={{ type: "spring", stiffness: 250 }}
-        className="group w-[105px] lg:w-[115px] xl:w-[120px] cursor-pointer flex-shrink-0"
+        className="group w-24 sm:w-28 md:w-32 lg:w-34 xl:w-36 cursor-pointer flex-shrink-0 flex flex-col items-center"
       >
-        <div className="relative mx-auto h-28 w-28 overflow-hidden rounded-full border border-white/30 shadow-2xl transition-all duration-300 group-hover:shadow-orange-400/40">
+        <div className="relative mx-auto h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 lg:h-34 lg:w-34 xl:h-36 xl:w-36 overflow-hidden rounded-full border-2 border-white/30 shadow-2xl transition-all duration-300 group-hover:shadow-orange-400/50 group-hover:border-orange-300">
           <img
             src={item.image}
             alt={item.title}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-transparent to-slate-950/30" />
         </div>
 
-        <p className="mt-3 text-center text-xs lg:text-sm font-semibold leading-4 text-slate-100 transition-colors group-hover:text-orange-300">
+        <p className="mt-3 text-center text-xs sm:text-sm md:text-base font-bold leading-tight text-slate-100 transition-colors group-hover:text-orange-300">
           {item.title}
         </p>
       </motion.div>
