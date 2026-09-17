@@ -8,7 +8,7 @@ import { Calendar, Clock, MapPin, ArrowRight, Users, DollarSign } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { HeroSliderAlways } from "@/components/home/HeroSliderAlways";
+import { EventsGalleryCollage } from "@/components/events/EventsGalleryCollage";
 
 interface Event {
   id: number;
@@ -125,61 +125,17 @@ export default function EventsPage() {
   const getEventDateLabel = (event: Event) => formatDate(event.date);
   const isExternalLink = (href: string) => /^https?:\/\//i.test(href);
 
+  const galleryImages = [
+    "/gallery/img1.jpg",
+    "/gallery/img2.jpg",
+    "/gallery/img3.jpg",
+    "/gallery/img4.jpeg",
+  ];
+
   return (
     <main className="min-h-screen theme-bg-dark flex flex-col">
       <Header />
-      {ongoingEvents.length > 0 ? (
-        <HeroSliderAlways
-          slides={ongoingEvents.map((event, index) => {
-            const aiImages = [
-              "/events/fall_enrollment_hero.jpg",
-              "/events/research_camp_hero.jpg",
-              "/events/college_prep_hero.jpg"
-            ];
-            return {
-              title: event.title,
-              subtitle: event.category,
-              imageSrc: aiImages[index % aiImages.length],
-              imageAlt: event.title,
-              cta: {
-                label: event.availableSpots === 0 ? "Event Full" : "Register Now",
-                href: event.registerHref || "/book-session",
-              },
-              hideSecondaryCta: true,
-              visualStyle: "default",
-            };
-          })}
-          intervalMs={5000}
-        />
-      ) : (
-        <section className="theme-bg-dark min-h-[58vh] pt-24 pb-10 lg:pt-28 lg:pb-12 relative overflow-hidden flex items-center">
-          <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute -top-24 left-1/2 h-64 w-[34rem] -translate-x-1/2 rounded-full bg-cyan-400/10 blur-3xl" />
-            <div className="absolute top-16 right-10 h-48 w-48 rounded-full bg-yellow-400/10 blur-3xl" />
-            <div className="absolute bottom-8 left-10 h-56 w-56 rounded-full bg-fuchsia-400/10 blur-3xl" />
-            <div className="absolute bottom-0 left-0 h-40 w-full bg-gradient-to-t from-slate-950/25 to-transparent" />
-          </div>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
-                <h1 className="bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-500 bg-clip-text text-5xl font-black text-transparent sm:text-6xl lg:text-7xl">
-                  EVENTS
-                </h1>
-                <p className="mx-auto mt-5 mb-4 max-w-4xl text-base theme-text-muted sm:text-lg lg:text-4">
-                  High-impact competitions and summer intensives for middle and high school students across online and in-person formats.
-                </p>
-                
-                <div className="flex flex-wrap justify-center gap-3">
-                  <Button asChild className="bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold">
-                    <a href="#ongoing-events">
-                      Explore Events
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </a>
-                  </Button>
-                </div>
-              </div>
-            </div>
-        </section>
-      )}
+      <EventsGalleryCollage images={galleryImages} />
       <section id="ongoing-events" className="py-12 md:py-14 theme-bg-medium relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 mb-10">
