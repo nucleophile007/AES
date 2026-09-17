@@ -1,10 +1,10 @@
-import Header from "@/components/home/Header";
-import Footer from "@/components/home/Footer";
-import Chatbot from "@/components/home/Chatbot";
+import Header from "../../../components/home/Header";
+import Footer from "../../../components/home/Footer";
+import Chatbot from "../../../components/home/Chatbot";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import RegistrationCloseButton from "@/components/events/RegistrationCloseButton";
+import RegistrationCloseButton from "../../../../components/events/RegistrationCloseButton";
 import type { Metadata } from "next";
 import { ArrowRight, CalendarDays, CheckCircle2, Clock3, MapPin, Sparkles, Trophy } from "lucide-react";
 
@@ -28,6 +28,8 @@ type ChampionsLevel = {
   goals: string;
   contests: string;
 };
+
+const SHARED_REGISTRATION_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScADaWPXsKAeOw6Ryve0OuRyh1INZDxHV5XG91j5CGwlxMfNg/viewform";
 
 const CHAMPIONS_VALUE_PROPS = [
   {
@@ -106,10 +108,36 @@ const CHAMPIONS_SESSION_PLAN = [
 ];
 
 const EVENT_FORMS: Record<string, EventFormConfig> = {
+  "fall-enrollments": {
+    title: "Fall 2026 Enrollments Registration",
+    viewUrl: SHARED_REGISTRATION_FORM_URL,
+    summary:
+      "Tutoring for all grades and districts with personalized lesson plans, in-person and online classes, homework support, and AP/test prep.",
+    eyebrow: "Fall Enrollment",
+    image: "/events/AES_Fall_2026_Flyer_1_FREE_TRIAL(1).png",
+    dateLabel: "Fall 2026",
+    timeLabel: "In-person and online classes",
+    locationLabel: "All grades, all districts",
+    ctaLabel: "Register for Fall Enrollment",
+    highlights: ["Math", "Physics", "Biology", "Chemistry", "English", "Personalized lesson plans", "Homework support", "Worksheets, quizzes & practice", "AP & test prep", "Free trial class"],
+  },
+  "college-prep": {
+    title: "UACHIEVE College Prep Registration",
+    viewUrl: SHARED_REGISTRATION_FORM_URL,
+    summary:
+      "College application support with college list building, essay guidance, extracurricular counseling, major selection, deadline tracking, and optional research program add-on.",
+    eyebrow: "College Prep",
+    image: "/events/AES_College_Prep%20(1)%20(1).png",
+    dateLabel: "Year-round support",
+    timeLabel: "In-person and virtual sessions",
+    locationLabel: "College application support",
+    ctaLabel: "Register for College Prep",
+    highlights: ["Building a potential list of colleges", "Tuning application essays", "Counseling through extracurricular activities", "Funding options, major selection, and deadline tracking", "Optional research program add-on"],
+  },
   "math-league": {
     title: "Greater Sacramento Math League Registration",
     viewUrl:
-      "https://docs.google.com/forms/d/1vHd3DXMFCh_-qa-JefYo6uXDolD-Qyzz_SsbD1gTvw4/viewform?edit_requested=true",
+      SHARED_REGISTRATION_FORM_URL,
     summary:
       "A high-energy regional math competition where students solve challenging problems, compete with peers, and earn medals and certificates.",
     eyebrow: "Math Competition",
@@ -122,8 +150,7 @@ const EVENT_FORMS: Record<string, EventFormConfig> = {
   },
   "ap-bridge": {
     title: "AP Bridge Summer Program Registration",
-    viewUrl:
-      "https://docs.google.com/forms/d/e/1FAIpQLSfnTmN-Y088mfyx9L7WSGBX-S-i9TxPsYXFNHhkc4634HvaYg/viewform",
+    viewUrl: SHARED_REGISTRATION_FORM_URL,
     summary:
       "8-week intensive course with expert mentors, small group settings, and take-home exam support.",
     eyebrow: "Summer Program",
@@ -146,31 +173,28 @@ const EVENT_FORMS: Record<string, EventFormConfig> = {
     ],
   },
   "aes-explorers": {
-    title: "AES Explorers Summer Camp Registration",
-    viewUrl:
-      "https://docs.google.com/forms/d/e/1FAIpQLScADaWPXsKAeOw6Ryve0OuRyh1INZDxHV5XG91j5CGwlxMfNg/viewform",
+    title: "AES Explorers Research Program Registration",
+    viewUrl: SHARED_REGISTRATION_FORM_URL,
     summary:
-      "AES presents its flagship college-level research camp for middle and high school students, with expert guidance and multiple academic tracks.",
-    eyebrow: "Research Camp",
-    image: "/program-image/aes-explorers-summer-camp.png",
-    dateLabel: "June 1 - Aug 7",
+      "A unique college-level research opportunity for middle and high school students with mentor guidance from university faculty, researchers, PhD experts, and industry mentors.",
+    eyebrow: "Research Opportunity",
+    image: "/events/AES_Explorers_Research.png",
+    dateLabel: "10 / 16 / 32 week options",
     timeLabel: "All sessions are online",
-    locationLabel: "From $100/week",
+    locationLabel: "Package fees starting from $100/week",
     ctaLabel: "Register for AES Explorers",
     highlights: [
-      "Engineering track",
-      "Law & Humanities track",
-      "Pre-Med track",
-      "AI/ML track",
-      "Guidance from university faculty (US & India)",
-      "Researchers and PhD experts",
-      "Sign up today",
+      "Engineering domain",
+      "Pre-Med domain",
+      "Law & Humanities domain",
+      "Business domain",
+      "Mentor guidance from university faculty, researchers, and PhD experts",
+      "Opportunity to publish in journals and research competitions",
     ],
   },
   "aes-champions": {
     title: "AES Champions Math Competition Prep Registration",
-    viewUrl:
-      "https://docs.google.com/forms/d/1yM9aV0zpWIdIqmzvx9G4inGvtvFx6jh3VRfkbGcTP4M/viewform",
+    viewUrl: SHARED_REGISTRATION_FORM_URL,
     summary:
       "Are you looking to give your child a math edge beyond the classroom? Competition prep for elementary through high school contests with cohort-based learning and online sessions.",
     eyebrow: "Competition Prep",
@@ -180,7 +204,6 @@ const EVENT_FORMS: Record<string, EventFormConfig> = {
     locationLabel: "Online",
     ctaLabel: "Join AES Champions",
     highlights: [
-      "Elementary: Math Kangaroo",
       "Elementary: NLMC",
       "Elementary: MOEMS",
       "Middle & High school: AMC 8 (Grades 5-8)",
@@ -258,7 +281,7 @@ export default async function EventRegistrationPage({
       <section className="relative overflow-hidden pt-20 sm:pt-24 md:pt-28">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.12),transparent_30%),radial-gradient(circle_at_top_right,rgba(168,85,247,0.16),transparent_32%),linear-gradient(180deg,#0f1730_0%,#13203f_48%,#0b1224_100%)]" />
         <div className="relative mx-auto w-full max-w-7xl space-y-10 px-4 pb-12 sm:px-6 md:px-8">
-          {id !== "aes-champions" && id !== "ap-bridge" && id !== "aes-explorers" && (
+          {id !== "aes-champions" && id !== "ap-bridge" && id !== "aes-explorers" && id !== "fall-enrollments" && id !== "college-prep" && (
             <div className="mx-auto max-w-4xl text-center text-white">
               <div className="inline-flex items-center gap-2 rounded-full border border-yellow-300/20 bg-yellow-300/10 px-4 py-2 text-sm uppercase tracking-[0.22em] text-yellow-200">
                 <Sparkles className="h-4 w-4" />

@@ -20,6 +20,11 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: '/program-image/flyer-aes-explorers.png',
+        destination: '/program-image/aes-explorers-summer-camp.png',
+        permanent: true,
+      },
+      {
         source: '/:path*',
         has: [
           {

@@ -231,12 +231,12 @@ const spotlights: StudentSpotlight[] = [
     message:
       "Congratulations to Nithila, a premed aspirant, on being a finalist at ISRC-2025. ACHARYA is proud of your achievement and dedication during the IGNITE'25 research program, which is truly inspirational.",
     accent: {
-      border: "border-amber-500/40",
-      glow: "shadow-[0_0_60px_-15px_rgba(245,158,11,0.35)]",
-      text: "text-amber-400",
-      iconStroke: "text-amber-400",
+      border: "border-amber-200",
+      glow: "shadow-xl shadow-amber-500/10",
+      text: "text-amber-600",
+      iconStroke: "text-amber-500",
       dividerFrom: "from-amber-400",
-      achievementGradient: "from-amber-300 via-amber-400 to-yellow-500",
+      achievementGradient: "from-amber-600 via-amber-500 to-yellow-600",
     },
   },
   {
@@ -253,31 +253,24 @@ const spotlights: StudentSpotlight[] = [
     message:
       "From TRANSFORM'25 to the Sac STEM Fair, your dedication to aerospace engineering continues to inspire us. Congratulations on this well-deserved win! We wish you boundless success as you continue your journey with ACHARYA.",
     accent: {
-      border: "border-blue-500/40",
-      glow: "shadow-[0_0_60px_-15px_rgba(59,130,246,0.35)]",
-      text: "text-blue-400",
-      iconStroke: "text-blue-400",
-      dividerFrom: "from-blue-400",
-      achievementGradient: "from-blue-300 via-blue-400 to-cyan-500",
+      border: "border-blue-200",
+      glow: "shadow-xl shadow-blue-500/10",
+      text: "text-blue-700",
+      iconStroke: "text-blue-600",
+      dividerFrom: "from-blue-500",
+      achievementGradient: "from-blue-700 via-blue-600 to-cyan-600",
     },
   },
 ];
 
 export function StudentSpotlights() {
   return (
-    <div className="relative w-full min-h-screen overflow-hidden bg-[#0a0e1a] py-10 px-4 sm:px-6 lg:px-8">
-      <div className="pointer-events-none absolute top-0 right-0 h-96 w-96 rounded-full bg-amber-500/5 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-0 left-0 h-96 w-96 rounded-full bg-blue-500/5 blur-3xl" />
+    <div className="relative w-full min-h-screen overflow-hidden bg-[#b4d2f7] py-10 px-4 sm:px-6 lg:px-8">
+      <div className="pointer-events-none absolute top-0 right-0 h-96 w-96 rounded-full bg-amber-400/20 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-0 left-0 h-96 w-96 rounded-full bg-blue-400/20 blur-3xl" />
 
       <div className="relative z-10 mx-auto w-full max-w-6xl">
         <div className="mb-20 flex justify-center">
-          {/* <div className="inline-flex items-center gap-3 rounded-full border border-amber-500/40 bg-[#0f1422] px-6 py-2.5">
-            <span className="text-amber-400">★</span>
-            <span className="text-sm font-bold tracking-[0.25em] text-amber-400">
-              STUDENT SPOTLIGHTS
-            </span>
-            <span className="text-amber-400">★</span>
-          </div> */}
         </div>
 
         <div className="flex flex-col gap-6">
@@ -287,12 +280,12 @@ export function StudentSpotlights() {
             return (
               <div
                 key={i}
-                className={`relative overflow-hidden rounded-2xl border ${s.accent.border} bg-gradient-to-br from-[#0f1422] to-[#0a0e1a] ${s.accent.glow}`}
+                className={`relative overflow-hidden rounded-2xl border ${s.accent.border} bg-white ${s.accent.glow}`}
               >
                 <div className="flex flex-col gap-6 p-6 sm:flex-row sm:p-8">
                   {/* Left: logo block */}
                   <div className="flex flex-shrink-0 flex-col items-center gap-3 sm:w-56">
-                     <div className="h-48 w-48 overflow-hidden rounded-full">
+                     <div className="h-48 w-48 overflow-hidden rounded-full border-[6px] border-[#b4d2f7] shadow-md">
                      <Image
                         src={s.logo}
                         alt={s.competition}
@@ -302,13 +295,10 @@ export function StudentSpotlights() {
                     />
                     </div>
                     <div className="text-center">
-                      {/* <p className="text-[11px] font-bold tracking-[0.2em] text-white/50">
-                        COMPETITION
-                      </p> */}
                       <p className={`mt-1 text-3xl font-bold ${s.accent.text}`}>
                         {s.competition}
                       </p>
-                      <p className="mt-1 text-xs text-white/40">{s.competitionDate}</p>
+                      <p className="mt-1 text-xs text-slate-500">{s.competitionDate}</p>
                     </div>
                   </div>
 
@@ -316,7 +306,7 @@ export function StudentSpotlights() {
                   <div className="relative flex-1">
                     {/* Achievement above name */}
                     <div className="flex items-center gap-3">
-                      <AchIcon className={`h-7 w-7 ${s.accent.text}`} />
+                      <AchIcon className={`h-7 w-7 ${s.accent.iconStroke}`} />
                       <span
                         className={`bg-gradient-to-r ${s.accent.achievementGradient} bg-clip-text text-xl font-extrabold uppercase tracking-[0.18em] text-transparent sm:text-2xl`}
                       >
@@ -324,10 +314,10 @@ export function StudentSpotlights() {
                       </span>
                     </div>
 
-                    <h3 className="mt-2 font-serif text-3xl font-bold text-white sm:text-3xl">
+                    <h3 className="mt-2 font-serif text-3xl font-bold text-slate-900 sm:text-3xl">
                       {s.studentName}
                     </h3>
-                    <p className="mt-1 text-sm text-white/60">
+                    <p className="mt-1 text-sm text-slate-600">
                       {s.grade} · {s.school}
                     </p>
 
@@ -337,7 +327,7 @@ export function StudentSpotlights() {
                       {s.topic}
                     </p>
 
-                    <p className="mt-3 text-base italic leading-relaxed text-white/75">
+                    <p className="mt-3 text-base italic leading-relaxed text-slate-700">
                       {s.message}
                     </p>
 

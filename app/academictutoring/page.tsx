@@ -710,30 +710,38 @@ export default function AcademicTutoringPage() {
           <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-purple-400 rounded-full opacity-10 animate-float"></div>
           <div className="absolute top-1/3 right-1/3 w-8 h-8 bg-green-400 rounded-full opacity-10 animate-float-reverse"></div>
         </div>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-8 sm:pt-12">
-          <div className="text-center mb-12 animate-slide-in-bottom">
-            <h1 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">
-              Empowering Every Learner Through Personalized Tutoring
-            </h1>
-            <p className="text-lg theme-text-muted max-w-4xl mx-auto animate-slide-in-bottom" style={{ animationDelay: '0.2s' }}>
-              We offer tailored academic tutoring for students from middle school to high school, including AP-level coursework. With a strong emphasis on personalization, foundational understanding, and academic excellence, our program helps students not only succeed but thrive.
-            </p>
-          </div>
-          
-          {/* Action Buttons */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="max-w-4xl mx-auto text-center"
-          >
-             <div className="flex justify-center">
-              <Link href="/book-session">
-                <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg">
-                  <ArrowRight className="mr-2 h-5 w-5" /> Book Free Consultation
-                </Button>
-              </Link>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-8 sm:pt-12">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="text-left space-y-8 animate-slide-in-bottom">
+              <div>
+                <h1 className="text-4xl lg:text-5xl font-bold theme-text-light mb-6">
+                  Empowering Every Learner Through Personalized Tutoring
+                </h1>
+                <p className="text-lg theme-text-muted max-w-xl animate-slide-in-bottom" style={{ animationDelay: '0.2s' }}>
+                  We offer tailored academic tutoring for students from middle school to high school, including AP-level coursework. With a strong emphasis on personalization, foundational understanding, and academic excellence, our program helps students not only succeed but thrive.
+                </p>
+              </div>
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                className="flex justify-start"
+              >
+                <Link href="/book-session">
+                  <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a2236] hover:from-yellow-300 hover:to-yellow-400 px-6 shadow-lg">
+                    <ArrowRight className="mr-2 h-5 w-5" /> Book Free Consultation
+                  </Button>
+                </Link>
+              </motion.div>
             </div>
-          </motion.div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, x: 50 }}
+              whileInView={{ opacity: 1, scale: 1, x: 0 }}
+              transition={{ duration: 0.8, type: "spring" }}
+              className="relative h-[400px] w-full rounded-2xl overflow-hidden shadow-2xl shadow-yellow-400/20"
+            >
+              <Image src="/hero/academic_tutoring.jpg" alt="Academic Tutoring" fill className="object-cover" />
+            </motion.div>
+          </div>
         </div>
       </section>
 

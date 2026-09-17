@@ -756,9 +756,6 @@ div.absolute.rounded-full[class*="bg-gradient"][class*="w-"][class*="h-"]:not([c
 }
 
 /* Hero Section Styles */
-.hero-badge {
-  @apply inline-block px-4 py-2 text-sm font-medium uppercase tracking-wider text-white/80 bg-white/10 backdrop-blur-sm rounded-full border border-white/20;
-}
 
 .text-outline {
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);

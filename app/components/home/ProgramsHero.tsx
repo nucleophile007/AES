@@ -135,7 +135,7 @@ export function ProgramsHero() {
     imageSrc: "/program-image/banner-tutoring.png",
     imageAlt: "AcharyaES programs",
     customContent: (
-      <section className="relative w-full bg-slate-950 overflow-hidden h-full">
+      <section className="relative w-full bg-[#b4d2f7] overflow-hidden h-full">
         {/* Fixed height container */}
         <div className="relative mx-auto w-full max-w-none h-[100svh] px-2 sm:px-4 lg:px-6 xl:px-8 pb-6 sm:pb-8 md:pb-10 pt-20 sm:pt-24">
           {/* Grid background */}
@@ -208,19 +208,19 @@ export function ProgramsHero() {
       imageSrc: "/program-image/acharyaes-college-hero.jpg",
       imageAlt: "ACHARYA college admissions highlights",
       customContent: (
-        <div className="relative w-full h-full overflow-hidden bg-[#091636]">
+        <div className="relative w-full h-full overflow-hidden bg-[#b4d2f7]">
           <Image
             src="/program-image/acharyaes-college-hero.jpg"
             alt="Students celebrating admissions"
             fill
             priority
-            className="object-cover"
+            className="object-cover opacity-30"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#070f2fb5] via-[#091636b3] to-[#091636eb]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-[#b4d2f7]/90 to-[#b4d2f7]" />
 
           <div className="relative mx-auto max-w-7xl h-full px-3 sm:px-6 lg:px-8 py-20 sm:py-24 md:py-28 flex flex-col items-center justify-center text-center">
-            <h2 className="text-5xl sm:text-6xl lg:text-8xl font-black font-serif italic text-white leading-none">ACHARYA</h2>
-            <p className="mt-2 text-2xl sm:text-3xl lg:text-5xl font-extrabold font-serif italic text-yellow-400">Class of 2026</p>
+            <h2 className="text-5xl sm:text-6xl lg:text-8xl font-black font-serif italic text-slate-900 leading-none">ACHARYA</h2>
+            <p className="mt-2 text-2xl sm:text-3xl lg:text-5xl font-extrabold font-serif italic text-emerald-700">Class of 2026</p>
 
             {/* <p className="mt-8 text-lg sm:text-2xl lg:text-4xl font-extrabold font-serif italic uppercase tracking-[0.12em] text-white">
               Tier 1 - Elite Medical Feeder Schools
@@ -230,7 +230,7 @@ export function ProgramsHero() {
               {preMedTier1.map((college) => (
                 <div
                   key={college.name}
-                  className="text-white flex flex-col items-center px-2 py-2 sm:px-3 sm:py-4"
+                  className="text-slate-900 flex flex-col items-center px-2 py-2 sm:px-3 sm:py-4"
                 >
                   <div className="mx-auto mb-2 sm:mb-3 h-14 w-14 sm:h-20 sm:w-20 lg:h-28 lg:w-28">
                     <Image
@@ -250,8 +250,8 @@ export function ProgramsHero() {
             </div>
 
             <div className="mt-8 sm:mt-10">
-              <p className="text-4xl sm:text-5xl font-black font-serif italic text-white">We Did It!</p>
-              <p className="mt-2 text-xl sm:text-3xl font-serif italic text-yellow-300">Congratulations to our students</p>
+              <p className="text-4xl sm:text-5xl font-black font-serif italic text-slate-900">We Did It!</p>
+              <p className="mt-2 text-xl sm:text-3xl font-serif italic text-emerald-600">Congratulations to our students</p>
             </div>
           </div>
         </div>

@@ -4,26 +4,19 @@ import { Medal, Microscope, Calendar, ArrowRight } from "lucide-react";
 
 export function UsaboSpotlight() {
   return (
-    <div className="relative w-full min-h-screen overflow-hidden bg-[#0a0e1a] py-10 px-4 sm:px-6 lg:px-8">
-      <div className="pointer-events-none absolute top-0 right-0 h-96 w-96 rounded-full bg-emerald-500/5 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-0 left-0 h-96 w-96 rounded-full bg-emerald-500/5 blur-3xl" />
+    <div className="relative w-full min-h-screen overflow-hidden bg-[#b4d2f7] py-10 px-4 sm:px-6 lg:px-8">
+      <div className="pointer-events-none absolute top-0 right-0 h-96 w-96 rounded-full bg-emerald-400/20 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-0 left-0 h-96 w-96 rounded-full bg-emerald-400/20 blur-3xl" />
 
       <div className="relative z-10 mx-auto w-full max-w-6xl">
         <div className="mb-8 flex justify-center">
-          <div className="inline-flex items-center gap-3 rounded-full border border-emerald-500/40 bg-[#0f1422] px-6 py-2.5">
-            <span className="text-emerald-400">★</span>
-            <span className="text-sm font-bold tracking-[0.25em] text-emerald-400">
-              STUDENT SPOTLIGHT
-            </span>
-            <span className="text-emerald-400">★</span>
-          </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-2xl border border-emerald-500/40 bg-gradient-to-br from-[#0f1422] to-[#0a0e1a] shadow-[0_0_60px_-15px_rgba(16,185,129,0.35)]">
+        <div className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-xl shadow-emerald-500/10">
           <div className="flex flex-col gap-6 p-6 sm:flex-row sm:p-8">
             {/* Left: logo block */}
             <div className="flex flex-shrink-0 flex-col items-center gap-3 sm:w-56">
-              <div className="h-48 w-48 overflow-hidden rounded-full">
+              <div className="h-48 w-48 overflow-hidden rounded-full border-[6px] border-[#b4d2f7] shadow-md">
               <Image
               src='/program-image/usabo2.jpeg'
               alt='usabo'
@@ -34,32 +27,32 @@ export function UsaboSpotlight() {
               </div>
               <div className="text-center">
                
-                <p className="mt-2 text-3xl font-bold text-emerald-400">USABO</p>
-                <p className="mt-1 text-xs text-white/40">2025</p>
+                <p className="mt-2 text-3xl font-bold text-emerald-600">USABO</p>
+                <p className="mt-1 text-xs text-slate-500">2025</p>
               </div>
             </div>
 
             {/* Right: content */}
             <div className="relative flex-1">
               <div className="flex items-center gap-3">
-                <Medal className="h-7 w-7 text-emerald-400" />
-                <span className="bg-gradient-to-r from-emerald-300 via-emerald-400 to-teal-500 bg-clip-text text-2xl font-extrabold uppercase tracking-[0.18em] text-transparent sm:text-3xl">
+                <Medal className="h-7 w-7 text-emerald-600" />
+                <span className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 bg-clip-text text-2xl font-extrabold uppercase tracking-[0.18em] text-transparent sm:text-3xl">
                   USABO&apos;26 SEMI-FINALIST
                 </span>
               </div>
 
-              <h3 className="mt-3 font-serif text-3xl font-bold text-white sm:text-4xl">
+              <h3 className="mt-3 font-serif text-3xl font-bold text-slate-900 sm:text-4xl">
                 Nithya Reddy Pathi
               </h3>
-              <p className="mt-1 text-sm text-white/60">
+              <p className="mt-1 text-sm text-slate-600">
                 Current Junior · Vista del Lago High School
               </p>
 
-              <p className="mt-5 font-serif text-xl italic font-bold text-emerald-400 leading-snug">
+              <p className="mt-5 font-serif text-xl italic font-bold text-emerald-600 leading-snug">
                 Elite national recognition in the biological sciences
               </p>
 
-              <p className="mt-4 text-base italic leading-relaxed text-white/75">
+              <p className="mt-4 text-base italic leading-relaxed text-slate-700">
                 A huge congratulations to our student on being named a USABO Semifinalist! It is
                 incredibly rewarding to see the strategic study plan designed by ACHARYA
                 translated into such elite national recognition. Your discipline and mastery of
@@ -67,8 +60,8 @@ export function UsaboSpotlight() {
               </p>
 
               <div className="mt-5 flex items-center gap-3">
-                <span className="h-px w-10 bg-gradient-to-r from-emerald-400 to-transparent" />
-                <span className="text-xs font-bold tracking-[0.2em] text-emerald-400">
+                <span className="h-px w-10 bg-gradient-to-r from-emerald-500 to-transparent" />
+                <span className="text-xs font-bold tracking-[0.2em] text-emerald-600">
                   — ACHARYA TEAM
                 </span>
               </div>
@@ -77,17 +70,17 @@ export function UsaboSpotlight() {
         </div>
 
         <div className="mt-10 text-center">
-          <h2 className="font-serif text-2xl font-bold text-white sm:text-3xl">
+          <h2 className="font-serif text-2xl font-bold text-slate-900 sm:text-3xl">
             Want to be a part of our{" "}
-            <span className="text-emerald-400">USABO Camp?</span>
+            <span className="text-emerald-600">USABO Camp?</span>
           </h2>
-          <p className="mt-3 text-base text-white/70 leading-relaxed max-w-2xl mx-auto">
+          <p className="mt-3 text-base text-slate-700 leading-relaxed max-w-2xl mx-auto">
             Train with mentors who have guided semifinalists and build the mastery that earns
             elite national recognition.
           </p>
           <a
             href="/book-session"
-            className="group mt-5 inline-flex items-center gap-2 text-sm font-bold tracking-wider text-emerald-400 hover:text-emerald-300"
+            className="group mt-5 inline-flex items-center gap-2 text-sm font-bold tracking-wider text-emerald-600 hover:text-emerald-500"
           >
             <Calendar className="h-4 w-4" />
             <span>BOOK A FREE SESSION</span>

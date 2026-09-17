@@ -263,6 +263,13 @@ export default function TeacherDashboard() {
   const [creatingGroup, setCreatingGroup] = useState(false);
   const createGroupInFlightRef = useRef(false);
 
+  const [editingGroupId, setEditingGroupId] = useState<number | null>(null);
+  const [isEditGroupModalOpen, setIsEditGroupModalOpen] = useState(false);
+  const [editGroupName, setEditGroupName] = useState("");
+  const [editGroupStudentIds, setEditGroupStudentIds] = useState<number[]>([]);
+  const [editGroupError, setEditGroupError] = useState<string | null>(null);
+  const [updatingGroup, setUpdatingGroup] = useState(false);
+
   const createEmptyResourceForm = (defaultProgram = ""): ResourceFormState => ({
     title: "",
     description: "",
@@ -381,7 +388,9 @@ export default function TeacherDashboard() {
 
       if (response.ok && data.teacher) {
         setTeacher(data.teacher);
-        setStudents(data.students || []);
+        const rawStudents = data.students || [];
+        const uniqueStudents = Array.from(new Map(rawStudents.map((s: Student) => [s.id, s])).values()) as Student[];
+        setStudents(uniqueStudents);
       } else {
         if (showGlobalLoader) {
           setError(data.error || 'Failed to fetch teacher data');
@@ -510,6 +519,92 @@ export default function TeacherDashboard() {
     } finally {
       setCreatingGroup(false);
       createGroupInFlightRef.current = false;
+    }
+  };
+
+  const openEditGroupModal = (group: StudentGroup) => {
+    setEditingGroupId(group.id);
+    setEditGroupName(group.name);
+    setEditGroupStudentIds(group.members.map(m => m.id));
+    setEditGroupError(null);
+    setIsEditGroupModalOpen(true);
+  };
+
+  const handleUpdateGroup = async () => {
+    if (updatingGroup) return;
+    setEditGroupError(null);
+
+    if (!teacherEmail) {
+      const message = "Teacher email not available.";
+      setEditGroupError(message);
+      toast({
+        variant: "destructive",
+        title: "Cannot update group",
+        description: message,
+      });
+      return;
+    }
+
+    if (!editGroupName.trim()) {
+      const message = "Group name is required.";
+      setEditGroupError(message);
+      toast({
+        title: "Missing group name",
+        description: message,
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+      return;
+    }
+
+    if (editGroupStudentIds.length === 0) {
+      const message = "Select at least one student.";
+      setEditGroupError(message);
+      toast({
+        title: "No students selected",
+        description: message,
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+      return;
+    }
+
+    setUpdatingGroup(true);
+    try {
+      const response = await fetch("/api/teacher/student-groups", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingGroupId,
+          teacherEmail,
+          name: editGroupName.trim(),
+          studentIds: editGroupStudentIds
+        }),
+      });
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || "Failed to update group");
+      }
+
+      setIsEditGroupModalOpen(false);
+      setEditingGroupId(null);
+      setEditGroupName("");
+      setEditGroupStudentIds([]);
+      await fetchStudentGroups();
+      toast({
+        title: "Group updated",
+        description: "Group has been updated successfully.",
+        className: "border-slate-300 bg-slate-100 text-slate-800",
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to update group";
+      setEditGroupError(message);
+      toast({
+        variant: "destructive",
+        title: "Failed to update group",
+        description: message,
+      });
+    } finally {
+      setUpdatingGroup(false);
     }
   };
 
@@ -1718,6 +1813,70 @@ export default function TeacherDashboard() {
                         </DialogFooter>
                       </DialogContent>
                     </Dialog>
+
+                    <Dialog open={isEditGroupModalOpen} onOpenChange={setIsEditGroupModalOpen}>
+                      <DialogContent className="sm:max-w-[520px]">
+                        <DialogHeader>
+                          <DialogTitle>Edit Student Group</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label>Group Name *</Label>
+                            <Input
+                              value={editGroupName}
+                              onChange={(e) => setEditGroupName(e.target.value)}
+                              placeholder="e.g. Algebra MWF"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Select Students *</Label>
+                            <div className="border rounded-lg p-3 max-h-60 overflow-y-auto space-y-2">
+                              {students.map((student) => (
+                                <label key={student.id} className="flex items-center gap-2 text-sm">
+                                  <Checkbox
+                                    checked={editGroupStudentIds.includes(student.id)}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        setEditGroupStudentIds([...editGroupStudentIds, student.id]);
+                                      } else {
+                                        setEditGroupStudentIds(editGroupStudentIds.filter((id) => id !== student.id));
+                                      }
+                                    }}
+                                  />
+                                  <span className="flex-1">
+                                    {student.name} <span className="text-gray-500">({student.email})</span>
+                                  </span>
+                                </label>
+                              ))}
+                              {students.length === 0 && (
+                                <p className="text-sm text-gray-500">No students found.</p>
+                              )}
+                            </div>
+                          </div>
+                          {editGroupError && <p className="text-sm text-red-600">{editGroupError}</p>}
+                        </div>
+                        <DialogFooter>
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setIsEditGroupModalOpen(false);
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button onClick={handleUpdateGroup} disabled={updatingGroup}>
+                            {updatingGroup ? (
+                              <>
+                                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                Saving...
+                              </>
+                            ) : (
+                              "Save Changes"
+                            )}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
                   </div>
 
                   {studentGroups.length === 0 ? (
@@ -1733,7 +1892,12 @@ export default function TeacherDashboard() {
                         <Card key={group.id} className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
                           <CardHeader className="pb-3">
                             <CardTitle className="flex items-center justify-between text-slate-900 text-lg">
-                              <span className="truncate">{group.name}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="truncate">{group.name}</span>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={() => openEditGroupModal(group)}>
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                              </div>
                               <Badge variant="outline" className="bg-slate-50">
                                 {group.members.length} students
                               </Badge>

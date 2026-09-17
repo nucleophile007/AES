@@ -204,3 +204,153 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function PUT(request: NextRequest) {
+  try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+    }
+
+    if (!hasRole(user, 'teacher')) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
+    const data = await request.json();
+    const { id, teacherEmail: teacherEmailParam, name, studentIds } = data;
+
+    if (!id || !name || !Array.isArray(studentIds) || studentIds.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Group ID, name, and at least one student are required' },
+        { status: 400 }
+      );
+    }
+
+    if (teacherEmailParam && String(teacherEmailParam).toLowerCase() !== user.email.toLowerCase()) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 403 });
+    }
+
+    const trimmedName = String(name).trim();
+    if (!trimmedName) {
+      return NextResponse.json(
+        { success: false, error: 'Group name is required' },
+        { status: 400 }
+      );
+    }
+
+    const teacher = await prisma.teacher.findUnique({
+      where: { email: user.email },
+      select: { id: true }
+    });
+
+    if (!teacher) {
+      return NextResponse.json(
+        { success: false, error: 'Teacher not found' },
+        { status: 404 }
+      );
+    }
+
+    const existingGroup = await prisma.studentGroup.findFirst({
+      where: {
+        id,
+        teacherId: teacher.id
+      }
+    });
+
+    if (!existingGroup) {
+      return NextResponse.json(
+        { success: false, error: 'Group not found' },
+        { status: 404 }
+      );
+    }
+
+    const duplicateNameGroup = await prisma.studentGroup.findFirst({
+      where: {
+        teacherId: teacher.id,
+        name: trimmedName,
+        id: { not: id }
+      },
+      select: { id: true }
+    });
+
+    if (duplicateNameGroup) {
+      return NextResponse.json(
+        { success: false, error: 'Another group with this name already exists' },
+        { status: 409 }
+      );
+    }
+
+    const uniqueStudentIds = Array.from(new Set(studentIds.map((id: any) => Number(id)).filter((id: number) => !Number.isNaN(id))));
+
+    if (uniqueStudentIds.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'At least one valid student is required' },
+        { status: 400 }
+      );
+    }
+
+    const mappedStudents = await prisma.teacherStudent.findMany({
+      where: {
+        teacherId: teacher.id,
+        studentId: { in: uniqueStudentIds }
+      },
+      select: { studentId: true }
+    });
+
+    if (mappedStudents.length !== uniqueStudentIds.length) {
+      return NextResponse.json(
+        { success: false, error: 'Some selected students are not mapped to this teacher' },
+        { status: 400 }
+      );
+    }
+
+    // Delete existing members and recreate them
+    await prisma.studentGroupMember.deleteMany({
+      where: { groupId: id }
+    });
+
+    const group = await prisma.studentGroup.update({
+      where: { id },
+      data: {
+        name: trimmedName,
+        members: {
+          create: uniqueStudentIds.map((studentId) => ({ studentId }))
+        }
+      },
+      include: {
+        members: {
+          include: {
+            student: true
+          }
+        }
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      group: {
+        id: group.id,
+        name: group.name,
+        createdAt: group.createdAt,
+        members: group.members.map((member) => ({
+          id: member.student.id,
+          name: member.student.name,
+          email: member.student.email,
+          grade: member.student.grade,
+          program: member.student.program
+        }))
+      }
+    });
+  } catch (error) {
+    console.error('Error updating student group:', error);
+    const details = error instanceof Error ? error.message : String(error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to update group',
+        ...(process.env.NODE_ENV === 'development' ? { details } : {}),
+      },
+      { status: 500 }
+    );
+  }
+}
