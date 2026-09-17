@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { getUserTimezone } from '@/lib/timezone';
-import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import { Calendar, Check, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 
 type Student = { id: number; name: string; email: string; requestStatus?: 'ASSIGNED' | 'SUBMITTED' | 'APPROVED' | null };
 type Meeting = { id: string; title: string; startDateTime: string; endDateTime: string; attendees: Student[]; unmatchedAttendees: Array<{ email: string; name: string }> };
@@ -35,7 +35,27 @@ export default function MeetingMinutesManager() {
   const [error, setError] = useState<string | null>(null);
   const [expandedMeetings, setExpandedMeetings] = useState<Set<number>>(new Set());
   const [hiddenMeetings, setHiddenMeetings] = useState<Set<number>>(new Set());
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const timezone = getUserTimezone();
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const formatMeetingLabel = (meeting: Meeting) => {
+    const d = new Date(meeting.startDateTime);
+    const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `${meeting.title} — ${dayName}, ${dateStr} @ ${timeStr}`;
+  };
 
   const load = useCallback(async () => {
     setLoading(true); setError(null);
@@ -129,7 +149,7 @@ export default function MeetingMinutesManager() {
   return <div className="space-y-6">
     {error && <Card className="border-amber-300"><CardContent className="py-4"><p className="text-amber-800">{error}</p><Button className="mt-3" variant="outline" onClick={load}>Retry</Button></CardContent></Card>}
     <Card>
-      <CardHeader><CardTitle>Create meeting minutes</CardTitle><CardDescription>Completed meetings from today and yesterday. Assign personal minutes to students, or write one common set and send it directly.</CardDescription></CardHeader>
+      <CardHeader><CardTitle>Create meeting minutes</CardTitle><CardDescription>Completed meetings from the past 7 days. Assign personal minutes to students, or write one common set and send it directly.</CardDescription></CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <button type="button" onClick={() => setCreationMode('STUDENT_ASSIGNED')} className={`rounded-xl border p-4 text-left transition ${creationMode === 'STUDENT_ASSIGNED' ? 'border-yellow-500 bg-yellow-50 ring-2 ring-yellow-200' : 'border-slate-200 hover:border-slate-400'}`}>
@@ -139,10 +159,57 @@ export default function MeetingMinutesManager() {
             <span className="block font-semibold">Write and send myself</span><span className="mt-1 block text-sm text-slate-500">Write one common final version for all selected attendees.</span>
           </button>
         </div>
-        <select className="w-full rounded-md border border-slate-300 bg-white px-3 py-2" value={meetingId} onChange={(event) => setMeetingId(event.target.value)}>
-          <option value="">Select a completed meeting</option>
-          {meetings.map((meeting) => <option key={meeting.id} value={meeting.id}>{meeting.title} — {new Date(meeting.startDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</option>)}
-        </select>
+        <div className="relative w-full" ref={dropdownRef}>
+          <button
+            type="button"
+            onClick={() => setDropdownOpen((prev) => !prev)}
+            className="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-left font-medium text-slate-800 shadow-sm transition hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+          >
+            <div className="flex items-center gap-2.5 truncate">
+              <Calendar className="h-4 w-4 shrink-0 text-slate-500" />
+              <span className="truncate">
+                {activeMeeting ? formatMeetingLabel(activeMeeting) : 'Select a completed meeting'}
+              </span>
+            </div>
+            <ChevronDown className={`h-4 w-4 shrink-0 text-slate-500 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {dropdownOpen && (
+            <div className="absolute left-0 right-0 top-full z-50 mt-1.5 max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl ring-1 ring-slate-900/5">
+              {meetings.length === 0 ? (
+                <div className="p-3 text-center text-sm text-slate-500">No completed meetings found in the past 7 days</div>
+              ) : (
+                meetings.map((meeting) => {
+                  const isSelected = meeting.id === meetingId;
+                  const label = formatMeetingLabel(meeting);
+                  return (
+                    <button
+                      key={meeting.id}
+                      type="button"
+                      onClick={() => {
+                        setMeetingId(meeting.id);
+                        setDropdownOpen(false);
+                      }}
+                      className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition ${
+                        isSelected
+                          ? 'bg-yellow-50 font-semibold text-slate-900'
+                          : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                      }`}
+                    >
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-medium text-slate-900">{meeting.title}</span>
+                        <span className="text-xs text-slate-500">
+                          {new Date(meeting.startDateTime).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} @ {new Date(meeting.startDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      {isSelected && <Check className="h-4 w-4 shrink-0 text-yellow-600" />}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          )}
+        </div>
         {activeMeeting && <div className="space-y-3">
           <div className="flex items-center gap-2"><Checkbox disabled={!selectableAttendees.length} checked={selected.length === selectableAttendees.length && selectableAttendees.length > 0} onCheckedChange={(checked) => setSelected(checked ? selectableAttendees.map((student) => student.id) : [])}/><span className="font-medium">Select all {creationMode === 'MENTOR_DIRECT' ? 'meeting attendees' : 'available students'}</span></div>
           {activeMeeting.attendees.map((student) => { const disabled = creationMode === 'STUDENT_ASSIGNED' && Boolean(student.requestStatus); return <label key={student.id} className={`flex items-center justify-between gap-2 rounded border p-3 ${disabled ? 'bg-slate-50 text-slate-500' : ''}`}><span className="flex items-center gap-2"><Checkbox disabled={disabled} checked={selected.includes(student.id)} onCheckedChange={(checked) => setSelected((current) => checked ? Array.from(new Set([...current, student.id])) : current.filter((id) => id !== student.id))}/><span>{student.name} <span className="text-slate-500">({student.email})</span></span></span>{student.requestStatus && <Badge variant="secondary">Existing · {student.requestStatus.toLowerCase()}</Badge>}</label>; })}

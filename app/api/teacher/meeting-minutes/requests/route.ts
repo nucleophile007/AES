@@ -33,38 +33,103 @@ export async function POST(request: NextRequest) {
     const timezone = typeof body.timezone === 'string' ? body.timezone : 'America/Los_Angeles';
     if (!eventId || !studentIds.length) return NextResponse.json({ error: 'Meeting and at least one student are required' }, { status: 400 });
 
-    const credentials = await getTeacherCalendarCredentials(user.email);
-    if (!credentials.teacher) return NextResponse.json({ error: 'Teacher not found' }, { status: 404 });
-    if (!credentials.accessToken) return NextResponse.json({ error: 'Google Calendar is not connected', needsReconnect: credentials.needsReconnect }, { status: 409 });
-    const event = await getCalendarEvent(credentials.accessToken, credentials.teacher.googleRefreshToken || undefined, eventId);
-    const times = googleEventDateTimes(event);
-    if (!isEligibleGoogleMeeting(event) || !times) return NextResponse.json({ error: 'Meeting is not an eligible completed event organized by you' }, { status: 400 });
+    const teacher = await prisma.teacher.findUnique({
+      where: { email: user.email },
+      select: { id: true, email: true },
+    });
+    if (!teacher) return NextResponse.json({ error: 'Teacher not found' }, { status: 404 });
 
-    const attendeeEmails = new Set((event.attendees || []).map((attendee) => normalizeEmail(attendee.email)).filter(Boolean));
+    const isAesSchedule = eventId.startsWith('aes:schedule:');
+    const scheduleId = isAesSchedule ? Number(eventId.replace('aes:schedule:', '')) : null;
+
+    let title = 'Untitled meeting';
+    let description: string | null = null;
+    let meetingLink: string | null = null;
+    let location: string | null = null;
+    let startDateTime = new Date();
+    let endDateTime = new Date();
+    let googleCalendarEventId: string | null = isAesSchedule ? null : eventId;
+    let classScheduleId: number | null = scheduleId;
+    let attendeeEmails = new Set<string>();
+
+    if (isAesSchedule && scheduleId) {
+      const schedule = await prisma.classSchedule.findUnique({
+        where: { id: scheduleId },
+        include: {
+          student: true,
+          group: { include: { members: { include: { student: true } } } },
+        },
+      });
+      if (!schedule || schedule.teacherId !== teacher.id) {
+        return NextResponse.json({ error: 'Class schedule not found or access denied' }, { status: 404 });
+      }
+      title = schedule.title || `Class with ${schedule.student.name}`;
+      description = schedule.description || null;
+      meetingLink = schedule.meetingLink || null;
+      location = schedule.location || null;
+      googleCalendarEventId = schedule.googleCalendarEventId || null;
+      classScheduleId = schedule.id;
+
+      const [startH, startM] = (schedule.startTime || '00:00').split(':').map(Number);
+      const [endH, endM] = (schedule.endTime || '00:00').split(':').map(Number);
+      const sDate = new Date(schedule.date);
+      sDate.setHours(startH || 0, startM || 0, 0, 0);
+      const eDate = new Date(schedule.date);
+      eDate.setHours(endH || 0, endM || 0, 0, 0);
+      startDateTime = sDate;
+      endDateTime = eDate;
+
+      const rawAttendees = schedule.group
+        ? schedule.group.members.map((m) => m.student)
+        : [schedule.student];
+      attendeeEmails = new Set(rawAttendees.map((s) => normalizeEmail(s.email)));
+    } else {
+      const credentials = await getTeacherCalendarCredentials(user.email);
+      if (!credentials.accessToken) return NextResponse.json({ error: 'Google Calendar is not connected', needsReconnect: credentials.needsReconnect }, { status: 409 });
+      const event = await getCalendarEvent(credentials.accessToken, credentials.teacher?.googleRefreshToken || undefined, eventId);
+      const times = googleEventDateTimes(event);
+      if (!isEligibleGoogleMeeting(event) || !times) return NextResponse.json({ error: 'Meeting is not an eligible completed event organized by you' }, { status: 400 });
+
+      title = event.summary || 'Untitled meeting';
+      description = event.description || null;
+      meetingLink = getGoogleMeetingLink(event);
+      location = event.location || null;
+      startDateTime = times.start;
+      endDateTime = times.end;
+      attendeeEmails = new Set((event.attendees || []).map((attendee) => normalizeEmail(attendee.email)).filter(Boolean));
+    }
+
     const students = await prisma.student.findMany({
-      where: { id: { in: studentIds }, teacherLinks: { some: { teacherId: credentials.teacher.id } } },
+      where: { id: { in: studentIds }, teacherLinks: { some: { teacherId: teacher.id } } },
       select: { id: true, name: true, email: true },
     });
     const validStudents = students.filter((student) => attendeeEmails.has(normalizeEmail(student.email)));
     if (validStudents.length !== studentIds.length) return NextResponse.json({ error: 'One or more students are not linked attendees of this meeting' }, { status: 403 });
 
     const result = await prisma.$transaction(async (tx) => {
-      const meeting = await tx.meetingMinuteMeeting.upsert({
-        where: { teacherId_googleCalendarEventId: { teacherId: credentials.teacher!.id, googleCalendarEventId: eventId } },
-        update: {
-          title: event.summary || 'Untitled meeting', description: event.description || null,
-          meetingLink: getGoogleMeetingLink(event), location: event.location || null,
-          startDateTime: times.start, endDateTime: times.end, timezone,
-          attendeeSnapshot: (event.attendees || []).map((attendee) => ({ email: attendee.email, name: attendee.displayName, responseStatus: attendee.responseStatus })),
-        },
-        create: {
-          teacherId: credentials.teacher!.id, source: 'GOOGLE', googleCalendarEventId: eventId,
-          title: event.summary || 'Untitled meeting', description: event.description || null,
-          meetingLink: getGoogleMeetingLink(event), location: event.location || null,
-          startDateTime: times.start, endDateTime: times.end, timezone,
-          attendeeSnapshot: (event.attendees || []).map((attendee) => ({ email: attendee.email, name: attendee.displayName, responseStatus: attendee.responseStatus })),
-        },
-      });
+      const meeting = classScheduleId
+        ? await tx.meetingMinuteMeeting.upsert({
+            where: { teacherId_classScheduleId: { teacherId: teacher.id, classScheduleId } },
+            update: { title, description, meetingLink, location, startDateTime, endDateTime, timezone },
+            create: {
+              teacherId: teacher.id,
+              source: 'AES_SCHEDULE',
+              classScheduleId,
+              googleCalendarEventId,
+              title, description, meetingLink, location, startDateTime, endDateTime, timezone,
+            },
+          })
+        : await tx.meetingMinuteMeeting.upsert({
+            where: { teacherId_googleCalendarEventId: { teacherId: teacher.id, googleCalendarEventId: eventId } },
+            update: { title, description, meetingLink, location, startDateTime, endDateTime, timezone },
+            create: {
+              teacherId: teacher.id,
+              source: 'GOOGLE',
+              googleCalendarEventId: eventId,
+              title, description, meetingLink, location, startDateTime, endDateTime, timezone,
+            },
+          });
+
       let created = 0;
       const createdStudentIds: number[] = [];
       for (const student of validStudents) {
@@ -77,18 +142,19 @@ export async function POST(request: NextRequest) {
       }
       return { meetingId: meeting.id, created, existing: validStudents.length - created, createdStudentIds };
     });
+
     const notification = await sendAcademicNotification({
       recipients: validStudents.filter((student) => result.createdStudentIds.includes(student.id)).map((student) => ({ email: student.email, name: student.name })),
-      subject: `Meeting minutes assigned: ${event.summary || 'Completed meeting'}`,
+      subject: `Meeting minutes assigned: ${title}`,
       heading: 'Meeting minutes have been assigned',
       message: 'Your teacher asked you to write and submit the minutes for a completed meeting.',
       details: [
-        { label: 'Meeting', value: event.summary || 'Untitled meeting' },
-        { label: 'Date', value: times.start.toLocaleString('en-US', { timeZone: timezone }) },
+        { label: 'Meeting', value: title },
+        { label: 'Date', value: startDateTime.toLocaleString('en-US', { timeZone: timezone }) },
       ],
       actionLabel: 'Write meeting minutes',
       actionUrl: getApplicationUrl('/student-dashboard?tab=meeting-minutes'),
-      replyTo: credentials.teacher.email,
+      replyTo: teacher.email,
     });
     return NextResponse.json({ success: true, ...result, notification });
   } catch (error) {

@@ -24,24 +24,75 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Meeting and at least one student are required' }, { status: 400 });
     }
 
-    const credentials = await getTeacherCalendarCredentials(user.email);
-    if (!credentials.teacher) return NextResponse.json({ error: 'Teacher not found' }, { status: 404 });
-    if (!credentials.accessToken) {
-      return NextResponse.json({ error: 'Google Calendar is not connected', needsReconnect: credentials.needsReconnect }, { status: 409 });
-    }
     const teacher = await prisma.teacher.findUnique({
-      where: { id: credentials.teacher.id },
+      where: { email: user.email },
       select: { id: true, name: true, email: true },
     });
     if (!teacher) return NextResponse.json({ error: 'Teacher not found' }, { status: 404 });
 
-    const event = await getCalendarEvent(credentials.accessToken, credentials.teacher.googleRefreshToken || undefined, eventId);
-    const times = googleEventDateTimes(event);
-    if (!isEligibleGoogleMeeting(event) || !times) {
-      return NextResponse.json({ error: 'Meeting is not an eligible completed event organized by you' }, { status: 400 });
+    const isAesSchedule = eventId.startsWith('aes:schedule:');
+    const scheduleId = isAesSchedule ? Number(eventId.replace('aes:schedule:', '')) : null;
+
+    let title = 'Untitled meeting';
+    let description: string | null = null;
+    let meetingLink: string | null = null;
+    let location: string | null = null;
+    let startDateTime = new Date();
+    let endDateTime = new Date();
+    let googleCalendarEventId: string | null = isAesSchedule ? null : eventId;
+    let classScheduleId: number | null = scheduleId;
+    let attendeeEmails = new Set<string>();
+
+    if (isAesSchedule && scheduleId) {
+      const schedule = await prisma.classSchedule.findUnique({
+        where: { id: scheduleId },
+        include: {
+          student: true,
+          group: { include: { members: { include: { student: true } } } },
+        },
+      });
+      if (!schedule || schedule.teacherId !== teacher.id) {
+        return NextResponse.json({ error: 'Class schedule not found or access denied' }, { status: 404 });
+      }
+      title = schedule.title || `Class with ${schedule.student.name}`;
+      description = schedule.description || null;
+      meetingLink = schedule.meetingLink || null;
+      location = schedule.location || null;
+      googleCalendarEventId = schedule.googleCalendarEventId || null;
+      classScheduleId = schedule.id;
+
+      const [startH, startM] = (schedule.startTime || '00:00').split(':').map(Number);
+      const [endH, endM] = (schedule.endTime || '00:00').split(':').map(Number);
+      const sDate = new Date(schedule.date);
+      sDate.setHours(startH || 0, startM || 0, 0, 0);
+      const eDate = new Date(schedule.date);
+      eDate.setHours(endH || 0, endM || 0, 0, 0);
+      startDateTime = sDate;
+      endDateTime = eDate;
+
+      const rawAttendees = schedule.group
+        ? schedule.group.members.map((m) => m.student)
+        : [schedule.student];
+      attendeeEmails = new Set(rawAttendees.map((s) => normalizeEmail(s.email)));
+    } else {
+      const credentials = await getTeacherCalendarCredentials(user.email);
+      if (!credentials.accessToken) {
+        return NextResponse.json({ error: 'Google Calendar is not connected', needsReconnect: credentials.needsReconnect }, { status: 409 });
+      }
+      const event = await getCalendarEvent(credentials.accessToken, credentials.teacher?.googleRefreshToken || undefined, eventId);
+      const times = googleEventDateTimes(event);
+      if (!isEligibleGoogleMeeting(event) || !times) {
+        return NextResponse.json({ error: 'Meeting is not an eligible completed event organized by you' }, { status: 400 });
+      }
+      title = event.summary || 'Untitled meeting';
+      description = event.description || null;
+      meetingLink = getGoogleMeetingLink(event);
+      location = event.location || null;
+      startDateTime = times.start;
+      endDateTime = times.end;
+      attendeeEmails = new Set((event.attendees || []).map((attendee) => normalizeEmail(attendee.email)).filter(Boolean));
     }
 
-    const attendeeEmails = new Set((event.attendees || []).map((attendee) => normalizeEmail(attendee.email)).filter(Boolean));
     const students = await prisma.student.findMany({
       where: { id: { in: studentIds }, teacherLinks: { some: { teacherId: teacher.id } } },
       include: { parentAccount: { select: { name: true, email: true } } },
@@ -51,22 +102,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'One or more students are not linked attendees of this meeting' }, { status: 403 });
     }
 
-    const meeting = await prisma.meetingMinuteMeeting.upsert({
-      where: { teacherId_googleCalendarEventId: { teacherId: teacher.id, googleCalendarEventId: eventId } },
-      update: {
-        title: event.summary || 'Untitled meeting', description: event.description || null,
-        meetingLink: getGoogleMeetingLink(event), location: event.location || null,
-        startDateTime: times.start, endDateTime: times.end, timezone,
-        attendeeSnapshot: (event.attendees || []).map((attendee) => ({ email: attendee.email, name: attendee.displayName, responseStatus: attendee.responseStatus })),
-      },
-      create: {
-        teacherId: teacher.id, source: 'GOOGLE', googleCalendarEventId: eventId,
-        title: event.summary || 'Untitled meeting', description: event.description || null,
-        meetingLink: getGoogleMeetingLink(event), location: event.location || null,
-        startDateTime: times.start, endDateTime: times.end, timezone,
-        attendeeSnapshot: (event.attendees || []).map((attendee) => ({ email: attendee.email, name: attendee.displayName, responseStatus: attendee.responseStatus })),
-      },
-    });
+    const meeting = classScheduleId
+      ? await prisma.meetingMinuteMeeting.upsert({
+          where: { teacherId_classScheduleId: { teacherId: teacher.id, classScheduleId } },
+          update: { title, description, meetingLink, location, startDateTime, endDateTime, timezone },
+          create: {
+            teacherId: teacher.id,
+            source: 'AES_SCHEDULE',
+            classScheduleId,
+            googleCalendarEventId,
+            title, description, meetingLink, location, startDateTime, endDateTime, timezone,
+          },
+        })
+      : await prisma.meetingMinuteMeeting.upsert({
+          where: { teacherId_googleCalendarEventId: { teacherId: teacher.id, googleCalendarEventId: eventId } },
+          update: { title, description, meetingLink, location, startDateTime, endDateTime, timezone },
+          create: {
+            teacherId: teacher.id,
+            source: 'GOOGLE',
+            googleCalendarEventId: eventId,
+            title, description, meetingLink, location, startDateTime, endDateTime, timezone,
+          },
+        });
 
     const existing = await prisma.meetingMinuteRequest.findMany({
       where: { meetingId: meeting.id, studentId: { in: studentIds } },
@@ -117,7 +174,7 @@ export async function POST(request: NextRequest) {
       message: `${teacher.name} prepared and shared the final minutes for ${meeting.title}.`,
       details: [
         { label: 'Meeting', value: meeting.title },
-        { label: 'When', value: meeting.startDateTime.toLocaleString('en-US', { timeZone: meeting.timezone }) },
+        { label: 'When', value: startDateTime.toLocaleString('en-US', { timeZone: timezone }) },
         { label: 'Mentor', value: teacher.name },
         { label: 'Final minutes', value: minutes },
       ],
