@@ -37,11 +37,12 @@ const launchTracks = [
     tagline: "Build, test, publish.",
     accent: "from-cyan-400 via-sky-400 to-blue-500",
     glow: "shadow-cyan-500/20",
+    color: "cyan" as const,
     points: [
-      "Research assistantships ",
-      "Robotics, AI and data-science projects",
-      "Startup Shadowing",
-      "Technical Workshops",
+      { title: "Research Assistantships", desc: "Gain hands-on research experience by collaborating directly with faculty and industry mentors on real-world challenges." },
+      { title: "Startup Internship", desc: "Work alongside innovative startups to tackle some of the most pressing technological problems of today." },
+      { title: "Robotics, AI & Data Science", desc: "Build practical solutions, analyze complex datasets, and deliver usable results for real-world applications." },
+      { title: "Technical Workshops", desc: "Participate in interactive sessions to learn from and network with leading experts in specialized technical domains." },
     ],
   },
   {
@@ -50,11 +51,12 @@ const launchTracks = [
     tagline: "Clinical exposure, real hours.",
     accent: "from-emerald-400 via-teal-400 to-cyan-500",
     glow: "shadow-emerald-500/20",
+    color: "emerald" as const,
     points: [
-      "Hospital Shadowing",
-      "Community Health Camps",
-      "Biomedical Research",
-      "Medical Case Writing",
+      { title: "Clinical & Hospital Shadowing", desc: "Shadow practicing physicians to observe patient care, clinical decision-making, and real-time medical practice." },
+      { title: "Community Health Camps", desc: "Organize and lead community health camps to directly address public health needs and create local impact." },
+      { title: "Biomedical Research", desc: "Conduct hands-on laboratory research to investigate complex medical challenges and work toward publication." },
+      { title: "Medical Case Writing", desc: "Collaborate with specialized doctors to analyze real patient cases and author published clinical case studies." },
     ],
   },
   {
@@ -63,14 +65,16 @@ const launchTracks = [
     tagline: "Argue, analyse, lead.",
     accent: "from-amber-400 via-orange-400 to-rose-500",
     glow: "shadow-amber-500/20",
+    color: "amber" as const,
     points: [
-      "Business Consulting Projects",
-      "Model UN & Policy Labs",
-      "Moot Court & Legal Research",
-      "Entrepreneurship Incubation",
+      { title: "Business Consulting Projects", desc: "Partner with real companies to analyze market dynamics, streamline operations, and deliver actionable strategic solutions." },
+      { title: "Model UN & Policy Labs", desc: "Draft real-world policy briefs, negotiate critical global issues, and master modern diplomatic and legislative strategy." },
+      { title: "Moot Court & Legal Research", desc: "Prepare compelling briefs and argue simulated courtroom cases alongside experienced legal professionals and scholars." },
+      { title: "Entrepreneurship Incubation", desc: "Pitch original venture concepts, build minimum viable products, and receive direct mentorship from seasoned founders." },
     ],
   },
 ];
+
 
 const packages = [
   {
@@ -295,11 +299,11 @@ export default function AESCreatorversePage() {
 
                 <div className="space-y-4">
                   {track.points.slice(0, 4).map((point) => (
-                    <div key={point} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10">
+                    <div key={point.title} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10">
                       <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${track.title === "Engineering and Sciences" ? "bg-cyan-500/20" : track.title === "Pre-Med" ? "bg-emerald-500/20" : "bg-amber-500/20"}`}>
                         {track.title === "Engineering and Sciences" ? "🔬" : track.title === "Pre-Med" ? "🏥" : "⚖️"}
                       </div>
-                      <span className="text-slate-200">{point}</span>
+                      <span className="text-slate-200">{point.title}</span>
                     </div>
                   ))}
                 </div>
@@ -324,37 +328,68 @@ export default function AESCreatorversePage() {
                 </div>
               </div>
 
-              <div className="absolute inset-0 rotate-y-180 overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-br from-[#18233c] to-[#121926] p-8 backface-hidden">
+              <div className="absolute inset-0 rotate-y-180 overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-br from-[#0f1829] to-[#0d1520] p-7 backface-hidden">
+                {/* Accent glow */}
+                <div className={`absolute -left-10 -top-10 h-40 w-40 rounded-full ${track.glow} bg-gradient-to-br ${track.accent} blur-3xl opacity-30`} />
+
                 <div className="flex h-full flex-col">
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <div className={`rounded-full bg-gradient-to-r ${track.accent} px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white`}>
-                      {track.title}
+                  {/* Back header */}
+                  <div className="mb-5 flex items-center justify-between">
+                    <div className={`rounded-full bg-gradient-to-r ${track.accent} px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.25em] text-white shadow-lg`}>
+                      {track.title === "Engineering and Sciences" ? "Eng & Sciences" : track.title === "Law, Humanities and Business" ? "Law & Business" : track.title}
                     </div>
                     <button
                       type="button"
                       onClick={() => toggleTrack(track.title)}
-                      className="text-sm font-semibold text-slate-200 transition hover:text-white"
+                      className="flex items-center gap-1 text-xs font-semibold text-slate-400 transition hover:text-white"
                     >
                       ← Back
                     </button>
                   </div>
 
-                  <p className="mb-5 text-sm uppercase tracking-[0.35em] text-slate-300">
+                  <p className={`mb-5 text-[10px] font-bold uppercase tracking-[0.3em] ${
+                    track.color === "cyan" ? "text-cyan-400" : track.color === "emerald" ? "text-emerald-400" : "text-amber-400"
+                  }`}>
                     {track.tagline}
                   </p>
 
-                  <div className="space-y-3">
-                    {track.points.map((point) => (
-                      <div key={point} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-3">
-                        <span className="mt-0.5 h-2.5 w-2.5 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
-                        <span className="text-sm text-slate-200">{point}</span>
+                  {/* Numbered items */}
+                  <div className="flex flex-col gap-3 flex-1 overflow-y-auto pr-1">
+                    {track.points.map((point, idx) => (
+                      <div
+                        key={point.title}
+                        className="flex gap-4 rounded-2xl border border-white/8 bg-white/4 p-4 hover:bg-white/8 transition-colors"
+                      >
+                        {/* Number badge */}
+                        <div className={`flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-full text-sm font-black ${
+                          track.color === "cyan"
+                            ? "bg-cyan-500/20 text-cyan-300"
+                            : track.color === "emerald"
+                            ? "bg-emerald-500/20 text-emerald-300"
+                            : "bg-amber-500/20 text-amber-300"
+                        }`}>
+                          {idx + 1}
+                        </div>
+                        {/* Content */}
+                        <div className="min-w-0">
+                          <p className={`text-sm font-bold mb-1 ${
+                            track.color === "cyan" ? "text-cyan-100" : track.color === "emerald" ? "text-emerald-100" : "text-amber-100"
+                          }`}>
+                            {point.title}
+                          </p>
+                          <p className="text-xs text-slate-400 leading-relaxed">
+                            {point.desc}
+                          </p>
+                        </div>
                       </div>
                     ))}
                   </div>
 
-                  <div className="mt-auto pt-6">
-                    <div className={`inline-flex rounded-full border border-white/10 bg-gradient-to-r ${track.accent} px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white`}>
-                      Track Details
+                  {/* Footer CTA */}
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                    <div className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r ${track.accent} px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-white shadow-lg`}>
+                      <span>Apply for This Track</span>
+                      <span>→</span>
                     </div>
                   </div>
                 </div>
