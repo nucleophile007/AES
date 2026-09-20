@@ -18,6 +18,7 @@ export type Slide = {
   hideSecondaryCta?: boolean;
   hideContent?: boolean;
   visualStyle?: "default" | "poster";
+  hideArrows?: boolean;
   customContent?: React.ReactNode;
 };
 
@@ -280,7 +281,7 @@ export function HeroSliderAlways({
         </div>
       )}
 
-      {enableNav && (
+      {enableNav && !activeSlide.hideArrows && (
         <div className="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-between z-20 px-4 md:px-8">
           <button
             type="button"
@@ -306,6 +307,7 @@ export function HeroSliderAlways({
           </button>
         </div>
       )}
+
     </section>
   );
 }

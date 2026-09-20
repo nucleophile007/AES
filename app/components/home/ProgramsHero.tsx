@@ -144,6 +144,7 @@ export function ProgramsHero() {
     title: "IEEE MIT URTC",
     imageSrc: "/logos/ieee-logo.svg",
     imageAlt: "IEEE logo",
+    hideArrows: true,
     customContent: (
       <section
         className="relative h-full w-full overflow-hidden bg-[#f6f3ed] text-[#151515]"
@@ -186,8 +187,11 @@ export function ProgramsHero() {
             </a>
           </div>
 
-          <div className="grid min-h-0 flex-1 items-center gap-3 py-3 lg:grid-cols-[1.08fr_0.92fr] lg:gap-10 lg:py-5">
+          <div className="grid min-h-0 flex-1 items-center gap-3 py-3 lg:grid-cols-[1.02fr_0.98fr] lg:gap-10 lg:py-5">
             <div className="min-w-0">
+              <p className="text-xs font-black uppercase tracking-[0.24em] text-[#a31f34] sm:text-sm">
+                Congratulations to our student researchers
+              </p>
               <div className="flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#151515] sm:text-xs">
                 <span className="inline-flex items-center gap-1.5 border border-black/15 bg-white/70 px-2 py-1.5">
                   <MapPin className="h-3.5 w-3.5 text-[#a31f34]" />
@@ -199,81 +203,100 @@ export function ProgramsHero() {
                 </span>
               </div>
 
-              <h1 className="mt-3 max-w-4xl text-[1.65rem] font-black uppercase leading-[0.98] tracking-normal text-[#151515] sm:text-4xl md:text-5xl lg:text-5xl 2xl:text-6xl">
-                ACHARYA students at IEEE MIT URTC
+              <h1 className="mt-3 max-w-4xl text-[2.15rem] font-black uppercase leading-[0.94] tracking-normal text-[#151515] sm:text-5xl md:text-6xl lg:text-[4.2rem] 2xl:text-7xl">
+                Soham & Pragna
               </h1>
 
+              <p className="mt-2 max-w-3xl text-base font-black uppercase leading-tight tracking-[0.08em] text-[#a31f34] sm:text-xl md:text-2xl">
+                Poster presenters at IEEE MIT URTC
+              </p>
+
               <p className="mt-3 max-w-3xl text-xs font-semibold leading-relaxed text-black/70 sm:hidden">
-                An internationally renowned undergraduate research conference highlighting global engineering and technology breakthroughs.
+                Celebrating ACHARYA students presenting undergraduate research at MIT URTC.
               </p>
               <p className="mt-3 hidden max-w-3xl text-sm font-semibold leading-relaxed text-black/70 sm:block">
-                The IEEE MIT URTC is an internationally renowned research conference for undergraduates by undergraduates, highlighting breakthroughs in engineering and technological research by student researchers worldwide.
+                ACHARYA proudly congratulates our students as they present their research at the IEEE MIT Undergraduate Research Technology Conference.
               </p>
 
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 {[
                   {
-                    name: "Soham Daterao",
+                    label: "Research Work 01",
+                    area: "Piezoelectric Energy Harvesting",
+                    presenter: "Soham Daterao",
                     title: "Dynamic Analysis of L-Shaped and U-Shaped Piezoelectric Harvesters",
                   },
                   {
-                    name: "Pragna Surabathula",
+                    label: "Research Work 02",
+                    area: "Speech Denoising",
+                    presenter: "Pragna Surabathula",
                     title: "Hearing it Clearly: Convolutional Autoencoders for Speech Denoising",
                   },
-                ].map((student) => (
+                ].map((research) => (
                   <article
-                    key={student.name}
-                    className="group border-l-4 border-[#a31f34] bg-white/82 p-2.5 shadow-[0_14px_34px_rgba(21,21,21,0.08)] ring-1 ring-black/10 transition-transform duration-300 hover:-translate-y-1 sm:p-3"
+                    key={research.label}
+                    className="group border-l-4 border-[#a31f34] bg-white/90 p-3 shadow-[0_14px_34px_rgba(21,21,21,0.08)] ring-1 ring-black/10 transition-transform duration-300 hover:-translate-y-1 sm:p-4"
                   >
                     <div className="flex items-center gap-2 text-[#a31f34]">
                       <Presentation className="h-4 w-4" />
                       <span className="text-[10px] font-black uppercase tracking-[0.16em]">
-                        Poster Presentation
+                        {research.label}
                       </span>
                     </div>
                     <h2 className="mt-2 text-lg font-black leading-tight text-[#151515] sm:text-xl">
-                      {student.name}
+                      {research.area}
                     </h2>
-                    <p className="mt-1.5 text-xs font-semibold leading-snug text-black/70 sm:text-sm">
-                      {student.title}
+                    <p className="mt-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#a31f34]/80">
+                      Presenter: {research.presenter}
+                    </p>
+                    <p className="mt-1.5 text-xs font-semibold leading-snug text-black/70 sm:text-[15px]">
+                      {research.title}
                     </p>
                   </article>
                 ))}
               </div>
-
-              <blockquote className="mt-3 max-w-3xl border-l-4 border-[#a31f34] pl-3 text-[11px] font-black uppercase leading-snug tracking-[0.05em] text-[#151515] sm:text-xs md:text-sm">
-                From ACHARYA, we congratulate our students and wish them all the best for their poster presentations at one of the elite institutions in the world.
-              </blockquote>
             </div>
 
             <div className="relative hidden h-full min-h-[360px] lg:block">
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-full max-w-sm bg-[#151515] p-6 text-white shadow-[0_28px_80px_rgba(0,0,0,0.28)] xl:max-w-md xl:p-8">
+                <div className="w-full max-w-md bg-[#151515] p-6 text-white shadow-[0_28px_80px_rgba(0,0,0,0.28)] xl:p-8">
                   <div className="flex items-start justify-between gap-6 border-b border-white/20 pb-5">
                     <div>
                       <p className="text-xs font-black uppercase tracking-[0.35em] text-white/60">
                         IEEE MIT
                       </p>
-                      <p className="mt-3 text-6xl font-black uppercase leading-none tracking-normal xl:text-7xl">
-                        URTC
+                      <p className="mt-3 text-3xl font-black uppercase leading-none tracking-normal text-white xl:text-4xl 2xl:text-5xl">
+                        Congratulations
                       </p>
                     </div>
                     <Award className="h-12 w-12 text-[#a31f34]" />
                   </div>
 
-                  <div className="mt-6 space-y-2 text-3xl font-black uppercase leading-none text-white/90 xl:mt-8 xl:space-y-3 xl:text-4xl">
-                    {["Engineering", "Computation", "Networks", "Humanity"].map((word) => (
-                      <p key={word} className="border-b border-white/10 pb-3">
-                        {word}
-                      </p>
+                  <div className="mt-6 grid grid-cols-2 gap-3">
+                    {[
+                      { value: "2", label: "Poster presentations" },
+                      { value: "MIT", label: "Conference venue" },
+                    ].map((item) => (
+                      <div key={item.label} className="border border-white/15 bg-white/[0.06] p-4">
+                        <p className="text-4xl font-black uppercase leading-none text-white">
+                          {item.value}
+                        </p>
+                        <p className="mt-3 text-[10px] font-black uppercase tracking-[0.18em] text-white/55">
+                          {item.label}
+                        </p>
+                      </div>
                     ))}
                   </div>
 
-                  <div className="mt-6 bg-[#a31f34] px-4 py-3 xl:mt-8 xl:px-5 xl:py-4">
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-white xl:text-sm xl:tracking-[0.2em]">
-                      Undergraduate Research Technology Conference
+                  <div className="mt-6 bg-[#a31f34] px-5 py-4 xl:mt-8">
+                    <p className="text-sm font-black uppercase tracking-[0.2em] text-white">
+                      All the best at your MIT URTC poster presentations
                     </p>
                   </div>
+
+                  <p className="mt-5 text-sm font-semibold leading-relaxed text-white/65">
+                    Representing ACHARYA through research in energy harvesting and speech denoising.
+                  </p>
                 </div>
               </div>
               <p className="absolute bottom-3 right-0 hidden max-w-sm text-right text-xs font-black uppercase tracking-[0.22em] text-white/80 2xl:block">
@@ -448,7 +471,7 @@ export function ProgramsHero() {
   return (
     <HeroSliderAlways
       slides={slides}
-      intervalMs={4500}
+      intervalMs={7000}
       ariaLabel="AcharyaES Programs"
       className="w-full pt-20 sm:pt-24"
     />
