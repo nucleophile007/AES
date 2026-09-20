@@ -338,13 +338,6 @@ export default function AESCreatorversePage() {
                     <div className={`rounded-full bg-gradient-to-r ${track.accent} px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.25em] text-white shadow-lg`}>
                       {track.title === "Engineering and Sciences" ? "Eng & Sciences" : track.title === "Law, Humanities and Business" ? "Law & Business" : track.title}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => toggleTrack(track.title)}
-                      className="flex items-center gap-1 text-xs font-semibold text-slate-400 transition hover:text-white"
-                    >
-                      ← Back
-                    </button>
                   </div>
 
                   <p className={`mb-5 text-[10px] font-bold uppercase tracking-[0.3em] ${
@@ -386,11 +379,21 @@ export default function AESCreatorversePage() {
                   </div>
 
                   {/* Footer CTA */}
-                  <div className="mt-4 pt-4 border-t border-white/10">
-                    <div className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r ${track.accent} px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-white shadow-lg`}>
-                      <span>Apply for This Track</span>
-                      <span>→</span>
-                    </div>
+                  <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
+                    <Link href="/book-session">
+                      <div className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r ${track.accent} px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-white shadow-lg transition hover:opacity-90 cursor-pointer`}>
+                        <span>Apply</span>
+                        <span>→</span>
+                      </div>
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={() => toggleTrack(track.title)}
+                      className={`font-semibold transition hover:-translate-x-1 ${track.title === "Engineering and Sciences" ? "text-cyan-300" : track.title === "Pre-Med" ? "text-emerald-300" : "text-amber-300"}`}
+                    >
+                      ← Back
+                    </button>
                   </div>
                 </div>
               </div>

@@ -6,10 +6,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Maximize2, X } from "lucide-react";
 
 interface EventsGalleryCollageProps {
-  images: string[];
+  images?: string[];
 }
 
-/* Reusable easing curve — matches the Dribbble editorial reveal style */
 const EASE = [0.76, 0, 0.24, 1] as const;
 
 /* Corner accent marks */
@@ -24,89 +23,56 @@ function CornerAccents() {
   );
 }
 
-/* Individual image card with clip-path reveal + counter-scale on image */
-interface GalleryCardProps {
+interface PhotoCardData {
+  id: string;
   src: string;
   title: string;
-  className: string;
-  /* clipPath reveal direction */
-  revealFrom: "left" | "right" | "bottom" | "top";
-  delay: number;
-  onOpen: () => void;
-}
-
-function GalleryCard({ src, title, className, revealFrom, delay, onOpen }: GalleryCardProps) {
-  const clipHidden = {
-    left:   "inset(0% 100% 0% 0%)",
-    right:  "inset(0% 0% 0% 100%)",
-    bottom: "inset(100% 0% 0% 0%)",
-    top:    "inset(0% 0% 100% 0%)",
-  }[revealFrom];
-
-  const clipVisible = "inset(0% 0% 0% 0%)";
-
-  return (
-    <motion.div
-      className={`group relative overflow-hidden cursor-pointer bg-slate-900 rounded-sm ${className}`}
-      /* outer wrapper clips the card into view */
-      initial={{ clipPath: clipHidden }}
-      whileInView={{ clipPath: clipVisible }}
-      viewport={{ once: true, margin: "0px" }}
-      transition={{ duration: 1.1, delay, ease: EASE }}
-      onClick={onOpen}
-    >
-      {/* Image counter-scales: starts larger, settles to normal — zoom-out-into-place effect */}
-      <motion.div
-        className="absolute inset-0"
-        initial={{ scale: 1.18 }}
-        whileInView={{ scale: 1 }}
-        viewport={{ once: true, margin: "0px" }}
-        transition={{ duration: 1.1, delay, ease: EASE }}
-      >
-        <Image
-          src={src}
-          alt={title}
-          fill
-          className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-          sizes="(max-width: 768px) 100vw, 40vw"
-        />
-      </motion.div>
-
-      {/* Dark overlay on hover */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
-
-      {/* Corner accents */}
-      <CornerAccents />
-
-      {/* Title + expand — slides up from bottom */}
-      <div className="absolute bottom-0 inset-x-0 p-5 z-20 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 flex items-end justify-between">
-        <h3 className="text-base sm:text-lg font-bold text-white leading-snug max-w-[80%]">
-          {title}
-        </h3>
-        <div className="h-9 w-9 flex items-center justify-center border border-white/30 text-white shrink-0 ml-3 bg-black/40 backdrop-blur-sm rounded-sm">
-          <Maximize2 className="h-4 w-4" />
-        </div>
-      </div>
-
-      {/* Subtle frame glow */}
-      <div className="absolute inset-0 border border-white/5 group-hover:border-yellow-400/20 transition-colors duration-300 pointer-events-none rounded-sm z-10" />
-    </motion.div>
-  );
+  widthClass: string;
 }
 
 export function EventsGalleryCollage({ images }: EventsGalleryCollageProps) {
   const [activeLightbox, setActiveLightbox] = useState<{ src: string; title: string } | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
 
   const imgs = [
-    images[0] || "/gallery/img1.jpg",
-    images[1] || "/gallery/img2.jpg",
-    images[2] || "/gallery/img3.jpg",
-    images[3] || "/gallery/img4.jpeg",
+    (images && images[0]) || "/gallery/img1.jpg",
+    (images && images[1]) || "/gallery/img2.jpg",
+    (images && images[2]) || "/gallery/img3.jpg",
+    (images && images[3]) || "/gallery/img4.jpeg",
   ];
 
-  return (
-    <div className="relative w-full pt-20 bg-[#080c14]">
+  const cards: PhotoCardData[] = [
+    {
+      id: "img1",
+      src: imgs[0],
+      title: "Campus Highlights & Learning",
+      widthClass: "w-[480px] sm:w-[600px] md:w-[700px]",
+    },
+    {
+      id: "img2",
+      src: imgs[1],
+      title: "Interactive Student Workshops",
+      widthClass: "w-[280px] sm:w-[340px] md:w-[400px]",
+    },
+    {
+      id: "img3",
+      src: imgs[2],
+      title: "Research & Mentorship Camps",
+      widthClass: "w-[280px] sm:w-[340px] md:w-[400px]",
+    },
+    {
+      id: "img4",
+      src: imgs[3],
+      title: "College Prep & Academic Celebrations",
+      widthClass: "w-[480px] sm:w-[600px] md:w-[700px]",
+    },
+  ];
 
+  // Repeat for seamless infinite scroll
+  const scrollItems = [...cards, ...cards, ...cards];
+
+  return (
+    <div className="relative w-full pt-20 pb-10 bg-[#080c14] overflow-hidden">
       {/* ── Museum-style heading ── */}
       <motion.div
         className="px-6 sm:px-10 lg:px-16 pt-10 pb-8"
@@ -126,53 +92,70 @@ export function EventsGalleryCollage({ images }: EventsGalleryCollageProps) {
         </div>
       </motion.div>
 
-      {/* ── 4-image Grid with directional clip-path reveals ──
-          Layout:
-            [ Card 1 — large left  ] [ Card 2 — top right  ]
-            [ Card 3 — bot center  ] [ Card 4 — large right ]
-          On desktop: 3 cols, cards span accordingly
-      */}
-      <div className="px-3 sm:px-4 pb-14">
+      {/* ── Single Infinite Horizontal Scrolling Row ── */}
+      <div
+        className="relative w-full overflow-hidden"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+        onTouchStart={() => setIsPaused(true)}
+        onTouchEnd={() => setIsPaused(false)}
+      >
+        {/* Edge gradient fade masks */}
+        <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-20 bg-gradient-to-r from-[#080c14] to-transparent z-20 pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-8 sm:w-20 bg-gradient-to-l from-[#080c14] to-transparent z-20 pointer-events-none" />
 
-        {/* Row 1 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-          <GalleryCard
-            src={imgs[0]}
-            title="Campus Highlights & Learning"
-            className="md:col-span-2 h-[420px] md:h-[500px]"
-            revealFrom="left"
-            delay={0}
-            onOpen={() => setActiveLightbox({ src: imgs[0], title: "Campus Highlights & Learning" })}
-          />
-          <GalleryCard
-            src={imgs[1]}
-            title="Interactive Student Workshops"
-            className="md:col-span-1 h-[420px] md:h-[500px]"
-            revealFrom="top"
-            delay={0.15}
-            onOpen={() => setActiveLightbox({ src: imgs[1], title: "Interactive Student Workshops" })}
-          />
-        </div>
+        <motion.div
+          className="flex gap-3 w-max will-change-transform px-3 sm:px-4"
+          animate={{
+            x: isPaused ? undefined : ["0%", `-${100 / 3}%`],
+          }}
+          transition={{
+            x: {
+              repeat: Infinity,
+              repeatType: "loop",
+              duration: 28,
+              ease: "linear",
+            },
+          }}
+        >
+          {scrollItems.map((card, idx) => (
+            <div
+              key={`${card.id}-${idx}`}
+              onClick={() => setActiveLightbox({ src: card.src, title: card.title })}
+              className={`group relative shrink-0 overflow-hidden cursor-pointer bg-slate-900 rounded-sm h-[320px] sm:h-[380px] md:h-[420px] ${card.widthClass}`}
+            >
+              {/* Image */}
+              <div className="absolute inset-0">
+                <Image
+                  src={card.src}
+                  alt={card.title}
+                  fill
+                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                  sizes="(max-width: 768px) 80vw, 50vw"
+                />
+              </div>
 
-        {/* Row 2 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <GalleryCard
-            src={imgs[2]}
-            title="Research & Mentorship Camps"
-            className="md:col-span-1 h-[420px] md:h-[500px]"
-            revealFrom="bottom"
-            delay={0.1}
-            onOpen={() => setActiveLightbox({ src: imgs[2], title: "Research & Mentorship Camps" })}
-          />
-          <GalleryCard
-            src={imgs[3]}
-            title="College Prep & Academic Celebrations"
-            className="md:col-span-2 h-[420px] md:h-[500px]"
-            revealFrom="right"
-            delay={0.2}
-            onOpen={() => setActiveLightbox({ src: imgs[3], title: "College Prep & Academic Celebrations" })}
-          />
-        </div>
+              {/* Dark overlay on hover */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
+
+              {/* Corner accents */}
+              <CornerAccents />
+
+              {/* Title on bottom left */}
+              <div className="absolute bottom-0 inset-x-0 p-5 z-20 flex items-end justify-between">
+                <h3 className="text-sm sm:text-base font-bold text-white/90 leading-snug drop-shadow-md">
+                  {card.title}
+                </h3>
+                <div className="h-8 w-8 flex items-center justify-center border border-white/30 text-white shrink-0 ml-3 bg-black/40 backdrop-blur-sm rounded-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <Maximize2 className="h-3.5 w-3.5" />
+                </div>
+              </div>
+
+              {/* Subtle frame glow */}
+              <div className="absolute inset-0 border border-white/5 group-hover:border-yellow-400/20 transition-colors duration-300 pointer-events-none rounded-sm z-10" />
+            </div>
+          ))}
+        </motion.div>
       </div>
 
       {/* ── Lightbox Modal ── */}

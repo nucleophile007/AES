@@ -31,7 +31,7 @@ interface Event {
 const HARD_CODED_UPCOMING_EVENTS: Event[] = [
   {
     id: 103,
-    title: "Fall 2026 Enrollments Open",
+    title: "Tutoring",
     description:
       "Tutoring for all grades and districts in math, physics, biology, chemistry, and English with personalized lesson plans.",
     category: "Fall Enrollment",
