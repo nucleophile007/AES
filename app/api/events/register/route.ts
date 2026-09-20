@@ -157,6 +157,30 @@ export async function POST(request: Request) {
       replyTo: parentEmail,
     });
 
+    // Schedule 24h prior event reminder if event date is in the future
+    try {
+      const eventDateTime = new Date(event.eventDate).getTime();
+      const reminderTime = eventDateTime - 24 * 60 * 60 * 1000;
+      if (reminderTime > Date.now()) {
+        const { qstash } = await import('@/lib/qstash');
+        const reminderUrl = getApplicationUrl('/api/jobs/event-reminders');
+        if (reminderUrl) {
+          await qstash.publishJSON({
+            url: reminderUrl,
+            body: {
+              eventId: event.id,
+              registrationId: registration.id,
+            },
+            notBefore: Math.floor(reminderTime / 1000),
+            deduplicationId: `event-reminder-${event.id}-reg-${registration.id}`,
+            retries: 2,
+          });
+        }
+      }
+    } catch (schedErr) {
+      console.warn('[Event Registration] Reminder scheduling notice:', schedErr);
+    }
+
     return NextResponse.json({
       success: true,
       registrationId: registration.id,

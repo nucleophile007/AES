@@ -234,7 +234,7 @@ export default function CustomChatDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={`max-w-2xl w-full h-[600px] flex flex-col p-0 ${NO_SPINNER_CLASS}`}>
+      <DialogContent className={`w-[calc(100vw-1.5rem)] sm:max-w-2xl h-[85vh] sm:h-[600px] max-h-[650px] flex flex-col p-0 ${NO_SPINNER_CLASS}`}>
         <DialogHeader className="sr-only">
           <DialogTitle>Chat with {recipientName}</DialogTitle>
         </DialogHeader>

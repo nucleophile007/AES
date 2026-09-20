@@ -497,7 +497,7 @@ const AssignmentForm = ({
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <div>
           <Label htmlFor="totalPoints">Total Points</Label>
           <Input
@@ -1422,31 +1422,33 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 min-w-0">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Assignment Management</h2>
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
+        <h2 className="text-xl sm:text-2xl font-bold text-slate-900 leading-snug">
+          Assignment Management
+        </h2>
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             type="button"
             variant="outline"
-            className="flex items-center gap-2"
+            className="flex items-center justify-center gap-1.5 text-xs sm:text-sm h-9 px-3 border-slate-300 hover:bg-slate-50"
             onClick={() => {
               setActiveTemplateEditorId(null);
               setIsMcqPdfDialogOpen(true);
             }}
           >
-            <FileText className="w-4 h-4" />
+            <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             Create Test
           </Button>
           <Dialog open={isCreateDialogOpen} onOpenChange={handleCreateDialogOpenChange}>
             <DialogTrigger asChild>
-              <Button onClick={handleCreate} className="flex items-center gap-2">
-                <Plus className="w-4 h-4" />
+              <Button onClick={handleCreate} className="flex items-center justify-center gap-1.5 text-xs sm:text-sm h-9 px-3.5 bg-slate-900 text-white hover:bg-slate-800">
+                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Create Assignment
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-[calc(100vw-1.5rem)] sm:max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
               <DialogHeader>
                 <DialogTitle>Create New Assignment</DialogTitle>
               </DialogHeader>
@@ -1458,20 +1460,20 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
                 studentGroups={studentGroups}
                 mcqTemplates={mcqTemplates}
               />
-              <div className="flex justify-end space-x-2 pt-4">
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4">
                 <Button variant="outline" onClick={() => handleCreateDialogOpenChange(false)}>
                   Cancel
                 </Button>
-                <Button onClick={handleSubmit} disabled={loading}>
+                <Button onClick={handleSubmit} disabled={loading} className="bg-slate-900 text-white hover:bg-slate-800">
                   {loading ? 'Creating...' : 'Create Assignment'}
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
         </div>
-                {groupLoadError && (
-                  <p className="text-sm text-orange-600">{groupLoadError}</p>
-                )}
+        {groupLoadError && (
+          <p className="text-sm text-orange-600">{groupLoadError}</p>
+        )}
       </div>
 
       <McqPdfAssignmentModal
@@ -1503,32 +1505,35 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
         </div>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg text-slate-900">Saved MCQ Templates</CardTitle>
+      <Card className="border border-slate-200 bg-white shadow-sm">
+        <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+          <CardTitle className="text-base sm:text-lg text-slate-900">Saved MCQ Templates</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6 pt-0">
           {mcqTemplates.length === 0 ? (
-            <p className="text-sm text-gray-600">No templates yet. Use “Create Test” to create one.</p>
+            <p className="text-xs sm:text-sm text-gray-600">No templates yet. Use “Create Test” to create one.</p>
           ) : (
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2">
               {mcqTemplates.map((template) => (
-                <div key={template.id} className="rounded-md border bg-white p-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-medium text-slate-900">{template.title}</p>
-                    <Badge variant="outline" className="text-[10px]">{getMcqTemplateTypeLabel(template.assessmentType)}</Badge>
+                <div key={template.id} className="rounded-lg border border-slate-200 bg-white p-3 sm:p-4 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                      <p className="font-semibold text-sm sm:text-base text-slate-900 truncate">{template.title}</p>
+                      <Badge variant="outline" className="text-[10px] bg-slate-50">{getMcqTemplateTypeLabel(template.assessmentType)}</Badge>
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500 truncate">{template.fileName || "Linked PDF"}</p>
+                    {template.summary && <p className="mt-1 line-clamp-2 text-xs text-gray-600">{template.summary}</p>}
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">{template.fileName || "Linked PDF"}</p>
-                  {template.summary && <p className="mt-1 line-clamp-2 text-xs text-gray-600">{template.summary}</p>}
-                  <div className="mt-3 flex items-center justify-between gap-2">
-                    <p className="text-xs text-gray-500">
-                      {template.updatedAt ? `Updated ${new Date(template.updatedAt).toLocaleString()}` : ""}
+                  <div className="mt-3 pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-[11px] text-gray-400">
+                      {template.updatedAt ? `Updated ${new Date(template.updatedAt).toLocaleDateString()}` : ""}
                     </p>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <Button
                         type="button"
                         size="sm"
                         variant="outline"
+                        className="h-7 text-xs px-2.5 border-slate-300"
                         onClick={() => {
                           setActiveTemplateEditorId(template.id);
                           setIsMcqPdfDialogOpen(true);
@@ -1540,6 +1545,7 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
                         type="button"
                         size="sm"
                         variant="destructive"
+                        className="h-7 text-xs px-2.5"
                         disabled={deletingTemplateIds.has(template.id)}
                         onClick={() => {
                           void handleDeleteTemplate(template.id);
@@ -1557,48 +1563,48 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
       </Card>
 
       {/* Assignment List */}
-      <div className="grid gap-4">
+      <div className="grid gap-3 sm:gap-4">
         {visibleAssignments.length === 0 ? (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <FileText className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-              <h3 className="text-lg font-medium mb-2">No assignments yet</h3>
-              <p className="text-gray-600 mb-4">Create your first assignment to get started</p>
-              <Button onClick={handleCreate}>
-                <Plus className="w-4 h-4 mr-2" />
+          <Card className="border border-dashed border-slate-300 bg-slate-50/60">
+            <CardContent className="p-6 sm:p-8 text-center">
+              <FileText className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 text-gray-400" />
+              <h3 className="text-base sm:text-lg font-semibold mb-1 sm:mb-2 text-slate-900">No assignments yet</h3>
+              <p className="text-xs sm:text-sm text-gray-600 mb-4">Create your first assignment to get started</p>
+              <Button onClick={handleCreate} className="bg-slate-900 text-white hover:bg-slate-800 text-xs sm:text-sm h-9">
+                <Plus className="w-4 h-4 mr-1.5" />
                 Create Assignment
               </Button>
             </CardContent>
           </Card>
         ) : (
           visibleAssignments.map((assignment) => (
-            <Card key={assignment.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-xl">{assignment.title}</CardTitle>
-                    <div className="flex gap-2 mt-2">
-                      <Badge variant="secondary">{assignment.subject}</Badge>
+            <Card key={assignment.id} className="border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
+              <CardHeader className="p-4 sm:p-5 pb-2 sm:pb-3">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="text-base sm:text-lg font-semibold text-slate-900 truncate">{assignment.title}</CardTitle>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                      <Badge variant="secondary" className="text-xs">{assignment.subject}</Badge>
                       {assignment.assignmentTargets && assignment.assignmentTargets.length > 0 ? (
-                        <Badge variant="default" className="bg-blue-100 text-blue-800">
+                        <Badge variant="default" className="bg-blue-100 text-blue-800 text-xs">
                           {assignment.assignmentTargets.length === 1
                             ? `Assigned to: ${assignment.assignmentTargets[0].student.name}`
                             : `Assigned to: ${assignment.assignmentTargets.length} students`}
                         </Badge>
                       ) : assignment.targetStudent ? (
-                        <Badge variant="default" className="bg-blue-100 text-blue-800">
+                        <Badge variant="default" className="bg-blue-100 text-blue-800 text-xs">
                           Assigned to: {assignment.targetStudent.name}
                         </Badge>
                       ) : null}
                       {isOverdue(assignment.dueDate) && (
-                        <Badge variant="destructive">Overdue</Badge>
+                        <Badge variant="destructive" className="text-xs">Overdue</Badge>
                       )}
                       {assignment.assignmentTargets && assignment.assignmentTargets.length > 0 && (
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-6 px-2 text-xs"
+                          className="h-6 px-1.5 text-xs text-blue-700 hover:text-blue-800"
                           onClick={() => toggleExpandedAssignment(assignment.id)}
                         >
                           {expandedAssignmentIds.has(assignment.id) ? "Hide assignees" : "View assignees"}
@@ -1606,13 +1612,14 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(assignment)} disabled={deletingAssignmentIds.has(assignment.id)}>
+                  <div className="flex items-center gap-1.5 self-end md:self-auto shrink-0">
+                    <Button variant="outline" size="sm" className="h-8 text-xs border-slate-300" onClick={() => handleEdit(assignment)} disabled={deletingAssignmentIds.has(assignment.id)}>
                       Edit
                     </Button>
                     <Button
                       variant="destructive"
                       size="sm"
+                      className="h-8 text-xs"
                       onClick={() => handleDelete(assignment.id)}
                       disabled={deletingAssignmentIds.has(assignment.id)}
                     >
@@ -1621,21 +1628,21 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-4">{assignment.description}</p>
+              <CardContent className="p-4 sm:p-5 pt-0">
+                <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">{assignment.description}</p>
 
                 {expandedAssignmentIds.has(assignment.id) && assignment.assignmentTargets && assignment.assignmentTargets.length > 0 && (
-                  <div className="mb-4 rounded-md border bg-blue-50 p-3">
-                    <p className="text-sm font-semibold text-blue-900">Assigned students</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
+                  <div className="mb-4 rounded-lg border border-blue-100 bg-blue-50/70 p-3">
+                    <p className="text-xs font-semibold text-blue-900">Assigned students</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
                       {assignment.assignmentTargets.map((target) => {
                         const matchedGroups = studentGroups
                           .filter((group) => group.members.some((member) => member.id === target.student.id))
                           .map((group) => group.name);
                         return (
-                          <div key={target.student.id} className="rounded-md border bg-white px-2 py-1 text-xs">
+                          <div key={target.student.id} className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs">
                             <p className="font-medium text-gray-900">{target.student.name}</p>
-                            <p className="text-gray-600">
+                            <p className="text-[11px] text-gray-500">
                               {matchedGroups.length > 0
                                 ? `Groups: ${matchedGroups.join(", ")}`
                                 : "No group"}
@@ -1647,42 +1654,42 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
                   </div>
                 )}
                 
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-600">Due Date</p>
-                      <p className="font-medium">{formatDate(assignment.dueDate)}</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4 mb-3">
+                  <div className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50/70 p-2.5">
+                    <Calendar className="w-4 h-4 text-slate-500 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-[11px] text-gray-500">Due Date</p>
+                      <p className="font-semibold text-xs sm:text-sm text-slate-900 truncate">{formatDate(assignment.dueDate)}</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-600">Submissions</p>
-                      <p className="font-medium">{assignment.submissions?.length || 0}</p>
+                  <div className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50/70 p-2.5">
+                    <Users className="w-4 h-4 text-slate-500 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-[11px] text-gray-500">Submissions</p>
+                      <p className="font-semibold text-xs sm:text-sm text-slate-900 truncate">{assignment.submissions?.length || 0}</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-600">Points</p>
-                      <p className="font-medium">{assignment.totalPoints}</p>
+                  <div className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50/70 p-2.5">
+                    <Clock className="w-4 h-4 text-slate-500 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-[11px] text-gray-500">Points</p>
+                      <p className="font-semibold text-xs sm:text-sm text-slate-900 truncate">{assignment.totalPoints}</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-600">Resources</p>
-                      <p className="font-medium">{assignment.resources?.length || 0}</p>
+                  <div className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50/70 p-2.5">
+                    <FileText className="w-4 h-4 text-slate-500 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-[11px] text-gray-500">Resources</p>
+                      <p className="font-semibold text-xs sm:text-sm text-slate-900 truncate">{assignment.resources?.length || 0}</p>
                     </div>
                   </div>
                 </div>
 
                 {assignment.allowLateSubmission && (
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="text-[11px] bg-slate-50">
                     Late submissions allowed
                   </Badge>
                 )}
@@ -1694,7 +1701,7 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={handleEditDialogOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-1.5rem)] sm:max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Edit Assignment</DialogTitle>
           </DialogHeader>
@@ -1707,11 +1714,11 @@ export default function AssignmentManager({ teacherEmail, assignments, onAssignm
             existingResources={editingAssignment?.resources?.map((item) => item.resource) || []}
             mcqTemplates={mcqTemplates}
           />
-          <div className="flex justify-end space-x-2 pt-4">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4">
             <Button variant="outline" onClick={() => handleEditDialogOpenChange(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSubmit} disabled={loading}>
+            <Button onClick={handleSubmit} disabled={loading} className="bg-slate-900 text-white hover:bg-slate-800">
               {loading ? 'Updating...' : 'Update Assignment'}
             </Button>
           </div>

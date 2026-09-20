@@ -627,11 +627,11 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 min-w-0">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Student Submissions</h2>
-        <Button onClick={fetchSubmissions} variant="outline" disabled={loading || isSavingGrade}>
+      <div className="flex flex-wrap justify-between items-center gap-2">
+        <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Student Submissions</h2>
+        <Button onClick={fetchSubmissions} variant="outline" size="sm" className="h-9 text-xs sm:text-sm border-slate-300" disabled={loading || isSavingGrade}>
           Refresh
         </Button>
       </div>
@@ -650,9 +650,9 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
       )}
 
       {/* Filters */}
-      <Card>
+      <Card className="border border-slate-200 bg-white shadow-sm">
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div>
               <Label>Status</Label>
               <Select value={filters.status} onValueChange={(value) => setFilters({...filters, status: value})}>
