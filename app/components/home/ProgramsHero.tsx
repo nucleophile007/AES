@@ -2,7 +2,17 @@
 
 import { useEffect } from "react";
 import Image from "next/image";
-import { Lightbulb, Telescope, Zap, Trophy } from "lucide-react";
+import {
+  Award,
+  CalendarDays,
+  ExternalLink,
+  Lightbulb,
+  MapPin,
+  Presentation,
+  Telescope,
+  Trophy,
+  Zap,
+} from "lucide-react";
 import { BannerItem } from "./banner-item";
 import { GridBackground } from "./grid-background";
 import { HeroSliderAlways, type Slide } from "./HeroSliderAlways";
@@ -130,12 +140,158 @@ export function ProgramsHero() {
     },
   ];
 
+  const mitUrtcSlide: Slide = {
+    title: "IEEE MIT URTC",
+    imageSrc: "/logos/ieee-logo.svg",
+    imageAlt: "IEEE logo",
+    customContent: (
+      <section
+        className="relative h-full w-full overflow-hidden bg-[#f6f3ed] text-[#151515]"
+        style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif' }}
+      >
+        <div className="absolute inset-y-0 right-0 hidden w-[43%] bg-[#a31f34] lg:block" />
+        <div className="absolute right-[34%] top-0 hidden h-full w-28 skew-x-[-11deg] bg-[#151515] lg:block" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(21,21,21,0.04)_1px,transparent_1px),linear-gradient(180deg,rgba(21,21,21,0.04)_1px,transparent_1px)] bg-[size:44px_44px]" />
+
+        <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col px-4 pb-14 pt-24 sm:px-6 sm:pb-20 sm:pt-28 lg:px-16 lg:pt-28">
+          <div className="flex flex-shrink-0 flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-20 items-center justify-center rounded bg-white px-2 shadow-sm ring-1 ring-black/10 sm:h-12 sm:w-24">
+                <Image
+                  src="/logos/ieee-logo.svg"
+                  alt="IEEE logo"
+                  width={112}
+                  height={64}
+                  priority
+                  className="h-full w-full object-contain"
+                />
+              </div>
+              <div className="border-l-4 border-[#a31f34] pl-3">
+                <p className="max-w-[14rem] text-[10px] font-black uppercase tracking-[0.2em] text-[#a31f34] sm:max-w-none sm:text-xs sm:tracking-[0.28em]">
+                  MIT Undergraduate Research Technology Conference
+                </p>
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-black/65 sm:text-xs">
+                  By undergraduates, for undergraduates
+                </p>
+              </div>
+            </div>
+            <a
+              href="https://urtc.mit.edu/"
+              target="_blank"
+              rel="noreferrer"
+              className="group hidden h-10 items-center gap-2 rounded bg-[#151515] px-4 text-xs font-black uppercase tracking-[0.16em] text-white transition-colors hover:bg-[#a31f34] focus:outline-none focus:ring-2 focus:ring-[#a31f34] focus:ring-offset-2 sm:inline-flex"
+            >
+              URTC
+              <ExternalLink className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+            </a>
+          </div>
+
+          <div className="grid min-h-0 flex-1 items-center gap-3 py-3 lg:grid-cols-[1.08fr_0.92fr] lg:gap-10 lg:py-5">
+            <div className="min-w-0">
+              <div className="flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#151515] sm:text-xs">
+                <span className="inline-flex items-center gap-1.5 border border-black/15 bg-white/70 px-2 py-1.5">
+                  <MapPin className="h-3.5 w-3.5 text-[#a31f34]" />
+                  Cambridge, Massachusetts
+                </span>
+                <span className="inline-flex items-center gap-1.5 border border-black/15 bg-white/70 px-2 py-1.5">
+                  <CalendarDays className="h-3.5 w-3.5 text-[#a31f34]" />
+                  Oct 9-11, 2026
+                </span>
+              </div>
+
+              <h1 className="mt-3 max-w-4xl text-[1.65rem] font-black uppercase leading-[0.98] tracking-normal text-[#151515] sm:text-4xl md:text-5xl lg:text-5xl 2xl:text-6xl">
+                ACHARYA students at IEEE MIT URTC
+              </h1>
+
+              <p className="mt-3 max-w-3xl text-xs font-semibold leading-relaxed text-black/70 sm:hidden">
+                An internationally renowned undergraduate research conference highlighting global engineering and technology breakthroughs.
+              </p>
+              <p className="mt-3 hidden max-w-3xl text-sm font-semibold leading-relaxed text-black/70 sm:block">
+                The IEEE MIT URTC is an internationally renowned research conference for undergraduates by undergraduates, highlighting breakthroughs in engineering and technological research by student researchers worldwide.
+              </p>
+
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {[
+                  {
+                    name: "Soham Daterao",
+                    title: "Dynamic Analysis of L-Shaped and U-Shaped Piezoelectric Harvesters",
+                  },
+                  {
+                    name: "Pragna Surabathula",
+                    title: "Hearing it Clearly: Convolutional Autoencoders for Speech Denoising",
+                  },
+                ].map((student) => (
+                  <article
+                    key={student.name}
+                    className="group border-l-4 border-[#a31f34] bg-white/82 p-2.5 shadow-[0_14px_34px_rgba(21,21,21,0.08)] ring-1 ring-black/10 transition-transform duration-300 hover:-translate-y-1 sm:p-3"
+                  >
+                    <div className="flex items-center gap-2 text-[#a31f34]">
+                      <Presentation className="h-4 w-4" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.16em]">
+                        Poster Presentation
+                      </span>
+                    </div>
+                    <h2 className="mt-2 text-lg font-black leading-tight text-[#151515] sm:text-xl">
+                      {student.name}
+                    </h2>
+                    <p className="mt-1.5 text-xs font-semibold leading-snug text-black/70 sm:text-sm">
+                      {student.title}
+                    </p>
+                  </article>
+                ))}
+              </div>
+
+              <blockquote className="mt-3 max-w-3xl border-l-4 border-[#a31f34] pl-3 text-[11px] font-black uppercase leading-snug tracking-[0.05em] text-[#151515] sm:text-xs md:text-sm">
+                From ACHARYA, we congratulate our students and wish them all the best for their poster presentations at one of the elite institutions in the world.
+              </blockquote>
+            </div>
+
+            <div className="relative hidden h-full min-h-[360px] lg:block">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-full max-w-sm bg-[#151515] p-6 text-white shadow-[0_28px_80px_rgba(0,0,0,0.28)] xl:max-w-md xl:p-8">
+                  <div className="flex items-start justify-between gap-6 border-b border-white/20 pb-5">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.35em] text-white/60">
+                        IEEE MIT
+                      </p>
+                      <p className="mt-3 text-6xl font-black uppercase leading-none tracking-normal xl:text-7xl">
+                        URTC
+                      </p>
+                    </div>
+                    <Award className="h-12 w-12 text-[#a31f34]" />
+                  </div>
+
+                  <div className="mt-6 space-y-2 text-3xl font-black uppercase leading-none text-white/90 xl:mt-8 xl:space-y-3 xl:text-4xl">
+                    {["Engineering", "Computation", "Networks", "Humanity"].map((word) => (
+                      <p key={word} className="border-b border-white/10 pb-3">
+                        {word}
+                      </p>
+                    ))}
+                  </div>
+
+                  <div className="mt-6 bg-[#a31f34] px-4 py-3 xl:mt-8 xl:px-5 xl:py-4">
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-white xl:text-sm xl:tracking-[0.2em]">
+                      Undergraduate Research Technology Conference
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <p className="absolute bottom-3 right-0 hidden max-w-sm text-right text-xs font-black uppercase tracking-[0.22em] text-white/80 2xl:block">
+                Research presentations by ACHARYA students
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    ),
+  };
+
   const programsSlide: Slide = {
     title: "Programs",
     imageSrc: "/program-image/banner-tutoring.png",
     imageAlt: "AcharyaES programs",
     customContent: (
-      <section className="relative w-full bg-[#b4d2f7] overflow-hidden h-full">
+      <section className="relative w-full bg-gradient-to-b from-[#b4d2f7] via-[#b4d2f7] via-[75%] to-[hsl(220,45%,20%)] overflow-hidden h-full">
         {/* Fixed height container */}
         <div className="relative mx-auto w-full max-w-none h-[100svh] px-2 sm:px-4 lg:px-6 xl:px-8 pb-6 sm:pb-8 md:pb-10 pt-20 sm:pt-24">
           {/* Grid background */}
@@ -208,7 +364,7 @@ export function ProgramsHero() {
       imageSrc: "/program-image/acharyaes-college-hero.jpg",
       imageAlt: "ACHARYA college admissions highlights",
       customContent: (
-        <div className="relative w-full h-full overflow-hidden bg-[#b4d2f7]">
+        <div className="relative w-full h-full overflow-hidden bg-gradient-to-b from-[#b4d2f7] via-[#b4d2f7] via-[75%] to-[hsl(220,45%,20%)]">
           <Image
             src="/program-image/acharyaes-college-hero.jpg"
             alt="Students celebrating admissions"
@@ -216,7 +372,7 @@ export function ProgramsHero() {
             priority
             className="object-cover opacity-30"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-[#b4d2f7]/90 to-[#b4d2f7]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-[#b4d2f7]/90 to-[hsl(220,45%,20%)]" />
 
           <div className="relative mx-auto max-w-7xl h-full px-3 sm:px-6 lg:px-8 py-20 sm:py-24 md:py-28 flex flex-col items-center justify-center text-center">
             <h2 className="text-5xl sm:text-6xl lg:text-8xl font-black font-serif italic text-slate-900 leading-none">ACHARYA</h2>
@@ -287,7 +443,7 @@ export function ProgramsHero() {
     // },
   ];
 
-  const slides: Slide[] = [programsSlide, spotlightsSlide, usabospotlightsSlide, ...programSlides];
+  const slides: Slide[] = [mitUrtcSlide, programsSlide, spotlightsSlide, usabospotlightsSlide, ...programSlides];
 
   return (
     <HeroSliderAlways

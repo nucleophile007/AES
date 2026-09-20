@@ -265,7 +265,7 @@ const spotlights: StudentSpotlight[] = [
 
 export function StudentSpotlights() {
   return (
-    <div className="relative w-full min-h-screen overflow-hidden bg-[#b4d2f7] py-10 px-4 sm:px-6 lg:px-8">
+    <div className="relative w-full min-h-screen overflow-hidden bg-gradient-to-b from-[#b4d2f7] via-[#b4d2f7] via-[75%] to-[hsl(220,45%,20%)] py-10 px-4 sm:px-6 lg:px-8">
       <div className="pointer-events-none absolute top-0 right-0 h-96 w-96 rounded-full bg-amber-400/20 blur-3xl" />
       <div className="pointer-events-none absolute bottom-0 left-0 h-96 w-96 rounded-full bg-blue-400/20 blur-3xl" />
 

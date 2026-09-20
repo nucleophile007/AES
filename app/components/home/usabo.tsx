@@ -4,7 +4,7 @@ import { Medal, Microscope, Calendar, ArrowRight } from "lucide-react";
 
 export function UsaboSpotlight() {
   return (
-    <div className="relative w-full min-h-screen overflow-hidden bg-[#b4d2f7] py-10 px-4 sm:px-6 lg:px-8">
+    <div className="relative w-full min-h-screen overflow-hidden bg-gradient-to-b from-[#b4d2f7] via-[#b4d2f7] via-[75%] to-[hsl(220,45%,20%)] py-10 px-4 sm:px-6 lg:px-8">
       <div className="pointer-events-none absolute top-0 right-0 h-96 w-96 rounded-full bg-emerald-400/20 blur-3xl" />
       <div className="pointer-events-none absolute bottom-0 left-0 h-96 w-96 rounded-full bg-emerald-400/20 blur-3xl" />
 
@@ -70,17 +70,17 @@ export function UsaboSpotlight() {
         </div>
 
         <div className="mt-10 text-center">
-          <h2 className="font-serif text-2xl font-bold text-slate-900 sm:text-3xl">
+          <h2 className="font-serif text-2xl font-bold text-white sm:text-3xl">
             Want to be a part of our{" "}
-            <span className="text-emerald-600">USABO Camp?</span>
+            <span className="text-emerald-400">USABO Camp?</span>
           </h2>
-          <p className="mt-3 text-base text-slate-700 leading-relaxed max-w-2xl mx-auto">
+          <p className="mt-3 text-base text-white/80 leading-relaxed max-w-2xl mx-auto">
             Train with mentors who have guided semifinalists and build the mastery that earns
             elite national recognition.
           </p>
           <a
             href="/book-session"
-            className="group mt-5 inline-flex items-center gap-2 text-sm font-bold tracking-wider text-emerald-600 hover:text-emerald-500"
+            className="group mt-5 inline-flex items-center gap-2 text-sm font-bold tracking-wider text-emerald-400 hover:text-emerald-300"
           >
             <Calendar className="h-4 w-4" />
             <span>BOOK A FREE SESSION</span>

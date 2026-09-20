@@ -1,0 +1,267 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e6]:
+            - img "ACHARYA Educational Services Logo" [ref=e8]
+            - generic [ref=e9]:
+              - heading "ACHARYA" [level=1] [ref=e10]
+              - paragraph [ref=e11]: Educational Services
+        - navigation [ref=e12]:
+          - navigation [ref=e15]:
+            - link "Home" [ref=e17] [cursor=pointer]:
+              - /url: /#home
+            - link "Our Team" [ref=e20] [cursor=pointer]:
+              - /url: /our-team
+            - paragraph [ref=e23]:
+              - generic [ref=e24]: Programs
+            - link "AES Creatorverse" [ref=e28] [cursor=pointer]:
+              - /url: /aes-creatorverse
+            - link "Testimonials" [ref=e31] [cursor=pointer]:
+              - /url: /testimonials
+            - paragraph [ref=e34]:
+              - generic [ref=e35]: Resources
+            - link "Events" [ref=e39] [cursor=pointer]:
+              - /url: /events
+            - link "Contact" [ref=e42] [cursor=pointer]:
+              - /url: /contact
+        - generic [ref=e44]:
+          - button "Login" [ref=e45] [cursor=pointer]
+          - link [ref=e46] [cursor=pointer]:
+            - /url: /book-session
+            - button "Book Free Session" [ref=e47]
+    - region "AcharyaES Programs" [ref=e48]:
+      - generic [ref=e55]:
+        - generic [ref=e56]:
+          - generic [ref=e57]:
+            - img "IEEE logo" [ref=e59]
+            - generic [ref=e60]:
+              - paragraph [ref=e61]: MIT Undergraduate Research Technology Conference
+              - paragraph [ref=e62]: By undergraduates, for undergraduates
+          - link "URTC" [ref=e63] [cursor=pointer]:
+            - /url: https://urtc.mit.edu/
+        - generic [ref=e68]:
+          - generic [ref=e69]:
+            - generic [ref=e70]:
+              - generic [ref=e71]: Cambridge, Massachusetts
+              - generic [ref=e75]: Oct 9-11, 2026
+            - heading "ACHARYA students at IEEE MIT URTC" [level=1] [ref=e78]
+            - paragraph [ref=e79]: The IEEE MIT URTC is an internationally renowned research conference for undergraduates by undergraduates, highlighting breakthroughs in engineering and technological research by student researchers worldwide.
+            - generic [ref=e80]:
+              - article [ref=e81]:
+                - generic [ref=e82]: Poster Presentation
+                - heading "Soham Daterao" [level=2] [ref=e87]
+                - paragraph [ref=e88]: Dynamic Analysis of L-Shaped and U-Shaped Piezoelectric Harvesters
+              - article [ref=e89]:
+                - generic [ref=e90]: Poster Presentation
+                - heading "Pragna Surabathula" [level=2] [ref=e95]
+                - paragraph [ref=e96]: "Hearing it Clearly: Convolutional Autoencoders for Speech Denoising"
+            - blockquote [ref=e97]: From ACHARYA, we congratulate our students and wish them all the best for their poster presentations at one of the elite institutions in the world.
+          - generic [ref=e100]:
+            - generic [ref=e102]:
+              - paragraph [ref=e103]: IEEE MIT
+              - paragraph [ref=e104]: URTC
+            - generic [ref=e108]:
+              - paragraph [ref=e109]: Engineering
+              - paragraph [ref=e110]: Computation
+              - paragraph [ref=e111]: Networks
+              - paragraph [ref=e112]: Humanity
+            - paragraph [ref=e114]: Undergraduate Research Technology Conference
+      - generic [ref=e115]:
+        - button "Go to slide 1" [active] [ref=e116] [cursor=pointer]
+        - button "Go to slide 2" [ref=e117] [cursor=pointer]
+        - button "Go to slide 3" [ref=e118] [cursor=pointer]
+        - button "Go to slide 4" [ref=e119] [cursor=pointer]
+        - button "Go to slide 5" [ref=e120] [cursor=pointer]
+    - generic [ref=e124]:
+      - generic [ref=e126]:
+        - heading "MISSION" [level=2] [ref=e127]
+        - generic [ref=e128]:
+          - paragraph [ref=e133]:
+            - strong [ref=e134]: "Personalized Learning:"
+            - text: Each lesson tailored to individual needs and learning pace
+          - paragraph [ref=e139]:
+            - strong [ref=e140]: "Flexible Options:"
+            - text: Face-to-face and online learning to suit your schedule
+          - paragraph [ref=e145]:
+            - strong [ref=e146]: "Strong Foundation:"
+            - text: Clear explanations, problem-solving strategies, and consistent support
+      - generic [ref=e147]:
+        - generic [ref=e148]:
+          - heading "Our Vision" [level=3] [ref=e149]
+          - paragraph [ref=e150]: To nurture students' passions with the ultimate goal of advocating their life goals and preparing them for the competitive world ahead.
+        - generic [ref=e151]:
+          - heading "Our Core Philosophy" [level=3] [ref=e152]
+          - paragraph [ref=e153]: "\"Every student can learn, just not on the same day, or in the same way.\""
+          - paragraph [ref=e154]: — George Evans
+          - paragraph [ref=e155]: We craft personalized, student-centric approaches rooted in decades of combined academic expertise from our team of IIT alumni, university faculty, and Ph.D. professionals.
+    - generic [ref=e158]:
+      - generic [ref=e159]:
+        - heading "Your Journey to Academic Excellence" [level=2] [ref=e160]
+        - paragraph [ref=e161]: A simple, proven process that transforms learning outcomes
+      - generic [ref=e162]:
+        - generic [ref=e163]:
+          - generic [ref=e164]: "01"
+          - generic [ref=e172]:
+            - heading "Free Assessment" [level=3] [ref=e173]
+            - paragraph [ref=e174]: We evaluate your child&apos;s current level and identify areas for improvement
+        - generic [ref=e175]:
+          - generic [ref=e176]: "02"
+          - generic [ref=e182]:
+            - heading "Personalized Plan" [level=3] [ref=e183]
+            - paragraph [ref=e184]: Create a tailored learning roadmap based on individual needs and goals
+        - generic [ref=e185]:
+          - generic [ref=e186]: "03"
+          - generic [ref=e192]:
+            - heading "Expert Mentoring" [level=3] [ref=e193]
+            - paragraph [ref=e194]: Begin 1-on-1 sessions with our experienced educators and track progress
+    - generic [ref=e196]:
+      - generic [ref=e197]:
+        - heading "Why Choose ACHARYA?" [level=2] [ref=e198]
+        - paragraph [ref=e199]: Discover the powerful capabilities that make our educational platform exceptional
+      - generic [ref=e201]:
+        - generic [ref=e202]:
+          - heading "Personalized Learning" [level=3] [ref=e207]
+          - paragraph [ref=e208]: Customized educational approaches tailored to each student's unique learning style and pace.
+        - generic [ref=e209]:
+          - heading "Expert Mentoring" [level=3] [ref=e213]
+          - paragraph [ref=e214]: One-on-one guidance from experienced educators with proven track records.
+        - generic [ref=e215]:
+          - heading "Affordable Excellence" [level=3] [ref=e219]
+          - paragraph [ref=e220]: Premium educational services at competitive rates with flexible payment options.
+        - generic [ref=e221]:
+          - heading "Consistent Progress" [level=3] [ref=e225]
+          - paragraph [ref=e226]: Regular assessments and progress tracking to ensure continuous improvement.
+    - generic [ref=e238]:
+      - heading "Ready to Transform Your Child's Academic Journey?" [level=2] [ref=e239]:
+        - text: Ready to Transform Your Child's
+        - generic [ref=e240]: Academic Journey?
+      - paragraph [ref=e241]: Join our community of satisfied families who have seen remarkable improvements with ACHARYA Educational Services. Book your free 60-minute assessment session today and discover your child's potential!
+      - generic [ref=e242]:
+        - link [ref=e243] [cursor=pointer]:
+          - /url: /book-session
+          - button "Book Free Session Now" [ref=e244]
+        - link [ref=e245] [cursor=pointer]:
+          - /url: /book-session
+          - button "Get Started Today" [ref=e246]
+      - generic [ref=e248]:
+        - generic [ref=e249]: Free 60-Min Assessment
+        - generic [ref=e252]: Expert Educators
+    - generic [ref=e256]:
+      - heading "What Parents Say About Us" [level=2] [ref=e257]
+      - paragraph [ref=e258]: Honest feedback from parents across our programs
+    - generic [ref=e621]:
+      - generic [ref=e623]:
+        - heading "Organizations That Support Us" [level=2] [ref=e624]:
+          - text: Organizations That
+          - generic [ref=e625]: Support Us
+        - paragraph [ref=e626]: Trusted by leading universities and high schools across the nation
+      - generic [ref=e628]:
+        - img "BICS Logo" [ref=e631]
+        - img "Images Organization Logo" [ref=e634]
+        - img "Tags Organization Logo" [ref=e637]
+        - img "BICS Logo" [ref=e640]
+        - img "Images Organization Logo" [ref=e643]
+        - img "Tags Organization Logo" [ref=e646]
+        - img "BICS Logo" [ref=e649]
+        - img "Images Organization Logo" [ref=e652]
+        - img "Tags Organization Logo" [ref=e655]
+        - img "BICS Logo" [ref=e658]
+        - img "Images Organization Logo" [ref=e661]
+        - img "Tags Organization Logo" [ref=e664]
+        - img "BICS Logo" [ref=e667]
+        - img "Images Organization Logo" [ref=e670]
+        - img "Tags Organization Logo" [ref=e673]
+        - img "BICS Logo" [ref=e676]
+        - img "Images Organization Logo" [ref=e679]
+        - img "Tags Organization Logo" [ref=e682]
+        - img "BICS Logo" [ref=e685]
+        - img "Images Organization Logo" [ref=e688]
+        - img "Tags Organization Logo" [ref=e691]
+        - img "BICS Logo" [ref=e694]
+        - img "Images Organization Logo" [ref=e697]
+        - img "Tags Organization Logo" [ref=e700]
+        - img "BICS Logo" [ref=e703]
+        - img "Images Organization Logo" [ref=e706]
+        - img "Tags Organization Logo" [ref=e709]
+        - img "BICS Logo" [ref=e712]
+        - img "Images Organization Logo" [ref=e715]
+        - img "Tags Organization Logo" [ref=e718]
+    - button [ref=e721] [cursor=pointer]
+    - contentinfo [ref=e724]:
+      - generic [ref=e726]:
+        - generic [ref=e727]:
+          - generic [ref=e728]:
+            - generic [ref=e729]:
+              - img "ACHARYA Educational Services Logo" [ref=e731]
+              - generic [ref=e733]:
+                - heading "ACHARYA" [level=3] [ref=e734]
+                - paragraph [ref=e735]: Educational Services
+            - paragraph [ref=e736]: Nurturing students' intuitive abilities and guiding them toward academic excellence and future success.
+            - generic [ref=e737]:
+              - link [ref=e738] [cursor=pointer]:
+                - /url: https://www.facebook.com/acharyafolsom/
+              - link [ref=e741] [cursor=pointer]:
+                - /url: https://x.com/ACHARYAfm
+              - link [ref=e745] [cursor=pointer]:
+                - /url: https://www.instagram.com/acharyaes/
+              - link [ref=e749] [cursor=pointer]:
+                - /url: https://www.youtube.com/@acharyaesfm
+          - generic [ref=e753]:
+            - heading "Programs" [level=4] [ref=e754]
+            - list [ref=e756]:
+              - listitem [ref=e757]:
+                - link "Academic Tutoring" [ref=e758] [cursor=pointer]:
+                  - /url: /academictutoring
+              - listitem [ref=e762]:
+                - link "College Prep" [ref=e763] [cursor=pointer]:
+                  - /url: /collegeprep
+              - listitem [ref=e767]:
+                - link "AES Explorers" [ref=e768] [cursor=pointer]:
+                  - /url: /aes-explorers
+              - listitem [ref=e772]:
+                - link "AES Champions" [ref=e773] [cursor=pointer]:
+                  - /url: /aes-champions
+              - listitem [ref=e777]:
+                - link "AES Creatorverse" [ref=e778] [cursor=pointer]:
+                  - /url: /aes-creatorverse
+          - generic [ref=e782]:
+            - heading "Resources" [level=4] [ref=e783]
+            - list [ref=e785]:
+              - listitem [ref=e786]:
+                - link "Study Materials" [ref=e787] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e791]:
+                - link "Practice Tests" [ref=e792] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e796]:
+                - link "College Guidance" [ref=e797] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e801]:
+                - link "Parent Resources" [ref=e802] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e806]:
+                - link "Success Stories" [ref=e807] [cursor=pointer]:
+                  - /url: "#"
+          - generic [ref=e811]:
+            - heading "Contact" [level=4] [ref=e812]
+            - generic [ref=e814]:
+              - generic [ref=e815]: (209) 920-7147
+              - generic [ref=e820]: acharya.folsom@gmail.com
+              - generic [ref=e826]: 1401 21st Ste R Sacramento, CA 95811
+        - generic [ref=e832]:
+          - paragraph [ref=e833]: © 2025 ACHARYA Educational Services. All rights reserved.
+          - generic [ref=e834]:
+            - link "Privacy Policy" [ref=e835] [cursor=pointer]:
+              - /url: "#"
+            - link "Terms of Service" [ref=e836] [cursor=pointer]:
+              - /url: "#"
+            - link "Cookie Policy" [ref=e837] [cursor=pointer]:
+              - /url: "#"
+  - region "Notifications (F8)":
+    - list
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e843] [cursor=pointer]
+  - alert [ref=e847]

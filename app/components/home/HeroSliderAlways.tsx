@@ -257,8 +257,8 @@ export function HeroSliderAlways({
       {enableNav && (
         <div
           className={cn(
-            "absolute inset-x-0 flex items-center justify-center gap-3 z-20",
-            showCutoutCta ? "bottom-3 md:bottom-4" : "bottom-8 md:bottom-10"
+            "absolute inset-x-0 hidden items-center justify-center gap-3 z-20 sm:flex",
+            showCutoutCta ? "bottom-3 md:bottom-4" : "bottom-3 md:bottom-4"
           )}
         >
           {slides.map((_, i) => {
