@@ -3367,6 +3367,8 @@ export default function StudentDashboard() {
         }}
       >
         <SheetContent side="right" className="w-full border-l border-slate-200 bg-white p-0 sm:max-w-2xl">
+          <SheetTitle className="sr-only">Assignment Details</SheetTitle>
+          <SheetDescription className="sr-only">Detailed view and submission status for this assignment</SheetDescription>
           {!detailAssignment ? null : (
             <div className="flex h-full flex-col">
               <SheetHeader className="border-b border-slate-200 px-5 py-4">
