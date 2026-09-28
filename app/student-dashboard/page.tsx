@@ -2469,7 +2469,7 @@ export default function StudentDashboard() {
                           <BookOpen className="h-10 w-10 sm:h-12 sm:w-12 text-slate-300 mb-3" />
                           <h3 className="text-base sm:text-lg font-semibold text-slate-700">No Assignments Found</h3>
                           <p className="text-xs sm:text-sm text-slate-500 max-w-sm mt-1">
-                            You don't have any assignments assigned right now. Check back later!
+                            You don&apos;t have any assignments assigned right now. Check back later!
                           </p>
                         </CardContent>
                       </Card>
