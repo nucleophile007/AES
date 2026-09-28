@@ -101,30 +101,30 @@ function PageFrame({
   totalPages: number;
 }) {
   return (
-    <div className="report-paper relative mx-auto bg-white shadow-[0_8px_30px_rgba(15,23,42,0.08)] ring-1 ring-slate-200 print:break-after-page print:shadow-none print:ring-0" style={{ width: "min(880px, 100%)", padding: "44px 56px 56px", marginBottom: 24 }}>
+    <div className="report-paper relative mx-auto bg-white shadow-[0_8px_30px_rgba(15,23,42,0.08)] ring-1 ring-slate-200 print:break-after-page print:shadow-none print:ring-0 w-full max-w-[880px] p-4 sm:p-8 md:p-12 mb-6 overflow-hidden">
       <div className="watermark">
         <img src="/acharya-logo.png" alt="" className="w-[420px]" />
       </div>
 
-      <header className="page-header relative z-10">
-        <div className="flex items-center gap-3">
-          <img src="/acharya-logo.png" alt="logo" className="h-12 w-12 object-contain" />
-          <div className="leading-tight">
-            <div className="serif-display font-bold text-[1rem] text-[var(--ink)]">AES Math Competition</div>
-            <div className="text-[0.88rem] text-[var(--ink)]">
+      <header className="page-header relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <img src="/acharya-logo.png" alt="logo" className="h-10 w-10 sm:h-12 sm:w-12 object-contain shrink-0" />
+          <div className="leading-tight min-w-0">
+            <div className="serif-display font-bold text-sm sm:text-[1rem] text-[var(--ink)] truncate">AES Math Competition</div>
+            <div className="text-xs sm:text-[0.88rem] text-[var(--ink)] truncate">
               Student: <span className="font-bold">{studentName}</span>
             </div>
           </div>
         </div>
-        <div className="text-right leading-tight">
-          <div className="serif-display font-bold text-[1rem] text-[var(--ink)]">{testTitle}</div>
-          <div className="text-[0.88rem] text-[var(--ink)]">{presentation.reportType}</div>
+        <div className="text-left sm:text-right leading-tight">
+          <div className="serif-display font-bold text-sm sm:text-[1rem] text-[var(--ink)]">{testTitle}</div>
+          <div className="text-xs sm:text-[0.88rem] text-[var(--ink)]">{presentation.reportType}</div>
         </div>
       </header>
 
       <div className="relative z-10">{children}</div>
 
-      <footer className="relative z-10 mt-10 pt-3 text-center text-[0.85rem] italic text-[var(--muted-ink)]">
+      <footer className="relative z-10 mt-8 sm:mt-10 pt-3 text-center text-xs sm:text-[0.85rem] italic text-[var(--muted-ink)]">
         Page {pageNumber} of {totalPages}
       </footer>
     </div>
@@ -163,20 +163,20 @@ export default function PremiumMcqReport({
   return (
     <div className={cn("w-full", className)}>
       <PageFrame presentation={presentation} studentName={studentName} testTitle={testTitle} pageNumber={1} totalPages={totalPages}>
-        <div className="text-center mt-8 mb-10">
-          <h1 className="serif-display text-[2.6rem] leading-tight text-[var(--ink)]">{presentation.reportTitle}</h1>
-          <p className="serif-display italic text-[1.05rem] text-[var(--ink)] mt-2">{presentation.reportType}</p>
+        <div className="text-center mt-6 sm:mt-8 mb-6 sm:mb-10">
+          <h1 className="serif-display text-2xl sm:text-3xl md:text-[2.6rem] leading-tight text-[var(--ink)] break-words">{presentation.reportTitle}</h1>
+          <p className="serif-display italic text-sm sm:text-base md:text-[1.05rem] text-[var(--ink)] mt-1.5 sm:mt-2">{presentation.reportType}</p>
           {showModeBadge && (
-            <div className="mt-3">
-              <Badge className={cn("border", presentation.mode === "confirmed" ? "border-emerald-200 bg-emerald-100 text-emerald-800" : "border-amber-200 bg-amber-100 text-amber-800") }>
+            <div className="mt-2.5 sm:mt-3">
+              <Badge className={cn("border text-xs", presentation.mode === "confirmed" ? "border-emerald-200 bg-emerald-100 text-emerald-800" : "border-amber-200 bg-amber-100 text-amber-800") }>
                 {presentation.mode === "confirmed" ? "Confirmed" : "Draft"}
               </Badge>
             </div>
           )}
         </div>
 
-        <h2 className="section-heading serif-display">1. Overall Score Summary</h2>
-        <div className="grid grid-cols-1 gap-6 mb-10 md:grid-cols-4">
+        <h2 className="section-heading serif-display text-base sm:text-lg">1. Overall Score Summary</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-10">
           <div className="summary-box">
             <div className="summary-box-header">Raw Score</div>
             <div className="summary-box-body">
@@ -302,9 +302,9 @@ export default function PremiumMcqReport({
             const incorrectQuestions = relatedQuestions.filter((question) => question.status === "incorrect" || question.status === "partial").map((question) => question.questionNumber ?? "").filter(Boolean);
 
             return (
-              <div key={index} className="grid grid-cols-[110px_1fr_70px] items-center gap-4">
-                <div className="serif-display text-[1.05rem] text-[var(--ink)]">{capitalize(difficulty.difficulty || "Medium")}</div>
-                <div>
+              <div key={index} className="grid grid-cols-1 sm:grid-cols-[110px_1fr_70px] items-start sm:items-center gap-2 sm:gap-4">
+                <div className="serif-display text-sm sm:text-[1.05rem] text-[var(--ink)] font-semibold sm:font-normal">{capitalize(difficulty.difficulty || "Medium")}</div>
+                <div className="w-full min-w-0">
                   <div className="diff-track" style={{ background: theme.track }}>
                     <div className="diff-fill num" style={{ width: `${Math.max(percentage, 8)}%`, background: theme.fill }}>
                       {difficulty.correctCount ?? 0} / {difficulty.questionCount ?? 0} correct
@@ -312,11 +312,11 @@ export default function PremiumMcqReport({
                   </div>
                   <div className="text-[0.82rem] mt-1 flex flex-wrap gap-x-3 leading-snug">
                     {correctQuestions.length > 0 && <span style={{ color: "var(--green)" }}>Correct: {correctQuestions.map((q) => `Q${q}`).join(", ")}</span>}
-                    <span className="text-[var(--muted-ink)]">—</span>
+                    <span className="text-[var(--muted-ink)] hidden sm:inline">—</span>
                     {incorrectQuestions.length > 0 && <span style={{ color: "var(--rose)" }}>Incorrect: {incorrectQuestions.map((q) => `Q${q}`).join(", ")}</span>}
                   </div>
                 </div>
-                <div className="serif-display num text-right font-bold text-[1rem]" style={{ color: theme.text }}>
+                <div className="serif-display num text-left sm:text-right font-bold text-sm sm:text-[1rem]" style={{ color: theme.text }}>
                   {percentage}%
                 </div>
               </div>
@@ -434,45 +434,47 @@ export default function PremiumMcqReport({
       )}
 
       <PageFrame presentation={presentation} studentName={studentName} testTitle={testTitle} pageNumber={showGapAnalysis ? 4 : 3} totalPages={totalPages}>
-        <h2 className="section-heading serif-display mt-2">Detailed Item Analysis</h2>
-        <table className="item-table serif-display">
-          <thead>
-            <tr>
-              <th className="w-[60px]">Q#</th>
-              <th>Topic</th>
-              <th>Sub-Topic Focus</th>
-              <th className="w-[110px]">Difficulty</th>
-              <th className="w-[70px] text-center">Key</th>
-              <th className="w-[90px] text-center">Student</th>
-              <th className="w-[80px] text-center">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {questionStats.map((question, index) => {
-              const isCorrect = question.status === "correct";
-              const isPartial = question.status === "partial";
-              return (
-                <tr key={index}>
-                  <td className="num">{question.questionNumber ?? index + 1}</td>
-                  <td>{question.topic || "-"}</td>
-                  <td>{question.subTopic || "-"}</td>
-                  <td>{capitalize(question.difficulty || "medium")}</td>
-                  <td className="text-center font-bold num">{(question.correctAnswers || []).join(", ") || "-"}</td>
-                  <td className="text-center num">{(question.selectedAnswers || []).join(", ") || "-"}</td>
-                  <td className="text-center">
-                    {isCorrect ? (
-                      <Check className="inline-block" size={18} strokeWidth={3} style={{ color: "var(--green)" }} />
-                    ) : isPartial ? (
-                      <span className="font-bold" style={{ color: "var(--amber)" }}>~</span>
-                    ) : (
-                      <X className="inline-block" size={18} strokeWidth={3} style={{ color: "var(--rose)" }} />
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <h2 className="section-heading serif-display mt-2 text-base sm:text-lg">Detailed Item Analysis</h2>
+        <div className="overflow-x-auto w-full -mx-2 sm:mx-0 px-2 sm:px-0">
+          <table className="item-table serif-display min-w-[540px]">
+            <thead>
+              <tr>
+                <th className="w-[50px] sm:w-[60px]">Q#</th>
+                <th>Topic</th>
+                <th>Sub-Topic Focus</th>
+                <th className="w-[90px] sm:w-[110px]">Difficulty</th>
+                <th className="w-[60px] sm:w-[70px] text-center">Key</th>
+                <th className="w-[70px] sm:w-[90px] text-center">Student</th>
+                <th className="w-[60px] sm:w-[80px] text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {questionStats.map((question, index) => {
+                const isCorrect = question.status === "correct";
+                const isPartial = question.status === "partial";
+                return (
+                  <tr key={index}>
+                    <td className="num">{question.questionNumber ?? index + 1}</td>
+                    <td>{question.topic || "-"}</td>
+                    <td>{question.subTopic || "-"}</td>
+                    <td>{capitalize(question.difficulty || "medium")}</td>
+                    <td className="text-center font-bold num">{(question.correctAnswers || []).join(", ") || "-"}</td>
+                    <td className="text-center num">{(question.selectedAnswers || []).join(", ") || "-"}</td>
+                    <td className="text-center">
+                      {isCorrect ? (
+                        <Check className="inline-block" size={18} strokeWidth={3} style={{ color: "var(--green)" }} />
+                      ) : isPartial ? (
+                        <span className="font-bold" style={{ color: "var(--amber)" }}>~</span>
+                      ) : (
+                        <X className="inline-block" size={18} strokeWidth={3} style={{ color: "var(--rose)" }} />
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </PageFrame>
     </div>
   );

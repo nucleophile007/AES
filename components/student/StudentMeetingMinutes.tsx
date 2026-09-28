@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import { ShimmerSkeleton } from '@/components/ui/dashboard-loading-skeleton';
 
 type Item = { id: number; status: 'ASSIGNED' | 'SUBMITTED' | 'APPROVED'; creationMode: 'STUDENT_ASSIGNED' | 'MENTOR_DIRECT'; studentMinutes: string | null; teacherFinalText: string | null; meeting: { title: string; startDateTime: string; teacher: { name: string } } };
 const HIDDEN_KEY = 'aes:student:hidden-meeting-minutes';
@@ -19,7 +20,26 @@ export default function StudentMeetingMinutes() {
   const submit = async (id: number) => { const response = await fetch(`/api/student/meeting-minutes/${id}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ studentMinutes: drafts[id] }) }); const data = await response.json(); if (!response.ok) return toast({ variant: 'destructive', title: 'Submission failed', description: data.error }); localStorage.removeItem(`aes:meeting-minutes:${id}`); toast({ title: 'Meeting minutes submitted', description: 'Your submission is locked and awaiting tutor approval.' }); await load(); };
   const hide = (id: number) => { const next = new Set(hidden); next.add(id); setHidden(next); localStorage.setItem(HIDDEN_KEY, JSON.stringify(Array.from(next))); };
   const visible = items.filter((item) => !hidden.has(item.id));
-  if (loading) return <Card><CardContent className="py-10 text-center text-slate-500">Loading meeting minutes…</CardContent></Card>;
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <Card key={`student-meeting-minutes-loading-${index}`} className="border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div className="flex min-h-20 sm:min-h-24 items-center justify-between gap-3 p-4 sm:p-5">
+              <div className="space-y-2 flex-1 min-w-0">
+                <ShimmerSkeleton className="h-5 w-56 max-w-full" />
+                <ShimmerSkeleton className="h-4 w-40 max-w-full" />
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <ShimmerSkeleton className="h-6 w-24 rounded-full" />
+                <ShimmerSkeleton className="h-8 w-8 rounded-md" />
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    );
+  }
   return <div className="space-y-4">
     {!visible.length && <Card><CardContent className="py-10 text-center text-slate-500">No visible meeting-minute requests.</CardContent></Card>}
     {!!hidden.size && <Button variant="ghost" size="sm" onClick={() => { setHidden(new Set()); localStorage.removeItem(HIDDEN_KEY); }}>Restore locally hidden meetings</Button>}

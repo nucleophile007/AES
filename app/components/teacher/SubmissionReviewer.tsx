@@ -735,57 +735,59 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
             const selectedAttemptValue = attemptSelectionBySubmissionId[submission.id]
               || String(parsedMcqSubmission?.latestAttemptNumber || 1);
             return (
-            <Card key={submission.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg">{submission.assignment.title}</CardTitle>
-                    <div className="flex items-center gap-2 mt-1">
-                      <User className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600">{submission.student.name}</span>
-                      <Badge variant="outline">{submission.student.grade}</Badge>
+            <Card key={submission.id} className="hover:shadow-md transition-shadow overflow-hidden">
+              <CardHeader className="p-4 sm:p-6 pb-3">
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="text-base sm:text-lg break-words">{submission.assignment.title}</CardTitle>
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <User className="w-4 h-4 text-gray-400 shrink-0" />
+                        <span className="text-gray-600 truncate text-xs sm:text-sm">{submission.student.name}</span>
+                      </div>
+                      <Badge variant="outline" className="shrink-0 text-xs">{submission.student.grade}</Badge>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
                     {getStatusBadge(submission)}
                     {submission.submissionNumber > 1 && (
-                      <Badge variant="outline">Resubmission #{submission.submissionNumber}</Badge>
+                      <Badge variant="outline" className="text-xs">Resubmission #{submission.submissionNumber}</Badge>
                     )}
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-600">Submitted</p>
-                      <p className="font-medium">{formatDate(submission.submittedAt)}</p>
-                      <p className="text-sm text-gray-500">{formatTime(submission.submittedAt)}</p>
+              <CardContent className="p-4 sm:p-6 pt-0">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-600">Submitted</p>
+                      <p className="font-medium text-xs sm:text-sm truncate">{formatDate(submission.submittedAt)}</p>
+                      <p className="text-xs text-gray-500">{formatTime(submission.submittedAt)}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-600">Due Date</p>
-                      <p className="font-medium">{formatDate(submission.assignment.dueDate)}</p>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Clock className="w-4 h-4 text-gray-400 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-600">Due Date</p>
+                      <p className="font-medium text-xs sm:text-sm truncate">{formatDate(submission.assignment.dueDate)}</p>
                       {isLate(submission.submittedAt, submission.assignment.dueDate) && (
-                        <p className="text-sm text-red-500">Late submission</p>
+                        <p className="text-xs text-red-500 font-medium">Late submission</p>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <Star className="w-4 h-4 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-600">Grade</p>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Star className="w-4 h-4 text-gray-400 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-600">Grade</p>
                       {submission.grade !== null ? (
-                        <p className={`font-medium text-lg ${getGradeColor(submission.grade, gradeMaxPoints)}`}>
+                        <p className={`font-medium text-base sm:text-lg ${getGradeColor(submission.grade, gradeMaxPoints)}`}>
                           {submission.grade}/{gradeMaxPoints}
                         </p>
                       ) : (
-                        <p className="text-gray-400">Not graded</p>
+                        <p className="text-gray-400 text-xs sm:text-sm">Not graded</p>
                       )}
                     </div>
                   </div>
@@ -795,9 +797,9 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                 <div className="space-y-3">
                   {isMcqSubmission ? (
                     <div className="rounded border bg-slate-50 p-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-medium text-slate-800">{parsedMcqSubmission?.testTitle}</p>
-                        <Badge variant="outline">MCQ Attempt</Badge>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2">
+                        <p className="text-xs sm:text-sm font-medium text-slate-800 break-words">{parsedMcqSubmission?.testTitle}</p>
+                        <Badge variant="outline" className="w-fit text-xs">MCQ Attempt</Badge>
                       </div>
                       <p className="mt-1 text-xs text-slate-600">
                         Attempt #{parsedMcqSubmission?.latestAttemptNumber} of {parsedMcqSubmission?.attemptCount} •{" "}
@@ -807,13 +809,13 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                         Max score: {parsedMcqSubmission?.maxScore}
                       </p>
                       {parsedMcqSubmission?.hasReport && (
-                        <div className="mt-2 space-y-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-700">
-                          <div className="flex items-center justify-between gap-2">
-                            <span>Report Workspace Ready</span>
+                        <div className="mt-2 space-y-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-1.5 text-xs text-emerald-700">
+                          <div className="flex flex-wrap items-center justify-between gap-1">
+                            <span className="font-medium">Report Workspace Ready</span>
                             <Badge
                               className={parsedMcqSubmission?.reportPresentation?.mode === "confirmed"
-                                ? "border-emerald-200 bg-emerald-100 text-emerald-800"
-                                : "border-amber-200 bg-amber-100 text-amber-800"}
+                                ? "border-emerald-200 bg-emerald-100 text-emerald-800 text-[10px]"
+                                : "border-amber-200 bg-amber-100 text-amber-800 text-[10px]"}
                             >
                               {parsedMcqSubmission?.reportPresentation?.mode === "confirmed" ? "Confirmed" : "Draft"}
                             </Badge>
@@ -828,9 +830,9 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                             Wrong {parsedMcqSubmission?.report?.scoreSummary?.wrongCount ?? 0}
                           </p>
                           {(parsedMcqSubmission?.report?.topicStats || []).slice(0, 3).map((topic, index) => (
-                            <div key={topic.topicId || index} className="flex items-center justify-between">
+                            <div key={topic.topicId || index} className="flex items-center justify-between gap-2">
                               <span className="truncate text-slate-600">{topic.topicName || "Topic"}</span>
-                              <span className="font-medium text-slate-900">{topic.score}/{topic.maxScore}</span>
+                              <span className="font-medium text-slate-900 shrink-0">{topic.score}/{topic.maxScore}</span>
                             </div>
                           ))}
                         </div>
@@ -838,26 +840,28 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                     </div>
                   ) : submission.content ? (
                     <div>
-                      <p className="text-sm font-medium text-gray-600 mb-1">Text Submission:</p>
+                      <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">Text Submission:</p>
                       <div className="bg-gray-50 p-3 rounded border">
-                        <p className="text-sm whitespace-pre-wrap">{submission.content}</p>
+                        <p className="text-xs sm:text-sm whitespace-pre-wrap break-words">{submission.content}</p>
                       </div>
                     </div>
                   ) : null}
 
                   {submission.fileUrl && (
                     <div>
-                      <p className="text-sm font-medium text-gray-600 mb-1">File Submission:</p>
-                      <div className="flex items-center gap-2 p-2 bg-gray-50 rounded border">
-                        <FileText className="w-4 h-4" />
-                        <span className="text-sm">{submission.fileName}</span>
+                      <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">File Submission:</p>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 p-2.5 bg-gray-50 rounded border">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <FileText className="w-4 h-4 text-gray-500 shrink-0" />
+                          <span className="text-xs sm:text-sm truncate">{submission.fileName}</span>
+                        </div>
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => window.open(submission.fileUrl!, '_blank')}
-                          className="ml-auto"
+                          className="w-full sm:w-auto shrink-0"
                         >
-                          <ExternalLink className="w-3 h-3 mr-1" />
+                          <ExternalLink className="w-3.5 h-3.5 mr-1" />
                           View
                         </Button>
                       </div>
@@ -868,7 +872,7 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                 </div>
 
                 {/* Actions */}
-                <div className="mt-4 flex flex-wrap justify-end gap-2">
+                <div className="mt-4 flex flex-col sm:flex-row sm:flex-wrap sm:justify-end gap-2">
                   {isMcqSubmission && (
                     <>
                       {attemptOptions.length > 1 && (
@@ -881,7 +885,7 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                             }))
                           }
                         >
-                          <SelectTrigger className="w-[200px]">
+                          <SelectTrigger className="w-full sm:w-[200px] text-xs sm:text-sm">
                             <SelectValue placeholder="Select attempt" />
                           </SelectTrigger>
                           <SelectContent>
@@ -895,23 +899,32 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                       )}
                       <Button
                         variant="outline"
+                        size="sm"
                         onClick={() => handleReportAction(submission, "generate", undefined, Number(selectedAttemptValue))}
                         disabled={reportActionSubmissionId !== null || isSavingGrade}
+                        className="w-full sm:w-auto text-xs sm:text-sm"
                       >
-                        <BarChart3 className="mr-2 h-4 w-4" />
+                        <BarChart3 className="mr-2 h-4 w-4 shrink-0" />
                         {reportBusy ? "Generating..." : "Generate Draft"}
                       </Button>
                       <Button
                         variant="outline"
+                        size="sm"
                         onClick={() => openReportDialog(submission)}
                         disabled={reportActionSubmissionId !== null}
+                        className="w-full sm:w-auto text-xs sm:text-sm"
                       >
-                        <PencilLine className="mr-2 h-4 w-4" />
+                        <PencilLine className="mr-2 h-4 w-4 shrink-0" />
                         Mentor Workspace
                       </Button>
                     </>
                   )}
-                  <Button onClick={() => handleGrade(submission)} disabled={isSavingGrade || reportBusy}>
+                  <Button
+                    size="sm"
+                    onClick={() => handleGrade(submission)}
+                    disabled={isSavingGrade || reportBusy}
+                    className="w-full sm:w-auto text-xs sm:text-sm"
+                  >
                     {submission.grade !== null ? 'Update Grade' : 'Grade Submission'}
                   </Button>
                 </div>
@@ -933,24 +946,24 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
           }
         }}
       >
-        <DialogContent className="flex h-[92vh] max-h-[92vh] max-w-[96vw] flex-col overflow-hidden p-0">
-          <DialogHeader className="shrink-0 border-b border-slate-200 px-6 py-4 pr-10">
-            <DialogTitle>
+        <DialogContent className="flex h-[95vh] sm:h-[92vh] max-h-[95vh] sm:max-h-[92vh] w-[98vw] max-w-[96vw] flex-col overflow-hidden p-0">
+          <DialogHeader className="shrink-0 border-b border-slate-200 p-4 sm:px-6 sm:py-4 pr-10">
+            <DialogTitle className="text-base sm:text-lg break-words">
               Mentor Report Workspace: {selectedReportSubmission?.assignment.title || "Submission"}
             </DialogTitle>
-            <p className="text-sm text-gray-600">
+            <p className="text-xs sm:text-sm text-gray-600 line-clamp-2 sm:line-clamp-none">
               Student: {selectedReportSubmission?.student.name || "N/A"} • Assessment: {selectedReportData?.testTitle || "MCQ + PDF Assessment"} • Edit live preview before confirmation
             </p>
           </DialogHeader>
 
-          <div className="min-h-0 flex-1 overflow-hidden px-4 py-3">
+          <div className="min-h-0 flex-1 overflow-y-auto lg:overflow-hidden p-3 sm:px-4 sm:py-3">
             {!selectedReportData?.report || !selectedReportPresentation || !selectedReportSubmission ? (
               <div className="py-8 text-center text-sm text-slate-600">
                 No report data available.
               </div>
             ) : (
-              <div className="grid h-full min-h-0 grid-cols-1 gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
-                <div className="h-full min-h-0 overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex flex-col lg:grid lg:grid-cols-[360px_minmax(0,1fr)] gap-4 h-full min-h-0">
+                <div className="lg:h-full lg:min-h-0 lg:overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
                   <div className="mb-3 flex items-center justify-between">
                     <h3 className="font-semibold text-slate-900">Draft Controls</h3>
                     <Badge className={selectedReportPresentation.mode === "confirmed"
@@ -1290,7 +1303,7 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
                   </div>
                 </div>
 
-                <div className="h-full min-h-0 overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white p-4">
+                <div className="lg:h-full lg:min-h-0 lg:overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white p-2 sm:p-4 overflow-x-auto">
                   <PremiumMcqReport
                     report={{ ...selectedReportData.report, assessmentType: selectedReportData.assessmentType }}
                     presentation={selectedReportPresentation}
@@ -1306,11 +1319,13 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
             )}
           </div>
 
-          <div className="flex shrink-0 justify-end gap-2 border-t border-slate-200 px-6 py-3">
+          <div className="flex flex-col-reverse sm:flex-row shrink-0 justify-end gap-2 border-t border-slate-200 p-3 sm:px-6 sm:py-3">
             <Button
               variant="outline"
+              size="sm"
               onClick={() => setIsReportDialogOpen(false)}
               disabled={reportActionSubmissionId !== null}
+              className="w-full sm:w-auto text-xs sm:text-sm"
             >
               Close
             </Button>
@@ -1318,28 +1333,34 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
               <>
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={() => handleReportAction(selectedReportSubmission, "saveDraft", selectedReportPresentation)}
                   disabled={reportActionSubmissionId !== null}
+                  className="w-full sm:w-auto text-xs sm:text-sm"
                 >
-                  <Save className="mr-2 h-4 w-4" />
+                  <Save className="mr-2 h-4 w-4 shrink-0" />
                   {reportActionSubmissionId === selectedReportSubmission.id ? "Saving..." : "Save Draft"}
                 </Button>
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={() => handleReportAction(selectedReportSubmission, "confirm", selectedReportPresentation)}
                   disabled={reportActionSubmissionId !== null}
+                  className="w-full sm:w-auto text-xs sm:text-sm"
                 >
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  <CheckCircle2 className="mr-2 h-4 w-4 shrink-0" />
                   {reportActionSubmissionId === selectedReportSubmission.id ? "Confirming..." : "Confirm Report"}
                 </Button>
                 <Button
+                  size="sm"
                   onClick={() => handleReportAction(selectedReportSubmission, "send", selectedReportPresentation)}
                   disabled={
                     reportActionSubmissionId !== null ||
                     selectedReportPresentation.mode !== "confirmed"
                   }
+                  className="w-full sm:w-auto text-xs sm:text-sm"
                 >
-                  <Send className="mr-2 h-4 w-4" />
+                  <Send className="mr-2 h-4 w-4 shrink-0" />
                   {reportActionSubmissionId === selectedReportSubmission.id ? "Sending..." : "Send Report"}
                 </Button>
               </>
@@ -1350,12 +1371,12 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
 
       {/* Grade Dialog */}
       <Dialog open={isGradeDialogOpen} onOpenChange={setIsGradeDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-base sm:text-lg break-words">
               Grade Submission: {selectedSubmission?.assignment.title}
             </DialogTitle>
-            <p className="text-sm text-gray-600">
+            <p className="text-xs sm:text-sm text-gray-600">
               Student: {selectedSubmission?.student.name}
             </p>
           </DialogHeader>
@@ -1377,11 +1398,11 @@ export default function SubmissionReviewer({ teacherEmail }: SubmissionReviewerP
             {/* Feedback removed: not displayed/collected in dashboard */}
           </div>
 
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button variant="outline" onClick={() => setIsGradeDialogOpen(false)} disabled={isSavingGrade}>
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => setIsGradeDialogOpen(false)} disabled={isSavingGrade} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button onClick={submitGrade} disabled={isSavingGrade}>
+            <Button onClick={submitGrade} disabled={isSavingGrade} className="w-full sm:w-auto">
               {isSavingGrade ? "Saving..." : "Save Grade"}
             </Button>
           </div>

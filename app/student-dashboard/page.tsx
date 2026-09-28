@@ -2439,326 +2439,386 @@ export default function StudentDashboard() {
                 )}
 
                 {activeTab === "assignments" && (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-2xl font-semibold text-slate-900">
-                        Assignment Workspace
-                      </h2>
-                      <div className="flex gap-2">
+                  <div className="space-y-4 sm:space-y-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <h2 className="text-xl sm:text-2xl font-semibold text-slate-900">
+                          Assignment Workspace
+                        </h2>
+                        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                          View, complete, and track all your course assignments
+                        </p>
+                      </div>
+                      <div className="flex gap-2 self-start sm:self-auto">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => fetchData()}
                           disabled={loading}
+                          className="text-xs sm:text-sm"
                         >
-                          <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
+                          <RefreshCw className={cn("h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2", loading && "animate-spin")} />
                           Refresh
                         </Button>
                       </div>
                     </div>
 
-                    <div className="grid gap-4">
-                      {assignments.map((assignment) => {
-                        // Find if there's a submission for this assignment
-                        const existingSubmission = submissions.find(s => s.assignmentId === assignment.id);
-                        const parsedSubmissionSummary = existingSubmission
-                          ? parseMcqSubmissionSummary(existingSubmission.content)
-                          : null;
-                        const gradeMaxPoints = parsedSubmissionSummary ? 100 : assignment.totalPoints;
-                        const deadlinePassed = isDeadlinePassed(assignment.dueDate);
-                        const acceptsLate = Boolean(assignment.allowLateSubmission);
-                        const canResubmitAssignment = existingSubmission &&
-                          (!deadlinePassed || acceptsLate) &&
-                          existingSubmission.grade === null;
-                        const mcqResources = getMcqResourcesForAssignment(assignment);
-                        const hasMcqResources = mcqResources.length > 0;
-                        const primaryMcqType = getMcqAssessmentTypeForResource(mcqResources[0]);
-                        const primaryMcqResource = mcqResources[0] || null;
-                        const canStartMcqAttempt = hasMcqResources && (!deadlinePassed || acceptsLate);
-                        const assignmentDescription = cleanStudentVisibleText(assignment.description);
+                    {assignments.length === 0 ? (
+                      <Card className="border-dashed">
+                        <CardContent className="flex flex-col items-center justify-center p-8 sm:p-12 text-center">
+                          <BookOpen className="h-10 w-10 sm:h-12 sm:w-12 text-slate-300 mb-3" />
+                          <h3 className="text-base sm:text-lg font-semibold text-slate-700">No Assignments Found</h3>
+                          <p className="text-xs sm:text-sm text-slate-500 max-w-sm mt-1">
+                            You don't have any assignments assigned right now. Check back later!
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <div className="grid gap-3 sm:gap-4">
+                        {assignments.map((assignment) => {
+                          // Find if there's a submission for this assignment
+                          const existingSubmission = submissions.find(s => s.assignmentId === assignment.id);
+                          const parsedSubmissionSummary = existingSubmission
+                            ? parseMcqSubmissionSummary(existingSubmission.content)
+                            : null;
+                          const gradeMaxPoints = parsedSubmissionSummary ? 100 : assignment.totalPoints;
+                          const deadlinePassed = isDeadlinePassed(assignment.dueDate);
+                          const acceptsLate = Boolean(assignment.allowLateSubmission);
+                          const canResubmitAssignment = existingSubmission &&
+                            (!deadlinePassed || acceptsLate) &&
+                            existingSubmission.grade === null;
+                          const mcqResources = getMcqResourcesForAssignment(assignment);
+                          const hasMcqResources = mcqResources.length > 0;
+                          const primaryMcqType = getMcqAssessmentTypeForResource(mcqResources[0]);
+                          const primaryMcqResource = mcqResources[0] || null;
+                          const canStartMcqAttempt = hasMcqResources && (!deadlinePassed || acceptsLate);
+                          const assignmentDescription = cleanStudentVisibleText(assignment.description);
 
-                        return (
-                          <motion.div
-                            key={assignment.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            whileHover={{ y: -2 }}
-                          >
-                            <Card className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
-                              <CardContent className="p-6">
-                                <div className="flex items-start justify-between">
-                                  <div className="flex-1">
-                                    <button
-                                      type="button"
-                                      className="mb-2 flex w-full items-center gap-3 text-left"
-                                      onClick={() => setExpandedAssignmentId(assignment.id)}
-                                    >
-                                      <h3 className="text-lg font-semibold">{assignment.title}</h3>
-                                      {existingSubmission ? getStatusBadge(existingSubmission.status) : getStatusBadge("pending")}
-                                      <span className="ml-auto text-xs text-slate-500">
-                                        Click for details
-                                      </span>
-                                    </button>
-                                    {assignmentDescription && (
-                                      <p className="text-gray-600 mb-3">{assignmentDescription}</p>
-                                    )}
-
-                                    <div className="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-600">
-                                      <BookOpen className="h-4 w-4 text-slate-500" />
-                                      <span>
-                                        {(assignment.resources || []).length} resource{(assignment.resources || []).length !== 1 ? 's' : ''} linked
-                                      </span>
-                                      {hasMcqResources && (
-                                        <Badge variant="outline" className="border-slate-300 bg-slate-100 text-slate-700">
-                                          {getMcqAssessmentTypeLabel(primaryMcqType)} ready
-                                        </Badge>
+                          return (
+                            <motion.div
+                              key={assignment.id}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              whileHover={{ y: -2 }}
+                            >
+                              <Card className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
+                                <CardContent className="p-4 sm:p-6">
+                                  <div className="flex flex-col lg:flex-row items-start justify-between gap-4">
+                                    <div className="flex-1 min-w-0 w-full">
+                                      <button
+                                        type="button"
+                                        className="mb-2 flex w-full flex-wrap items-center gap-2 sm:gap-3 text-left group"
+                                        onClick={() => setExpandedAssignmentId(assignment.id)}
+                                      >
+                                        <h3 className="text-base sm:text-lg font-semibold text-slate-900 group-hover:text-blue-600 transition-colors break-words">
+                                          {assignment.title}
+                                        </h3>
+                                        <div className="flex flex-wrap items-center gap-1.5">
+                                          {existingSubmission ? getStatusBadge(existingSubmission.status) : getStatusBadge("pending")}
+                                        </div>
+                                        <span className="sm:ml-auto text-xs text-slate-500 hover:text-slate-800 underline sm:no-underline">
+                                          Click for details
+                                        </span>
+                                      </button>
+                                      {assignmentDescription && (
+                                        <p className="text-slate-600 text-xs sm:text-sm mb-3 break-words line-clamp-3 sm:line-clamp-none">
+                                          {assignmentDescription}
+                                        </p>
                                       )}
-                                    </div>
-                                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
-                                      <span className="flex items-center gap-1">
-                                        <BookOpen className="h-4 w-4" />
-                                        {assignment.subject}
-                                      </span>
-                                      <span className="flex items-center gap-1">
-                                        <Calendar className="h-4 w-4" />
-                                        Due: {formatDate(new Date(assignment.dueDate), getUserTimezone())}
-                                      </span>
-                                      <span className="flex items-center gap-1">
-                                        <Star className="h-4 w-4" />
-                                        {assignment.totalPoints} points
-                                      </span>
-                                    </div>
 
-                                    {/* Deadline status indicator */}
-                                    <div className="flex items-center gap-2 text-sm">
-                                      {deadlinePassed ? (
-                                        acceptsLate ? (
-                                          <span className="flex items-center gap-1 text-amber-700">
-                                            <AlertCircle className="h-4 w-4" />
-                                            Deadline passed, late attempts allowed
+                                      <div className="mb-3 flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-600">
+                                        <div className="flex items-center gap-1">
+                                          <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-500 shrink-0" />
+                                          <span>
+                                            {(assignment.resources || []).length} resource{(assignment.resources || []).length !== 1 ? 's' : ''} linked
                                           </span>
+                                        </div>
+                                        {hasMcqResources && (
+                                          <Badge variant="outline" className="border-slate-300 bg-slate-100 text-slate-700 text-xs">
+                                            {getMcqAssessmentTypeLabel(primaryMcqType)} ready
+                                          </Badge>
+                                        )}
+                                      </div>
+
+                                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-sm text-slate-500 mb-3">
+                                        <span className="flex items-center gap-1">
+                                          <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-slate-400" />
+                                          <span className="truncate max-w-[150px] sm:max-w-none">{assignment.subject}</span>
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                          <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-slate-400" />
+                                          Due: {formatDate(new Date(assignment.dueDate), getUserTimezone())}
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                          <Star className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-slate-400" />
+                                          {assignment.totalPoints} points
+                                        </span>
+                                      </div>
+
+                                      {/* Deadline status indicator */}
+                                      <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+                                        {deadlinePassed ? (
+                                          acceptsLate ? (
+                                            <span className="flex items-center gap-1 text-amber-700">
+                                              <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                                              Deadline passed, late attempts allowed
+                                            </span>
+                                          ) : (
+                                            <span className="flex items-center gap-1 text-red-600">
+                                              <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                                              Deadline passed
+                                            </span>
+                                          )
                                         ) : (
-                                          <span className="flex items-center gap-1 text-red-600">
-                                            <AlertCircle className="h-4 w-4" />
-                                            Deadline passed
+                                          <span className="flex items-center gap-1 text-slate-700">
+                                            <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-emerald-600" />
+                                            Still accepting submissions
                                           </span>
-                                        )
-                                      ) : (
-                                        <span className="flex items-center gap-1 text-slate-700">
-                                          <CheckCircle className="h-4 w-4" />
-                                          Still accepting submissions
-                                        </span>
+                                        )}
+
+                                        {existingSubmission && (
+                                          <span className="text-slate-500">
+                                            • Submitted on {formatDateTime(new Date(existingSubmission.submittedAt), getUserTimezone())}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* Action buttons */}
+                                    <div className="flex flex-row lg:flex-col flex-wrap gap-2 w-full lg:w-auto shrink-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="border-slate-300 text-slate-700 hover:bg-slate-50 flex-1 sm:flex-initial text-xs sm:text-sm"
+                                        onClick={() => setExpandedAssignmentId(assignment.id)}
+                                      >
+                                        <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                                        View Details
+                                      </Button>
+
+                                      {canStartMcqAttempt && primaryMcqResource && (
+                                        <Button
+                                          size="sm"
+                                          className="bg-brand-blue text-white hover:bg-brand-blue/90 flex-1 sm:flex-initial text-xs sm:text-sm"
+                                          onClick={() => loadMcqTemplateForAssignment(assignment, primaryMcqResource.id)}
+                                        >
+                                          <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                                          {getMcqActionLabelForResource(primaryMcqType, existingSubmission, primaryMcqResource.id)}
+                                        </Button>
                                       )}
 
-                                      {existingSubmission && (
-                                        <span className="text-gray-500">
-                                          • Submitted on {formatDateTime(new Date(existingSubmission.submittedAt), getUserTimezone())}
-                                        </span>
+                                      {/* Submit button for new written assignments */}
+                                      {!hasMcqResources && !existingSubmission && (!deadlinePassed || acceptsLate) && (
+                                        <Dialog
+                                          open={isSubmitDialogOpen && selectedAssignment?.id === assignment.id && !isResubmitting}
+                                          onOpenChange={(nextOpen) => handleAssignmentDialogOpenChange(nextOpen, "submit")}
+                                        >
+                                          <DialogTrigger asChild>
+                                            <Button
+                                              size="sm"
+                                              onClick={() => {
+                                                openAssignmentDialog(assignment, "submit");
+                                              }}
+                                              className="bg-brand-blue text-white hover:bg-brand-blue/90 flex-1 sm:flex-initial text-xs sm:text-sm"
+                                            >
+                                              <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                                              Submit Assignment
+                                            </Button>
+                                          </DialogTrigger>
+                                          <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+                                            <DialogHeader>
+                                              <DialogTitle className="text-base sm:text-lg break-words">
+                                                Submit Assignment: {selectedAssignment?.title}
+                                              </DialogTitle>
+                                            </DialogHeader>
+                                            <div className="space-y-4 py-2">
+                                              <div className="space-y-2">
+                                                <Label htmlFor="submission" className="text-xs sm:text-sm">Written Response</Label>
+                                                <Textarea
+                                                  id="submission"
+                                                  placeholder="Enter your assignment response here..."
+                                                  value={submissionText}
+                                                  onChange={(e) => setSubmissionText(e.target.value)}
+                                                  rows={6}
+                                                  className="text-xs sm:text-sm"
+                                                />
+                                              </div>
+                                              <div className="space-y-2">
+                                                <Label htmlFor="file" className="text-xs sm:text-sm">File Upload (Optional)</Label>
+                                                <Input
+                                                  id="file"
+                                                  type="file"
+                                                  accept=".pdf,.doc,.docx,.txt,.jpg,.png"
+                                                  onChange={(e) => setSubmissionFile(e.target.files?.[0] || null)}
+                                                  className="text-xs sm:text-sm"
+                                                />
+                                                <p className="text-xs text-gray-500">
+                                                  Accepted formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB)
+                                                </p>
+                                              </div>
+                                            </div>
+                                            <DialogFooter className="flex-col-reverse sm:flex-row gap-2 sm:gap-0">
+                                              <Button
+                                                variant="outline"
+                                                onClick={() => setIsSubmitDialogOpen(false)}
+                                                className="w-full sm:w-auto"
+                                              >
+                                                Cancel
+                                              </Button>
+                                              <Button
+                                                onClick={handleSubmission}
+                                                disabled={isSubmitting || (!submissionText.trim() && !submissionFile)}
+                                                className="w-full sm:w-auto bg-brand-blue text-white hover:bg-brand-blue/90"
+                                              >
+                                                {isSubmitting ? (
+                                                  <>
+                                                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                                    Submitting...
+                                                  </>
+                                                ) : (
+                                                  <>
+                                                    <Send className="h-4 w-4 mr-2" />
+                                                    Submit Assignment
+                                                  </>
+                                                )}
+                                              </Button>
+                                            </DialogFooter>
+                                          </DialogContent>
+                                        </Dialog>
+                                      )}
+
+                                      {/* Resubmit button for submitted assignments */}
+                                      {!hasMcqResources && canResubmitAssignment && (
+                                        <Dialog
+                                          open={isResubmitDialogOpen && selectedAssignment?.id === assignment.id && isResubmitting}
+                                          onOpenChange={(nextOpen) => handleAssignmentDialogOpenChange(nextOpen, "resubmit")}
+                                        >
+                                          <DialogTrigger asChild>
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={() => {
+                                                openAssignmentDialog(assignment, "resubmit", {
+                                                  initialText: existingSubmission.content || "",
+                                                  submissionId: existingSubmission.id,
+                                                });
+                                              }}
+                                              className="border-slate-300 text-slate-700 hover:bg-slate-50 flex-1 sm:flex-initial text-xs sm:text-sm"
+                                            >
+                                              <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                                              Resubmit
+                                            </Button>
+                                          </DialogTrigger>
+                                          <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+                                            <DialogHeader>
+                                              <DialogTitle className="text-base sm:text-lg break-words">
+                                                Resubmit Assignment: {selectedAssignment?.title}
+                                              </DialogTitle>
+                                              <p className="text-xs sm:text-sm text-slate-600 bg-slate-100 p-3 rounded-lg mt-2">
+                                                Your previous submission will be replaced with this new one.
+                                              </p>
+                                            </DialogHeader>
+                                            <div className="space-y-4 py-2">
+                                              <div className="space-y-2">
+                                                <Label htmlFor="resubmission" className="text-xs sm:text-sm">Updated Response</Label>
+                                                <Textarea
+                                                  id="resubmission"
+                                                  placeholder="Enter your updated assignment response here..."
+                                                  value={submissionText}
+                                                  onChange={(e) => setSubmissionText(e.target.value)}
+                                                  rows={6}
+                                                  className="text-xs sm:text-sm"
+                                                />
+                                              </div>
+                                              <div className="space-y-2">
+                                                <Label htmlFor="resubmit-file" className="text-xs sm:text-sm">File Upload (Optional)</Label>
+                                                <Input
+                                                  id="resubmit-file"
+                                                  type="file"
+                                                  accept=".pdf,.doc,.docx,.txt,.jpg,.png"
+                                                  onChange={(e) => setSubmissionFile(e.target.files?.[0] || null)}
+                                                  className="text-xs sm:text-sm"
+                                                />
+                                                <p className="text-xs text-gray-500">
+                                                  Accepted formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB)
+                                                </p>
+                                              </div>
+                                            </div>
+                                            <DialogFooter className="flex-col-reverse sm:flex-row gap-2 sm:gap-0">
+                                              <Button
+                                                variant="outline"
+                                                onClick={() => setIsResubmitDialogOpen(false)}
+                                                className="w-full sm:w-auto"
+                                              >
+                                                Cancel
+                                              </Button>
+                                              <Button
+                                                onClick={handleSubmission}
+                                                disabled={isSubmitting || (!submissionText.trim() && !submissionFile)}
+                                                className="w-full sm:w-auto bg-brand-blue text-white hover:bg-brand-blue/90"
+                                              >
+                                                {isSubmitting ? (
+                                                  <>
+                                                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                                    Resubmitting...
+                                                  </>
+                                                ) : (
+                                                  <>
+                                                    <RefreshCw className="h-4 w-4 mr-2" />
+                                                    Resubmit Assignment
+                                                  </>
+                                                )}
+                                              </Button>
+                                            </DialogFooter>
+                                          </DialogContent>
+                                        </Dialog>
+                                      )}
+
+                                      {/* Status indicators for completed/graded submissions */}
+                                      {existingSubmission && existingSubmission.grade !== null && existingSubmission.grade !== undefined && (
+                                        <div className="text-left lg:text-center w-full lg:w-auto">
+                                          <Badge variant="secondary" className="bg-slate-200 text-slate-800 text-xs">
+                                            <Trophy className="h-3 w-3 mr-1" />
+                                            Graded: {existingSubmission.grade}/{gradeMaxPoints}
+                                          </Badge>
+                                        </div>
+                                      )}
+
+                                      {deadlinePassed && existingSubmission && (existingSubmission.grade === null || existingSubmission.grade === undefined) && (
+                                        <div className="text-left lg:text-center w-full lg:w-auto">
+                                          <Badge variant="secondary" className="bg-gray-100 text-gray-600 text-xs">
+                                            <Clock className="h-3 w-3 mr-1" />
+                                            Awaiting Grade
+                                          </Badge>
+                                        </div>
                                       )}
                                     </div>
                                   </div>
 
-                                  <div className="flex flex-col gap-2">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="border-slate-300 text-slate-700 hover:bg-slate-50"
-                                      onClick={() => setExpandedAssignmentId(assignment.id)}
-                                    >
-                                      <Eye className="h-4 w-4 mr-2" />
-                                      View Details
-                                    </Button>
-
-                                    {canStartMcqAttempt && primaryMcqResource && (
-                                      <Button
-                                        className="bg-brand-blue text-white hover:bg-brand-blue/90"
-                                        onClick={() => loadMcqTemplateForAssignment(assignment, primaryMcqResource.id)}
-                                      >
-                                        <Target className="h-4 w-4 mr-2" />
-                                        {getMcqActionLabelForResource(primaryMcqType, existingSubmission, primaryMcqResource.id)}
-                                      </Button>
-                                    )}
-
-                                    {/* Submit button for new written assignments */}
-                                    {!hasMcqResources && !existingSubmission && (!deadlinePassed || acceptsLate) && (
-                                      <Dialog
-                                        open={isSubmitDialogOpen && selectedAssignment?.id === assignment.id && !isResubmitting}
-                                        onOpenChange={(nextOpen) => handleAssignmentDialogOpenChange(nextOpen, "submit")}
-                                      >
-                                        <DialogTrigger asChild>
-                                          <Button
-                                            onClick={() => {
-                                              openAssignmentDialog(assignment, "submit");
-                                            }}
-                                            className="bg-brand-blue text-white hover:bg-brand-blue/90"
-                                          >
-                                            <Send className="h-4 w-4 mr-2" />
-                                            Submit Assignment
-                                          </Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="max-w-2xl">
-                                          <DialogHeader>
-                                            <DialogTitle>Submit Assignment: {selectedAssignment?.title}</DialogTitle>
-                                          </DialogHeader>
-                                          <div className="space-y-4">
-                                            <div className="space-y-2">
-                                              <Label htmlFor="submission">Written Response</Label>
-                                              <Textarea
-                                                id="submission"
-                                                placeholder="Enter your assignment response here..."
-                                                value={submissionText}
-                                                onChange={(e) => setSubmissionText(e.target.value)}
-                                                rows={6}
-                                              />
-                                            </div>
-                                            <div className="space-y-2">
-                                              <Label htmlFor="file">File Upload (Optional)</Label>
-                                              <Input
-                                                id="file"
-                                                type="file"
-                                                accept=".pdf,.doc,.docx,.txt,.jpg,.png"
-                                                onChange={(e) => setSubmissionFile(e.target.files?.[0] || null)}
-                                              />
-                                              <p className="text-xs text-gray-500">
-                                                Accepted formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB)
-                                              </p>
-                                            </div>
-                                          </div>
-                                          <DialogFooter>
-                                            <Button
-                                              onClick={handleSubmission}
-                                              disabled={isSubmitting || (!submissionText.trim() && !submissionFile)}
-                                            >
-                                              {isSubmitting ? (
-                                                <>
-                                                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                                  Submitting...
-                                                </>
-                                              ) : (
-                                                <>
-                                                  <Send className="h-4 w-4 mr-2" />
-                                                  Submit Assignment
-                                                </>
-                                              )}
-                                            </Button>
-                                          </DialogFooter>
-                                        </DialogContent>
-                                      </Dialog>
-                                    )}
-
-                                    {/* Resubmit button for submitted assignments */}
-                                    {!hasMcqResources && canResubmitAssignment && (
-                                      <Dialog
-                                        open={isResubmitDialogOpen && selectedAssignment?.id === assignment.id && isResubmitting}
-                                        onOpenChange={(nextOpen) => handleAssignmentDialogOpenChange(nextOpen, "resubmit")}
-                                      >
-                                        <DialogTrigger asChild>
-                                          <Button
-                                            variant="outline"
-                                            onClick={() => {
-                                              openAssignmentDialog(assignment, "resubmit", {
-                                                initialText: existingSubmission.content || "",
-                                                submissionId: existingSubmission.id,
-                                              });
-                                            }}
-                                            className="border-slate-300 text-slate-700 hover:bg-slate-50"
-                                          >
-                                            <RefreshCw className="h-4 w-4 mr-2" />
-                                            Resubmit
-                                          </Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="max-w-2xl">
-                                          <DialogHeader>
-                                            <DialogTitle>Resubmit Assignment: {selectedAssignment?.title}</DialogTitle>
-                                            <p className="text-sm text-slate-600 bg-slate-100 p-3 rounded-lg mt-2">
-                                              Your previous submission will be replaced with this new one.
-                                            </p>
-                                          </DialogHeader>
-                                          <div className="space-y-4">
-                                            <div className="space-y-2">
-                                              <Label htmlFor="resubmission">Updated Response</Label>
-                                              <Textarea
-                                                id="resubmission"
-                                                placeholder="Enter your updated assignment response here..."
-                                                value={submissionText}
-                                                onChange={(e) => setSubmissionText(e.target.value)}
-                                                rows={6}
-                                              />
-                                            </div>
-                                            <div className="space-y-2">
-                                              <Label htmlFor="resubmit-file">File Upload (Optional)</Label>
-                                              <Input
-                                                id="resubmit-file"
-                                                type="file"
-                                                accept=".pdf,.doc,.docx,.txt,.jpg,.png"
-                                                onChange={(e) => setSubmissionFile(e.target.files?.[0] || null)}
-                                              />
-                                              <p className="text-xs text-gray-500">
-                                                Accepted formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB)
-                                              </p>
-                                            </div>
-                                          </div>
-                                          <DialogFooter>
-                                            <Button
-                                              onClick={handleSubmission}
-                                              disabled={isSubmitting || (!submissionText.trim() && !submissionFile)}
-                                            >
-                                              {isSubmitting ? (
-                                                <>
-                                                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                                  Resubmitting...
-                                                </>
-                                              ) : (
-                                                <>
-                                                  <RefreshCw className="h-4 w-4 mr-2" />
-                                                  Resubmit Assignment
-                                                </>
-                                              )}
-                                            </Button>
-                                          </DialogFooter>
-                                        </DialogContent>
-                                      </Dialog>
-                                    )}
-
-                                    {/* Status indicators for completed/graded submissions */}
-                                    {existingSubmission && existingSubmission.grade !== null && existingSubmission.grade !== undefined && (
-                                      <div className="text-center">
-                                        <Badge variant="secondary" className="bg-slate-200 text-slate-800">
-                                          <Trophy className="h-3 w-3 mr-1" />
-                                          Graded: {existingSubmission.grade}/{gradeMaxPoints}
-                                        </Badge>
-                                      </div>
-                                    )}
-
-                                    {deadlinePassed && existingSubmission && (existingSubmission.grade === null || existingSubmission.grade === undefined) && (
-                                      <div className="text-center">
-                                        <Badge variant="secondary" className="bg-gray-100 text-gray-600">
-                                          <Clock className="h-3 w-3 mr-1" />
-                                          Awaiting Grade
-                                        </Badge>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-
-                              </CardContent>
-                            </Card>
-                          </motion.div>
-                        );
-                      })}
-                    </div>
+                                </CardContent>
+                              </Card>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {activeTab === "submissions" && (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-2xl font-semibold text-slate-900">
-                        Submission History
-                      </h2>
+                  <div className="space-y-4 sm:space-y-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <h2 className="text-xl sm:text-2xl font-semibold text-slate-900">
+                          Submission History
+                        </h2>
+                        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                          Review your submitted coursework, attempts, and grades
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="grid gap-4">
+                    <div className="grid gap-3 sm:gap-4">
                       {submissions.map((submission) => {
                         const assignment = assignments.find(a => a.id === submission.assignmentId);
                         const submittedAfterDeadline = assignment
@@ -2775,38 +2835,40 @@ export default function StudentDashboard() {
                             whileHover={{ y: -2 }}
                           >
                             <Card className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
-                              <CardContent className="p-6">
-                                <div className="flex items-start justify-between mb-4">
-                                  <div className="flex-1">
-                                    <h3 className="text-lg font-semibold">{submission.assignmentTitle}</h3>
-                                    <p className="text-sm text-gray-600">
+                              <CardContent className="p-4 sm:p-6">
+                                <div className="flex flex-col sm:flex-row items-start justify-between gap-3 mb-4">
+                                  <div className="flex-1 min-w-0 w-full">
+                                    <h3 className="text-base sm:text-lg font-semibold text-slate-900 break-words">
+                                      {submission.assignmentTitle}
+                                    </h3>
+                                    <p className="text-xs sm:text-sm text-slate-600">
                                       Submitted on {formatDateTime(new Date(submission.submittedAt), getUserTimezone())}
                                     </p>
                                     {assignment && (
-                                      <p className="text-sm text-gray-500 mt-1">
-                                        Due: {formatDate(new Date(assignment.dueDate), getUserTimezone())}
-                                        {submittedAfterDeadline && <span className="text-red-500 ml-2">(Submitted after deadline)</span>}
-                                        {!submittedAfterDeadline && <span className="text-slate-500 ml-2">(Submitted on time)</span>}
+                                      <p className="text-xs sm:text-sm text-slate-500 mt-1 flex flex-wrap items-center gap-1">
+                                        <span>Due: {formatDate(new Date(assignment.dueDate), getUserTimezone())}</span>
+                                        {submittedAfterDeadline && <span className="text-rose-600 font-medium">(Submitted after deadline)</span>}
+                                        {!submittedAfterDeadline && <span className="text-emerald-600 font-medium">(Submitted on time)</span>}
                                       </p>
                                     )}
                                     {assignment && (
-                                      <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
+                                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-sm text-slate-500 mt-2">
                                         <span className="flex items-center gap-1">
-                                          <BookOpen className="h-4 w-4" />
-                                          {assignment.subject}
+                                          <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-slate-400" />
+                                          <span className="truncate max-w-[140px] sm:max-w-none">{assignment.subject}</span>
                                         </span>
                                         <span className="flex items-center gap-1">
-                                          <Star className="h-4 w-4" />
+                                          <Star className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-slate-400" />
                                           {assignment.totalPoints} points
                                         </span>
                                         <span className="flex items-center gap-1">
-                                          <RefreshCw className="h-4 w-4" />
+                                          <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-slate-400" />
                                           Submission #{submission.id}
                                         </span>
                                       </div>
                                     )}
                                   </div>
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
                                     {getStatusBadge(submission.status)}
                                   </div>
                                 </div>
@@ -2816,19 +2878,19 @@ export default function StudentDashboard() {
                                   <div className="mb-4">
                                     {parsedMcqSubmission ? (
                                       <>
-                                        <h4 className="text-sm font-medium text-gray-700 mb-2">MCQ Attempt Summary:</h4>
-                                        <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
-                                          <p className="text-sm font-semibold text-slate-900">{parsedMcqSubmission.testTitle}</p>
-                                          <p className="mt-1 text-sm text-slate-700">
+                                        <h4 className="text-xs sm:text-sm font-medium text-slate-700 mb-2">MCQ Attempt Summary:</h4>
+                                        <div className="bg-slate-50 border border-slate-200 p-3 sm:p-4 rounded-lg">
+                                          <p className="text-xs sm:text-sm font-semibold text-slate-900 break-words">{parsedMcqSubmission.testTitle}</p>
+                                          <p className="mt-1 text-xs sm:text-sm text-slate-700">
                                             {parsedMcqSubmission.answeredCount}/{parsedMcqSubmission.totalQuestions} answered
                                           </p>
                                           <p className="text-xs text-slate-600">Maximum score: {parsedMcqSubmission.maxScore}</p>
                                           <p className="text-xs text-slate-600">Attempts: {parsedMcqSubmission.attemptCount} ({parsedMcqSubmission.latestAttemptLabel})</p>
                                           {parsedMcqSubmission.isConfirmedReport && (
-                                            <div className="mt-3 flex items-center justify-end gap-3">
+                                            <div className="mt-3 flex flex-wrap items-center justify-end gap-2 sm:gap-3">
                                               <Button
                                                 size="sm"
-                                                className="bg-slate-900 text-white hover:bg-slate-800"
+                                                className="bg-slate-900 text-white hover:bg-slate-800 w-full sm:w-auto text-xs sm:text-sm"
                                                 onClick={() => window.open(`/student-dashboard/report/${submission.id}`, "_blank")}
                                               >
                                                 Open PDF Report
@@ -2839,9 +2901,9 @@ export default function StudentDashboard() {
                                       </>
                                     ) : (
                                       <>
-                                        <h4 className="text-sm font-medium text-gray-700 mb-2">Written Response:</h4>
-                                        <div className="bg-gray-50 p-4 rounded-lg">
-                                          <p className="text-sm text-gray-800 whitespace-pre-wrap">{submission.content}</p>
+                                        <h4 className="text-xs sm:text-sm font-medium text-slate-700 mb-2">Written Response:</h4>
+                                        <div className="bg-slate-50 border border-slate-200 p-3 sm:p-4 rounded-lg">
+                                          <p className="text-xs sm:text-sm text-slate-800 whitespace-pre-wrap break-words">{submission.content}</p>
                                         </div>
                                       </>
                                     )}
@@ -2851,15 +2913,15 @@ export default function StudentDashboard() {
                                 {/* File Attachment */}
                                 {submission.fileUrl && submission.fileName && (
                                   <div className="mb-4">
-                                    <h4 className="text-sm font-medium text-gray-700 mb-2">File Attachment:</h4>
-                                    <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
-                                      <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                          <div className="p-2 bg-slate-200 rounded-lg">
-                                            <FileText className="h-5 w-5 text-slate-700" />
+                                    <h4 className="text-xs sm:text-sm font-medium text-slate-700 mb-2">File Attachment:</h4>
+                                    <div className="bg-slate-50 border border-slate-200 p-3 sm:p-4 rounded-lg">
+                                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                        <div className="flex items-center gap-3 min-w-0">
+                                          <div className="p-2 bg-slate-200 rounded-lg shrink-0">
+                                            <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-slate-700" />
                                           </div>
-                                          <div>
-                                            <p className="text-sm font-medium text-slate-900">{submission.fileName}</p>
+                                          <div className="min-w-0 flex-1">
+                                            <p className="text-xs sm:text-sm font-medium text-slate-900 truncate">{submission.fileName}</p>
                                             {submission.fileSize && (
                                               <p className="text-xs text-slate-600">
                                                 {(submission.fileSize / 1024 / 1024).toFixed(2)} MB
@@ -2867,18 +2929,20 @@ export default function StudentDashboard() {
                                             )}
                                           </div>
                                         </div>
-                                        <div className="flex gap-2">
+                                        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                                           <Button
                                             variant="outline"
                                             size="sm"
+                                            className="flex-1 sm:flex-initial text-xs sm:text-sm"
                                             onClick={() => window.open(submission.fileUrl, '_blank')}
                                           >
-                                            <Eye className="h-4 w-4 mr-2" />
+                                            <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                                             View
                                           </Button>
                                           <Button
                                             variant="outline"
                                             size="sm"
+                                            className="flex-1 sm:flex-initial text-xs sm:text-sm"
                                             onClick={() => {
                                               const link = document.createElement('a');
                                               if (submission.fileUrl) {
@@ -2888,7 +2952,7 @@ export default function StudentDashboard() {
                                               }
                                             }}
                                           >
-                                            <Download className="h-4 w-4 mr-2" />
+                                            <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                                             Download
                                           </Button>
                                         </div>
@@ -2900,9 +2964,9 @@ export default function StudentDashboard() {
                                 {/* Grade Display */}
                                 {submission.grade !== null && submission.grade !== undefined && assignment && (
                                   <div className="mb-4">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <span className="text-sm text-gray-600">Grade:</span>
-                                      <span className={cn("text-lg font-bold", getGradeColor(calculateGradePercentage(submission.grade, gradeMaxPoints)))}>
+                                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                      <span className="text-xs sm:text-sm text-slate-600">Grade:</span>
+                                      <span className={cn("text-base sm:text-lg font-bold", getGradeColor(calculateGradePercentage(submission.grade, gradeMaxPoints)))}>
                                         {submission.grade}/{gradeMaxPoints} ({calculateGradePercentage(submission.grade, gradeMaxPoints)}%)
                                       </span>
                                     </div>
@@ -2913,11 +2977,9 @@ export default function StudentDashboard() {
                                   </div>
                                 )}
 
-                                {/* Teacher feedback hidden in student dashboard */}
-
                                 {/* Submission Status Info */}
-                                <div className="mt-4 pt-4 border-t border-gray-200">
-                                  <div className="flex items-center justify-between text-xs text-gray-500">
+                                <div className="mt-4 pt-3 border-t border-slate-100">
+                                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
                                     <span>Submission ID: #{submission.id}</span>
                                     <span>
                                       {submission.grade !== null && submission.grade !== undefined ? 'Graded' : 'Awaiting Review'}
@@ -2932,22 +2994,22 @@ export default function StudentDashboard() {
 
                       {submissions.length === 0 && (
                         <motion.div
-                          initial={{ opacity: 0, scale: 0.9 }}
+                          initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
                         >
                           <Card className="border border-slate-200 bg-white shadow-sm">
-                            <CardContent className="p-12 text-center">
-                              <FileText className="mx-auto mb-4 h-10 w-10 text-slate-400" />
-                              <h3 className="text-2xl font-bold text-slate-900 mb-2">No Submissions Yet</h3>
-                              <p className="text-slate-600 mb-6 text-lg">
+                            <CardContent className="p-6 sm:p-12 text-center">
+                              <FileText className="mx-auto mb-3 sm:mb-4 h-8 w-8 sm:h-10 sm:w-10 text-slate-400" />
+                              <h3 className="text-lg sm:text-2xl font-bold text-slate-900 mb-1.5 sm:mb-2">No Submissions Yet</h3>
+                              <p className="text-slate-600 mb-4 sm:mb-6 text-xs sm:text-base max-w-md mx-auto">
                                 Start by submitting an assignment. Your completed work will appear here.
                               </p>
                               <Button
-                                className="bg-brand-blue text-white hover:bg-brand-blue/90"
+                                className="bg-brand-blue text-white hover:bg-brand-blue/90 text-xs sm:text-sm"
                                 onClick={() => setActiveTab("assignments")}
-                                size="lg"
+                                size="default"
                               >
-                                <FileText className="h-5 w-5 mr-2" />
+                                <FileText className="h-4 w-4 mr-2" />
                                 View Assignments
                               </Button>
                             </CardContent>
@@ -2959,29 +3021,34 @@ export default function StudentDashboard() {
                 )}
 
                 {activeTab === "grades" && (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-2xl font-semibold text-slate-900">
-                        Grades & Performance
-                      </h2>
+                  <div className="space-y-4 sm:space-y-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <h2 className="text-xl sm:text-2xl font-semibold text-slate-900">
+                          Grades & Performance
+                        </h2>
+                        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                          Track your academic achievements and score breakdown
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                       <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
+                        initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         whileHover={{ y: -2 }}
                       >
                         <Card className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
-                          <CardHeader className="pb-3">
-                            <CardTitle className="flex items-center gap-2 text-slate-900 text-lg">
-                              <Trophy className="h-5 w-5 text-slate-700" />
+                          <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+                            <CardTitle className="flex items-center gap-2 text-slate-900 text-base sm:text-lg">
+                              <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-slate-700 shrink-0" />
                               Overall Performance
                             </CardTitle>
                           </CardHeader>
-                          <CardContent>
+                          <CardContent className="p-4 sm:p-6 pt-0">
                             <div className="text-center space-y-2">
-                              <div className="text-3xl font-bold text-slate-900">
+                              <div className="text-2xl sm:text-3xl font-bold text-slate-900">
                                 {gradedSubmissions.length > 0
                                   ? averageGradePercent >= 90 ? 'A'
                                     : averageGradePercent >= 80 ? 'B'
@@ -2990,17 +3057,17 @@ export default function StudentDashboard() {
                                           : 'F'
                                   : 'N/A'}
                               </div>
-                              <div className="text-sm text-gray-600">Current Grade</div>
+                              <div className="text-xs sm:text-sm text-slate-600">Current Grade</div>
                               <Progress
                                 value={averageGradePercent}
                                 className={cn(
-                                  "h-3",
+                                  "h-2.5 sm:h-3",
                                   gradedSubmissions.length > 0 && averageGradePercent >= 80 && "[&>div]:bg-emerald-600",
                                   gradedSubmissions.length > 0 && averageGradePercent >= 60 && averageGradePercent < 80 && "[&>div]:bg-amber-500",
                                   gradedSubmissions.length > 0 && averageGradePercent < 60 && "[&>div]:bg-rose-500"
                                 )}
                               />
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-slate-500">
                                 {gradedSubmissions.length > 0 ? `${averageGradePercent}% Average` : 'No grades yet'}
                               </div>
                             </div>
@@ -3009,29 +3076,29 @@ export default function StudentDashboard() {
                       </motion.div>
 
                       <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
+                        initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.1 }}
                         whileHover={{ y: -2 }}
                       >
                         <Card className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
-                          <CardHeader className="pb-3">
-                            <CardTitle className="flex items-center gap-2 text-slate-900 text-lg">
-                              <Target className="h-5 w-5 text-slate-700" />
+                          <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+                            <CardTitle className="flex items-center gap-2 text-slate-900 text-base sm:text-lg">
+                              <Target className="h-4 w-4 sm:h-5 sm:w-5 text-slate-700 shrink-0" />
                               Assignments Completed
                             </CardTitle>
                           </CardHeader>
-                          <CardContent>
+                          <CardContent className="p-4 sm:p-6 pt-0">
                             <div className="text-center space-y-2">
-                              <div className="text-3xl font-bold text-slate-900">
+                              <div className="text-2xl sm:text-3xl font-bold text-slate-900">
                                 {gradedSubmissions.length}/{submissions.length}
                               </div>
-                              <div className="text-sm text-gray-600">Graded Assignments</div>
+                              <div className="text-xs sm:text-sm text-slate-600">Graded Assignments</div>
                               <Progress
                                 value={gradedSubmissionPercentage}
-                                className="h-3"
+                                className="h-2.5 sm:h-3"
                               />
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-slate-500">
                                 {gradedSubmissionPercentage}% Graded
                               </div>
                             </div>
@@ -3040,27 +3107,28 @@ export default function StudentDashboard() {
                       </motion.div>
 
                       <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
+                        initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.2 }}
                         whileHover={{ y: -2 }}
+                        className="sm:col-span-2 lg:col-span-1"
                       >
                         <Card className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
-                          <CardHeader className="pb-3">
-                            <CardTitle className="flex items-center gap-2 text-slate-900 text-lg">
-                              <TrendingUp className="h-5 w-5 text-slate-700" />
+                          <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+                            <CardTitle className="flex items-center gap-2 text-slate-900 text-base sm:text-lg">
+                              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-slate-700 shrink-0" />
                               Pending Assignments
                             </CardTitle>
                           </CardHeader>
-                          <CardContent>
+                          <CardContent className="p-4 sm:p-6 pt-0">
                             <div className="text-center space-y-2">
-                              <div className="text-3xl font-bold text-slate-900">
+                              <div className="text-2xl sm:text-3xl font-bold text-slate-900">
                                 {pendingAssignmentsCount}
                               </div>
-                              <div className="text-sm text-gray-600">Due Soon</div>
+                              <div className="text-xs sm:text-sm text-slate-600">Due Soon</div>
                               <div className={cn(
                                 "text-xs font-medium",
-                                pendingAssignmentsCount > 0 ? "text-slate-700" : "text-slate-600"
+                                pendingAssignmentsCount > 0 ? "text-amber-700" : "text-emerald-700"
                               )}>
                                 {pendingAssignmentsCount > 0
                                   ? 'Action Required'
@@ -3078,11 +3146,11 @@ export default function StudentDashboard() {
                       transition={{ delay: 0.3 }}
                     >
                       <Card className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
-                        <CardHeader>
-                          <CardTitle>Grade Breakdown by Subject</CardTitle>
+                        <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+                          <CardTitle className="text-base sm:text-lg">Grade Breakdown by Subject</CardTitle>
                         </CardHeader>
-                        <CardContent>
-                          <div className="space-y-4">
+                        <CardContent className="p-4 sm:p-6 pt-2">
+                          <div className="space-y-3 sm:space-y-4">
                             {(() => {
                               // Group submissions by subject and calculate averages
                               const subjectGrades = submissions
@@ -3114,21 +3182,23 @@ export default function StudentDashboard() {
 
                               return subjectArray.length > 0 ? (
                                 subjectArray.map((item) => (
-                                  <div key={item.subject} className="flex items-center gap-4">
-                                    <div className="w-32 text-sm font-medium truncate">{item.subject}</div>
-                                    <div className="flex-1">
-                                      <div className="flex items-center justify-between mb-1">
-                                        <span className="text-sm text-gray-600">{item.assignments} graded</span>
-                                        <span className="text-sm font-medium">{item.grade} ({item.percentage}%)</span>
+                                  <div key={item.subject} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-3 rounded-lg border border-slate-100 bg-slate-50/60">
+                                    <div className="w-full sm:w-36 text-xs sm:text-sm font-semibold sm:font-medium text-slate-900 truncate">
+                                      {item.subject}
+                                    </div>
+                                    <div className="flex-1 w-full">
+                                      <div className="flex items-center justify-between mb-1.5 text-xs sm:text-sm">
+                                        <span className="text-slate-600">{item.assignments} graded</span>
+                                        <span className="font-semibold text-slate-900">{item.grade} ({item.percentage}%)</span>
                                       </div>
                                       <Progress value={clampPercentage(item.percentage)} className="h-2" />
                                     </div>
                                   </div>
                                 ))
                               ) : (
-                                <div className="text-center py-8 text-gray-500">
-                                  <Trophy className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                                  <p>No graded assignments yet</p>
+                                <div className="text-center py-8 text-slate-500">
+                                  <Trophy className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 text-slate-300" />
+                                  <p className="text-xs sm:text-sm">No graded assignments yet</p>
                                 </div>
                               );
                             })()}
@@ -3140,16 +3210,22 @@ export default function StudentDashboard() {
                 )}
 
                 {activeTab === "schedule" && (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-2xl font-semibold text-slate-900">Schedule & Events</h2>
+                  <div className="space-y-4 sm:space-y-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <h2 className="text-xl sm:text-2xl font-semibold text-slate-900">Schedule & Events</h2>
+                        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                          View your upcoming live classes and scheduled academic sessions
+                        </p>
+                      </div>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => fetchData()}
                         disabled={loading}
+                        className="self-start sm:self-auto text-xs sm:text-sm"
                       >
-                        <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
+                        <RefreshCw className={cn("h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2", loading && "animate-spin")} />
                         Refresh
                       </Button>
                     </div>
@@ -3161,16 +3237,21 @@ export default function StudentDashboard() {
                 {activeTab === "meeting-minutes" && <StudentMeetingMinutes />}
 
                 {activeTab === "progress" && (
-                  <div className="space-y-6">
-                    <h2 className="text-2xl font-semibold text-slate-900">Academic Progress</h2>
+                  <div className="space-y-4 sm:space-y-6">
+                    <div>
+                      <h2 className="text-xl sm:text-2xl font-semibold text-slate-900">Academic Progress</h2>
+                      <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                        Track your completion rate, assignments stats, and progress reports
+                      </p>
+                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                       <Card className="border border-slate-200 bg-white shadow-sm">
-                        <CardHeader>
-                          <CardTitle>Assignment Completion</CardTitle>
+                        <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+                          <CardTitle className="text-base sm:text-lg text-slate-900">Assignment Completion</CardTitle>
                         </CardHeader>
-                        <CardContent>
-                          <div className="space-y-4">
+                        <CardContent className="p-4 sm:p-6 pt-2">
+                          <div className="space-y-3 sm:space-y-4">
                             {/* Group assignments by subject */}
                             {(() => {
                               // Group assignments by subject
@@ -3187,12 +3268,19 @@ export default function StudentDashboard() {
                                 return acc;
                               }, {} as Record<string, { total: number, completed: number }>);
 
+                              const entries = Object.entries(bySubject);
+                              if (entries.length === 0) {
+                                return (
+                                  <p className="text-xs sm:text-sm text-slate-500 py-4 text-center">No assignments to track.</p>
+                                );
+                              }
+
                               // Convert to array for rendering
-                              return Object.entries(bySubject).map(([subject, counts]) => (
-                                <div key={subject} className="space-y-2">
-                                  <div className="flex justify-between">
-                                    <span className="text-sm font-medium">{subject}</span>
-                                    <span className="text-sm text-gray-600">
+                              return entries.map(([subject, counts]) => (
+                                <div key={subject} className="space-y-1.5 p-3 rounded-lg border border-slate-100 bg-slate-50/50">
+                                  <div className="flex justify-between items-center text-xs sm:text-sm">
+                                    <span className="font-semibold sm:font-medium text-slate-900 truncate max-w-[160px] sm:max-w-none">{subject}</span>
+                                    <span className="text-slate-600">
                                       {counts.completed}/{counts.total} completed
                                     </span>
                                   </div>
@@ -3200,7 +3288,7 @@ export default function StudentDashboard() {
                                     value={clampPercentage(counts.total > 0 ? (counts.completed / counts.total) * 100 : 0)}
                                     className="h-2"
                                   />
-                                  <div className="text-xs text-gray-500">
+                                  <div className="text-xs text-slate-500">
                                     {counts.total - counts.completed} remaining
                                   </div>
                                 </div>
@@ -3211,55 +3299,55 @@ export default function StudentDashboard() {
                       </Card>
 
                       <Card className="border border-slate-200 bg-white shadow-sm">
-                        <CardHeader>
-                          <CardTitle>Assignment Statistics</CardTitle>
+                        <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+                          <CardTitle className="text-base sm:text-lg text-slate-900">Assignment Statistics</CardTitle>
                         </CardHeader>
-                        <CardContent>
-                          <div className="space-y-6">
+                        <CardContent className="p-4 sm:p-6 pt-2">
+                          <div className="space-y-4 sm:space-y-6">
                             {/* Assignment counts */}
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="bg-slate-100 p-4 rounded-xl text-center">
-                                <div className="text-3xl font-bold text-slate-900">
+                            <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
+                              <div className="bg-slate-100/80 p-3 sm:p-4 rounded-xl text-center">
+                                <div className="text-2xl sm:text-3xl font-bold text-slate-900">
                                   {submissions.length}
                                 </div>
-                                <div className="text-sm text-gray-600">
+                                <div className="text-xs sm:text-sm text-slate-600">
                                   Submissions
                                 </div>
                               </div>
-                              <div className="bg-slate-100 p-4 rounded-xl text-center">
-                                <div className="text-3xl font-bold text-slate-900">
+                              <div className="bg-slate-100/80 p-3 sm:p-4 rounded-xl text-center">
+                                <div className="text-2xl sm:text-3xl font-bold text-slate-900">
                                   {submissions.filter(s => s.status === "graded").length}
                                 </div>
-                                <div className="text-sm text-gray-600">
+                                <div className="text-xs sm:text-sm text-slate-600">
                                   Completed
                                 </div>
                               </div>
-                              <div className="bg-slate-100 p-4 rounded-xl text-center">
-                                <div className="text-3xl font-bold text-slate-900">
+                              <div className="bg-slate-100/80 p-3 sm:p-4 rounded-xl text-center">
+                                <div className="text-2xl sm:text-3xl font-bold text-slate-900">
                                   {assignments.filter(a =>
                                     !submissions.some(s => s.assignmentId === a.id)
                                   ).length}
                                 </div>
-                                <div className="text-sm text-gray-600">
+                                <div className="text-xs sm:text-sm text-slate-600">
                                   Pending
                                 </div>
                               </div>
-                              <div className="bg-slate-100 p-4 rounded-xl text-center">
-                                <div className="text-3xl font-bold text-slate-900">
+                              <div className="bg-slate-100/80 p-3 sm:p-4 rounded-xl text-center">
+                                <div className="text-2xl sm:text-3xl font-bold text-slate-900">
                                   {assignments.length}
                                 </div>
-                                <div className="text-sm text-gray-600">
+                                <div className="text-xs sm:text-sm text-slate-600">
                                   Total Assignments
                                 </div>
                               </div>
                             </div>
 
                             {/* Activity summary */}
-                            <div className="text-center pt-2 border-t">
-                              <p className="text-sm font-medium text-gray-700 mb-1">
+                            <div className="text-center pt-2 border-t border-slate-100">
+                              <p className="text-xs sm:text-sm font-medium text-slate-700 mb-0.5">
                                 Recent Activity
                               </p>
-                              <p className="text-sm text-gray-600">
+                              <p className="text-xs sm:text-sm text-slate-600">
                                 {(() => {
                                   if (submissions.length === 0) return "No submissions yet";
                                   const latestSubmission = submissions.reduce<Submission | null>((latest, current) => {
@@ -3278,15 +3366,15 @@ export default function StudentDashboard() {
                       </Card>
                     </div>
 
-                    <div className="mt-8">
+                    <div className="mt-6 sm:mt-8">
                       <Card className="border border-slate-200 bg-white shadow-sm">
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <FileText className="h-6 w-6 text-slate-700" />
+                        <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+                          <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-slate-900">
+                            <FileText className="h-5 w-5 text-slate-700 shrink-0" />
                             Evaluations & Progress Reports
                           </CardTitle>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="p-4 sm:p-6 pt-2">
                           {loading ? (
                             <div className="space-y-3 py-2">
                               {Array.from({ length: 3 }).map((_, index) => (
@@ -3299,7 +3387,7 @@ export default function StudentDashboard() {
                             </div>
                           ) : (
                             <>
-                              <div className="mb-4 text-sm text-gray-600">
+                              <div className="mb-4 text-xs sm:text-sm text-slate-600">
                                 {progressReports.length > 0 
                                   ? `Showing ${progressReports.length} progress report${progressReports.length !== 1 ? 's' : ''}`
                                   : 'No progress reports published yet'}
@@ -3314,31 +3402,31 @@ export default function StudentDashboard() {
                 )}
 
                 {activeTab === "resources" && (
-                  <Card className="border border-slate-200 bg-white shadow-sm">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg text-slate-900">Learning Resources</CardTitle>
-                      <CardDescription>Personal and general resources shared by your teachers.</CardDescription>
+                  <Card className="border border-slate-200 bg-white shadow-sm overflow-hidden">
+                    <CardHeader className="pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
+                      <CardTitle className="text-lg sm:text-xl text-slate-900 font-semibold">Learning Resources</CardTitle>
+                      <CardDescription className="text-xs sm:text-sm text-slate-500">Personal and general resources shared by your teachers.</CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="px-3 sm:px-6 pb-6">
                       <ResourceLibrary studentEmail={studentEmail} />
                     </CardContent>
                   </Card>
                 )}
 
                 {activeTab === "messages" && (
-                  <div className="space-y-6">
-                    <div className="flex justify-between items-center mb-4">
-                      <h2 className="text-2xl font-semibold text-slate-900">Messages</h2>
+                  <div className="space-y-4 sm:space-y-6">
+                    <div className="flex justify-between items-center mb-2 sm:mb-4">
+                      <h2 className="text-xl sm:text-2xl font-semibold text-slate-900">Messages</h2>
                     </div>
 
                     {/* Import and use our MentorMessages component */}
                     {student && (
-                      <Card className="border border-slate-200 bg-white shadow-sm">
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-lg text-slate-900">Mentor Inbox</CardTitle>
-                          <CardDescription>Receive guidance and reply to your instructors.</CardDescription>
+                      <Card className="border border-slate-200 bg-white shadow-sm overflow-hidden">
+                        <CardHeader className="pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
+                          <CardTitle className="text-lg sm:text-xl text-slate-900 font-semibold">Mentor Inbox</CardTitle>
+                          <CardDescription className="text-xs sm:text-sm text-slate-500">Receive guidance and reply to your instructors.</CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="px-3 sm:px-6 pb-6">
                           <MentorMessages
                             studentId={student.id}
                             studentEmail={student.email}
@@ -3371,44 +3459,44 @@ export default function StudentDashboard() {
           <SheetDescription className="sr-only">Detailed view and submission status for this assignment</SheetDescription>
           {!detailAssignment ? null : (
             <div className="flex h-full flex-col">
-              <SheetHeader className="border-b border-slate-200 px-5 py-4">
-                <SheetTitle className="text-slate-900">{detailAssignment.title}</SheetTitle>
-                <SheetDescription className="text-slate-600">
+              <SheetHeader className="border-b border-slate-200 px-4 sm:px-6 py-4">
+                <SheetTitle className="text-base sm:text-lg font-semibold text-slate-900 break-words">{detailAssignment.title}</SheetTitle>
+                <SheetDescription className="text-xs sm:text-sm text-slate-600">
                   {detailAssignment.subject} • Due {formatDate(new Date(detailAssignment.dueDate), getUserTimezone())}
                 </SheetDescription>
               </SheetHeader>
 
-              <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-sm font-medium text-slate-800">Assignment Info</p>
-                  <p className="mt-1 text-sm text-slate-600">
+              <div className="flex-1 space-y-4 overflow-y-auto px-4 sm:px-6 py-4">
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 sm:p-4">
+                  <p className="text-xs sm:text-sm font-semibold text-slate-800">Assignment Info</p>
+                  <p className="mt-1 text-xs sm:text-sm text-slate-600 leading-relaxed">
                     Program: <span className="font-medium text-slate-700">{detailAssignment.program}</span> • Grade:
                     <span className="font-medium text-slate-700"> {detailAssignment.grade || "N/A"}</span> • Total points:
                     <span className="font-medium text-slate-700"> {detailAssignment.totalPoints}</span>
                   </p>
                   {detailDescription && (
-                    <p className="mt-2 text-sm text-slate-700">{detailDescription}</p>
+                    <p className="mt-2 text-xs sm:text-sm text-slate-700 break-words leading-relaxed">{detailDescription}</p>
                   )}
                   {detailAssignment.instructions && (
-                    <p className="mt-2 text-sm text-slate-700">
-                      Instructions: {detailAssignment.instructions}
+                    <p className="mt-2 text-xs sm:text-sm text-slate-700 break-words leading-relaxed bg-white/70 p-2.5 rounded border border-slate-200">
+                      <span className="font-semibold text-slate-800">Instructions:</span> {detailAssignment.instructions}
                     </p>
                   )}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                   {detailSubmission ? getStatusBadge(detailSubmission.status) : getStatusBadge("pending")}
                   {detailDeadlinePassed ? (
                     detailAssignment.allowLateSubmission ? (
-                      <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">Late attempts allowed</Badge>
+                      <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 text-xs">Late attempts allowed</Badge>
                     ) : (
-                      <Badge variant="destructive">Deadline passed</Badge>
+                      <Badge variant="destructive" className="text-xs">Deadline passed</Badge>
                     )
                   ) : (
-                    <Badge variant="outline" className="border-slate-300 bg-slate-100 text-slate-700">Accepting submissions</Badge>
+                    <Badge variant="outline" className="border-slate-300 bg-slate-100 text-slate-700 text-xs">Accepting submissions</Badge>
                   )}
                   {detailHasMcqResources && (
-                    <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
+                    <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 text-xs">
                       {detailMcqResources.length === 1
                         ? `${getMcqAssessmentTypeLabel(detailPrimaryMcqType)} ready`
                         : "MCQ + PDF resources ready"}
@@ -3419,17 +3507,19 @@ export default function StudentDashboard() {
                 <div className="flex flex-wrap gap-2">
                   {!detailHasMcqResources && !detailSubmission && (!detailDeadlinePassed || Boolean(detailAssignment.allowLateSubmission)) && (
                     <Button
-                      className="bg-brand-blue text-white hover:bg-brand-blue/90"
+                      size="sm"
+                      className="bg-brand-blue text-white hover:bg-brand-blue/90 w-full sm:w-auto text-xs sm:text-sm"
                       onClick={() => openAssignmentDialog(detailAssignment, "submit")}
                     >
-                      <Send className="h-4 w-4 mr-2" />
+                      <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                       Submit Assignment
                     </Button>
                   )}
                   {!detailHasMcqResources && detailCanResubmit && detailSubmission && (
                     <Button
+                      size="sm"
                       variant="outline"
-                      className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                      className="border-slate-300 text-slate-700 hover:bg-slate-50 w-full sm:w-auto text-xs sm:text-sm"
                       onClick={() =>
                         openAssignmentDialog(detailAssignment, "resubmit", {
                           initialText: detailSubmission.content || "",
@@ -3437,26 +3527,27 @@ export default function StudentDashboard() {
                         })
                       }
                     >
-                      <RefreshCw className="h-4 w-4 mr-2" />
+                      <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                       Resubmit
                     </Button>
                   )}
                   {detailSingleMcqResource && detailCanStartMcq && (
                     <Button
+                      size="sm"
                       variant="outline"
-                      className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                      className="border-slate-300 text-slate-700 hover:bg-slate-50 w-full sm:w-auto text-xs sm:text-sm"
                       onClick={() => loadMcqTemplateForAssignment(detailAssignment, detailSingleMcqResource.id)}
                     >
-                      <Target className="h-4 w-4 mr-2" />
+                      <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                       {getMcqActionLabelForResource(detailPrimaryMcqType, detailSubmission, detailSingleMcqResource.id)}
                     </Button>
                   )}
                 </div>
 
                 <div>
-                  <p className="mb-2 text-sm font-semibold text-slate-900">Linked Resources</p>
+                  <p className="mb-2 text-xs sm:text-sm font-semibold text-slate-900">Linked Resources</p>
                   {(detailAssignment.resources || []).length === 0 ? (
-                    <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+                    <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-xs sm:text-sm text-slate-500">
                       No resources attached to this assignment.
                     </div>
                   ) : (
@@ -3470,22 +3561,22 @@ export default function StudentDashboard() {
                         const showMcqAttemptButton = detailMcqResources.length > 1;
                         const resourceSummary = getStudentResourceSummary(resource);
                         return (
-                        <div key={resource.id} className="rounded-lg border border-slate-200 bg-white p-3">
-                          <div className="flex items-start justify-between gap-2">
+                        <div key={resource.id} className="rounded-lg border border-slate-200 bg-white p-3 sm:p-4">
+                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                             <div className="min-w-0">
-                              <p className="truncate text-sm font-semibold text-slate-900">{resource.title}</p>
+                              <p className="truncate text-xs sm:text-sm font-semibold text-slate-900">{resource.title}</p>
                               <p className="text-xs text-slate-500">
                                 {resource.type === "mcq_template" ? "MCQ + PDF" : resource.type}
                               </p>
                             </div>
-                            <div className="flex gap-1">
+                            <div className="flex flex-wrap gap-1">
                               {resource.isRequired && (
-                                <Badge variant="outline" className="border-rose-200 bg-rose-50 text-rose-700">
+                                <Badge variant="outline" className="border-rose-200 bg-rose-50 text-rose-700 text-xs">
                                   Required
                                 </Badge>
                               )}
                               {resource.type === "mcq_template" && (
-                                <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
+                                <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 text-xs">
                                   MCQ + PDF • {resourceTypeLabel}
                                 </Badge>
                               )}
@@ -3493,7 +3584,7 @@ export default function StudentDashboard() {
                           </div>
 
                           {resourceSummary && (
-                            <p className="mt-2 text-xs text-slate-600">{resourceSummary}</p>
+                            <p className="mt-2 text-xs text-slate-600 break-words">{resourceSummary}</p>
                           )}
 
                           <div className="mt-3 flex flex-wrap gap-2">
@@ -3501,10 +3592,10 @@ export default function StudentDashboard() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                                className="border-slate-300 text-slate-700 hover:bg-slate-50 text-xs sm:text-sm"
                                 onClick={() => window.open(resource.fileUrl || "", "_blank")}
                               >
-                                <FileText className="h-4 w-4 mr-1" />
+                                <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
                                 Open PDF
                               </Button>
                             )}
@@ -3513,10 +3604,10 @@ export default function StudentDashboard() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                                className="border-slate-300 text-slate-700 hover:bg-slate-50 text-xs sm:text-sm"
                                 onClick={() => window.open(resource.linkUrl || "", "_blank")}
                               >
-                                <ExternalLink className="h-4 w-4 mr-1" />
+                                <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
                                 Open Link
                               </Button>
                             )}
@@ -3524,10 +3615,10 @@ export default function StudentDashboard() {
                             {resource.type === "mcq_template" && showMcqAttemptButton && detailCanStartMcq && (
                               <Button
                                 size="sm"
-                                className="bg-slate-900 text-white hover:bg-slate-800"
+                                className="bg-slate-900 text-white hover:bg-slate-800 text-xs sm:text-sm"
                                 onClick={() => loadMcqTemplateForAssignment(detailAssignment, resource.id)}
                               >
-                                <Target className="h-4 w-4 mr-1" />
+                                <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
                                 {getMcqActionLabelForResource(resourceAssessmentType, detailSubmission, resource.id)}
                               </Button>
                             )}

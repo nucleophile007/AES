@@ -535,42 +535,44 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
       {/* Header with Search and Filters */}
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold mb-1">Resource Library</h2>
-          <p className="text-gray-600">Access study materials, documents, and resources</p>
+          <h2 className="text-xl sm:text-2xl font-bold mb-1 text-slate-900">Resource Library</h2>
+          <p className="text-xs sm:text-sm text-gray-600">Access study materials, documents, and resources</p>
         </div>
         
         <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
-          <div className="relative">
+          <div className="relative flex-1 sm:flex-initial">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Search resources..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-full sm:w-64"
+              className="pl-10 w-full sm:w-64 text-sm"
             />
           </div>
           
-          <select
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-            className="px-3 py-2 border rounded-md bg-white"
-          >
-            <option value="all">All Types</option>
-            {uniqueTypes.map(type => (
-              <option key={type} value={type}>{getResourceTypeLabel(type)}</option>
-            ))}
-          </select>
-          
-          <select
-            value={selectedSubject}
-            onChange={(e) => setSelectedSubject(e.target.value)}
-            className="px-3 py-2 border rounded-md bg-white"
-          >
-            <option value="all">All Subjects</option>
-            {uniqueSubjects.map(subject => (
-              <option key={subject} value={subject}>{subject}</option>
-            ))}
-          </select>
+          <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
+            <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="px-3 py-2 border rounded-md bg-white text-xs sm:text-sm w-full sm:w-auto"
+            >
+              <option value="all">All Types</option>
+              {uniqueTypes.map(type => (
+                <option key={type} value={type}>{getResourceTypeLabel(type)}</option>
+              ))}
+            </select>
+            
+            <select
+              value={selectedSubject}
+              onChange={(e) => setSelectedSubject(e.target.value)}
+              className="px-3 py-2 border rounded-md bg-white text-xs sm:text-sm w-full sm:w-auto"
+            >
+              <option value="all">All Subjects</option>
+              {uniqueSubjects.map(subject => (
+                <option key={subject} value={subject}>{subject}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -589,16 +591,24 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
 
       {/* Resource Categories */}
       <Tabs defaultValue="personal" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="personal">Personal Resources ({studentSpecificResources.length})</TabsTrigger>
-          <TabsTrigger value="general">General Resources ({generalResources.length})</TabsTrigger>
-          <TabsTrigger value="submissions">My Submissions ({submissions.length})</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto pb-1">
+          <TabsList className="inline-flex h-auto p-1 bg-slate-100 flex-wrap sm:flex-nowrap gap-1 w-full sm:w-auto min-w-full sm:min-w-0">
+            <TabsTrigger value="personal" className="text-xs sm:text-sm py-1.5 px-3 flex-1 sm:flex-initial">
+              Personal Resources ({studentSpecificResources.length})
+            </TabsTrigger>
+            <TabsTrigger value="general" className="text-xs sm:text-sm py-1.5 px-3 flex-1 sm:flex-initial">
+              General Resources ({generalResources.length})
+            </TabsTrigger>
+            <TabsTrigger value="submissions" className="text-xs sm:text-sm py-1.5 px-3 flex-1 sm:flex-initial">
+              My Submissions ({submissions.length})
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Personal Resources */}
         <TabsContent value="personal" className="space-y-4">
           {studentSpecificResources.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-gray-500 text-sm">
               No personal resources assigned.
             </div>
           ) : (
@@ -607,26 +617,27 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                 const resourceSummary = getResourceSummary(resource);
                 const isMcqTemplate = resource.type === "mcq_template";
                 return (
-                <Card key={resource.id} className="hover:shadow-lg transition-shadow border-blue-200">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-2">
-                        {getResourceIcon(resource.type)}
-                        <CardTitle className="text-lg leading-tight">{resource.title}</CardTitle>
+                <Card key={resource.id} className="hover:shadow-lg transition-shadow border-blue-200 flex flex-col justify-between">
+                  <CardHeader className="pb-3 p-4 sm:p-6">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start gap-2 min-w-0">
+                        <div className="mt-0.5 shrink-0">
+                          {getResourceIcon(resource.type)}
+                        </div>
+                        <CardTitle className="text-base sm:text-lg leading-tight break-words">{resource.title}</CardTitle>
                       </div>
-                      <Badge variant="default" className="bg-blue-600 text-xs">
+                      <Badge variant="default" className="bg-blue-600 text-xs shrink-0">
                         Personal
                       </Badge>
                     </div>
                     
                     {resourceSummary && (
-                      <p className="text-sm text-gray-600 mt-2">{resourceSummary}</p>
+                      <p className="text-xs sm:text-sm text-gray-600 mt-2 line-clamp-3">{resourceSummary}</p>
                     )}
                   </CardHeader>
                   
-                  <CardContent className="space-y-3">
-                    {/* Similar content structure as assignment resources */}
-                    <div className="flex flex-wrap gap-2">
+                  <CardContent className="space-y-3 p-4 sm:p-6 pt-0">
+                    <div className="flex flex-wrap gap-1.5">
                       <Badge variant="outline" className="text-xs">
                         {resource.subject}
                       </Badge>
@@ -641,7 +652,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                       </div>
                     )}
                     
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2 pt-1">
                       {resource.fileUrl && !isMcqTemplate && (
                         <Button
                           size="sm"
@@ -650,7 +661,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                             markAsViewed(resource.id);
                             window.open(resource.fileUrl, '_blank');
                           }}
-                          className="flex-1"
+                          className="flex-1 w-full text-xs sm:text-sm"
                         >
                           <Download className="h-4 w-4 mr-1" />
                           Download
@@ -665,7 +676,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                             markAsViewed(resource.id);
                             window.open(resource.linkUrl, '_blank');
                           }}
-                          className="flex-1"
+                          className="flex-1 w-full text-xs sm:text-sm"
                         >
                           <ExternalLink className="h-4 w-4 mr-1" />
                           Open Link
@@ -673,7 +684,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                       )}
                     </div>
                     
-                    <div className="flex items-center justify-between text-xs text-gray-500">
+                    <div className="flex items-center justify-between text-xs text-gray-500 pt-1 border-t border-slate-100">
                       <div>
                         Assigned: {new Date(resource.assignedAt || resource.createdAt).toLocaleDateString()}
                       </div>
@@ -681,12 +692,12 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                         {resource.viewedAt ? (
                           <>
                             <CheckCircle className="h-3 w-3 text-green-500" />
-                            Viewed
+                            <span>Viewed</span>
                           </>
                         ) : (
                           <>
-                            <Clock className="h-3 w-3" />
-                            Not viewed
+                            <Clock className="h-3 w-3 text-amber-500" />
+                            <span>Not viewed</span>
                           </>
                         )}
                       </div>
@@ -701,7 +712,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
         {/* General Resources */}
         <TabsContent value="general" className="space-y-4">
           {generalResources.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-gray-500 text-sm">
               No general resources available.
             </div>
           ) : (
@@ -710,20 +721,22 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                 const resourceSummary = getResourceSummary(resource);
                 const isMcqTemplate = resource.type === "mcq_template";
                 return (
-                <Card key={resource.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center gap-2">
-                      {getResourceIcon(resource.type)}
-                      <CardTitle className="text-lg leading-tight">{resource.title}</CardTitle>
+                <Card key={resource.id} className="hover:shadow-lg transition-shadow flex flex-col justify-between">
+                  <CardHeader className="pb-3 p-4 sm:p-6">
+                    <div className="flex items-start gap-2">
+                      <div className="mt-0.5 shrink-0">
+                        {getResourceIcon(resource.type)}
+                      </div>
+                      <CardTitle className="text-base sm:text-lg leading-tight break-words">{resource.title}</CardTitle>
                     </div>
                     
                     {resourceSummary && (
-                      <p className="text-sm text-gray-600 mt-2">{resourceSummary}</p>
+                      <p className="text-xs sm:text-sm text-gray-600 mt-2 line-clamp-3">{resourceSummary}</p>
                     )}
                   </CardHeader>
                   
-                  <CardContent className="space-y-3">
-                    <div className="flex flex-wrap gap-2">
+                  <CardContent className="space-y-3 p-4 sm:p-6 pt-0">
+                    <div className="flex flex-wrap gap-1.5">
                       <Badge variant="outline" className="text-xs">
                         {resource.subject}
                       </Badge>
@@ -741,7 +754,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                       </div>
                     )}
                     
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2 pt-1">
                       {resource.fileUrl && !isMcqTemplate && (
                         <Button
                           size="sm"
@@ -750,7 +763,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                             markAsViewed(resource.id);
                             window.open(resource.fileUrl, '_blank');
                           }}
-                          className="flex-1"
+                          className="flex-1 w-full text-xs sm:text-sm"
                         >
                           <Download className="h-4 w-4 mr-1" />
                           Download
@@ -765,7 +778,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                             markAsViewed(resource.id);
                             window.open(resource.linkUrl, '_blank');
                           }}
-                          className="flex-1"
+                          className="flex-1 w-full text-xs sm:text-sm"
                         >
                           <ExternalLink className="h-4 w-4 mr-1" />
                           Open Link
@@ -781,68 +794,72 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
 
         {/* Student Submissions */}
         <TabsContent value="submissions" className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
-              <h3 className="text-lg font-semibold">Submit to Teachers</h3>
-              <p className="text-sm text-gray-600">Share your work and get feedback from your teachers</p>
+              <h3 className="text-base sm:text-lg font-semibold text-slate-900">Submit to Teachers</h3>
+              <p className="text-xs sm:text-sm text-gray-600">Share your work and get feedback from your teachers</p>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={fetchTeachersAndSubmissions} disabled={submissionsLoading}>
-                <RefreshCw className={`h-4 w-4 mr-2 ${submissionsLoading ? "animate-spin" : ""}`} />
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+              <Button variant="outline" size="sm" onClick={fetchTeachersAndSubmissions} disabled={submissionsLoading} className="text-xs sm:text-sm">
+                <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${submissionsLoading ? "animate-spin" : ""}`} />
                 Refresh
               </Button>
             <Dialog open={showSubmissionDialog} onOpenChange={handleSubmissionDialogOpenChange}>
               <DialogTrigger asChild>
-                <Button onClick={openSubmissionDialog}>
-                  <Plus className="h-4 w-4 mr-2" />
+                <Button size="sm" onClick={openSubmissionDialog} className="text-xs sm:text-sm">
+                  <Plus className="h-3.5 w-3.5 mr-1.5" />
                   New Submission
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-xl">
                 <DialogHeader>
-                  <DialogTitle>Submit Work to Teachers</DialogTitle>
+                  <DialogTitle className="text-lg sm:text-xl">Submit Work to Teachers</DialogTitle>
                 </DialogHeader>
                 
-                <div className="space-y-4">
+                <div className="space-y-4 py-2">
                   <div className="space-y-2">
-                    <Label htmlFor="title">Title *</Label>
+                    <Label htmlFor="title" className="text-xs sm:text-sm font-medium">Title *</Label>
                     <Input
                       id="title"
                       placeholder="Enter submission title"
                       value={submissionTitle}
                       onChange={(e) => setSubmissionTitle(e.target.value)}
+                      className="text-sm"
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
+                    <Label htmlFor="description" className="text-xs sm:text-sm font-medium">Description</Label>
                     <Input
                       id="description"
                       placeholder="Brief description (optional)"
                       value={submissionDescription}
                       onChange={(e) => setSubmissionDescription(e.target.value)}
+                      className="text-sm"
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="content">Content</Label>
+                    <Label htmlFor="content" className="text-xs sm:text-sm font-medium">Content</Label>
                     <Textarea
                       id="content"
                       placeholder="Write your content here..."
                       value={submissionContent}
                       onChange={(e) => setSubmissionContent(e.target.value)}
                       rows={4}
+                      className="text-sm"
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="file">Attach File (Optional)</Label>
+                    <Label htmlFor="file" className="text-xs sm:text-sm font-medium">Attach File (Optional)</Label>
                     <Input
                       id="file"
                       type="file"
                       accept=".pdf,.doc,.docx,.txt,.jpg,.png,.ppt,.pptx,.xlsx"
                       onChange={(e) => setSubmissionFile(e.target.files?.[0] || null)}
+                      className="text-xs sm:text-sm"
                     />
                     <p className="text-xs text-gray-500">
                       Supported: PDF, DOC, DOCX, TXT, JPG, PNG, PPT, PPTX, XLSX (Max 10MB)
@@ -850,8 +867,8 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                   </div>
                   
                   <div className="space-y-2">
-                    <Label>Select Teachers * (At least one required)</Label>
-                    <div className="border rounded-lg p-3 space-y-2 max-h-40 overflow-y-auto">
+                    <Label className="text-xs sm:text-sm font-medium">Select Teachers * (At least one required)</Label>
+                    <div className="border rounded-lg p-3 space-y-2 max-h-40 overflow-y-auto bg-slate-50">
                       {teachers.map((teacher) => (
                         <div key={teacher.id} className="flex items-center space-x-2">
                           <Checkbox
@@ -863,7 +880,7 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                           />
                           <Label 
                             htmlFor={`teacher-${teacher.id}`}
-                            className="text-sm cursor-pointer flex-1"
+                            className="text-xs sm:text-sm cursor-pointer flex-1"
                           >
                             {teacher.name}
                             <span className="text-gray-500 ml-1">({teacher.program})</span>
@@ -871,16 +888,17 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                         </div>
                       ))}
                       {teachers.length === 0 && (
-                        <p className="text-sm text-gray-500">No teachers found.</p>
+                        <p className="text-xs sm:text-sm text-gray-500">No teachers found.</p>
                       )}
                     </div>
                   </div>
                 </div>
                 
-                <DialogFooter>
+                <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-2">
                   <Button
                     onClick={handleSubmission}
                     disabled={isSubmitting || !submissionTitle.trim() || selectedTeachers.length === 0}
+                    className="w-full sm:w-auto"
                   >
                     {isSubmitting ? (
                       <>
@@ -918,11 +936,11 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
             <div className="space-y-4 py-2">
               {Array.from({ length: 3 }).map((_, index) => (
                 <Card key={`resource-submissions-loading-${index}`}>
-                  <CardHeader className="space-y-3">
+                  <CardHeader className="space-y-3 p-4 sm:p-6">
                     <ShimmerSkeleton className="h-5 w-1/2" />
                     <ShimmerSkeleton className="h-4 w-1/3" />
                   </CardHeader>
-                  <CardContent className="space-y-3">
+                  <CardContent className="space-y-3 p-4 sm:p-6 pt-0">
                     <ShimmerSkeleton className="h-4 w-full" />
                     <ShimmerSkeleton className="h-4 w-5/6" />
                     <ShimmerSkeleton className="h-20 w-full rounded-lg" />
@@ -931,13 +949,13 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
               ))}
             </div>
           ) : submissions.length === 0 ? (
-            <div className="text-center py-12">
-              <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Submissions Yet</h3>
-              <p className="text-gray-600 mb-4">
+            <div className="text-center py-12 px-4">
+              <Upload className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No Submissions Yet</h3>
+              <p className="text-xs sm:text-sm text-gray-600 mb-4 max-w-md mx-auto">
                 Start sharing your work with teachers to get feedback and guidance.
               </p>
-              <Button onClick={openSubmissionDialog}>
+              <Button onClick={openSubmissionDialog} className="text-xs sm:text-sm">
                 <Plus className="h-4 w-4 mr-2" />
                 Create First Submission
               </Button>
@@ -946,14 +964,14 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
             <div className="space-y-4">
               {submissions.map((submission) => (
                 <Card key={submission.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
+                  <CardHeader className="pb-3 p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                       <div>
-                        <CardTitle className="text-lg">{submission.title}</CardTitle>
+                        <CardTitle className="text-base sm:text-lg">{submission.title}</CardTitle>
                         {submission.description && (
-                          <p className="text-sm text-gray-600 mt-1">{submission.description}</p>
+                          <p className="text-xs sm:text-sm text-gray-600 mt-1">{submission.description}</p>
                         )}
-                        <div className="flex items-center gap-4 text-xs text-gray-500 mt-2">
+                        <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-gray-500 mt-2">
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             Submitted {new Date(submission.submittedAt).toLocaleDateString()}
@@ -964,47 +982,50 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                           </span>
                         </div>
                       </div>
-                      <Badge variant={submission.teacherRemarks.length > 0 ? 'default' : 'secondary'}>
+                      <Badge variant={submission.teacherRemarks.length > 0 ? 'default' : 'secondary'} className="self-start sm:self-auto text-xs">
                         {submission.teacherRemarks.length > 0 ? 'Has Feedback' : 'Pending Review'}
                       </Badge>
                     </div>
                   </CardHeader>
                   
-                  <CardContent className="space-y-3">
+                  <CardContent className="space-y-3 p-4 sm:p-6 pt-0">
                     {/* Content Preview */}
                     {submission.content && (
                       <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-sm text-gray-800 line-clamp-3">{submission.content}</p>
+                        <p className="text-xs sm:text-sm text-gray-800 line-clamp-3">{submission.content}</p>
                       </div>
                     )}
                     
                     {/* File Attachment */}
                     {submission.fileUrl && submission.fileName && (
-                      <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                        <FileText className="h-5 w-5 text-blue-600" />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-blue-900">{submission.fileName}</p>
-                          {submission.fileSize && (
-                            <p className="text-xs text-blue-700">
-                              {(submission.fileSize / 1024 / 1024).toFixed(2)} MB
-                            </p>
-                          )}
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-blue-50 rounded-lg">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <FileText className="h-5 w-5 text-blue-600 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs sm:text-sm font-medium text-blue-900 truncate">{submission.fileName}</p>
+                            {submission.fileSize && (
+                              <p className="text-xs text-blue-700">
+                                {(submission.fileSize / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            )}
+                          </div>
                         </div>
                         <Button 
                           variant="outline" 
                           size="sm"
                           onClick={() => window.open(submission.fileUrl, '_blank')}
+                          className="w-full sm:w-auto text-xs sm:text-sm"
                         >
-                          <ExternalLink className="h-4 w-4 mr-1" />
-                          Open
+                          <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                          Open File
                         </Button>
                       </div>
                     )}
                     
                     {/* Teachers */}
                     <div>
-                      <p className="text-sm font-medium text-gray-700 mb-2">Sent to:</p>
-                      <div className="flex flex-wrap gap-2">
+                      <p className="text-xs sm:text-sm font-medium text-gray-700 mb-2">Sent to:</p>
+                      <div className="flex flex-wrap gap-1.5">
                         {submission.teachers.map((teacher) => (
                           <Badge key={teacher.id} variant="outline" className="text-xs">
                             {teacher.name}
@@ -1015,17 +1036,17 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
                     
                     {/* Teacher Remarks */}
                     {submission.teacherRemarks.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-gray-700">Teacher Feedback:</p>
+                      <div className="space-y-2 pt-2">
+                        <p className="text-xs sm:text-sm font-medium text-gray-700">Teacher Feedback:</p>
                         {submission.teacherRemarks.map((remark) => (
                           <div key={remark.id} className="bg-green-50 p-3 rounded-lg border-l-4 border-green-200">
-                            <div className="flex items-start justify-between mb-2">
-                              <p className="text-sm font-medium text-green-900">{remark.teacher.name}</p>
-                              <p className="text-xs text-green-600">
+                            <div className="flex items-start justify-between mb-1 gap-2">
+                              <p className="text-xs sm:text-sm font-medium text-green-900">{remark.teacher.name}</p>
+                              <p className="text-xs text-green-600 shrink-0">
                                 {new Date(remark.createdAt).toLocaleDateString()}
                               </p>
                             </div>
-                            <p className="text-sm text-green-800">{remark.remark}</p>
+                            <p className="text-xs sm:text-sm text-green-800">{remark.remark}</p>
                           </div>
                         ))}
                       </div>
@@ -1039,16 +1060,16 @@ export default function ResourceLibrary({ studentEmail }: ResourceLibraryProps) 
       </Tabs>
 
       <AlertDialog open={isDiscardDialogOpen} onOpenChange={setIsDiscardDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-[95vw] sm:max-w-md p-4 sm:p-6 rounded-xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Discard submission draft?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-base sm:text-lg">Discard submission draft?</AlertDialogTitle>
+            <AlertDialogDescription className="text-xs sm:text-sm">
               You have unsaved changes in this submission. Discarding will remove your draft.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep Editing</AlertDialogCancel>
-            <AlertDialogAction onClick={discardSubmissionChanges}>
+          <AlertDialogFooter className="flex flex-col-reverse sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto">Keep Editing</AlertDialogCancel>
+            <AlertDialogAction onClick={discardSubmissionChanges} className="w-full sm:w-auto">
               Discard
             </AlertDialogAction>
           </AlertDialogFooter>

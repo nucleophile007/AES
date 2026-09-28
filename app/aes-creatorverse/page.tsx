@@ -39,10 +39,10 @@ const launchTracks = [
     glow: "shadow-cyan-500/20",
     color: "cyan" as const,
     points: [
-      { title: "Research Assistantships", desc: "Gain hands-on research experience by collaborating directly with faculty and industry mentors on real-world challenges." },
-      { title: "Startup Internship", desc: "Work alongside innovative startups to tackle some of the most pressing technological problems of today." },
-      { title: "Robotics, AI & Data Science", desc: "Build practical solutions, analyze complex datasets, and deliver usable results for real-world applications." },
-      { title: "Technical Workshops", desc: "Participate in interactive sessions to learn from and network with leading experts in specialized technical domains." },
+      { title: "Research Assistantships", desc: "Gain hands-on research experience by collaborating directly with faculty and industry mentors on real-world challenges.", icon: "🔬" },
+      { title: "Startup Internship", desc: "Work alongside innovative startups to tackle some of the most pressing technological problems of today.", icon: "🚀" },
+      { title: "Robotics, AI & Data Science", desc: "Build practical solutions, analyze complex datasets, and deliver usable results for real-world applications.", icon: "🤖" },
+      { title: "Technical Workshops", desc: "Participate in interactive sessions to learn from and network with leading experts in specialized technical domains.", icon: "💻" },
     ],
   },
   {
@@ -53,10 +53,10 @@ const launchTracks = [
     glow: "shadow-emerald-500/20",
     color: "emerald" as const,
     points: [
-      { title: "Clinical & Hospital Shadowing", desc: "Shadow practicing physicians to observe patient care, clinical decision-making, and real-time medical practice." },
-      { title: "Community Health Camps", desc: "Organize and lead community health camps to directly address public health needs and create local impact." },
-      { title: "Biomedical Research", desc: "Conduct hands-on laboratory research to investigate complex medical challenges and work toward publication." },
-      { title: "Medical Case Writing", desc: "Collaborate with specialized doctors to analyze real patient cases and author published clinical case studies." },
+      { title: "Clinical & Hospital Shadowing", desc: "Shadow practicing physicians to observe patient care, clinical decision-making, and real-time medical practice.", icon: "🏥" },
+      { title: "Community Health Camps", desc: "Organize and lead community health camps to directly address public health needs and create local impact.", icon: "🩺" },
+      { title: "Biomedical Research", desc: "Conduct hands-on laboratory research to investigate complex medical challenges and work toward publication.", icon: "🧬" },
+      { title: "Medical Case Writing", desc: "Collaborate with specialized doctors to analyze real patient cases and author published clinical case studies.", icon: "📋" },
     ],
   },
   {
@@ -67,10 +67,10 @@ const launchTracks = [
     glow: "shadow-amber-500/20",
     color: "amber" as const,
     points: [
-      { title: "Business Consulting Projects", desc: "Partner with real companies to analyze market dynamics, streamline operations, and deliver actionable strategic solutions." },
-      { title: "Model UN & Policy Labs", desc: "Draft real-world policy briefs, negotiate critical global issues, and master modern diplomatic and legislative strategy." },
-      { title: "Moot Court & Legal Research", desc: "Prepare compelling briefs and argue simulated courtroom cases alongside experienced legal professionals and scholars." },
-      { title: "Entrepreneurship Incubation", desc: "Pitch original venture concepts, build minimum viable products, and receive direct mentorship from seasoned founders." },
+      { title: "Business Consulting Projects", desc: "Partner with real companies to analyze market dynamics, streamline operations, and deliver actionable strategic solutions.", icon: "📊" },
+      { title: "Model UN & Policy Labs", desc: "Draft real-world policy briefs, negotiate critical global issues, and master modern diplomatic and legislative strategy.", icon: "🌐" },
+      { title: "Moot Court & Legal Research", desc: "Prepare compelling briefs and argue simulated courtroom cases alongside experienced legal professionals and scholars.", icon: "⚖️" },
+      { title: "Entrepreneurship Incubation", desc: "Pitch original venture concepts, build minimum viable products, and receive direct mentorship from seasoned founders.", icon: "💡" },
     ],
   },
 ];
@@ -301,7 +301,7 @@ export default function AESCreatorversePage() {
                   {track.points.slice(0, 4).map((point) => (
                     <div key={point.title} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10">
                       <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${track.title === "Engineering and Sciences" ? "bg-cyan-500/20" : track.title === "Pre-Med" ? "bg-emerald-500/20" : "bg-amber-500/20"}`}>
-                        {track.title === "Engineering and Sciences" ? "🔬" : track.title === "Pre-Med" ? "🏥" : "⚖️"}
+                        {point.icon || (track.title === "Engineering and Sciences" ? "🔬" : track.title === "Pre-Med" ? "🏥" : "⚖️")}
                       </div>
                       <span className="text-slate-200">{point.title}</span>
                     </div>
@@ -328,60 +328,214 @@ export default function AESCreatorversePage() {
                 </div>
               </div>
 
-              <div className="absolute inset-0 rotate-y-180 overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-br from-[#0f1829] to-[#0d1520] p-7 backface-hidden">
-                {/* Accent glow */}
-                <div className={`absolute -left-10 -top-10 h-40 w-40 rounded-full ${track.glow} bg-gradient-to-br ${track.accent} blur-3xl opacity-30`} />
+              <div className="absolute inset-0 rotate-y-180 overflow-hidden rounded-[32px] border border-white/15 bg-gradient-to-br from-[#111928] via-[#0d1422] to-[#090e18] p-6 sm:p-8 backface-hidden shadow-2xl">
+                {/* Soft Pastel Ambient Orbs */}
+                <div className="absolute -left-12 -top-12 h-44 w-44 rounded-full bg-sky-300/15 blur-3xl opacity-40 pointer-events-none" />
+                <div className="absolute -right-12 -bottom-12 h-44 w-44 rounded-full bg-rose-300/15 blur-3xl opacity-40 pointer-events-none" />
 
                 <div className="flex h-full flex-col">
-                  {/* Back header */}
-                  <div className="mb-5 flex items-center justify-between">
-                    <div className={`rounded-full bg-gradient-to-r ${track.accent} px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.25em] text-white shadow-lg`}>
+                  {/* Back header with Frosted Pastel Pill */}
+                  <div className="mb-4 flex items-center justify-between">
+                    <div className="rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs sm:text-sm font-bold uppercase tracking-[0.22em] text-slate-100 shadow-md backdrop-blur-md">
                       {track.title === "Engineering and Sciences" ? "Eng & Sciences" : track.title === "Law, Humanities and Business" ? "Law & Business" : track.title}
                     </div>
+                    <span className="text-[11px] font-semibold text-slate-400 tracking-wider uppercase">
+                      Curriculum
+                    </span>
                   </div>
 
-                  <p className={`mb-5 text-[10px] font-bold uppercase tracking-[0.3em] ${
-                    track.color === "cyan" ? "text-cyan-400" : track.color === "emerald" ? "text-emerald-400" : "text-amber-400"
-                  }`}>
+                  <p className="mb-4 text-xs sm:text-sm font-semibold uppercase tracking-[0.28em] text-slate-300">
                     {track.tagline}
                   </p>
 
-                  {/* Numbered items */}
-                  <div className="flex flex-col gap-3 flex-1 overflow-y-auto pr-1">
-                    {track.points.map((point, idx) => (
-                      <div
-                        key={point.title}
-                        className="flex gap-4 rounded-2xl border border-white/8 bg-white/4 p-4 hover:bg-white/8 transition-colors"
-                      >
-                        {/* Number badge */}
-                        <div className={`flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-full text-sm font-black ${
-                          track.color === "cyan"
-                            ? "bg-cyan-500/20 text-cyan-300"
-                            : track.color === "emerald"
-                            ? "bg-emerald-500/20 text-emerald-300"
-                            : "bg-amber-500/20 text-amber-300"
-                        }`}>
-                          {idx + 1}
+                  {/* Numbered items / Bright Pastel Paper Banners with True Paper Roll Animation */}
+                  <div className="flex flex-col gap-3.5 flex-1 overflow-y-auto pr-1.5 [perspective:1200px]">
+                    {track.points.map((point, idx) => {
+                      const isFromLeft = idx % 2 === 0; // 0 and 2 (1st and 3rd) from left; 1 and 3 (2nd and 4th) from right
+
+                      // Curated Bright Pastel Paper Themes with high contrast & vibrant badges
+                      const pastelThemes = [
+                        {
+                          borderAccent: isFromLeft ? 'border-l-[6px] border-l-[#0284c7]' : 'border-r-[6px] border-r-[#0284c7]',
+                          borderBase: 'border-[#7dd3fc]/80',
+                          bgGradient: isFromLeft
+                            ? 'bg-gradient-to-r from-[#e0f2fe] via-[#dbeafe] to-[#bae6fd]'
+                            : 'bg-gradient-to-l from-[#e0f2fe] via-[#dbeafe] to-[#bae6fd]',
+                          badge: 'bg-[#0284c7] text-white shadow-md shadow-sky-500/30',
+                          title: 'text-[#0f172a]',
+                          desc: 'text-[#334155]',
+                          glow: 'hover:shadow-[0_12px_28px_-4px_rgba(2,132,199,0.35)]',
+                          rollGradient: 'from-[#7dd3fc] via-white to-[#0284c7]',
+                        },
+                        {
+                          borderAccent: isFromLeft ? 'border-l-[6px] border-l-[#e11d48]' : 'border-r-[6px] border-r-[#e11d48]',
+                          borderBase: 'border-[#fda4af]/80',
+                          bgGradient: isFromLeft
+                            ? 'bg-gradient-to-r from-[#ffe4e6] via-[#fecdd3] to-[#fbcfe8]'
+                            : 'bg-gradient-to-l from-[#ffe4e6] via-[#fecdd3] to-[#fbcfe8]',
+                          badge: 'bg-[#e11d48] text-white shadow-md shadow-rose-500/30',
+                          title: 'text-[#0f172a]',
+                          desc: 'text-[#334155]',
+                          glow: 'hover:shadow-[0_12px_28px_-4px_rgba(225,29,72,0.35)]',
+                          rollGradient: 'from-[#fda4af] via-white to-[#e11d48]',
+                        },
+                        {
+                          borderAccent: isFromLeft ? 'border-l-[6px] border-l-[#16a34a]' : 'border-r-[6px] border-r-[#16a34a]',
+                          borderBase: 'border-[#86efac]/80',
+                          bgGradient: isFromLeft
+                            ? 'bg-gradient-to-r from-[#dcfce7] via-[#d1fae5] to-[#bbf7d0]'
+                            : 'bg-gradient-to-l from-[#dcfce7] via-[#d1fae5] to-[#bbf7d0]',
+                          badge: 'bg-[#16a34a] text-white shadow-md shadow-emerald-500/30',
+                          title: 'text-[#0f172a]',
+                          desc: 'text-[#334155]',
+                          glow: 'hover:shadow-[0_12px_28px_-4px_rgba(22,163,74,0.35)]',
+                          rollGradient: 'from-[#86efac] via-white to-[#16a34a]',
+                        },
+                        {
+                          borderAccent: isFromLeft ? 'border-l-[6px] border-l-[#9333ea]' : 'border-r-[6px] border-r-[#9333ea]',
+                          borderBase: 'border-[#d8b4fe]/80',
+                          bgGradient: isFromLeft
+                            ? 'bg-gradient-to-r from-[#f3e8ff] via-[#e9d5ff] to-[#fce7f3]'
+                            : 'bg-gradient-to-l from-[#f3e8ff] via-[#e9d5ff] to-[#fce7f3]',
+                          badge: 'bg-[#9333ea] text-white shadow-md shadow-purple-500/30',
+                          title: 'text-[#0f172a]',
+                          desc: 'text-[#334155]',
+                          glow: 'hover:shadow-[0_12px_28px_-4px_rgba(147,51,234,0.35)]',
+                          rollGradient: 'from-[#d8b4fe] via-white to-[#9333ea]',
+                        },
+                      ];
+
+                      const currentTheme = pastelThemes[idx % pastelThemes.length];
+
+                      return (
+                        <div key={point.title} className="relative w-full">
+                          {/* Main Bright Pastel Paper Banner with Progressive Unroll Mask */}
+                          <motion.div
+                            initial={{
+                              clipPath: isFromLeft
+                                ? "inset(0 100% 0 0 round 16px)"
+                                : "inset(0 0 0 100% round 16px)",
+                              opacity: 0,
+                              scaleY: 0.94,
+                            }}
+                            animate={
+                              isFlipped
+                                ? {
+                                    clipPath: isFromLeft
+                                      ? "inset(0 0% 0 0 round 16px)"
+                                      : "inset(0 0 0 0% round 16px)",
+                                    opacity: 1,
+                                    scaleY: 1,
+                                  }
+                                : {
+                                    clipPath: isFromLeft
+                                      ? "inset(0 100% 0 0 round 16px)"
+                                      : "inset(0 0 0 100% round 16px)",
+                                    opacity: 0,
+                                    scaleY: 0.94,
+                                  }
+                            }
+                            transition={{
+                              duration: 0.75,
+                              delay: isFlipped ? 0.2 + idx * 0.13 : 0,
+                              ease: [0.22, 1, 0.36, 1],
+                            }}
+                            whileHover={{
+                              y: -2,
+                              scale: 1.015,
+                              transition: { duration: 0.2 },
+                            }}
+                            className={`group/banner relative overflow-hidden flex gap-4 rounded-2xl border p-4 transition-all duration-300 shadow-[0_4px_16px_rgba(0,0,0,0.18)] ${currentTheme.borderAccent} ${currentTheme.borderBase} ${currentTheme.bgGradient} ${currentTheme.glow}`}
+                          >
+                            {/* Paper Crease Spine Highlight */}
+                            <div
+                              className={`absolute top-0 bottom-0 pointer-events-none w-8 ${
+                                isFromLeft
+                                  ? 'left-0 bg-gradient-to-r from-white/60 to-transparent'
+                                  : 'right-0 bg-gradient-to-l from-white/60 to-transparent'
+                              }`}
+                            />
+
+                            {/* Soft Unrolling Sheen Sweep */}
+                            <motion.div
+                              initial={{ x: isFromLeft ? "-100%" : "200%", opacity: 0 }}
+                              animate={
+                                isFlipped
+                                  ? { x: isFromLeft ? "250%" : "-150%", opacity: [0, 0.7, 0] }
+                                  : { x: isFromLeft ? "-100%" : "200%", opacity: 0 }
+                              }
+                              transition={{
+                                duration: 0.75,
+                                delay: isFlipped ? 0.3 + idx * 0.13 : 0,
+                                ease: "easeInOut",
+                              }}
+                              className="absolute inset-y-0 w-20 -skew-x-12 bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none"
+                            />
+
+                            {/* Paper Seal Stamp Number Badge */}
+                            <div
+                              className={`relative z-10 flex-shrink-0 flex h-9 w-9 items-center justify-center rounded-xl text-xs sm:text-sm font-black border border-white/60 shadow-md ${currentTheme.badge}`}
+                            >
+                              0{idx + 1}
+                            </div>
+
+                            {/* Content */}
+                            <div className="relative z-10 min-w-0 flex-1">
+                              <p
+                                className={`text-base sm:text-lg font-black mb-1 tracking-tight ${currentTheme.title}`}
+                              >
+                                {point.title}
+                              </p>
+                              <p className={`text-xs sm:text-sm leading-relaxed font-medium ${currentTheme.desc}`}>
+                                {point.desc}
+                              </p>
+                            </div>
+                          </motion.div>
+
+                          {/* Animated 3D Paper Rolling Cylinder Head */}
+                          <motion.div
+                            initial={{
+                              left: isFromLeft ? "0%" : "auto",
+                              right: !isFromLeft ? "0%" : "auto",
+                              opacity: 0,
+                              scaleX: 1,
+                            }}
+                            animate={
+                              isFlipped
+                                ? {
+                                    left: isFromLeft ? ["0%", "100%"] : "auto",
+                                    right: !isFromLeft ? ["0%", "100%"] : "auto",
+                                    opacity: [0, 1, 1, 0],
+                                    scaleX: [0.7, 1.3, 0.9, 0],
+                                  }
+                                : {
+                                    left: isFromLeft ? "0%" : "auto",
+                                    right: !isFromLeft ? "0%" : "auto",
+                                    opacity: 0,
+                                    scaleX: 1,
+                                  }
+                            }
+                            transition={{
+                              duration: 0.75,
+                              delay: isFlipped ? 0.2 + idx * 0.13 : 0,
+                              ease: [0.22, 1, 0.36, 1],
+                            }}
+                            className={`absolute top-0 bottom-0 w-4 pointer-events-none z-30 ${
+                              isFromLeft ? "-translate-x-1/2" : "translate-x-1/2"
+                            }`}
+                          >
+                            {/* Cylindrical paper curl body with 3D parchment lighting */}
+                            <div className={`h-full w-full rounded-full bg-gradient-to-r ${currentTheme.rollGradient} shadow-[0_0_12px_rgba(255,255,255,0.8),0_4px_12px_rgba(0,0,0,0.4)] border-x border-white/90`} />
+                          </motion.div>
                         </div>
-                        {/* Content */}
-                        <div className="min-w-0">
-                          <p className={`text-sm font-bold mb-1 ${
-                            track.color === "cyan" ? "text-cyan-100" : track.color === "emerald" ? "text-emerald-100" : "text-amber-100"
-                          }`}>
-                            {point.title}
-                          </p>
-                          <p className="text-xs text-slate-400 leading-relaxed">
-                            {point.desc}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   {/* Footer CTA */}
                   <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
                     <Link href="/book-session">
-                      <div className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r ${track.accent} px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-white shadow-lg transition hover:opacity-90 cursor-pointer`}>
+                      <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-gradient-to-r from-white/15 via-white/20 to-white/10 px-5 py-2.5 text-xs sm:text-sm font-bold uppercase tracking-[0.2em] text-white shadow-md backdrop-blur-md transition hover:bg-white/25 hover:border-white/40 cursor-pointer">
                         <span>Apply</span>
                         <span>→</span>
                       </div>
@@ -390,7 +544,7 @@ export default function AESCreatorversePage() {
                     <button
                       type="button"
                       onClick={() => toggleTrack(track.title)}
-                      className={`font-semibold transition hover:-translate-x-1 ${track.title === "Engineering and Sciences" ? "text-cyan-300" : track.title === "Pre-Med" ? "text-emerald-300" : "text-amber-300"}`}
+                      className="font-semibold text-sm sm:text-base text-slate-300 transition hover:text-white hover:-translate-x-1"
                     >
                       ← Back
                     </button>

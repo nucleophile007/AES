@@ -117,66 +117,70 @@ const ProgressReportList: React.FC<ProgressReportListProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {reports.map((report) => (
         <Card
           key={report.id}
-          className="hover:shadow-lg transition-shadow border-l-4 border-l-blue-600"
+          className="hover:shadow-lg transition-shadow border-l-4 border-l-blue-600 overflow-hidden"
         >
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 pb-3">
-            <div className="flex justify-between items-start flex-wrap gap-2">
-              <div className="space-y-1">
-                <CardTitle className="text-lg text-gray-900">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 sm:p-6 pb-3">
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-2.5 sm:gap-3">
+              <div className="space-y-1 min-w-0 flex-1">
+                <CardTitle className="text-base sm:text-lg text-gray-900 break-words">
                   Progress Report
                   {report.reportPeriod && ` - ${report.reportPeriod}`}
                 </CardTitle>
-                <div className="flex items-center gap-4 text-sm text-gray-600">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs sm:text-sm text-gray-600">
                   <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    {new Date(report.reportDate).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
+                    <Calendar className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                    <span>
+                      {new Date(report.reportDate).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
                   </div>
                   {report.teacher && (
                     <div className="flex items-center gap-1">
-                      <User className="h-4 w-4" />
-                      {report.teacher.name}
+                      <User className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                      <span className="truncate max-w-[140px] sm:max-w-none">{report.teacher.name}</span>
                     </div>
                   )}
                   {showStudentName && report.student && (
                     <div className="flex items-center gap-1">
-                      <User className="h-4 w-4" />
-                      Student: {report.student.name}
+                      <User className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                      <span className="truncate max-w-[140px] sm:max-w-none">Student: {report.student.name}</span>
                     </div>
                   )}
                   {report.subject && (
                     <div className="flex items-center gap-1">
-                      <BookOpen className="h-4 w-4" />
-                      {report.subject}
+                      <BookOpen className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                      <span className="truncate max-w-[140px] sm:max-w-none">{report.subject}</span>
                     </div>
                   )}
                 </div>
               </div>
-              {report.status && getStatusBadge(report.status)}
+              <div className="shrink-0 self-start sm:self-auto">
+                {report.status && getStatusBadge(report.status)}
+              </div>
             </div>
           </CardHeader>
 
-          <CardContent className="pt-6 space-y-6">
+          <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
             {/* Metrics Overview */}
             {(report.progressRating ||
               report.attendanceRate !== null ||
               report.homeworkCompletion !== null) && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
                 {report.progressRating && (
                   <div className="text-center">
-                    <div className="text-sm text-gray-600 mb-2">
+                    <div className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2">
                       Progress Rating
                     </div>
-                    <div className="flex items-center justify-center gap-2">
+                    <div className="flex items-center justify-center gap-1 sm:gap-2">
                       <div
-                        className={`text-3xl font-bold ${
+                        className={`text-2xl sm:text-3xl font-bold ${
                           report.progressRating >= 8
                             ? "text-green-600"
                             : report.progressRating >= 6
@@ -186,7 +190,7 @@ const ProgressReportList: React.FC<ProgressReportListProps> = ({
                       >
                         {report.progressRating}
                       </div>
-                      <div className="text-gray-500">/10</div>
+                      <div className="text-xs sm:text-sm text-gray-500">/10</div>
                     </div>
                     <Progress
                       value={report.progressRating * 10}
@@ -197,8 +201,8 @@ const ProgressReportList: React.FC<ProgressReportListProps> = ({
 
                 {report.attendanceRate !== null && report.attendanceRate !== undefined && (
                   <div className="text-center">
-                    <div className="text-sm text-gray-600 mb-2">Attendance</div>
-                    <div className="text-3xl font-bold text-blue-600">
+                    <div className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2">Attendance</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-blue-600">
                       {report.attendanceRate.toFixed(0)}%
                     </div>
                     <Progress value={report.attendanceRate} className="h-2 mt-2" />
@@ -207,10 +211,10 @@ const ProgressReportList: React.FC<ProgressReportListProps> = ({
 
                 {report.homeworkCompletion !== null && report.homeworkCompletion !== undefined && (
                   <div className="text-center">
-                    <div className="text-sm text-gray-600 mb-2">
+                    <div className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2">
                       Homework Completion
                     </div>
-                    <div className="text-3xl font-bold text-purple-600">
+                    <div className="text-2xl sm:text-3xl font-bold text-purple-600">
                       {report.homeworkCompletion.toFixed(0)}%
                     </div>
                     <Progress
@@ -223,12 +227,12 @@ const ProgressReportList: React.FC<ProgressReportListProps> = ({
             )}
 
             {/* Overall Progress */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 font-semibold text-gray-800">
-                <FileText className="h-5 w-5 text-blue-600" />
+            <div className="space-y-1.5 sm:space-y-2">
+              <div className="flex items-center gap-2 font-semibold text-xs sm:text-sm text-gray-800">
+                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 shrink-0" />
                 <span>Overall Progress Summary</span>
               </div>
-              <p className="text-gray-700 leading-relaxed ml-7">
+              <p className="text-xs sm:text-sm text-gray-700 leading-relaxed pl-6 sm:pl-7 break-words">
                 {report.overallProgress}
               </p>
             </div>
@@ -237,64 +241,64 @@ const ProgressReportList: React.FC<ProgressReportListProps> = ({
             {renderArraySection(
               "Milestones Achieved",
               report.milestonesAchieved,
-              <Award className="h-5 w-5 text-yellow-600" />
+              <Award className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600 shrink-0" />
             )}
 
             {renderArraySection(
               "Publications & Work",
               report.publications,
-              <FileText className="h-5 w-5 text-green-600" />
+              <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 shrink-0" />
             )}
 
             {renderArraySection(
               "Skills Improved",
               report.skillsImproved,
-              <TrendingUp className="h-5 w-5 text-blue-600" />
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 shrink-0" />
             )}
 
             {renderArraySection(
               "Strength Areas",
               report.strengthsAreas,
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 shrink-0" />
             )}
 
             {renderArraySection(
               "Areas for Improvement",
               report.improvementAreas,
-              <AlertCircle className="h-5 w-5 text-orange-600" />
+              <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600 shrink-0" />
             )}
 
             {renderArraySection(
               "Next Steps & Goals",
               report.nextSteps,
-              <Target className="h-5 w-5 text-purple-600" />
+              <Target className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 shrink-0" />
             )}
 
             {/* Text Sections */}
             {report.classParticipation && (
-              <div className="space-y-2">
-                <div className="font-semibold text-gray-800">
+              <div className="space-y-1.5 sm:space-y-2">
+                <div className="font-semibold text-xs sm:text-sm text-gray-800">
                   Class Participation
                 </div>
-                <p className="text-gray-600 ml-4">{report.classParticipation}</p>
+                <p className="text-xs sm:text-sm text-gray-600 pl-3 sm:pl-4 break-words">{report.classParticipation}</p>
               </div>
             )}
 
             {report.recommendations && (
-              <div className="space-y-2 bg-blue-50 p-4 rounded-lg border border-blue-100">
-                <div className="font-semibold text-blue-900">
+              <div className="space-y-1.5 sm:space-y-2 bg-blue-50 p-3 sm:p-4 rounded-lg border border-blue-100">
+                <div className="font-semibold text-xs sm:text-sm text-blue-900">
                   Teacher&apos;s Recommendations
                 </div>
-                <p className="text-blue-800">{report.recommendations}</p>
+                <p className="text-xs sm:text-sm text-blue-800 break-words leading-relaxed">{report.recommendations}</p>
               </div>
             )}
 
             {report.parentNotes && (
-              <div className="space-y-2 bg-purple-50 p-4 rounded-lg border border-purple-100">
-                <div className="font-semibold text-purple-900">
+              <div className="space-y-1.5 sm:space-y-2 bg-purple-50 p-3 sm:p-4 rounded-lg border border-purple-100">
+                <div className="font-semibold text-xs sm:text-sm text-purple-900">
                   Notes for Parents
                 </div>
-                <p className="text-purple-800">{report.parentNotes}</p>
+                <p className="text-xs sm:text-sm text-purple-800 break-words leading-relaxed">{report.parentNotes}</p>
               </div>
             )}
           </CardContent>

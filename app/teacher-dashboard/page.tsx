@@ -2100,13 +2100,14 @@ export default function TeacherDashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
+                className="w-full min-w-0"
               >
-                <Card className="border border-slate-200 bg-white shadow-sm">
-                  <CardHeader className="pb-3">
+                <Card className="border border-slate-200 bg-white shadow-sm overflow-hidden">
+                  <CardHeader className="p-4 sm:p-6 pb-3">
                     <CardTitle className="text-lg text-slate-900">Submission Review</CardTitle>
-                    <CardDescription>Grade work, annotate feedback, and track follow-ups.</CardDescription>
+                    <CardDescription className="text-xs sm:text-sm text-slate-600">Grade work, annotate feedback, and track follow-ups.</CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-3 sm:p-6 pt-0">
                     <SubmissionReviewer teacherEmail={teacherEmail} />
                   </CardContent>
                 </Card>
@@ -2720,12 +2721,12 @@ export default function TeacherDashboard() {
                   </DialogContent>
                 </Dialog>
 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-xl font-semibold text-slate-900">Student Resource Submissions</h3>
-                    <p className="text-slate-600">Review and provide feedback on work submitted by students.</p>
+                    <h3 className="text-lg sm:text-xl font-semibold text-slate-900">Student Resource Submissions</h3>
+                    <p className="text-xs sm:text-sm text-slate-600">Review and provide feedback on work submitted by students.</p>
                   </div>
-                  <Button onClick={fetchStudentSubmissions} variant="outline" disabled={submissionsLoading}>
+                  <Button onClick={fetchStudentSubmissions} variant="outline" disabled={submissionsLoading} className="w-full sm:w-auto text-xs sm:text-sm">
                     <RefreshCw className={cn("h-4 w-4 mr-2", submissionsLoading && "animate-spin")} />
                     Refresh
                   </Button>
@@ -2733,10 +2734,10 @@ export default function TeacherDashboard() {
 
                 {submissionsError && (
                   <Card className="border-red-200 bg-red-50">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between gap-3">
+                    <CardContent className="p-4 sm:pt-6">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <p className="text-sm text-red-700">{submissionsError}</p>
-                        <Button variant="outline" size="sm" onClick={fetchStudentSubmissions}>
+                        <Button variant="outline" size="sm" onClick={fetchStudentSubmissions} className="w-full sm:w-auto">
                           Retry
                         </Button>
                       </div>
@@ -2745,14 +2746,14 @@ export default function TeacherDashboard() {
                 )}
 
                 {submissionsLoading ? (
-                  <div className="grid gap-6 py-2">
+                  <div className="grid gap-4 sm:gap-6 py-2">
                     {Array.from({ length: 3 }).map((_, index) => (
                       <Card key={`teacher-submissions-loading-${index}`}>
-                        <CardHeader className="space-y-3">
+                        <CardHeader className="space-y-3 p-4 sm:p-6">
                           <ShimmerSkeleton className="h-5 w-1/2" />
                           <ShimmerSkeleton className="h-4 w-1/3" />
                         </CardHeader>
-                        <CardContent className="space-y-3">
+                        <CardContent className="space-y-3 p-4 sm:p-6 pt-0">
                           <ShimmerSkeleton className="h-4 w-full" />
                           <ShimmerSkeleton className="h-4 w-5/6" />
                           <ShimmerSkeleton className="h-24 w-full rounded-lg" />
@@ -2762,54 +2763,54 @@ export default function TeacherDashboard() {
                   </div>
                 ) : studentSubmissions.length === 0 ? (
                   <Card className="border border-slate-200 bg-white shadow-sm">
-                    <CardContent className="py-12 text-center">
+                    <CardContent className="py-12 text-center p-4 sm:p-6">
                       <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                       <h3 className="text-lg font-medium text-gray-900 mb-2">No Student Submissions</h3>
-                      <p className="text-gray-600">
+                      <p className="text-xs sm:text-sm text-gray-600">
                       Students haven&apos;t submitted any resources for review yet.
                       </p>
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="grid gap-6">
+                  <div className="grid gap-4 sm:gap-6">
                     {studentSubmissions.map((submission) => (
-                      <Card key={submission.id} className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
-                        <CardHeader>
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <CardTitle className="text-lg mb-1">{submission.title}</CardTitle>
-                              <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <Card key={submission.id} className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md overflow-hidden">
+                        <CardHeader className="p-4 sm:p-6 pb-3">
+                          <div className="flex flex-col sm:flex-row items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <CardTitle className="text-base sm:text-lg mb-1 break-words">{submission.title}</CardTitle>
+                              <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
                                 <span className="flex items-center gap-1">
-                                  <User className="h-4 w-4" />
-                                  {submission.student.name} ({submission.student.grade})
+                                  <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                                  <span className="truncate">{submission.student.name} ({submission.student.grade})</span>
                                 </span>
                                 <span className="flex items-center gap-1">
-                                  <Clock className="h-4 w-4" />
+                                  <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                                   {new Date(submission.submittedAt).toLocaleDateString()}
                                 </span>
                                 <span className="flex items-center gap-1">
-                                  <Users className="h-4 w-4" />
+                                  <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                                   {submission.allTeachers.length} teacher{submission.allTeachers.length !== 1 ? 's' : ''}
                                 </span>
                               </div>
                               {submission.description && (
-                                <p className="text-gray-600 mt-2">{submission.description}</p>
+                                <p className="text-xs sm:text-sm text-gray-600 mt-2 break-words">{submission.description}</p>
                               )}
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Badge variant={submission.hasMyRemark ? 'default' : 'secondary'}>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <Badge variant={submission.hasMyRemark ? 'default' : 'secondary'} className="text-xs">
                                 {submission.hasMyRemark ? 'Reviewed' : 'Needs Review'}
                               </Badge>
                             </div>
                           </div>
                         </CardHeader>
 
-                        <CardContent className="space-y-4">
+                        <CardContent className="space-y-4 p-4 sm:p-6 pt-0">
                           {/* Content Preview */}
                           {submission.content && (
-                            <div className="bg-gray-50 p-4 rounded-lg">
-                              <p className="text-sm font-medium text-gray-700 mb-2">Content:</p>
-                              <p className="text-sm text-gray-800 whitespace-pre-wrap line-clamp-4">
+                            <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                              <p className="text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Content:</p>
+                              <p className="text-xs sm:text-sm text-gray-800 whitespace-pre-wrap break-words line-clamp-4">
                                 {submission.content}
                               </p>
                             </div>
@@ -2817,23 +2818,26 @@ export default function TeacherDashboard() {
 
                           {/* File Attachment */}
                           {submission.fileUrl && submission.fileName && (
-                            <div className="flex items-center gap-3 p-4 bg-slate-100 rounded-lg">
-                              <FileText className="h-6 w-6 text-slate-700" />
-                              <div className="flex-1">
-                                <p className="text-sm font-medium text-slate-900">{submission.fileName}</p>
-                                {submission.fileSize && (
-                                  <p className="text-xs text-slate-600">
-                                    {(submission.fileSize / 1024 / 1024).toFixed(2)} MB
-                                  </p>
-                                )}
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 sm:p-4 bg-slate-100 rounded-lg">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-slate-700 shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs sm:text-sm font-medium text-slate-900 truncate">{submission.fileName}</p>
+                                  {submission.fileSize && (
+                                    <p className="text-[11px] sm:text-xs text-slate-600">
+                                      {(submission.fileSize / 1024 / 1024).toFixed(2)} MB
+                                    </p>
+                                  )}
+                                </div>
                               </div>
-                              <div className="flex gap-2">
+                              <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => window.open(submission.fileUrl, '_blank')}
+                                  className="flex-1 sm:flex-initial text-xs sm:text-sm"
                                 >
-                                  <Eye className="h-4 w-4 mr-1" />
+                                  <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
                                   View
                                 </Button>
                                 <Button
@@ -2845,8 +2849,9 @@ export default function TeacherDashboard() {
                                     link.download = submission.fileName;
                                     link.click();
                                   }}
+                                  className="flex-1 sm:flex-initial text-xs sm:text-sm"
                                 >
-                                  <Download className="h-4 w-4 mr-1" />
+                                  <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
                                   Download
                                 </Button>
                               </div>
@@ -2855,13 +2860,13 @@ export default function TeacherDashboard() {
 
                           {/* All Teachers */}
                           <div>
-                            <p className="text-sm font-medium text-gray-700 mb-2">Sent to teachers:</p>
-                            <div className="flex flex-wrap gap-2">
+                            <p className="text-xs sm:text-sm font-medium text-gray-700 mb-2">Sent to teachers:</p>
+                            <div className="flex flex-wrap gap-1.5 sm:gap-2">
                               {submission.allTeachers.map((teacher: any) => (
                                 <Badge
                                   key={teacher.id}
                                   variant="outline"
-                                  className={teacher.email === teacherEmail ? 'bg-slate-100 border-slate-300' : ''}
+                                  className={`text-xs ${teacher.email === teacherEmail ? 'bg-slate-100 border-slate-300' : ''}`}
                                 >
                                   {teacher.name} {teacher.email === teacherEmail && '(You)'}
                                 </Badge>
@@ -2872,39 +2877,41 @@ export default function TeacherDashboard() {
                           {/* Existing Remarks */}
                           {submission.teacherRemarks.length > 0 && (
                             <div className="space-y-2">
-                              <p className="text-sm font-medium text-gray-700">Your previous feedback:</p>
+                              <p className="text-xs sm:text-sm font-medium text-gray-700">Your previous feedback:</p>
                               {submission.teacherRemarks.map((remark: any) => (
                                 <div key={remark.id} className="bg-slate-100 p-3 rounded-lg border-l-4 border-slate-300">
-                                  <div className="flex items-start justify-between mb-1">
-                                    <p className="text-sm font-medium text-slate-900">Your Feedback</p>
-                                    <p className="text-xs text-slate-600">
+                                  <div className="flex items-start justify-between gap-2 mb-1">
+                                    <p className="text-xs sm:text-sm font-medium text-slate-900">Your Feedback</p>
+                                    <p className="text-[11px] sm:text-xs text-slate-600 shrink-0">
                                       {new Date(remark.updatedAt).toLocaleDateString()}
                                     </p>
                                   </div>
-                                  <p className="text-sm text-slate-700">{remark.remark}</p>
+                                  <p className="text-xs sm:text-sm text-slate-700 break-words">{remark.remark}</p>
                                 </div>
                               ))}
                             </div>
                           )}
 
                           {/* Add/Update Remark */}
-                          <div className="pt-4 border-t">
+                          <div className="pt-3 sm:pt-4 border-t">
                             <Dialog>
                               <DialogTrigger asChild>
                                 <Button
                                   variant={submission.hasMyRemark ? "outline" : "default"}
+                                  size="sm"
                                   onClick={() => {
                                     setSelectedSubmission(submission);
                                     setRemarkText(submission.teacherRemarks[0]?.remark || "");
                                   }}
+                                  className="w-full sm:w-auto text-xs sm:text-sm"
                                 >
                                   <MessageCircle className="h-4 w-4 mr-2" />
                                   {submission.hasMyRemark ? 'Update Feedback' : 'Add Feedback'}
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="max-w-2xl">
+                              <DialogContent className="max-w-[95vw] sm:max-w-2xl p-4 sm:p-6">
                                 <DialogHeader>
-                                  <DialogTitle>
+                                  <DialogTitle className="text-base sm:text-lg break-words">
                                     {submission.hasMyRemark ? 'Update' : 'Add'} Feedback for &quot;{submission.title}&quot;
                                   </DialogTitle>
                                 </DialogHeader>
@@ -2922,10 +2929,11 @@ export default function TeacherDashboard() {
                                   </div>
                                 </div>
 
-                                <DialogFooter>
+                                <DialogFooter className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
                                   <Button
                                     onClick={() => handleAddRemark(submission.id)}
                                     disabled={isAddingRemark || !remarkText.trim()}
+                                    className="w-full sm:w-auto"
                                   >
                                     {isAddingRemark ? (
                                       <>

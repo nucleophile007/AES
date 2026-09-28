@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import { ShimmerSkeleton } from '@/components/ui/dashboard-loading-skeleton';
 
 type Item = { id: number; creationMode: 'STUDENT_ASSIGNED' | 'MENTOR_DIRECT'; teacherFinalText: string; approvedAt: string; student: { name: string }; meeting: { title: string; startDateTime: string; teacher: { name: string } } };
 const HIDDEN_KEY = 'aes:parent:hidden-meeting-minutes';
@@ -11,6 +12,25 @@ export default function ParentMeetingMinutes() {
   const [items, setItems] = useState<Item[]>([]); const [loading, setLoading] = useState(true); const [expanded, setExpanded] = useState<Set<number>>(new Set()); const [hidden, setHidden] = useState<Set<number>>(new Set());
   useEffect(() => { try { setHidden(new Set(JSON.parse(localStorage.getItem(HIDDEN_KEY) || '[]'))); } catch { setHidden(new Set()); } void fetch('/api/parent/meeting-minutes').then(async (response) => ({ ok: response.ok, data: await response.json() })).then(({ ok, data }) => { if (ok) setItems(data.requests || []); }).finally(() => setLoading(false)); }, []);
   const hide = (id: number) => { const next = new Set(hidden); next.add(id); setHidden(next); localStorage.setItem(HIDDEN_KEY, JSON.stringify(Array.from(next))); }; const visible = items.filter((item) => !hidden.has(item.id));
-  if (loading) return <Card><CardContent className="py-10 text-center text-slate-500">Loading meeting minutes…</CardContent></Card>;
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <Card key={`parent-meeting-minutes-loading-${index}`} className="border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div className="flex min-h-20 sm:min-h-24 items-center justify-between gap-3 p-4 sm:p-5">
+              <div className="space-y-2 flex-1 min-w-0">
+                <ShimmerSkeleton className="h-5 w-60 max-w-full" />
+                <ShimmerSkeleton className="h-4 w-48 max-w-full" />
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <ShimmerSkeleton className="h-6 w-28 rounded-full" />
+                <ShimmerSkeleton className="h-8 w-8 rounded-md" />
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    );
+  }
   return <div className="space-y-4">{!visible.length && <Card><CardContent className="py-10 text-center text-slate-500">No visible approved meeting minutes.</CardContent></Card>}{!!hidden.size && <Button variant="ghost" size="sm" onClick={() => { setHidden(new Set()); localStorage.removeItem(HIDDEN_KEY); }}>Restore locally hidden meetings</Button>}{visible.map((item) => { const open = expanded.has(item.id); return <Card key={item.id} className="overflow-hidden"><div className="flex min-h-24 items-center justify-between gap-3 p-5"><button className="flex flex-1 items-center gap-3 text-left" onClick={() => setExpanded((current) => { const next = new Set(current); next.has(item.id) ? next.delete(item.id) : next.add(item.id); return next; })}>{open ? <ChevronDown className="h-5 w-5"/> : <ChevronRight className="h-5 w-5"/>}<span><span className="block text-lg font-semibold">{item.meeting.title}</span><span className="text-sm text-slate-500">{item.student.name} · {item.meeting.teacher.name} · {new Date(item.meeting.startDateTime).toLocaleString()}</span></span></button>{item.creationMode === 'MENTOR_DIRECT' && <Badge variant="secondary">Prepared by mentor</Badge>}<Button variant="ghost" size="sm" title="Hide only on this dashboard" onClick={() => hide(item.id)}><Trash2 className="h-4 w-4"/></Button></div>{open && <CardContent className="border-t pt-5"><p className="mb-2 text-sm text-slate-500">{item.creationMode === 'MENTOR_DIRECT' ? 'Prepared and sent directly by the mentor.' : 'Prepared by the student and approved by the mentor.'}</p><div className="whitespace-pre-wrap rounded-lg bg-slate-50 p-4">{item.teacherFinalText}</div></CardContent>}</Card>; })}</div>;
 }
