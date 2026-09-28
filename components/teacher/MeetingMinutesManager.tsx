@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { getUserTimezone } from '@/lib/timezone';
 import { Calendar, Check, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import { ShimmerSkeleton } from '@/components/ui/dashboard-loading-skeleton';
 
 type Student = { id: number; name: string; email: string; requestStatus?: 'ASSIGNED' | 'SUBMITTED' | 'APPROVED' | null };
 type Meeting = { id: string; title: string; startDateTime: string; endDateTime: string; attendees: Student[]; unmatchedAttendees: Array<{ email: string; name: string }> };
@@ -145,7 +146,45 @@ export default function MeetingMinutesManager() {
     } catch (err) { toast({ variant: 'destructive', title: 'Review failed', description: err instanceof Error ? err.message : 'Try again.' }); }
   };
 
-  if (loading) return <Card><CardContent className="py-10 text-center text-slate-500">Loading meeting minutes…</CardContent></Card>;
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Card className="border border-slate-200 bg-white shadow-sm">
+          <CardHeader className="space-y-2 p-4 sm:p-6 pb-3">
+            <ShimmerSkeleton className="h-6 w-56" />
+            <ShimmerSkeleton className="h-4 w-96 max-w-full" />
+          </CardHeader>
+          <CardContent className="space-y-4 p-4 sm:p-6 pt-0">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <ShimmerSkeleton className="h-20 w-full rounded-xl" />
+              <ShimmerSkeleton className="h-20 w-full rounded-xl" />
+            </div>
+            <ShimmerSkeleton className="h-12 w-full rounded-xl" />
+          </CardContent>
+        </Card>
+
+        <Card className="border border-slate-200 bg-white shadow-sm">
+          <CardHeader className="space-y-2 p-4 sm:p-6 pb-3">
+            <ShimmerSkeleton className="h-6 w-48" />
+            <ShimmerSkeleton className="h-4 w-80 max-w-full" />
+          </CardHeader>
+          <CardContent className="space-y-4 p-4 sm:p-6 pt-0">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={`teacher-meeting-minutes-loading-${index}`} className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="space-y-2 flex-1 min-w-0">
+                    <ShimmerSkeleton className="h-5 w-64 max-w-full" />
+                    <ShimmerSkeleton className="h-4 w-48 max-w-full" />
+                  </div>
+                  <ShimmerSkeleton className="h-8 w-20 rounded-md shrink-0" />
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   return <div className="space-y-6">
     {error && <Card className="border-amber-300"><CardContent className="py-4"><p className="text-amber-800">{error}</p><Button className="mt-3" variant="outline" onClick={load}>Retry</Button></CardContent></Card>}
     <Card>

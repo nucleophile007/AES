@@ -145,9 +145,11 @@ export default function StudentReportPdfPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4 bg-white p-4 print:max-w-none print:p-0">
-      <div className="flex flex-wrap items-center justify-between gap-2 print:hidden">
-        <Button variant="outline" onClick={() => router.push("/student-dashboard")}>Back to Dashboard</Button>
+    <div className="mx-auto max-w-6xl space-y-4 bg-white p-2 sm:p-4 md:p-6 print:max-w-none print:p-0">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-2 sm:px-0 print:hidden">
+        <Button variant="outline" size="sm" onClick={() => router.push("/student-dashboard")} className="text-xs sm:text-sm">
+          Back to Dashboard
+        </Button>
         {/* <Button onClick={() => window.print()}>Download as PDF</Button> */}
       </div>
 

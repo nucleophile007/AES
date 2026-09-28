@@ -104,6 +104,35 @@ function TeacherTabSkeleton({ tab }: { tab: string }) {
           </div>
         </div>
       );
+    case "meeting-minutes":
+      return (
+        <div className="space-y-6">
+          <div className="rounded-xl border bg-white p-5 space-y-4">
+            <ShimmerSkeleton className="h-6 w-56" />
+            <ShimmerSkeleton className="h-4 w-96 max-w-full" />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <ShimmerSkeleton className="h-20 w-full rounded-xl" />
+              <ShimmerSkeleton className="h-20 w-full rounded-xl" />
+            </div>
+            <ShimmerSkeleton className="h-12 w-full rounded-xl" />
+          </div>
+          <div className="rounded-xl border bg-white p-5 space-y-4">
+            <ShimmerSkeleton className="h-6 w-48" />
+            <ShimmerSkeleton className="h-4 w-80 max-w-full" />
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={`teacher-meeting-minutes-${index}`} className="rounded-xl border border-slate-200 bg-white p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2 flex-1">
+                    <ShimmerSkeleton className="h-5 w-64 max-w-full" />
+                    <ShimmerSkeleton className="h-4 w-48 max-w-full" />
+                  </div>
+                  <ShimmerSkeleton className="h-8 w-20 rounded-md shrink-0" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
     case "students":
     default:
       return (
@@ -242,6 +271,25 @@ function StudentTabSkeleton({ tab }: { tab: string }) {
             <ShimmerSkeleton className="h-[280px] w-full rounded-lg" />
             <ShimmerSkeleton className="h-10 w-full rounded-lg" />
           </div>
+        </div>
+      );
+    case "meeting-minutes":
+      return (
+        <div className="space-y-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={`student-meeting-minutes-${index}`} className="rounded-xl border bg-white p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2 flex-1">
+                  <ShimmerSkeleton className="h-5 w-56 max-w-full" />
+                  <ShimmerSkeleton className="h-4 w-40 max-w-full" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <ShimmerSkeleton className="h-6 w-24 rounded-full" />
+                  <ShimmerSkeleton className="h-8 w-8 rounded-md" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       );
     case "overview":

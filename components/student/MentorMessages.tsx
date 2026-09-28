@@ -267,13 +267,13 @@ export default function MentorMessages({ studentId, studentEmail, studentName, o
   }, [messages]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 w-full">
       {/* Mentors List */}
       <Card className="lg:col-span-1">
-        <CardHeader>
-          <CardTitle className="text-lg">My Mentors</CardTitle>
+        <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+          <CardTitle className="text-base sm:text-lg">My Mentors</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6 pt-0">
           {isLoading && mentors.length === 0 ? (
             <div className="space-y-3 p-2">
               {Array.from({ length: 4 }).map((_, index) => (
@@ -287,30 +287,30 @@ export default function MentorMessages({ studentId, studentEmail, studentName, o
               ))}
             </div>
           ) : mentors.length === 0 ? (
-            <div className="text-center p-8 text-gray-500">
-              <User className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-              <p>No mentors assigned yet</p>
+            <div className="text-center p-6 sm:p-8 text-gray-500">
+              <User className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 text-gray-400" />
+              <p className="text-xs sm:text-sm">No mentors assigned yet</p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-60 lg:max-h-[480px] overflow-y-auto">
               {mentors.map((mentor) => (
                 <div 
                   key={mentor.id} 
                   className={cn(
-                    "p-3 rounded-lg cursor-pointer hover:bg-gray-50",
-                    selectedMentor?.id === mentor.id && "bg-blue-50"
+                    "p-2.5 sm:p-3 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors",
+                    selectedMentor?.id === mentor.id && "bg-blue-50 border border-blue-200"
                   )}
                   onClick={() => setSelectedMentor(mentor)}
                 >
                   <div className="flex items-start gap-3">
-                    <Avatar className="h-8 w-8">
+                    <Avatar className="h-8 w-8 shrink-0">
                       <AvatarFallback className="text-xs bg-blue-100 text-blue-600">
                         {mentor.name.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{mentor.name}</p>
-                      <p className="text-xs text-gray-600">{mentor.program}</p>
+                      <p className="text-xs sm:text-sm font-medium truncate">{mentor.name}</p>
+                      <p className="text-xs text-gray-600 truncate">{mentor.program}</p>
                     </div>
                   </div>
                 </div>
@@ -322,21 +322,22 @@ export default function MentorMessages({ studentId, studentEmail, studentName, o
 
       {/* Message Area */}
       <Card className="lg:col-span-2">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">
+        <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <CardTitle className="text-base sm:text-lg truncate max-w-full">
               {selectedMentor 
                 ? `Chat with ${selectedMentor.name}` 
                 : "Select a mentor to start chatting"}
             </CardTitle>
             {selectedMentor && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 self-end sm:self-auto">
                 {/* Notification Bell */}
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={requestPermission}
                   title={permission === 'granted' ? 'Notifications enabled' : 'Enable notifications'}
+                  className="h-8 px-2 text-xs"
                 >
                   {permission === 'granted' ? (
                     <Bell className="h-4 w-4 text-green-600" />
@@ -344,7 +345,7 @@ export default function MentorMessages({ studentId, studentEmail, studentName, o
                     <BellOff className="h-4 w-4 text-gray-400" />
                   )}
                   {unreadCount > 0 && (
-                    <span className="ml-1 text-xs bg-red-500 text-white rounded-full px-1.5 py-0.5">
+                    <span className="ml-1 text-[10px] bg-red-500 text-white rounded-full px-1.5 py-0.5">
                       {unreadCount}
                     </span>
                   )}
@@ -366,21 +367,21 @@ export default function MentorMessages({ studentId, studentEmail, studentName, o
             )}
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6 pt-0">
           {!selectedMentor ? (
-            <div className="flex items-center justify-center h-96 text-gray-500">
+            <div className="flex items-center justify-center h-64 sm:h-96 text-gray-500">
               <div className="text-center">
-                <User className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                <p>Select a mentor from the list to view messages</p>
+                <User className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 text-gray-400" />
+                <p className="text-xs sm:text-sm">Select a mentor from the list to view messages</p>
               </div>
             </div>
           ) : (
             <>
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded mb-4 text-sm">
+                <div className="bg-red-50 border border-red-200 text-red-800 px-3 sm:px-4 py-2 sm:py-3 rounded-lg mb-3 sm:mb-4 text-xs sm:text-sm">
                   <div className="flex">
                     <div className="py-1">
-                      <svg className="h-5 w-5 text-red-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 mr-2 sm:mr-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       </svg>
                     </div>
@@ -392,7 +393,7 @@ export default function MentorMessages({ studentId, studentEmail, studentName, o
                 </div>
               )}
 
-              <ScrollArea className="h-80 w-full p-4 border rounded-lg mb-4" ref={scrollAreaRef}>
+              <ScrollArea className="h-72 sm:h-80 w-full p-3 sm:p-4 border rounded-lg mb-3 sm:mb-4" ref={scrollAreaRef}>
                 {isLoading ? (
                   <div className="space-y-3 p-2">
                     {Array.from({ length: 4 }).map((_, index) => (
@@ -400,19 +401,19 @@ export default function MentorMessages({ studentId, studentEmail, studentName, o
                         key={`mentor-messages-loading-${index}`}
                         className={`flex ${index % 2 === 0 ? 'justify-start' : 'justify-end'}`}
                       >
-                        <div className="max-w-[75%] space-y-2">
-                          <ShimmerSkeleton className="h-4 w-56" />
-                          <ShimmerSkeleton className="h-4 w-40" />
+                        <div className="max-w-[85%] sm:max-w-[75%] space-y-2">
+                          <ShimmerSkeleton className="h-4 w-40 sm:w-56" />
+                          <ShimmerSkeleton className="h-4 w-28 sm:w-40" />
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : messages.length === 0 && !error ? (
-                  <div className="flex items-center justify-center h-full text-gray-400">
+                  <div className="flex items-center justify-center h-full text-xs sm:text-sm text-gray-400 py-12">
                     No messages yet. Start the conversation!
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {messages.map((message) => {
                       const isUserMessage = message.senderRole === 'student';
                       
@@ -422,15 +423,15 @@ export default function MentorMessages({ studentId, studentEmail, studentName, o
                           className={`flex ${isUserMessage ? 'justify-end' : 'justify-start'}`}
                         >
                           <div 
-                            className={`max-w-[80%] p-3 rounded-lg ${
+                            className={`max-w-[88%] sm:max-w-[80%] p-2.5 sm:p-3 rounded-lg ${
                               isUserMessage 
                                 ? 'bg-blue-500 text-white rounded-tr-none' 
                                 : 'bg-gray-100 text-gray-800 rounded-tl-none'
                             }`}
                           >
-                            <div className="text-sm">{message.content}</div>
+                            <div className="text-xs sm:text-sm break-words">{message.content}</div>
                             <div 
-                              className={`flex items-center gap-1 text-xs mt-1 ${
+                              className={`flex items-center gap-1 text-[10px] sm:text-xs mt-1 ${
                                 isUserMessage ? 'text-blue-100' : 'text-gray-500'
                               }`}
                             >
@@ -443,10 +444,8 @@ export default function MentorMessages({ studentId, studentEmail, studentName, o
                               {isUserMessage && (
                                 <span className="flex items-center" title={message.readAt ? 'Read' : 'Sent'}>
                                   {message.readAt ? (
-                                    // Double check for read
                                     <span className="font-bold">✓✓</span>
                                   ) : (
-                                    // Single check for sent
                                     <span>✓</span>
                                   )}
                                 </span>
@@ -461,7 +460,7 @@ export default function MentorMessages({ studentId, studentEmail, studentName, o
               </ScrollArea>
 
               {/* Message input */}
-              <div className="flex gap-2 mt-4">
+              <div className="flex gap-2 mt-2 sm:mt-4">
                 <Input
                   placeholder="Type your message..."
                   value={newMessage}
@@ -473,11 +472,13 @@ export default function MentorMessages({ studentId, studentEmail, studentName, o
                     }
                   }}
                   disabled={isSending}
-                  className="flex-1"
+                  className="flex-1 text-xs sm:text-sm"
                 />
                 <Button 
                   onClick={sendMessage}
                   disabled={isSending || !newMessage.trim()}
+                  size="sm"
+                  className="px-3 sm:px-4"
                 >
                   {isSending ? (
                     <RefreshCw className="h-4 w-4 animate-spin" />
