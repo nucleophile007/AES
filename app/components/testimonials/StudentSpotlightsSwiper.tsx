@@ -3,8 +3,9 @@
 import React, { useCallback, useEffect, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
-import { ChevronLeft, ChevronRight, Quote } from "lucide-react";
+import { ChevronLeft, ChevronRight, Quote, Sparkles } from "lucide-react";
 import Image from "next/image";
+import { motion } from "framer-motion";
 
 export type StudentSpotlight = {
   id: string;
@@ -58,33 +59,35 @@ export default function StudentSpotlightsSwiper({
   }
 
   return (
-    <div className="w-full relative px-4 md:px-16 group">
+    <div className="relative w-full px-2 sm:px-4 md:px-12 lg:px-20 group">
       <div className="overflow-hidden cursor-grab active:cursor-grabbing pb-8 pt-4" ref={emblaRef}>
         <div className="flex touch-pan-y items-stretch">
           {items.map((item, index) => (
             <div
               key={item.id}
-              className="flex-[0_0_100%] min-w-0 px-2 md:px-6"
+              className="flex-[0_0_100%] md:flex-[0_0_50%] min-w-0 px-2 md:px-3"
             >
-              <div 
-                className={`transition-all duration-700 mx-auto w-full max-w-6xl rounded-3xl overflow-hidden min-h-[40vh] md:h-[400px] relative
+              <motion.div
+                whileHover={{ y: -8 }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
+                className={`transition-all duration-700 mx-auto w-full rounded-[2rem] overflow-hidden min-h-[430px] relative
                   ${
                     index === selectedIndex 
-                      ? "border border-yellow-400/30 bg-[#121b2e] shadow-[0_0_50px_-12px_rgba(250,204,21,0.15)] opacity-100 scale-100" 
-                      : "border border-slate-700/50 bg-[#0d1424] opacity-50 scale-[0.97]"
+                      ? "border border-yellow-400/50 bg-[#121b2e] shadow-[0_20px_70px_-20px_rgba(250,204,21,0.35)] scale-100"
+                      : "border border-slate-700/70 bg-[#0d1424] scale-[0.97]"
                   }`}
               >
-                {/* Decorative Elements */}
-                <div className="absolute top-0 right-0 -mr-32 -mt-32 w-96 h-96 rounded-full bg-blue-500/10 blur-[80px] pointer-events-none" />
-                <div className="absolute bottom-0 left-0 -ml-32 -mb-32 w-96 h-96 rounded-full bg-yellow-500/5 blur-[80px] pointer-events-none" />
+                <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-blue-500/15 blur-[70px] pointer-events-none animate-pulse" />
+                <div className="absolute -bottom-28 -left-16 h-72 w-72 rounded-full bg-yellow-500/10 blur-[80px] pointer-events-none" />
+                <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-yellow-400/80 to-transparent" />
                 
-                <div className="flex flex-col md:flex-row p-6 md:p-10 gap-8 h-full relative z-10">
+                <div className="flex flex-col md:flex-row p-5 lg:p-7 gap-5 h-full relative z-10">
                   {/* Left Column: Event & Student */}
-                  <div className="md:w-5/12 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-700/50 pb-8 md:pb-0 md:pr-8">
+                  <div className="md:w-[38%] flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-700/60 pb-5 md:pb-0 md:pr-5">
                     {/* Event Info */}
-                    <div className="flex items-start gap-5">
+                    <div className="flex items-start gap-3">
                       {item.competitionLogo && (
-                        <div className="h-16 w-16 md:h-20 md:w-20 flex-shrink-0 rounded-2xl overflow-hidden border border-white/10 bg-white/5 p-2 shadow-lg backdrop-blur-sm">
+                        <div className="h-14 w-14 md:h-16 md:w-16 flex-shrink-0 rounded-2xl overflow-hidden border border-white/10 bg-white/5 p-2 shadow-lg backdrop-blur-sm">
                           <Image
                             src={item.competitionLogo}
                             alt="Competition logo"
@@ -95,17 +98,17 @@ export default function StudentSpotlightsSwiper({
                         </div>
                       )}
                       <div className="pt-1">
-                        <p className="text-[10px] md:text-[11px] uppercase tracking-[0.25em] text-yellow-500 font-bold mb-2">{item.date}</p>
-                        <h3 className="text-xl md:text-2xl font-bold leading-snug text-slate-100 line-clamp-3">
+                        <p className="text-[9px] uppercase tracking-[0.2em] text-yellow-400 font-bold mb-2">{item.date}</p>
+                        <h3 className="text-base md:text-lg font-bold leading-snug text-slate-100 line-clamp-3">
                           {item.event}
                         </h3>
                       </div>
                     </div>
 
                     {/* Student Info */}
-                    <div className="mt-8 flex items-center gap-4 bg-white/5 rounded-2xl p-4 border border-white/5 backdrop-blur-sm">
+                    <div className="mt-6 flex items-center gap-3 bg-white/5 rounded-2xl p-3 border border-white/5 backdrop-blur-sm">
                       {item.schoolLogo && (
-                        <div className="h-14 w-14 rounded-full border border-slate-600/60 bg-[#0f172a] p-2 shadow-inner flex-shrink-0">
+                        <div className="h-11 w-11 rounded-full border border-slate-600/60 bg-[#0f172a] p-2 shadow-inner flex-shrink-0">
                           <Image
                             src={item.schoolLogo}
                             alt={`${item.student} school logo`}
@@ -116,7 +119,7 @@ export default function StudentSpotlightsSwiper({
                         </div>
                       )}
                       <div>
-                        <p className="text-lg md:text-xl font-bold bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
+                        <p className="text-base md:text-lg font-bold bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
                           {item.student ? item.student : item.gradeSchool}
                         </p>
                         {item.student ? (
@@ -127,17 +130,16 @@ export default function StudentSpotlightsSwiper({
                   </div>
 
                   {/* Right Column: Achievement & Quote */}
-                  <div className="md:w-7/12 flex flex-col justify-center md:pl-6 relative">
-                    <Quote className="absolute top-0 right-0 w-32 h-32 text-white/[0.02] -rotate-12 pointer-events-none" />
+                  <div className="md:w-[62%] flex flex-col justify-center md:pl-2 relative">
+                    <Quote className="absolute top-0 right-0 w-24 h-24 text-white/[0.04] -rotate-12 pointer-events-none" />
+                    <div className="mb-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-yellow-400">
+                      <Sparkles className="h-4 w-4" />
+                      <span>{item.achievement}</span>
+                    </div>
                     
                     <p
-                      className="leading-relaxed text-slate-200 text-lg md:text-[1.35rem] mb-8 font-serif"
+                      className="leading-snug text-slate-100 text-lg md:text-xl mb-6 font-serif"
                     >
-                      Achieved
-                      <span className="mx-2 font-bold text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded-md">
-                        {item.achievement}
-                      </span>
-                      with the topic 
                       <span className="block mt-4 italic text-cyan-300 font-medium leading-snug border-l-2 border-cyan-500/30 pl-4">
                         “{item.topic}”
                       </span>
@@ -146,7 +148,7 @@ export default function StudentSpotlightsSwiper({
                     <div className="relative">
                       <Quote className="absolute -left-2 -top-2 w-5 h-5 text-yellow-500/40" />
                       <p
-                        className="text-slate-300/90 leading-relaxed text-base md:text-lg pl-6"
+                        className="text-slate-300/90 leading-relaxed text-sm md:text-base pl-6"
                         style={{ fontFamily: '"Kalam", cursive', letterSpacing: '0.4px' }}
                       >
                         {item.quote}
@@ -154,7 +156,7 @@ export default function StudentSpotlightsSwiper({
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
           ))}
         </div>

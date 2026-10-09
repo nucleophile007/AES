@@ -190,6 +190,7 @@
 // }
 "use client";
 import Image from "next/image";
+import { motion } from "framer-motion";
 
 import { Award, Medal, Trophy, Microscope } from "lucide-react";
 
@@ -265,83 +266,91 @@ const spotlights: StudentSpotlight[] = [
 
 export function StudentSpotlights() {
   return (
-    <div className="relative w-full min-h-screen overflow-hidden bg-gradient-to-b from-[#b4d2f7] via-[#b4d2f7] via-[75%] to-[hsl(220,45%,20%)] py-10 px-4 sm:px-6 lg:px-8">
-      <div className="pointer-events-none absolute top-0 right-0 h-96 w-96 rounded-full bg-amber-400/20 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-0 left-0 h-96 w-96 rounded-full bg-blue-400/20 blur-3xl" />
+    <div
+      className="relative flex min-h-screen w-full flex-col overflow-hidden px-4 pb-10 pt-24 sm:px-6 sm:pt-28 lg:px-8 lg:pt-24"
+      style={{
+        background:
+          "linear-gradient(180deg, #b4d2f7 0%, #b4d2f7 38%, #a8c6eb 55%, #8baad3 70%, #6683a8 83%, #3f567d 93%, hsl(220 45% 20%) 100%)",
+      }}
+    >
+      <div className="pointer-events-none absolute -right-20 top-0 h-96 w-96 rounded-full bg-amber-400/25 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-20 left-0 h-96 w-96 rounded-full bg-blue-400/25 blur-3xl" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
 
-      <div className="relative z-10 mx-auto w-full max-w-6xl">
-        <div className="mb-20 flex justify-center">
-        </div>
+      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center">
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.7 }}
+          className="mb-8 flex items-end justify-between gap-4 px-1"
+        >
+          <div>
+            <h2 className="mt-2 font-serif text-3xl font-bold text-slate-900 sm:text-4xl">Research in motion</h2>
+          </div>
+          <p className="hidden max-w-xs text-right text-sm font-medium leading-relaxed text-slate-800 sm:block">
+            Celebrating the curiosity, rigor, and imagination behind every achievement.
+          </p>
+        </motion.div>
 
-        <div className="flex flex-col gap-6">
+        <div className="grid gap-5 lg:grid-cols-2">
           {spotlights.map((s, i) => {
             const CompIcon = s.competitionIcon === "microscope" ? Microscope : Award;
             const AchIcon = s.achievementIcon === "medal" ? Medal : Trophy;
             return (
-              <div
+              <motion.div
                 key={i}
-                className={`relative overflow-hidden rounded-2xl border ${s.accent.border} bg-white ${s.accent.glow}`}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.25 }}
+                transition={{ duration: 0.7, delay: i * 0.14 }}
+                whileHover={{ y: -8 }}
+                className={`group relative overflow-hidden rounded-[2rem] border ${s.accent.border} bg-white/95 ${s.accent.glow} transition-shadow duration-500 hover:shadow-2xl`}
               >
-                <div className="flex flex-col gap-6 p-6 sm:flex-row sm:p-8">
-                  {/* Left: logo block */}
-                  <div className="flex flex-shrink-0 flex-col items-center gap-3 sm:w-56">
-                     <div className="h-48 w-48 overflow-hidden rounded-full border-[6px] border-[#b4d2f7] shadow-md">
-                     <Image
+                <div className="absolute inset-x-8 top-0 h-1 bg-gradient-to-r from-transparent via-current to-transparent opacity-70" />
+                <div className="absolute -right-20 -top-20 h-52 w-52 rounded-full bg-blue-400/10 blur-3xl transition-transform duration-700 group-hover:scale-125" />
+
+                <div className="relative flex flex-col gap-5 p-5 sm:flex-row sm:items-stretch sm:p-6">
+                  {/* Compact event rail */}
+                  <div className="flex flex-shrink-0 flex-row items-center gap-4 border-b border-slate-200 pb-5 sm:w-[34%] sm:flex-col sm:items-center sm:justify-between sm:border-b-0 sm:border-r sm:pb-0 sm:pr-5">
+                    <div className="relative h-24 w-24 overflow-hidden rounded-full border-[5px] border-[#b4d2f7] bg-slate-100 shadow-lg sm:h-32 sm:w-32">
+                      <Image
                         src={s.logo}
                         alt={s.competition}
-                        width={128}
-                        height={128}
-                        className="h-full w-full object-cover"
-                    />
+                        fill
+                        sizes="(max-width: 640px) 96px, 128px"
+                        className="object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
                     </div>
-                    <div className="text-center">
-                      <p className={`mt-1 text-3xl font-bold ${s.accent.text}`}>
-                        {s.competition}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-500">{s.competitionDate}</p>
+                    <div className="text-left sm:text-center">
+                      <div className={`flex items-center gap-2 sm:justify-center ${s.accent.text}`}>
+                        <CompIcon className="h-4 w-4" />
+                        <span className="text-[0.65rem] font-bold uppercase tracking-[0.2em]">{s.competition}</span>
+                      </div>
+                      <p className="mt-1 text-xs font-medium text-slate-700">{s.competitionDate}</p>
                     </div>
                   </div>
 
-                  {/* Right: content */}
-                  <div className="relative flex-1">
-                    {/* Achievement above name */}
-                    <div className="flex items-center gap-3">
-                      <AchIcon className={`h-7 w-7 ${s.accent.iconStroke}`} />
-                      <span
-                        className={`bg-gradient-to-r ${s.accent.achievementGradient} bg-clip-text text-xl font-extrabold uppercase tracking-[0.18em] text-transparent sm:text-2xl`}
-                      >
+                  {/* Achievement content */}
+                  <div className="relative flex min-w-0 flex-1 flex-col justify-center">
+                    <div className="flex items-center gap-2">
+                      <AchIcon className={`h-5 w-5 ${s.accent.iconStroke}`} />
+                      <span className={`bg-gradient-to-r ${s.accent.achievementGradient} bg-clip-text text-xs font-extrabold uppercase tracking-[0.14em] text-transparent sm:text-sm`}>
                         {s.achievement}
                       </span>
                     </div>
 
-                    <h3 className="mt-2 font-serif text-3xl font-bold text-slate-900 sm:text-3xl">
+                    <h3 className="mt-3 font-serif text-2xl font-bold leading-tight text-slate-900 sm:text-[1.7rem]">
                       {s.studentName}
                     </h3>
-                    <p className="mt-1 text-sm text-slate-600">
-                      {s.grade} · {s.school}
-                    </p>
-
-                    <p
-                      className={`mt-4 font-serif text-xl italic font-bold ${s.accent.text} leading-snug`}
-                    >
+                    <p className="mt-1 text-xs font-medium text-slate-700">{s.grade} · {s.school}</p>
+                    <p className={`mt-4 font-serif text-lg italic font-bold ${s.accent.text} leading-snug`}>
                       {s.topic}
                     </p>
-
-                    <p className="mt-3 text-base italic leading-relaxed text-slate-700">
-                      {s.message}
-                    </p>
-
-                    <div className="mt-4 flex items-center gap-3">
-                      <span
-                        className={`h-px w-10 bg-gradient-to-r ${s.accent.dividerFrom} to-transparent`}
-                      />
-                      <span className={`text-xs font-bold tracking-[0.2em] ${s.accent.text}`}>
-                        — ACHARYA TEAM
-                      </span>
-                    </div>
+                    <p className="mt-3 text-sm font-medium italic leading-relaxed text-slate-800">{s.message}</p>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>

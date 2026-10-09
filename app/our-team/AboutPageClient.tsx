@@ -105,7 +105,7 @@ export default function AboutPageClient({ mentors }: AboutPageClientProps) {
   return (
     <>
       {/* About Acharya — CEO Words Section */}
-      <section className="theme-bg-dark relative overflow-hidden" style={{ minHeight: "calc(100vh - 72px)" }}>
+      <section className="theme-bg-dark relative overflow-hidden pt-[82px]" style={{ minHeight: "calc(100vh - 72px)" }}>
 
         {/* Subtle ambient background */}
         <div className="absolute inset-0 pointer-events-none">
@@ -115,61 +115,58 @@ export default function AboutPageClient({ mentors }: AboutPageClientProps) {
 
         {/* Full-height two-column layout */}
         <div
-          className="relative z-10 flex flex-col lg:flex-row"
-          style={{ minHeight: "calc(100vh - 72px)" }}
+          className="relative z-10 grid lg:grid-cols-[minmax(0,1.3fr)_minmax(280px,0.55fr)] gap-6 lg:gap-8 max-w-[1500px] mx-auto px-4 sm:px-8 lg:px-12"
+          style={{ minHeight: "calc(100vh - 154px)" }}
         >
-          {/* ── LEFT: Scrollable text content ── */}
+          {/* ── LEFT: Editorial text content ── */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="flex-1 flex flex-col justify-center overflow-y-auto px-6 sm:px-10 lg:px-16 py-10 lg:py-12"
-            style={{ maxHeight: "calc(100vh - 72px)", scrollbarWidth: "none" }}
+            className="min-w-0 flex flex-col justify-start py-8 lg:py-10 lg:pr-2"
           >
             {/* Heading group */}
-            <div className="mb-5">
-              <h1 className="text-3xl sm:text-4xl lg:text-[2.6rem] font-black bg-gradient-to-r from-yellow-400 via-amber-400 to-orange-400 bg-clip-text text-transparent leading-tight mb-2">
-                About Acharya
+            <div className="mb-6">
+              <p className="mb-3 text-[0.64rem] uppercase tracking-[0.3em] text-yellow-400/70">
+                A note from ACHARYA's Founder
+              </p>
+              <h1
+                className="text-4xl sm:text-5xl lg:text-[3rem] font-bold text-yellow-300 leading-[1.05] mb-3"
+                style={{ fontFamily: '"Libre Caslon Text", Georgia, serif' }}
+              >
+                About ACHARYA...
               </h1>
-              <div className="h-[3px] w-16 bg-gradient-to-r from-yellow-400 via-amber-400 to-transparent rounded-full" />
+              <div className="h-px w-28 bg-white/20" />
             </div>
 
-            {/* Body paragraphs — compact */}
-            <div className="space-y-3 text-slate-300 text-[0.92rem] sm:text-[0.95rem] leading-[1.7]">
-              <p>
-                We believe education should be more than the consumption of knowledge. It should inspire young minds to{" "}
+            {/* Body paragraphs */}
+            <div className="space-y-6 text-slate-300 text-[0.96rem] sm:text-[1rem] leading-[1.65]">
+              <p className="text-base sm:text-lg text-white leading-[1.5]">
+                <span style={{ fontFamily: '"Libre Caslon Text", Georgia, serif' }}>
+                  For us, education should be more than the consumption of knowledge.
+                </span>{" "}
+                It should inspire young minds to{" "}
                 <span className="text-yellow-300 font-semibold">question, explore, create, and solve problems that matter.</span>
               </p>
-              <p>
-                My own journey across{" "}
-                <span className="text-white font-semibold">Mechanical Engineering, Aerospace Systems, Neuroscience, and Liberal Arts</span>,
-                with academic experiences at{" "}
-                <span className="text-amber-400 font-medium">IIT Hyderabad, KAIST, and Ashoka University/UPenn</span>, has taught me one thing above all:
-                the most meaningful innovation happens at the intersection of disciplines, ideas, and perspectives.
-              </p>
-              <p>
-                As the{" "}
-                <span className="text-white font-semibold">CEO and Research Program Director at ACHARYA</span>, I work closely with a devoted team of researchers
-                and mentors bringing{" "}
-                <span className="text-yellow-400 font-bold">50+ years of combined experience</span> across academia, industry, and research. Together,
-                we challenge the conventional approach to student development.
-              </p>
 
-              {/* Italic callout */}
-              <p className="text-slate-400/90 italic pl-3 border-l-2 border-yellow-400/40 my-1">
-                We don&apos;t believe in generic roadmaps, short-term projects, or one-size-fits-all mentorship.
-              </p>
+              <div className="grid sm:grid-cols-2 gap-5 lg:gap-7 text-[0.94rem] sm:text-[0.98rem]">
+                <p>
+                  As the{" "}
+                  <span className="text-white font-semibold">CEO and Research Program Director at ACHARYA</span>, I work closely with a devoted team of researchers
+                  and mentors bringing{" "}
+                  <span className="text-yellow-400 font-bold">50+ years of combined experience</span> across academia, industry, and research. Together,
+                  we challenge the conventional approach to student development.
+                </p>
+              </div>
 
-              <p>
-                We believe every student has a unique combination of curiosity, strengths, and passions—and that these deserve the{" "}
+              <p className="max-w-3xl">
+                Every student has a unique combination of curiosity, strengths, and passions—and these deserve the{" "}
                 <span className="text-white font-semibold">time, depth, and mentorship</span> to grow into something extraordinary.
-              </p>
-              <p>
-                Our role is to help students transform that initial spark of curiosity into years of{" "}
+                Our role is to help transform that initial spark of curiosity into years of{" "}
                 <span className="text-yellow-300 font-semibold">purposeful exploration, rigorous research, meaningful accomplishments, and real-world impact.</span>
               </p>
-              <p>
-                At ACHARYA, we are meticulously shaping the high school journey one student at a time—so that their{" "}
+              <p className="max-w-3xl">
+                At ACHARYA, we meticulously shape the high school journey one student at a time—so that their{" "}
                 <span className="text-white font-semibold">passion</span> doesn&apos;t remain an interest, but becomes a{" "}
                 <span className="text-white font-semibold">pursuit</span>; their pursuit becomes{" "}
                 <span className="text-white font-semibold">expertise</span>; and their expertise becomes the foundation to{" "}
@@ -177,57 +174,39 @@ export default function AboutPageClient({ mentors }: AboutPageClientProps) {
               </p>
             </div>
 
-            {/* Pull quote */}
-            <blockquote className="mt-5 border-l-[3px] border-yellow-400 pl-4 py-2 bg-gradient-to-r from-yellow-400/8 to-transparent rounded-r-lg">
-              <p className="text-yellow-300 font-semibold text-[0.9rem] sm:text-[0.95rem] italic leading-snug">
-                &ldquo;Don&apos;t just discover a passion. Pursue it for years, research it deeply, build something meaningful, and create a difference.&rdquo;
-              </p>
-            </blockquote>
-
-            {/* Sign-off */}
-            <div className="mt-5 flex items-center gap-3">
-              <div className="h-px flex-1 bg-gradient-to-r from-yellow-400/30 to-transparent" />
-              <p className="text-right text-slate-400 text-xs font-medium tracking-widest uppercase">
-                Regards &nbsp;·&nbsp; <span className="text-white font-bold text-sm">Team ACHARYA</span>
-              </p>
-            </div>
           </motion.div>
 
-          {/* ── RIGHT: Founder Photo — sticky, full height, blending ── */}
+          {/* ── RIGHT: Founder Photo — framed editorial anchor ── */}
           <motion.div
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 1, ease: "easeOut", delay: 0.15 }}
-            className="hidden lg:block relative flex-shrink-0"
-            style={{ width: "38%", minHeight: "calc(100vh - 72px)" }}
+            className="relative min-w-0 w-full h-[min(64vh,540px)] min-h-[400px] lg:h-[calc(100vh-200px)] lg:min-h-[480px] lg:sticky lg:top-[116px] self-start mt-0 lg:mt-8 lg:mx-3 lg:-translate-x-20"
           >
-            {/* Warm glow behind photo */}
-            <div className="absolute inset-0 bg-gradient-to-l from-yellow-400/8 via-amber-500/5 to-transparent pointer-events-none" />
-
-            {/* Photo with edge-blending mask */}
-            <div
-              className="absolute inset-0"
-              style={{
-                WebkitMaskImage: [
-                  "linear-gradient(to bottom, transparent 0%, black 8%, black 85%, transparent 100%)",
-                  "linear-gradient(to right, transparent 0%, black 15%, black 100%)",
-                ].join(", "),
-                maskImage: [
-                  "linear-gradient(to bottom, transparent 0%, black 8%, black 85%, transparent 100%)",
-                  "linear-gradient(to right, transparent 0%, black 15%, black 100%)",
-                ].join(", "),
-                WebkitMaskComposite: "source-in",
-                maskComposite: "intersect",
-              }}
-            >
+            {/* Transparent founder portrait placed directly into the page background */}
+            <div className="absolute inset-0">
               <Image
-                src="/founder-image.png"
-                alt="Shanti Sir – CEO & Research Program Director, ACHARYA"
-                fill
-                className="object-cover object-top"
+                src="/shanti-founder.png"
+                alt="Shanti Swaroop – Founder, ACHARYA Educational Services"
+                width={1284}
+                height={1225}
+                sizes="(max-width: 1024px) 100vw, 48vw"
+                className="absolute left-1/2 top-0 h-auto w-[125%] max-w-none -translate-x-1/2"
                 quality={100}
                 priority
               />
+            </div>
+
+            <div className="absolute bottom-0 left-0 z-20 w-[calc(100%-2rem)] px-6 sm:px-10 lg:left-8 lg:w-[calc(100%-4rem)] lg:px-0 pb-8 lg:pb-12 text-left drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+              <p
+                className="max-w-[25rem] text-sm sm:text-base text-yellow-100/90 italic leading-relaxed"
+                style={{ fontFamily: '"Libre Caslon Text", Georgia, serif' }}
+              >
+                Don&apos;t just discover a passion. Pursue it for years, research it deeply, build something meaningful, and create a difference.
+              </p>
+              <p className="mt-3 whitespace-normal lg:whitespace-nowrap text-[0.55rem] sm:text-[0.6rem] uppercase tracking-[0.08em] leading-relaxed text-yellow-400/75">
+                Shanti Swaroop · Founder, ACHARYA Educational Services
+              </p>
             </div>
           </motion.div>
 

@@ -3,12 +3,7 @@
 import { useEffect } from "react";
 import Image from "next/image";
 import {
-  Award,
-  CalendarDays,
-  ExternalLink,
   Lightbulb,
-  MapPin,
-  Presentation,
   Telescope,
   Trophy,
   Zap,
@@ -16,6 +11,7 @@ import {
 import { BannerItem } from "./banner-item";
 import { GridBackground } from "./grid-background";
 import { HeroSliderAlways, type Slide } from "./HeroSliderAlways";
+import { MitUrtcSlide } from "./MitUrtcSlide";
 import { StudentSpotlights } from "./student-spotlights";
 import { UsaboSpotlight } from "./usabo";
 
@@ -145,168 +141,7 @@ export function ProgramsHero() {
     imageSrc: "/logos/ieee-logo.svg",
     imageAlt: "IEEE logo",
     hideArrows: true,
-    customContent: (
-      <section
-        className="relative h-full w-full overflow-hidden bg-[#f6f3ed] text-[#151515]"
-        style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif' }}
-      >
-        <div className="absolute inset-y-0 right-0 hidden w-[43%] bg-[#a31f34] lg:block" />
-        <div className="absolute right-[34%] top-0 hidden h-full w-28 skew-x-[-11deg] bg-[#151515] lg:block" />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(21,21,21,0.04)_1px,transparent_1px),linear-gradient(180deg,rgba(21,21,21,0.04)_1px,transparent_1px)] bg-[size:44px_44px]" />
-
-        <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col px-4 pb-14 pt-24 sm:px-6 sm:pb-20 sm:pt-28 lg:px-16 lg:pt-28">
-          <div className="flex flex-shrink-0 flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-20 items-center justify-center rounded bg-white px-2 shadow-sm ring-1 ring-black/10 sm:h-12 sm:w-24">
-                <Image
-                  src="/logos/ieee-logo.svg"
-                  alt="IEEE logo"
-                  width={112}
-                  height={64}
-                  priority
-                  className="h-full w-full object-contain"
-                />
-              </div>
-              <div className="border-l-4 border-[#a31f34] pl-3">
-                <p className="max-w-[14rem] text-[10px] font-black uppercase tracking-[0.2em] text-[#a31f34] sm:max-w-none sm:text-xs sm:tracking-[0.28em]">
-                  MIT Undergraduate Research Technology Conference
-                </p>
-                <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-black/65 sm:text-xs">
-                  By undergraduates, for undergraduates
-                </p>
-              </div>
-            </div>
-            <a
-              href="https://urtc.mit.edu/"
-              target="_blank"
-              rel="noreferrer"
-              className="group hidden h-10 items-center gap-2 rounded bg-[#151515] px-4 text-xs font-black uppercase tracking-[0.16em] text-white transition-colors hover:bg-[#a31f34] focus:outline-none focus:ring-2 focus:ring-[#a31f34] focus:ring-offset-2 sm:inline-flex"
-            >
-              URTC
-              <ExternalLink className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-            </a>
-          </div>
-
-          <div className="grid min-h-0 flex-1 items-center gap-3 py-3 lg:grid-cols-[1.02fr_0.98fr] lg:gap-10 lg:py-5">
-            <div className="min-w-0">
-              <p className="text-xs font-black uppercase tracking-[0.24em] text-[#a31f34] sm:text-sm">
-                Congratulations to our student researchers
-              </p>
-              <div className="flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#151515] sm:text-xs">
-                <span className="inline-flex items-center gap-1.5 border border-black/15 bg-white/70 px-2 py-1.5">
-                  <MapPin className="h-3.5 w-3.5 text-[#a31f34]" />
-                  Cambridge, Massachusetts
-                </span>
-                <span className="inline-flex items-center gap-1.5 border border-black/15 bg-white/70 px-2 py-1.5">
-                  <CalendarDays className="h-3.5 w-3.5 text-[#a31f34]" />
-                  Oct 9-11, 2026
-                </span>
-              </div>
-
-              <h1 className="mt-3 max-w-4xl text-[2.15rem] font-black uppercase leading-[0.94] tracking-normal text-[#151515] sm:text-5xl md:text-6xl lg:text-[4.2rem] 2xl:text-7xl">
-                Soham & Pragna
-              </h1>
-
-              <p className="mt-2 max-w-3xl text-base font-black uppercase leading-tight tracking-[0.08em] text-[#a31f34] sm:text-xl md:text-2xl">
-                Poster presenters at IEEE MIT URTC
-              </p>
-
-              <p className="mt-3 max-w-3xl text-xs font-semibold leading-relaxed text-black/70 sm:hidden">
-                Celebrating ACHARYA students presenting undergraduate research at MIT URTC.
-              </p>
-              <p className="mt-3 hidden max-w-3xl text-sm font-semibold leading-relaxed text-black/70 sm:block">
-                ACHARYA proudly congratulates our students as they present their research at the IEEE MIT Undergraduate Research Technology Conference.
-              </p>
-
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                {[
-                  {
-                    label: "Research Work 01",
-                    area: "Piezoelectric Energy Harvesting",
-                    presenter: "Soham Daterao",
-                    title: "Dynamic Analysis of L-Shaped and U-Shaped Piezoelectric Harvesters",
-                  },
-                  {
-                    label: "Research Work 02",
-                    area: "Speech Denoising",
-                    presenter: "Pragna Surabathula",
-                    title: "Hearing it Clearly: Convolutional Autoencoders for Speech Denoising",
-                  },
-                ].map((research) => (
-                  <article
-                    key={research.label}
-                    className="group border-l-4 border-[#a31f34] bg-white/90 p-3 shadow-[0_14px_34px_rgba(21,21,21,0.08)] ring-1 ring-black/10 transition-transform duration-300 hover:-translate-y-1 sm:p-4"
-                  >
-                    <div className="flex items-center gap-2 text-[#a31f34]">
-                      <Presentation className="h-4 w-4" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.16em]">
-                        {research.label}
-                      </span>
-                    </div>
-                    <h2 className="mt-2 text-lg font-black leading-tight text-[#151515] sm:text-xl">
-                      {research.area}
-                    </h2>
-                    <p className="mt-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#a31f34]/80">
-                      Presenter: {research.presenter}
-                    </p>
-                    <p className="mt-1.5 text-xs font-semibold leading-snug text-black/70 sm:text-[15px]">
-                      {research.title}
-                    </p>
-                  </article>
-                ))}
-              </div>
-            </div>
-
-            <div className="relative hidden h-full min-h-[360px] lg:block">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-full max-w-md bg-[#151515] p-6 text-white shadow-[0_28px_80px_rgba(0,0,0,0.28)] xl:p-8">
-                  <div className="flex items-start justify-between gap-6 border-b border-white/20 pb-5">
-                    <div>
-                      <p className="text-xs font-black uppercase tracking-[0.35em] text-white/60">
-                        IEEE MIT
-                      </p>
-                      <p className="mt-3 text-3xl font-black uppercase leading-none tracking-normal text-white xl:text-4xl 2xl:text-5xl">
-                        Congratulations
-                      </p>
-                    </div>
-                    <Award className="h-12 w-12 text-[#a31f34]" />
-                  </div>
-
-                  <div className="mt-6 grid grid-cols-2 gap-3">
-                    {[
-                      { value: "2", label: "Poster presentations" },
-                      { value: "MIT", label: "Conference venue" },
-                    ].map((item) => (
-                      <div key={item.label} className="border border-white/15 bg-white/[0.06] p-4">
-                        <p className="text-4xl font-black uppercase leading-none text-white">
-                          {item.value}
-                        </p>
-                        <p className="mt-3 text-[10px] font-black uppercase tracking-[0.18em] text-white/55">
-                          {item.label}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-6 bg-[#a31f34] px-5 py-4 xl:mt-8">
-                    <p className="text-sm font-black uppercase tracking-[0.2em] text-white">
-                      All the best at your MIT URTC poster presentations
-                    </p>
-                  </div>
-
-                  <p className="mt-5 text-sm font-semibold leading-relaxed text-white/65">
-                    Representing ACHARYA through research in energy harvesting and speech denoising.
-                  </p>
-                </div>
-              </div>
-              <p className="absolute bottom-3 right-0 hidden max-w-sm text-right text-xs font-black uppercase tracking-[0.22em] text-white/80 2xl:block">
-                Research presentations by ACHARYA students
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-    ),
+    customContent: <MitUrtcSlide />,
   };
 
   const programsSlide: Slide = {
