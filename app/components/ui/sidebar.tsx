@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
@@ -212,6 +212,8 @@ const Sidebar = React.forwardRef<
             }
             side={side}
           >
+            <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+            <SheetDescription className="sr-only">Mobile dashboard navigation menu</SheetDescription>
             <div className="flex h-full w-full flex-col">{children}</div>
           </SheetContent>
         </Sheet>
@@ -561,7 +563,14 @@ const SidebarMenuButton = React.forwardRef<
     ref,
   ) => {
     const Comp = asChild ? Slot : "button";
-    const { isMobile, state } = useSidebar();
+    const { isMobile, state, setOpenMobile } = useSidebar();
+
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      props.onClick?.(e);
+      if (isMobile) {
+        setOpenMobile(false);
+      }
+    };
 
     const button = (
       <Comp
@@ -571,6 +580,7 @@ const SidebarMenuButton = React.forwardRef<
         data-active={isActive}
         className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
         {...props}
+        onClick={handleClick}
       />
     );
 

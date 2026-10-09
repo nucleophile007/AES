@@ -144,6 +144,24 @@ export async function POST(request: NextRequest) {
       senderName: user.name,
       senderRole: message.senderRole as 'student' | 'teacher' | 'parent',
     });
+
+    // Queue delayed offline unread message notification (runs after 15 min if message remains unread)
+    try {
+      const { qstash } = await import('@/lib/qstash');
+      const { getApplicationUrl } = await import('@/lib/academic-notifications');
+      const jobUrl = getApplicationUrl('/api/jobs/unread-message-notification');
+      if (jobUrl) {
+        await qstash.publishJSON({
+          url: jobUrl,
+          body: { messageId: message.id },
+          notBefore: Math.floor(Date.now() / 1000) + 15 * 60,
+          deduplicationId: `unread-msg-${message.id}`,
+          retries: 2,
+        });
+      }
+    } catch (queueErr) {
+      console.warn('[Send Message] Unread notification queue notice:', queueErr);
+    }
     
     console.log(`[Send Message] Total request time: ${Date.now() - startTime}ms`);
     

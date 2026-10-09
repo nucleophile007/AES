@@ -142,31 +142,31 @@ const StudentProgressModal: React.FC<StudentProgressModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-1.5rem)] sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold mb-4 text-red-600">
+          <DialogTitle className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-slate-900">
             {studentName}&apos;s Progress
           </DialogTitle>
-          <div className="flex gap-2 border-b mb-4 pb-2">
+          <div className="flex gap-2 border-b mb-4 pb-2 overflow-x-auto no-scrollbar">
             <button
-              className={`px-4 py-2 text-sm font-medium flex items-center gap-2 ${activeTab === 'overview' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2 whitespace-nowrap shrink-0 rounded-t-md transition-colors ${activeTab === 'overview' ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50/40' : 'text-gray-500 hover:text-gray-700'}`}
               onClick={() => setActiveTab('overview')}
             >
-              <LayoutDashboard className="h-4 w-4" />
+              <LayoutDashboard className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               Assignments Overview
             </button>
             <button
-              className={`px-4 py-2 text-sm font-medium flex items-center gap-2 ${activeTab === 'reports' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2 whitespace-nowrap shrink-0 rounded-t-md transition-colors ${activeTab === 'reports' ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50/40' : 'text-gray-500 hover:text-gray-700'}`}
               onClick={() => setActiveTab('reports')}
             >
-              <FileSpreadsheet className="h-4 w-4" />
+              <FileSpreadsheet className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               Progress Reports
             </button>
             <button
-              className={`px-4 py-2 text-sm font-medium flex items-center gap-2 ${activeTab === 'meetings' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2 whitespace-nowrap shrink-0 rounded-t-md transition-colors ${activeTab === 'meetings' ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50/40' : 'text-gray-500 hover:text-gray-700'}`}
               onClick={() => setActiveTab('meetings')}
             >
-              <NotebookText className="h-4 w-4" />
+              <NotebookText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               Meeting Notes
             </button>
           </div>

@@ -5,6 +5,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
 import {
   Dialog,
@@ -230,15 +231,15 @@ const StudentScheduleView: React.FC<StudentScheduleViewProps> = ({ studentEmail 
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-400 p-4 my-4">
+        <div className="bg-red-50 border-l-4 border-red-400 p-3 sm:p-4 my-2 sm:my-4 rounded-r-md">
           <div className="flex items-start">
             <div className="flex-shrink-0">
               <AlertCircle className="h-5 w-5 text-red-400" />
             </div>
-            <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="ml-3 flex-1 min-w-0">
+              <p className="text-xs sm:text-sm text-red-700 break-words">{error}</p>
             </div>
             <div className="ml-auto pl-3">
               <div className="-mx-1.5 -my-1.5">
@@ -247,7 +248,7 @@ const StudentScheduleView: React.FC<StudentScheduleViewProps> = ({ studentEmail 
                   className="inline-flex rounded-md p-1.5 text-red-500 hover:bg-red-100 focus:outline-none"
                 >
                   <span className="sr-only">Dismiss</span>
-                  <span className="h-5 w-5">×</span>
+                  <span className="h-5 w-5 leading-none">×</span>
                 </button>
               </div>
             </div>
@@ -255,17 +256,17 @@ const StudentScheduleView: React.FC<StudentScheduleViewProps> = ({ studentEmail 
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Upcoming Classes Card */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-blue-600" />
+        <Card className="lg:col-span-1 border border-slate-200 bg-white shadow-sm">
+          <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-slate-900">
+              <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 shrink-0" />
               Upcoming Classes
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="p-4 sm:p-6 pt-2">
+            <div className="space-y-3 sm:space-y-4">
               {loading ? (
                 <div className="space-y-3 py-2">
                   {Array.from({ length: 3 }).map((_, index) => (
@@ -280,51 +281,52 @@ const StudentScheduleView: React.FC<StudentScheduleViewProps> = ({ studentEmail 
                 upcomingClasses.map((event) => (
                   <div 
                     key={event.id} 
-                    className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                    className="p-3 sm:p-4 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
                     onClick={() => handleEventSelect(event)}
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-medium text-gray-900">{event.title}</h4>
+                    <div className="flex flex-wrap justify-between items-start gap-2 mb-2">
+                      <h4 className="font-semibold text-xs sm:text-sm text-slate-900 break-words flex-1 min-w-[120px]">{event.title}</h4>
                       <Badge 
                         variant="outline" 
-                        className={getSubjectColorSet(event.subject || "General").badge}
+                        className={cn("text-xs shrink-0", getSubjectColorSet(event.subject || "General").badge)}
                       >
                         {event.subject || "General"}
                       </Badge>
                     </div>
-                    <div className="text-sm text-gray-500">
-                      <div className="flex items-center gap-1 mb-1">
-                        <CalendarIcon className="h-3 w-3" />
+                    <div className="text-xs sm:text-sm text-slate-500 space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <CalendarIcon className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                         <span>{moment(event.date).format('MMM D, YYYY')}</span>
                       </div>
-                      <div className="flex items-center gap-1 mb-1">
-                        <Clock className="h-3 w-3" />
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                         <span>{event.startTime} - {event.endTime}</span>
                       </div>
                       {event.location && (
-                        <div className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          <span>{event.location}</span>
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                          <span className="truncate">{event.location}</span>
                         </div>
                       )}
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <CalendarIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                  <p>No upcoming classes scheduled</p>
+                <div className="text-center py-8 text-slate-500">
+                  <CalendarIcon className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+                  <p className="text-xs sm:text-sm">No upcoming classes scheduled</p>
                 </div>
               )}
               
-              <div className="flex justify-center mt-2">
+              <div className="flex justify-center pt-1">
                 <Button 
                   variant="outline" 
                   size="sm"
                   onClick={fetchEvents}
                   disabled={loading}
+                  className="w-full sm:w-auto text-xs sm:text-sm"
                 >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
                   Refresh
                 </Button>
               </div>
@@ -333,36 +335,38 @@ const StudentScheduleView: React.FC<StudentScheduleViewProps> = ({ studentEmail 
         </Card>
 
         {/* Calendar Card */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5 text-blue-600" />
+        <Card className="lg:col-span-2 border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-slate-900">
+              <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 shrink-0" />
               My Class Schedule
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-2 sm:p-6 pt-0">
             {loading ? (
               <div className="space-y-3 py-4">
                 <ShimmerSkeleton className="h-6 w-40" />
-                <ShimmerSkeleton className="h-[500px] w-full rounded-lg" />
+                <ShimmerSkeleton className="h-[400px] sm:h-[500px] w-full rounded-lg" />
               </div>
             ) : (
-              <div className="h-[500px]">
-                <Calendar
-                  localizer={localizer}
-                  events={events}
-                  startAccessor="start"
-                  endAccessor="end"
-                  style={{ height: '100%' }}
-                  onSelectEvent={handleEventSelect}
-                  eventPropGetter={(event: ClassEvent) => {
-                    const colorClass = event.color || getSubjectColorSet(event.subject || "General").calendar;
-                    
-                    return {
-                      className: `${colorClass} border-l-4 rounded px-2`
-                    };
-                  }}
-                />
+              <div className="h-[420px] sm:h-[520px] w-full overflow-x-auto">
+                <div className="min-w-[300px] h-full">
+                  <Calendar
+                    localizer={localizer}
+                    events={events}
+                    startAccessor="start"
+                    endAccessor="end"
+                    style={{ height: '100%' }}
+                    onSelectEvent={handleEventSelect}
+                    eventPropGetter={(event: ClassEvent) => {
+                      const colorClass = event.color || getSubjectColorSet(event.subject || "General").calendar;
+                      
+                      return {
+                        className: `${colorClass} border-l-4 rounded px-1.5 sm:px-2 text-xs`
+                      };
+                    }}
+                  />
+                </div>
               </div>
             )}
           </CardContent>
@@ -372,60 +376,60 @@ const StudentScheduleView: React.FC<StudentScheduleViewProps> = ({ studentEmail 
       {/* View Event Dialog */}
       <Dialog open={isViewEventDialogOpen} onOpenChange={setIsViewEventDialogOpen}>
         {selectedEvent && (
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto p-4 sm:p-6">
             <DialogHeader>
-              <DialogTitle>{selectedEvent.title}</DialogTitle>
+              <DialogTitle className="text-base sm:text-lg break-words">{selectedEvent.title}</DialogTitle>
             </DialogHeader>
             
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4 py-2">
               {/* Subject Badge */}
               <div className="flex justify-center">
                 <Badge 
-                  className={getSubjectColorSet(selectedEvent.subject || "General").detail}
+                  className={cn("text-xs", getSubjectColorSet(selectedEvent.subject || "General").detail)}
                 >
                   {selectedEvent.subject || "General"}
                 </Badge>
               </div>
               
               {/* Teacher Info */}
-              <div className="grid grid-cols-[20px_1fr] items-center gap-2">
-                <User className="h-5 w-5 text-blue-600" />
-                <p>
-                  <span className="font-medium">Teacher:</span>{' '}
+              <div className="grid grid-cols-[20px_1fr] items-center gap-2.5 text-xs sm:text-sm">
+                <User className="h-4 w-4 text-blue-600 shrink-0" />
+                <p className="text-slate-700">
+                  <span className="font-semibold text-slate-900">Teacher:</span>{' '}
                   {selectedEvent.teacher?.name || 'N/A'}
                 </p>
               </div>
               
               {/* Date/Time Info */}
-              <div className="grid grid-cols-[20px_1fr] items-center gap-2">
-                <Clock className="h-5 w-5 text-blue-600" />
-                <div>
+              <div className="grid grid-cols-[20px_1fr] items-start gap-2.5 text-xs sm:text-sm">
+                <Clock className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+                <div className="text-slate-700">
                   <p>
-                    <span className="font-medium">Date:</span>{' '}
+                    <span className="font-semibold text-slate-900">Date:</span>{' '}
                     {moment(selectedEvent.date).format('dddd, MMMM D, YYYY')}
                   </p>
-                  <p>
-                    <span className="font-medium">Time:</span>{' '}
+                  <p className="mt-0.5">
+                    <span className="font-semibold text-slate-900">Time:</span>{' '}
                     {selectedEvent.startTime} - {selectedEvent.endTime}
                   </p>
                 </div>
               </div>
               
               {/* Subject Info */}
-              <div className="grid grid-cols-[20px_1fr] items-center gap-2">
-                <Book className="h-5 w-5 text-blue-600" />
-                <p>
-                  <span className="font-medium">Subject:</span>{' '}
+              <div className="grid grid-cols-[20px_1fr] items-center gap-2.5 text-xs sm:text-sm">
+                <Book className="h-4 w-4 text-blue-600 shrink-0" />
+                <p className="text-slate-700">
+                  <span className="font-semibold text-slate-900">Subject:</span>{' '}
                   {selectedEvent.subject || "General"}
                 </p>
               </div>
               
               {/* Location Info */}
               {selectedEvent.location && (
-                <div className="grid grid-cols-[20px_1fr] items-center gap-2">
-                  <MapPin className="h-5 w-5 text-blue-600" />
-                  <p>
-                    <span className="font-medium">Location:</span>{' '}
+                <div className="grid grid-cols-[20px_1fr] items-center gap-2.5 text-xs sm:text-sm">
+                  <MapPin className="h-4 w-4 text-blue-600 shrink-0" />
+                  <p className="text-slate-700">
+                    <span className="font-semibold text-slate-900">Location:</span>{' '}
                     {selectedEvent.location}
                   </p>
                 </div>
@@ -433,18 +437,18 @@ const StudentScheduleView: React.FC<StudentScheduleViewProps> = ({ studentEmail 
               
               {/* Meeting Link */}
               {selectedEvent.meetingLink && (
-                <div className="grid grid-cols-[20px_1fr] items-center gap-2">
-                  <ExternalLink className="h-5 w-5 text-blue-600" />
-                  <div>
-                    <p className="font-medium">Meeting Link:</p>
+                <div className="grid grid-cols-[20px_1fr] items-start gap-2.5 text-xs sm:text-sm">
+                  <ExternalLink className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-900">Meeting Link:</p>
                     <a 
                       href={selectedEvent.meetingLink} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline flex items-center gap-1 text-sm"
+                      className="text-blue-600 hover:underline flex items-center gap-1 mt-0.5 break-all text-xs sm:text-sm"
                     >
-                      <span>{selectedEvent.meetingLink}</span>
-                      <ExternalLink className="h-3 w-3" />
+                      <span className="break-all">{selectedEvent.meetingLink}</span>
+                      <ExternalLink className="h-3 w-3 shrink-0" />
                     </a>
                   </div>
                 </div>
@@ -452,9 +456,9 @@ const StudentScheduleView: React.FC<StudentScheduleViewProps> = ({ studentEmail 
               
               {/* Description */}
               {selectedEvent.description && (
-                <div>
-                  <p className="font-medium">Description:</p>
-                  <p className="whitespace-pre-wrap text-gray-700 text-sm mt-1 p-3 bg-gray-50 rounded-md">
+                <div className="text-xs sm:text-sm">
+                  <p className="font-semibold text-slate-900">Description:</p>
+                  <p className="whitespace-pre-wrap text-slate-700 mt-1 p-2.5 sm:p-3 bg-slate-50 border border-slate-200 rounded-md break-words">
                     {selectedEvent.description}
                   </p>
                 </div>
@@ -462,18 +466,16 @@ const StudentScheduleView: React.FC<StudentScheduleViewProps> = ({ studentEmail 
               
               {/* Status */}
               {selectedEvent.status && (
-                <div>
-                  <p className="font-medium">Status:</p>
-                  <div className="capitalize text-sm">
-                    <Badge variant="outline">
-                      {selectedEvent.status}
-                    </Badge>
-                  </div>
+                <div className="text-xs sm:text-sm flex items-center gap-2">
+                  <span className="font-semibold text-slate-900">Status:</span>
+                  <Badge variant="outline" className="capitalize text-xs">
+                    {selectedEvent.status}
+                  </Badge>
                 </div>
               )}
             </div>
             
-            <DialogFooter>
+            <DialogFooter className="flex-col-reverse sm:flex-row gap-2 sm:gap-0 pt-2">
               {selectedEvent.meetingLink && (
                 <Button 
                   variant="default"
@@ -482,14 +484,14 @@ const StudentScheduleView: React.FC<StudentScheduleViewProps> = ({ studentEmail 
                       window.open(selectedEvent.meetingLink, '_blank');
                     }
                   }}
-                  className="mr-auto"
+                  className="w-full sm:w-auto bg-brand-blue text-white hover:bg-brand-blue/90 text-xs sm:text-sm"
                 >
-                  <ExternalLink className="h-4 w-4 mr-2" />
+                  <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                   Join Meeting
                 </Button>
               )}
               <DialogClose asChild>
-                <Button variant="outline">Close</Button>
+                <Button variant="outline" className="w-full sm:w-auto text-xs sm:text-sm">Close</Button>
               </DialogClose>
             </DialogFooter>
           </DialogContent>

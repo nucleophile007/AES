@@ -1603,72 +1603,90 @@ export default function TeacherDashboard() {
           </SidebarFooter>
         </Sidebar>
 
-        <SidebarInset className="flex-1">
+        <SidebarInset className="flex-1 min-w-0">
           <header className="sticky top-0 z-10 border-b border-slate-200/70 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/80">
-            <div className="flex min-h-16 items-center gap-2 px-4 md:px-6">
-              <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="mr-2 h-4" />
-              <div className="flex items-center gap-2 flex-1">
-                <h1 className="text-lg font-semibold text-slate-900">
+            <div className="flex min-h-14 sm:min-h-16 items-center justify-between gap-2 px-3 sm:px-4 md:px-6">
+              <div className="flex items-center gap-2 min-w-0">
+                <SidebarTrigger className="-ml-1" />
+                <Separator orientation="vertical" className="mr-1 sm:mr-2 h-4" />
+                <h1 className="text-base sm:text-lg font-semibold text-slate-900 truncate">
                   Teacher Dashboard
                 </h1>
-                <Badge variant="outline" className="hidden md:inline-flex border-slate-300 bg-slate-100 text-slate-700">
+                <Badge variant="outline" className="hidden md:inline-flex border-slate-300 bg-slate-100 text-slate-700 text-xs">
                   {currentTabMeta.title}
                 </Badge>
               </div>
-              <div className="hidden lg:flex items-center gap-2">
-                <select
-                  value={selectedProgram ?? ""}
-                  onChange={(event) => setSelectedProgram(event.target.value || null)}
-                  className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
-                >
-                  <option value="">All Programs</option>
-                  {teacher.programs.map((program) => (
-                    <option key={program} value={program}>
-                      {program}
-                    </option>
-                  ))}
-                </select>
+              <div className="flex items-center gap-2 flex-1 justify-end max-w-xs sm:max-w-md">
+                <div className="hidden sm:flex items-center gap-2">
+                  <select
+                    value={selectedProgram ?? ""}
+                    onChange={(event) => setSelectedProgram(event.target.value || null)}
+                    className="h-9 sm:h-10 rounded-md border border-slate-200 bg-white px-2.5 sm:px-3 text-xs sm:text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                  >
+                    <option value="">All Programs</option>
+                    {teacher.programs.map((program) => (
+                      <option key={program} value={program}>
+                        {program}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="relative flex-1 sm:w-60 sm:flex-initial">
+                  <Search className="pointer-events-none absolute left-2.5 sm:left-3 top-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    placeholder="Search students..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="h-9 sm:h-10 w-full pl-8 sm:pl-9 text-xs sm:text-sm"
+                  />
+                </div>
               </div>
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <Input
-                  placeholder="Search students..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-64 pl-9"
-                />
-              </div>
+            </div>
+            {/* Mobile-only Program Filter Row */}
+            <div className="flex sm:hidden items-center gap-2 px-3 pb-2.5 pt-0 border-t border-slate-100">
+              <span className="text-xs font-medium text-slate-500 shrink-0">Program:</span>
+              <select
+                value={selectedProgram ?? ""}
+                onChange={(event) => setSelectedProgram(event.target.value || null)}
+                className="h-8 flex-1 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+              >
+                <option value="">All Programs</option>
+                {teacher.programs.map((program) => (
+                  <option key={program} value={program}>
+                    {program}
+                  </option>
+                ))}
+              </select>
             </div>
           </header>
 
-          <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 teacher-chat-no-spinner">
+          <div className="flex flex-1 flex-col gap-4 sm:gap-6 p-3 sm:p-4 md:p-6 teacher-chat-no-spinner min-w-0">
             <Card className="border border-slate-200/80 bg-white shadow-sm">
-              <CardHeader className="pb-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="space-y-1">
-                    <CardTitle className="flex items-center gap-2 text-xl text-slate-900">
-                      <currentTabMeta.icon className="h-5 w-5 text-slate-700" />
-                      {currentTabMeta.title}
+              <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+                  <div className="space-y-0.5 sm:space-y-1 min-w-0">
+                    <CardTitle className="flex items-center gap-2 text-lg sm:text-xl text-slate-900 truncate">
+                      <currentTabMeta.icon className="h-5 w-5 text-slate-700 shrink-0" />
+                      <span className="truncate">{currentTabMeta.title}</span>
                     </CardTitle>
-                    <CardDescription className="text-sm text-slate-600">
+                    <CardDescription className="text-xs sm:text-sm text-slate-600 line-clamp-2 sm:line-clamp-none">
                       {currentTabMeta.description}
                     </CardDescription>
                   </div>
-                  <Badge className="bg-slate-100 text-slate-700 border border-slate-300">
+                  <Badge className="bg-slate-100 text-slate-700 border border-slate-300 text-xs shrink-0">
                     {teacher.programs.length} Program{teacher.programs.length === 1 ? "" : "s"}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="pt-0">
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <CardContent className="p-4 sm:p-6 pt-0">
+                <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
                   {dashboardStats.map((stat) => (
-                    <div key={stat.label} className="rounded-xl border border-slate-200/70 bg-white p-4 shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{stat.label}</p>
-                        <stat.icon className="h-4 w-4 text-slate-600" />
+                    <div key={stat.label} className="rounded-xl border border-slate-200/70 bg-white p-3 sm:p-4 shadow-sm">
+                      <div className="flex items-center justify-between gap-1">
+                        <p className="text-[11px] sm:text-xs font-medium uppercase tracking-wide text-slate-500 truncate">{stat.label}</p>
+                        <stat.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-600 shrink-0" />
                       </div>
-                      <p className="mt-2 text-2xl font-semibold text-slate-900">{stat.value}</p>
+                      <p className="mt-1.5 sm:mt-2 text-xl sm:text-2xl font-semibold text-slate-900">{stat.value}</p>
                     </div>
                   ))}
                 </div>
@@ -1685,43 +1703,50 @@ export default function TeacherDashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="space-y-6"
+                className="space-y-6 min-w-0"
               >
                 {/* Parent Conversations Section */}
                 {parentConversations.length > 0 && (
                   <div className="mb-6">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-slate-900">
-                      <Users className="h-5 w-5" />
+                    <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2 text-slate-900">
+                      <Users className="h-4 w-4 sm:h-5 sm:w-5 text-slate-700" />
                       Parent Conversations
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 mb-6">
                       {parentConversations.map((parent) => (
                         <Card key={parent.recipientId} className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
-                          <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1">
-                                <p className="font-semibold text-gray-900">{parent.recipientName}</p>
-                                <p className="text-sm text-gray-600 mt-1 line-clamp-2">{parent.lastMessage}</p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                  {new Date(parent.lastMessageTime).toLocaleDateString()}
-                                </p>
-                                {parent.unreadCount > 0 && (
-                                  <Badge className="mt-2 bg-slate-900 text-white">
-                                    {parent.unreadCount} unread
-                                  </Badge>
-                                )}
+                          <CardContent className="p-3.5 sm:p-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between sm:justify-start gap-2">
+                                  <p className="font-semibold text-gray-900 text-sm sm:text-base truncate">{parent.recipientName}</p>
+                                  <span className="text-[11px] sm:text-xs text-gray-400 sm:hidden">
+                                    {new Date(parent.lastMessageTime).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                <p className="text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2">{parent.lastMessage}</p>
+                                <div className="flex items-center gap-2 mt-1.5">
+                                  <p className="text-xs text-gray-400 hidden sm:block">
+                                    {new Date(parent.lastMessageTime).toLocaleDateString()}
+                                  </p>
+                                  {parent.unreadCount > 0 && (
+                                    <Badge className="bg-slate-900 text-white text-[10px] px-1.5 py-0.5">
+                                      {parent.unreadCount} unread
+                                    </Badge>
+                                  )}
+                                </div>
                               </div>
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="ml-3 border-slate-300 text-slate-700 hover:bg-slate-50"
+                                className="w-full sm:w-auto border-slate-300 text-slate-700 hover:bg-slate-50 text-xs sm:text-sm h-8 sm:h-9 shrink-0"
                                 onClick={() => {
                                   setSelectedChatParent({ id: parent.recipientId, name: parent.recipientName });
                                   setSelectedChatStudent(null); // Clear student selection
                                   setIsChatOpen(true);
                                 }}
                               >
-                                <MessageCircle className="h-4 w-4 mr-2" />
+                                <MessageCircle className="h-3.5 w-3.5 mr-1.5" />
                                 Chat
                               </Button>
                             </div>
@@ -1734,19 +1759,19 @@ export default function TeacherDashboard() {
                 )}
 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold flex items-center gap-2 text-slate-900">
-                      <Users className="h-5 w-5" />
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2 text-slate-900">
+                      <Users className="h-4 w-4 sm:h-5 sm:w-5 text-slate-700" />
                       Student Groups
                     </h3>
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button size="sm" className="bg-slate-900 text-white hover:bg-slate-800">
-                          <Plus className="h-4 w-4 mr-2" />
+                        <Button size="sm" className="bg-slate-900 text-white hover:bg-slate-800 text-xs sm:text-sm h-8 sm:h-9">
+                          <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5" />
                           Create Group
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="sm:max-w-[520px]">
+                      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                           <DialogTitle>Create Student Group</DialogTitle>
                         </DialogHeader>
@@ -1763,7 +1788,7 @@ export default function TeacherDashboard() {
                             <Label>Select Students *</Label>
                             <div className="border rounded-lg p-3 max-h-60 overflow-y-auto space-y-2">
                               {students.map((student) => (
-                                <label key={student.id} className="flex items-center gap-2 text-sm">
+                                <label key={student.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-slate-50 p-1 rounded">
                                   <Checkbox
                                     checked={groupStudentIds.includes(student.id)}
                                     onCheckedChange={(checked) => {
@@ -1774,8 +1799,8 @@ export default function TeacherDashboard() {
                                       }
                                     }}
                                   />
-                                  <span className="flex-1">
-                                    {student.name} <span className="text-gray-500">({student.email})</span>
+                                  <span className="flex-1 min-w-0 truncate">
+                                    {student.name} <span className="text-gray-500 text-xs truncate">({student.email})</span>
                                   </span>
                                 </label>
                               ))}
@@ -1786,7 +1811,7 @@ export default function TeacherDashboard() {
                           </div>
                           {groupError && <p className="text-sm text-red-600">{groupError}</p>}
                         </div>
-                        <DialogFooter>
+                        <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
                           <Button
                             variant="outline"
                             onClick={() => {
@@ -1815,7 +1840,7 @@ export default function TeacherDashboard() {
                     </Dialog>
 
                     <Dialog open={isEditGroupModalOpen} onOpenChange={setIsEditGroupModalOpen}>
-                      <DialogContent className="sm:max-w-[520px]">
+                      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                           <DialogTitle>Edit Student Group</DialogTitle>
                         </DialogHeader>
@@ -1832,7 +1857,7 @@ export default function TeacherDashboard() {
                             <Label>Select Students *</Label>
                             <div className="border rounded-lg p-3 max-h-60 overflow-y-auto space-y-2">
                               {students.map((student) => (
-                                <label key={student.id} className="flex items-center gap-2 text-sm">
+                                <label key={student.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-slate-50 p-1 rounded">
                                   <Checkbox
                                     checked={editGroupStudentIds.includes(student.id)}
                                     onCheckedChange={(checked) => {
@@ -1843,8 +1868,8 @@ export default function TeacherDashboard() {
                                       }
                                     }}
                                   />
-                                  <span className="flex-1">
-                                    {student.name} <span className="text-gray-500">({student.email})</span>
+                                  <span className="flex-1 min-w-0 truncate">
+                                    {student.name} <span className="text-gray-500 text-xs truncate">({student.email})</span>
                                   </span>
                                 </label>
                               ))}
@@ -1855,7 +1880,7 @@ export default function TeacherDashboard() {
                           </div>
                           {editGroupError && <p className="text-sm text-red-600">{editGroupError}</p>}
                         </div>
-                        <DialogFooter>
+                        <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
                           <Button
                             variant="outline"
                             onClick={() => {
@@ -1881,43 +1906,43 @@ export default function TeacherDashboard() {
 
                   {studentGroups.length === 0 ? (
                     <Card className="border border-dashed border-slate-300 bg-slate-50/60">
-                      <CardContent className="py-10 text-center">
-                        <Users className="h-10 w-10 text-gray-400 mx-auto mb-3" />
-                        <p className="text-sm text-gray-500">Create your first group to manage students together.</p>
+                      <CardContent className="py-8 sm:py-10 text-center">
+                        <Users className="h-8 w-8 sm:h-10 sm:w-10 text-gray-400 mx-auto mb-2 sm:mb-3" />
+                        <p className="text-xs sm:text-sm text-gray-500">Create your first group to manage students together.</p>
                       </CardContent>
                     </Card>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
                       {studentGroups.map((group) => (
                         <Card key={group.id} className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
-                          <CardHeader className="pb-3">
-                            <CardTitle className="flex items-center justify-between text-slate-900 text-lg">
-                              <div className="flex items-center gap-2">
-                                <span className="truncate">{group.name}</span>
-                                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={() => openEditGroupModal(group)}>
-                                  <Edit className="h-3 w-3" />
+                          <CardHeader className="p-4 pb-2 sm:pb-3">
+                            <CardTitle className="flex items-center justify-between text-slate-900 text-base sm:text-lg gap-2">
+                              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                <span className="truncate font-semibold">{group.name}</span>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full shrink-0" onClick={() => openEditGroupModal(group)}>
+                                  <Edit className="h-3.5 w-3.5" />
                                 </Button>
                               </div>
-                              <Badge variant="outline" className="bg-slate-50">
-                                {group.members.length} students
+                              <Badge variant="outline" className="bg-slate-50 shrink-0 text-xs">
+                                {group.members.length} {group.members.length === 1 ? 'student' : 'students'}
                               </Badge>
                             </CardTitle>
                             <div className="text-xs text-gray-500">
                               {new Date(group.createdAt).toLocaleDateString()}
                             </div>
                           </CardHeader>
-                          <CardContent>
+                          <CardContent className="p-4 pt-0">
                             {group.members.length === 0 ? (
-                              <p className="text-sm text-gray-500">No students assigned.</p>
+                              <p className="text-xs sm:text-sm text-gray-500">No students assigned.</p>
                             ) : (
-                              <div className="flex flex-wrap gap-2">
+                              <div className="flex flex-wrap gap-1.5">
                                 {group.members.slice(0, 4).map((member) => (
-                                  <Badge key={member.id} variant="secondary" className="bg-gray-100 text-gray-700">
+                                  <Badge key={member.id} variant="secondary" className="bg-gray-100 text-gray-700 text-xs">
                                     {member.name}
                                   </Badge>
                                 ))}
                                 {group.members.length > 4 && (
-                                  <Badge variant="outline" className="text-gray-500">
+                                  <Badge variant="outline" className="text-gray-500 text-xs">
                                     +{group.members.length - 4} more
                                   </Badge>
                                 )}
@@ -1930,79 +1955,91 @@ export default function TeacherDashboard() {
                   )}
                 </div>
 
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-slate-900">
-                  <GraduationCap className="h-5 w-5" />
-                  Students
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredStudents.length === 0 && (
-                    <div className="col-span-full text-center text-gray-400 py-12">
-                      No students found.
-                    </div>
-                  )}
-                  {filteredStudents.map((student) => (
-                    <Card key={student.id} className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="flex items-center gap-2 text-slate-900 text-lg">
-                          <User className="h-5 w-5" />
-                          {student.name}
-                        </CardTitle>
-                        <div className="text-xs text-gray-500">{student.email}</div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3">
-                          {/* Program Badges */}
-                          <div className="flex flex-wrap gap-2">
-                            <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-300">
-                              {student.program}
-                            </Badge>
-                            <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-300">
-                              {student.grade}
-                            </Badge>
-                          </div>
-
-                          {/* School Info */}
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <School className="h-4 w-4" />
-                            {student.schoolName}
-                          </div>
-
-                          {/* Parent Info */}
-                          <div className="text-xs text-gray-500 space-y-1">
-                            <div className="flex items-center gap-1">
-                              <User className="h-3 w-3" />
-                              Parent: {student.parentName}
+                <div className="space-y-4">
+                  <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2 text-slate-900">
+                    <GraduationCap className="h-4 w-4 sm:h-5 sm:w-5 text-slate-700" />
+                    Students ({filteredStudents.length})
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+                    {filteredStudents.length === 0 && (
+                      <div className="col-span-full text-center text-gray-400 py-10 sm:py-12 bg-white rounded-xl border border-dashed border-slate-200 text-sm">
+                        No students found matching the selected filters.
+                      </div>
+                    )}
+                    {filteredStudents.map((student) => (
+                      <Card key={student.id} className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md flex flex-col justify-between">
+                        <CardHeader className="p-4 sm:p-5 pb-2 sm:pb-3">
+                          <CardTitle className="flex items-center gap-2 text-slate-900 text-base sm:text-lg min-w-0">
+                            <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 shrink-0 font-medium text-xs">
+                              {student.name.charAt(0).toUpperCase()}
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Mail className="h-3 w-3" />
-                              {student.parentEmail}
+                            <span className="truncate font-semibold">{student.name}</span>
+                          </CardTitle>
+                          <div className="text-xs text-gray-500 truncate mt-0.5">{student.email}</div>
+                        </CardHeader>
+                        <CardContent className="p-4 sm:p-5 pt-0 flex-1 flex flex-col justify-between">
+                          <div className="space-y-3">
+                            {/* Program Badges */}
+                            <div className="flex flex-wrap gap-1.5">
+                              <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-300 text-xs">
+                                {student.program}
+                              </Badge>
+                              {student.grade && (
+                                <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-300 text-xs">
+                                  {student.grade}
+                                </Badge>
+                              )}
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Phone className="h-3 w-3" />
-                              {student.parentPhone}
-                            </div>
-                          </div>
 
-                          {/* Recent Submissions */}
-                          {student.recentSubmissions.length > 0 && (
-                            <div className="text-xs">
-                              <div className="font-medium text-gray-700 mb-1">Recent Submissions:</div>
-                              {student.recentSubmissions.slice(0, 2).map((submission, idx) => (
-                                <div key={idx} className="text-gray-500 flex justify-between">
-                                  <span>{submission.assignment.title}</span>
-                                  <span className={submission.grade ? 'text-slate-700' : 'text-slate-500'}>
-                                    {submission.grade ? `${submission.grade}%` : 'Pending'}
-                                  </span>
+                            {/* School Info */}
+                            {student.schoolName && (
+                              <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 truncate">
+                                <School className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400 shrink-0" />
+                                <span className="truncate">{student.schoolName}</span>
+                              </div>
+                            )}
+
+                            {/* Parent Info */}
+                            <div className="text-xs text-gray-500 space-y-1.5 bg-slate-50/80 p-2.5 rounded-lg border border-slate-100">
+                              <div className="flex items-center gap-1.5 truncate">
+                                <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                                <span className="truncate">Parent: <span className="text-slate-700 font-medium">{student.parentName || "N/A"}</span></span>
+                              </div>
+                              {student.parentEmail && (
+                                <div className="flex items-center gap-1.5 truncate">
+                                  <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                                  <span className="truncate">{student.parentEmail}</span>
                                 </div>
-                              ))}
+                              )}
+                              {student.parentPhone && (
+                                <div className="flex items-center gap-1.5 truncate">
+                                  <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                                  <span className="truncate">{student.parentPhone}</span>
+                                </div>
+                              )}
                             </div>
-                          )}
 
-                          <div className="flex gap-2 mt-3">
+                            {/* Recent Submissions */}
+                            {student.recentSubmissions && student.recentSubmissions.length > 0 && (
+                              <div className="text-xs space-y-1">
+                                <div className="font-medium text-gray-700">Recent Submissions:</div>
+                                {student.recentSubmissions.slice(0, 2).map((submission, idx) => (
+                                  <div key={idx} className="text-gray-500 flex justify-between gap-2 text-[11px] sm:text-xs">
+                                    <span className="truncate">{submission.assignment.title}</span>
+                                    <span className={`shrink-0 font-medium ${submission.grade ? 'text-slate-700' : 'text-slate-500'}`}>
+                                      {submission.grade ? `${submission.grade}%` : 'Pending'}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-100">
                             <Button
                               size="sm"
                               variant="outline"
-                              className="flex-1 border-slate-300 hover:bg-slate-50"
+                              className="flex-1 border-slate-300 hover:bg-slate-50 text-xs sm:text-sm h-8 sm:h-9"
                               onClick={() => {
                                 setSelectedProgressStudent(student);
                                 setIsProgressModalOpen(true);
@@ -2013,20 +2050,22 @@ export default function TeacherDashboard() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                              className="border-slate-300 text-slate-700 hover:bg-slate-50 text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3 shrink-0 flex items-center gap-1.5"
                               onClick={() => {
                                 setSelectedChatStudent(student);
                                 setSelectedChatParent(null); // Clear parent selection
                                 setIsChatOpen(true);
                               }}
+                              aria-label={`Chat with ${student.name}`}
                             >
-                              <MessageCircle className="h-4 w-4" />
+                              <MessageCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                              <span className="hidden xs:inline sm:hidden md:inline">Chat</span>
                             </Button>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -2043,7 +2082,7 @@ export default function TeacherDashboard() {
                     <CardTitle className="text-lg text-slate-900">Assignment Manager</CardTitle>
                     <CardDescription>Create, edit, and maintain assignment workflows.</CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-3.5 sm:p-6">
                     <AssignmentManager
                       teacherEmail={teacherEmail}
                       assignments={assignments}
@@ -2061,13 +2100,14 @@ export default function TeacherDashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
+                className="w-full min-w-0"
               >
-                <Card className="border border-slate-200 bg-white shadow-sm">
-                  <CardHeader className="pb-3">
+                <Card className="border border-slate-200 bg-white shadow-sm overflow-hidden">
+                  <CardHeader className="p-4 sm:p-6 pb-3">
                     <CardTitle className="text-lg text-slate-900">Submission Review</CardTitle>
-                    <CardDescription>Grade work, annotate feedback, and track follow-ups.</CardDescription>
+                    <CardDescription className="text-xs sm:text-sm text-slate-600">Grade work, annotate feedback, and track follow-ups.</CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-3 sm:p-6 pt-0">
                     <SubmissionReviewer teacherEmail={teacherEmail} />
                   </CardContent>
                 </Card>
@@ -2681,12 +2721,12 @@ export default function TeacherDashboard() {
                   </DialogContent>
                 </Dialog>
 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-xl font-semibold text-slate-900">Student Resource Submissions</h3>
-                    <p className="text-slate-600">Review and provide feedback on work submitted by students.</p>
+                    <h3 className="text-lg sm:text-xl font-semibold text-slate-900">Student Resource Submissions</h3>
+                    <p className="text-xs sm:text-sm text-slate-600">Review and provide feedback on work submitted by students.</p>
                   </div>
-                  <Button onClick={fetchStudentSubmissions} variant="outline" disabled={submissionsLoading}>
+                  <Button onClick={fetchStudentSubmissions} variant="outline" disabled={submissionsLoading} className="w-full sm:w-auto text-xs sm:text-sm">
                     <RefreshCw className={cn("h-4 w-4 mr-2", submissionsLoading && "animate-spin")} />
                     Refresh
                   </Button>
@@ -2694,10 +2734,10 @@ export default function TeacherDashboard() {
 
                 {submissionsError && (
                   <Card className="border-red-200 bg-red-50">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between gap-3">
+                    <CardContent className="p-4 sm:pt-6">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <p className="text-sm text-red-700">{submissionsError}</p>
-                        <Button variant="outline" size="sm" onClick={fetchStudentSubmissions}>
+                        <Button variant="outline" size="sm" onClick={fetchStudentSubmissions} className="w-full sm:w-auto">
                           Retry
                         </Button>
                       </div>
@@ -2706,14 +2746,14 @@ export default function TeacherDashboard() {
                 )}
 
                 {submissionsLoading ? (
-                  <div className="grid gap-6 py-2">
+                  <div className="grid gap-4 sm:gap-6 py-2">
                     {Array.from({ length: 3 }).map((_, index) => (
                       <Card key={`teacher-submissions-loading-${index}`}>
-                        <CardHeader className="space-y-3">
+                        <CardHeader className="space-y-3 p-4 sm:p-6">
                           <ShimmerSkeleton className="h-5 w-1/2" />
                           <ShimmerSkeleton className="h-4 w-1/3" />
                         </CardHeader>
-                        <CardContent className="space-y-3">
+                        <CardContent className="space-y-3 p-4 sm:p-6 pt-0">
                           <ShimmerSkeleton className="h-4 w-full" />
                           <ShimmerSkeleton className="h-4 w-5/6" />
                           <ShimmerSkeleton className="h-24 w-full rounded-lg" />
@@ -2723,54 +2763,54 @@ export default function TeacherDashboard() {
                   </div>
                 ) : studentSubmissions.length === 0 ? (
                   <Card className="border border-slate-200 bg-white shadow-sm">
-                    <CardContent className="py-12 text-center">
+                    <CardContent className="py-12 text-center p-4 sm:p-6">
                       <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                       <h3 className="text-lg font-medium text-gray-900 mb-2">No Student Submissions</h3>
-                      <p className="text-gray-600">
+                      <p className="text-xs sm:text-sm text-gray-600">
                       Students haven&apos;t submitted any resources for review yet.
                       </p>
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="grid gap-6">
+                  <div className="grid gap-4 sm:gap-6">
                     {studentSubmissions.map((submission) => (
-                      <Card key={submission.id} className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
-                        <CardHeader>
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <CardTitle className="text-lg mb-1">{submission.title}</CardTitle>
-                              <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <Card key={submission.id} className="border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md overflow-hidden">
+                        <CardHeader className="p-4 sm:p-6 pb-3">
+                          <div className="flex flex-col sm:flex-row items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <CardTitle className="text-base sm:text-lg mb-1 break-words">{submission.title}</CardTitle>
+                              <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
                                 <span className="flex items-center gap-1">
-                                  <User className="h-4 w-4" />
-                                  {submission.student.name} ({submission.student.grade})
+                                  <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                                  <span className="truncate">{submission.student.name} ({submission.student.grade})</span>
                                 </span>
                                 <span className="flex items-center gap-1">
-                                  <Clock className="h-4 w-4" />
+                                  <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                                   {new Date(submission.submittedAt).toLocaleDateString()}
                                 </span>
                                 <span className="flex items-center gap-1">
-                                  <Users className="h-4 w-4" />
+                                  <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                                   {submission.allTeachers.length} teacher{submission.allTeachers.length !== 1 ? 's' : ''}
                                 </span>
                               </div>
                               {submission.description && (
-                                <p className="text-gray-600 mt-2">{submission.description}</p>
+                                <p className="text-xs sm:text-sm text-gray-600 mt-2 break-words">{submission.description}</p>
                               )}
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Badge variant={submission.hasMyRemark ? 'default' : 'secondary'}>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <Badge variant={submission.hasMyRemark ? 'default' : 'secondary'} className="text-xs">
                                 {submission.hasMyRemark ? 'Reviewed' : 'Needs Review'}
                               </Badge>
                             </div>
                           </div>
                         </CardHeader>
 
-                        <CardContent className="space-y-4">
+                        <CardContent className="space-y-4 p-4 sm:p-6 pt-0">
                           {/* Content Preview */}
                           {submission.content && (
-                            <div className="bg-gray-50 p-4 rounded-lg">
-                              <p className="text-sm font-medium text-gray-700 mb-2">Content:</p>
-                              <p className="text-sm text-gray-800 whitespace-pre-wrap line-clamp-4">
+                            <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                              <p className="text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Content:</p>
+                              <p className="text-xs sm:text-sm text-gray-800 whitespace-pre-wrap break-words line-clamp-4">
                                 {submission.content}
                               </p>
                             </div>
@@ -2778,23 +2818,26 @@ export default function TeacherDashboard() {
 
                           {/* File Attachment */}
                           {submission.fileUrl && submission.fileName && (
-                            <div className="flex items-center gap-3 p-4 bg-slate-100 rounded-lg">
-                              <FileText className="h-6 w-6 text-slate-700" />
-                              <div className="flex-1">
-                                <p className="text-sm font-medium text-slate-900">{submission.fileName}</p>
-                                {submission.fileSize && (
-                                  <p className="text-xs text-slate-600">
-                                    {(submission.fileSize / 1024 / 1024).toFixed(2)} MB
-                                  </p>
-                                )}
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 sm:p-4 bg-slate-100 rounded-lg">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-slate-700 shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs sm:text-sm font-medium text-slate-900 truncate">{submission.fileName}</p>
+                                  {submission.fileSize && (
+                                    <p className="text-[11px] sm:text-xs text-slate-600">
+                                      {(submission.fileSize / 1024 / 1024).toFixed(2)} MB
+                                    </p>
+                                  )}
+                                </div>
                               </div>
-                              <div className="flex gap-2">
+                              <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => window.open(submission.fileUrl, '_blank')}
+                                  className="flex-1 sm:flex-initial text-xs sm:text-sm"
                                 >
-                                  <Eye className="h-4 w-4 mr-1" />
+                                  <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
                                   View
                                 </Button>
                                 <Button
@@ -2806,8 +2849,9 @@ export default function TeacherDashboard() {
                                     link.download = submission.fileName;
                                     link.click();
                                   }}
+                                  className="flex-1 sm:flex-initial text-xs sm:text-sm"
                                 >
-                                  <Download className="h-4 w-4 mr-1" />
+                                  <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
                                   Download
                                 </Button>
                               </div>
@@ -2816,13 +2860,13 @@ export default function TeacherDashboard() {
 
                           {/* All Teachers */}
                           <div>
-                            <p className="text-sm font-medium text-gray-700 mb-2">Sent to teachers:</p>
-                            <div className="flex flex-wrap gap-2">
+                            <p className="text-xs sm:text-sm font-medium text-gray-700 mb-2">Sent to teachers:</p>
+                            <div className="flex flex-wrap gap-1.5 sm:gap-2">
                               {submission.allTeachers.map((teacher: any) => (
                                 <Badge
                                   key={teacher.id}
                                   variant="outline"
-                                  className={teacher.email === teacherEmail ? 'bg-slate-100 border-slate-300' : ''}
+                                  className={`text-xs ${teacher.email === teacherEmail ? 'bg-slate-100 border-slate-300' : ''}`}
                                 >
                                   {teacher.name} {teacher.email === teacherEmail && '(You)'}
                                 </Badge>
@@ -2833,39 +2877,41 @@ export default function TeacherDashboard() {
                           {/* Existing Remarks */}
                           {submission.teacherRemarks.length > 0 && (
                             <div className="space-y-2">
-                              <p className="text-sm font-medium text-gray-700">Your previous feedback:</p>
+                              <p className="text-xs sm:text-sm font-medium text-gray-700">Your previous feedback:</p>
                               {submission.teacherRemarks.map((remark: any) => (
                                 <div key={remark.id} className="bg-slate-100 p-3 rounded-lg border-l-4 border-slate-300">
-                                  <div className="flex items-start justify-between mb-1">
-                                    <p className="text-sm font-medium text-slate-900">Your Feedback</p>
-                                    <p className="text-xs text-slate-600">
+                                  <div className="flex items-start justify-between gap-2 mb-1">
+                                    <p className="text-xs sm:text-sm font-medium text-slate-900">Your Feedback</p>
+                                    <p className="text-[11px] sm:text-xs text-slate-600 shrink-0">
                                       {new Date(remark.updatedAt).toLocaleDateString()}
                                     </p>
                                   </div>
-                                  <p className="text-sm text-slate-700">{remark.remark}</p>
+                                  <p className="text-xs sm:text-sm text-slate-700 break-words">{remark.remark}</p>
                                 </div>
                               ))}
                             </div>
                           )}
 
                           {/* Add/Update Remark */}
-                          <div className="pt-4 border-t">
+                          <div className="pt-3 sm:pt-4 border-t">
                             <Dialog>
                               <DialogTrigger asChild>
                                 <Button
                                   variant={submission.hasMyRemark ? "outline" : "default"}
+                                  size="sm"
                                   onClick={() => {
                                     setSelectedSubmission(submission);
                                     setRemarkText(submission.teacherRemarks[0]?.remark || "");
                                   }}
+                                  className="w-full sm:w-auto text-xs sm:text-sm"
                                 >
                                   <MessageCircle className="h-4 w-4 mr-2" />
                                   {submission.hasMyRemark ? 'Update Feedback' : 'Add Feedback'}
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="max-w-2xl">
+                              <DialogContent className="max-w-[95vw] sm:max-w-2xl p-4 sm:p-6">
                                 <DialogHeader>
-                                  <DialogTitle>
+                                  <DialogTitle className="text-base sm:text-lg break-words">
                                     {submission.hasMyRemark ? 'Update' : 'Add'} Feedback for &quot;{submission.title}&quot;
                                   </DialogTitle>
                                 </DialogHeader>
@@ -2883,10 +2929,11 @@ export default function TeacherDashboard() {
                                   </div>
                                 </div>
 
-                                <DialogFooter>
+                                <DialogFooter className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
                                   <Button
                                     onClick={() => handleAddRemark(submission.id)}
                                     disabled={isAddingRemark || !remarkText.trim()}
+                                    className="w-full sm:w-auto"
                                   >
                                     {isAddingRemark ? (
                                       <>
