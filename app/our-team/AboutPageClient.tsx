@@ -128,7 +128,7 @@ export default function AboutPageClient({ mentors }: AboutPageClientProps) {
             {/* Heading group */}
             <div className="mb-6">
               <p className="mb-3 text-[0.64rem] uppercase tracking-[0.3em] text-yellow-400/70">
-                A note from ACHARYA's Founder
+                A note from ACHARYA&apos;s Founder
               </p>
               <h1
                 className="text-4xl sm:text-5xl lg:text-[3rem] font-bold text-yellow-300 leading-[1.05] mb-3"
