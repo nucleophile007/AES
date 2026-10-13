@@ -307,6 +307,7 @@ export function ProgramsHero() {
     <HeroSliderAlways
       slides={slides}
       intervalMs={7000}
+      autoPlay={false}
       ariaLabel="AcharyaES Programs"
       className="w-full pt-20 sm:pt-24"
     />

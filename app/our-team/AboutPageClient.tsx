@@ -115,7 +115,7 @@ export default function AboutPageClient({ mentors }: AboutPageClientProps) {
 
         {/* Full-height two-column layout */}
         <div
-          className="relative z-10 grid lg:grid-cols-[minmax(0,1.3fr)_minmax(280px,0.55fr)] gap-6 lg:gap-8 max-w-[1500px] mx-auto px-4 sm:px-8 lg:px-12"
+          className="relative z-10 grid lg:grid-cols-[minmax(0,1.1fr)_minmax(420px,1.2fr)] gap-6 lg:gap-3 max-w-[1550px] mx-auto px-4 sm:px-8 lg:px-10"
           style={{ minHeight: "calc(100vh - 154px)" }}
         >
           {/* ── LEFT: Editorial text content ── */}
@@ -181,31 +181,32 @@ export default function AboutPageClient({ mentors }: AboutPageClientProps) {
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 1, ease: "easeOut", delay: 0.15 }}
-            className="relative min-w-0 w-full h-[min(64vh,540px)] min-h-[400px] lg:h-[calc(100vh-200px)] lg:min-h-[480px] lg:sticky lg:top-[116px] self-start mt-0 lg:mt-8 lg:mx-3 lg:-translate-x-20"
+            className="relative min-w-0 w-full h-[min(64vh,540px)] min-h-[360px] lg:h-[calc(100vh-200px)] lg:min-h-[480px] lg:sticky lg:top-[116px] self-start mt-0 lg:mt-8 lg:max-w-[700px] lg:ml-auto"
           >
             {/* Transparent founder portrait placed directly into the page background */}
-            <div className="absolute inset-0">
+            <div className="absolute inset-0 overflow-hidden -translate-y-14">
               <Image
                 src="/shanti-founder.png"
                 alt="Shanti Swaroop – Founder, ACHARYA Educational Services"
                 width={1284}
-                height={1225}
+                height={1200}
                 sizes="(max-width: 1024px) 100vw, 48vw"
-                className="absolute left-1/2 top-0 h-auto w-[125%] max-w-none -translate-x-1/2"
+                className="absolute left-1/2 top-0 h-full w-auto max-w-none -translate-x-1/2 object-contain"
                 quality={100}
                 priority
               />
             </div>
 
-            <div className="absolute bottom-0 left-0 z-20 w-[calc(100%-2rem)] px-6 sm:px-10 lg:left-8 lg:w-[calc(100%-4rem)] lg:px-0 pb-8 lg:pb-12 text-left drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+            <div className="absolute right-[17%] bottom-[-0.5%] z-10 w-[56%] max-w-[560px] min-w-[260px] drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)] sm:w-[58%] md:w-[54%] lg:w-[52%] xl:w-[50%]">
               <p
-                className="max-w-[25rem] text-sm sm:text-base text-yellow-100/90 italic leading-relaxed"
+                className="text-left text-[clamp(1.2rem,2.9vw,1.4rem)] leading-[0.94] text-yellow-100/95 italic"
                 style={{ fontFamily: '"Libre Caslon Text", Georgia, serif' }}
               >
                 Don&apos;t just discover a passion. Pursue it for years, research it deeply, build something meaningful, and create a difference.
               </p>
-              <p className="mt-3 whitespace-normal lg:whitespace-nowrap text-[0.55rem] sm:text-[0.6rem] uppercase tracking-[0.08em] leading-relaxed text-yellow-400/75">
-                Shanti Swaroop · Founder, ACHARYA Educational Services
+              <p className="mt-4 text-left font-semibold uppercase tracking-[0.12em] leading-relaxed text-yellow-400 text-[0.62rem] sm:text-[0.72rem] lg:text-[0.82rem]">
+                <span className="block">Shanti Swaroop</span>
+                <span className="mt-1 block text-yellow-300/80">Founder, ACHARYA</span>
               </p>
             </div>
           </motion.div>

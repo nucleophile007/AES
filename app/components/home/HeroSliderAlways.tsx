@@ -25,6 +25,7 @@ export type Slide = {
 type HeroSliderAlwaysProps = {
   slides: Slide[];
   intervalMs?: number;
+  autoPlay?: boolean;
   className?: string;
   ariaLabel?: string;
 };
@@ -32,6 +33,7 @@ type HeroSliderAlwaysProps = {
 export function HeroSliderAlways({
   slides,
   intervalMs = 4500,
+  autoPlay = true,
   className,
   ariaLabel = "Hero carousel",
 }: HeroSliderAlwaysProps) {
@@ -45,12 +47,12 @@ export function HeroSliderAlways({
   const showCutoutCta = hideSlideContent && !!activeSlide?.cta && activeSlide?.showCtaWhenHidden === true;
 
   React.useEffect(() => {
-    if (!enableNav || isHovered) return;
+    if (!autoPlay || !enableNav || isHovered) return;
     const id = setInterval(() => {
       setIndex((prev) => (prev + 1) % count);
     }, intervalMs);
     return () => clearInterval(id);
-  }, [count, enableNav, intervalMs, isHovered]);
+  }, [autoPlay, count, enableNav, intervalMs, isHovered]);
 
   React.useEffect(() => {
     if (count === 0) return;
