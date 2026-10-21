@@ -1,198 +1,9 @@
-// "use client";
-// import Image from "next/image";
-
-// import { Award, Quote, Medal, Trophy, Microscope } from "lucide-react";
-
-// interface StudentSpotlight {
-//   logo: string;
-//   studentName: string;
-//   grade: string;
-//   school: string;
-//   competition: string;
-//   competitionDate: string;
-//   topic: string;
-//   achievement: string;
-//   achievementIcon: "medal" | "trophy";
-//   competitionIcon: "microscope" | "award";
-//   message: string;
-//   accent: {
-//     border: string;
-//     glow: string;
-//     text: string;
-//     badgeBg: string;
-//     badgeBorder: string;
-//     iconStroke: string;
-//     quoteColor: string;
-//     dividerFrom: string;
-//   };
-// }
-
-// const spotlights: StudentSpotlight[] = [
-//   {
-//     logo: "/program-image/isrc.png",
-//     studentName: "Nithila Shanmugham",
-//     grade: "Current Senior",
-//     school: "Granite Bay High School",
-//     competition: "ISRC",
-//     competitionDate: "Sept 2025",
-//     topic: "A Parametric Study of Human Balance with Delays using Delay Differential Equations",
-//     achievement: "FINALIST · TOP 20",
-//     achievementIcon: "medal",
-//     competitionIcon: "microscope",
-//     message:
-//       "Congratulations to Nithila, a premed aspirant, on being a finalist at ISRC-2025. ACHARYA is proud of your achievement and dedication during the IGNITE'25 research program, which is truly inspirational.",
-//     accent: {
-//       border: "border-amber-500/40",
-//       glow: "shadow-[0_0_60px_-15px_rgba(245,158,11,0.35)]",
-//       text: "text-amber-400",
-//       badgeBg: "bg-amber-500/15",
-//       badgeBorder: "border-amber-500/40",
-//       iconStroke: "text-amber-400",
-//       quoteColor: "text-amber-400/30",
-//       dividerFrom: "from-amber-400",
-//     },
-//   },
-//   {
-//     logo: "/program-image/sac.jpg",
-//     studentName: "Atreya Kulkarni",
-//     grade: "Current Junior",
-//     school: "Vista del Lago High School",
-//     competition: "Sac STEM Fair",
-//     competitionDate: "March 2026",
-//     topic: "A Geometric Approach for Thickness Prediction in Incremental Sheet Forming",
-//     achievement: "CITADEL INNOVATION PRIZE",
-//     achievementIcon: "trophy",
-//     competitionIcon: "award",
-//     message:
-//       "From TRANSFORM'25 to the Sac STEM Fair, your dedication to aerospace engineering continues to inspire us. Congratulations on this well-deserved win! We wish you boundless success as you continue your journey with ACHARYA.",
-//     accent: {
-//       border: "border-blue-500/40",
-//       glow: "shadow-[0_0_60px_-15px_rgba(59,130,246,0.35)]",
-//       text: "text-blue-400",
-//       badgeBg: "bg-blue-500/15",
-//       badgeBorder: "border-blue-500/40",
-//       iconStroke: "text-blue-400",
-//       quoteColor: "text-blue-400/30",
-//       dividerFrom: "from-blue-400",
-//     },
-//   },
-// ];
-
-// export function StudentSpotlights() {
-//   return (
-//     <div className="relative w-full min-h-screen overflow-hidden bg-[#0a0e1a] py-10 px-4 sm:px-6 lg:px-8">
-//       {/* Subtle background glows */}
-//       <div className="pointer-events-none absolute top-0 right-0 h-96 w-96 rounded-full bg-amber-500/5 blur-3xl" />
-//       <div className="pointer-events-none absolute bottom-0 left-0 h-96 w-96 rounded-full bg-blue-500/5 blur-3xl" />
-
-//       <div className="relative z-10 mx-auto w-full max-w-6xl">
-//         {/* Header pill */}
-//         <div className="mb-8 flex justify-center">
-//           <div className="inline-flex items-center gap-3 rounded-full border border-amber-500/40 bg-[#0f1422] px-6 py-2.5">
-//             {/* <span className="text-amber-400">★</span>
-//             <span className="text-sm font-bold tracking-[0.25em] text-amber-400">
-//               STUDENT SPOTLIGHTS
-//             </span>
-//             <span className="text-amber-400">★</span> */}
-//           </div>
-//         </div>
-
-//         {/* Cards */}
-//         <div className="flex flex-col gap-6">
-//           {spotlights.map((s, i) => {
-//             // const CompIcon = s.competitionIcon === "microscope" ? Microscope : Award;
-//             const AchIcon = s.achievementIcon === "medal" ? Medal : Trophy;
-//             return (
-//               <div
-//                 key={i}
-//                 className={`relative overflow-hidden rounded-2xl border ${s.accent.border} bg-gradient-to-br from-[#0f1422] to-[#0a0e1a] ${s.accent.glow}`}
-//               >
-//                 <div className="flex flex-col gap-6 p-6 sm:flex-row sm:p-8">
-//                   {/* Left: logo block */}
-//                   <div className="flex flex-shrink-0 flex-col items-center gap-3 sm:w-44">
-//                     <div className="h-32 w-32 overflow-hidden rounded-full">
-//                     <Image
-//                         src={s.logo}
-//                         alt={s.competition}
-//                         width={128}
-//                         height={128}
-//                         className="h-full w-full object-cover"
-//                     />
-//                     </div>
-//                     <div className="text-center">
-//                       <p className="text-[11px] font-bold tracking-[0.2em] text-white/50">
-//                         COMPETITION
-//                       </p>
-//                       <p className={`mt-1 text-lg font-bold ${s.accent.text}`}>{s.competition}</p>
-//                       <p className="mt-1 text-xs text-white/40">{s.competitionDate}</p>
-//                     </div>
-//                   </div>
-
-//                   {/* Right: content */}
-//                   <div className="relative flex-1">
-//                     <Quote
-//                       className={`absolute -top-2 left-0 h-8 w-8 ${s.accent.quoteColor}`}
-//                       fill="currentColor"
-//                     />
-
-//                     {/* Header row */}
-//                     <div className="flex flex-col gap-3 pl-10 sm:flex-row sm:items-start sm:justify-between">
-//                       <div className="min-w-0">
-//                         <h3 className="font-serif text-3xl font-bold text-white sm:text-4xl">
-//                           {s.studentName}
-//                         </h3>
-//                         <p className="mt-1 text-sm text-white/60">
-//                           {s.grade} · {s.school}
-//                         </p>
-//                       </div>
-//                       <div
-//                         className={`inline-flex flex-shrink-0 items-center gap-2 rounded-full border ${s.accent.badgeBorder} ${s.accent.badgeBg} px-4 py-2`}
-//                       >
-//                         <AchIcon className={`h-4 w-4 ${s.accent.text}`} />
-//                         <span className={`text-xs font-bold tracking-wider ${s.accent.text}`}>
-//                           {s.achievement}
-//                         </span>
-//                       </div>
-//                     </div>
-
-//                     {/* Topic */}
-//                     <p
-//                       className={`mt-5 pl-10 font-serif text-xl italic font-bold ${s.accent.text} leading-snug`}
-//                     >
-//                       {s.topic}
-//                     </p>
-
-//                     {/* Message with vertical bar */}
-//                     <div className={`mt-4 ml-10 border-l-2 ${s.accent.border} pl-4`}>
-//                       <p className="text-base italic leading-relaxed text-white/75">{s.message}</p>
-//                     </div>
-
-//                     {/* Signature */}
-//                     <div className="mt-5 flex items-center gap-3 pl-10">
-//                       <span
-//                         className={`h-px w-10 bg-gradient-to-r ${s.accent.dividerFrom} to-transparent`}
-//                       />
-//                       <span
-//                         className={`text-xs font-bold tracking-[0.2em] ${s.accent.text}`}
-//                       >
-//                         — ACHARYA TEAM
-//                       </span>
-//                     </div>
-//                   </div>
-//                 </div>
-//               </div>
-//             );
-//           })}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
 "use client";
+
+import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-
-import { Award, Medal, Trophy, Microscope } from "lucide-react";
+import { Award, Medal, Trophy, Microscope, Sparkles, Quote } from "lucide-react";
 
 interface StudentSpotlight {
   logo: string;
@@ -210,9 +21,12 @@ interface StudentSpotlight {
     border: string;
     glow: string;
     text: string;
+    badgeBg: string;
+    badgeBorder: string;
     iconStroke: string;
     dividerFrom: string;
     achievementGradient: string;
+    circleBorder: string;
   };
 }
 
@@ -232,12 +46,15 @@ const spotlights: StudentSpotlight[] = [
     message:
       "Congratulations to Nithila, a premed aspirant, on being a finalist at ISRC-2025. ACHARYA is proud of your achievement and dedication during the IGNITE'25 research program, which is truly inspirational.",
     accent: {
-      border: "border-amber-200",
-      glow: "shadow-xl shadow-amber-500/10",
-      text: "text-amber-600",
-      iconStroke: "text-amber-500",
-      dividerFrom: "from-amber-400",
+      border: "border-amber-200/90 hover:border-amber-400",
+      glow: "shadow-2xl shadow-amber-500/10",
+      text: "text-amber-700",
+      badgeBg: "bg-amber-50",
+      badgeBorder: "border-amber-300",
+      iconStroke: "text-amber-600",
+      dividerFrom: "from-amber-500",
       achievementGradient: "from-amber-600 via-amber-500 to-yellow-600",
+      circleBorder: "border-amber-300/80",
     },
   },
   {
@@ -254,12 +71,40 @@ const spotlights: StudentSpotlight[] = [
     message:
       "From TRANSFORM'25 to the Sac STEM Fair, your dedication to aerospace engineering continues to inspire us. Congratulations on this well-deserved win! We wish you boundless success as you continue your journey with ACHARYA.",
     accent: {
-      border: "border-blue-200",
-      glow: "shadow-xl shadow-blue-500/10",
+      border: "border-blue-200/90 hover:border-blue-400",
+      glow: "shadow-2xl shadow-blue-500/10",
       text: "text-blue-700",
+      badgeBg: "bg-blue-50",
+      badgeBorder: "border-blue-300",
       iconStroke: "text-blue-600",
       dividerFrom: "from-blue-500",
       achievementGradient: "from-blue-700 via-blue-600 to-cyan-600",
+      circleBorder: "border-blue-300/80",
+    },
+  },
+  {
+    logo: "/program-image/usabo2.jpeg",
+    studentName: "Nithya Reddy Pathi",
+    grade: "Current Junior",
+    school: "Vista del Lago High School",
+    competition: "USABO",
+    competitionDate: "2025",
+    topic: "Elite national recognition in the biological sciences",
+    achievement: "USABO'26 SEMI-FINALIST",
+    achievementIcon: "medal",
+    competitionIcon: "microscope",
+    message:
+      "A huge congratulations to our student on being named a USABO Semifinalist! It is incredibly rewarding to see the strategic study plan designed by ACHARYA translated into such elite national recognition. Your discipline and mastery of the biological sciences are truly inspiring.",
+    accent: {
+      border: "border-emerald-200/90 hover:border-emerald-400",
+      glow: "shadow-2xl shadow-emerald-500/10",
+      text: "text-emerald-700",
+      badgeBg: "bg-emerald-50",
+      badgeBorder: "border-emerald-300",
+      iconStroke: "text-emerald-600",
+      dividerFrom: "from-emerald-500",
+      achievementGradient: "from-emerald-700 via-emerald-600 to-teal-700",
+      circleBorder: "border-emerald-300/80",
     },
   },
 ];
@@ -267,94 +112,133 @@ const spotlights: StudentSpotlight[] = [
 export function StudentSpotlights() {
   return (
     <div
-      className="relative flex min-h-screen w-full flex-col overflow-hidden px-4 pb-10 pt-24 sm:px-6 sm:pt-28 lg:px-8 lg:pt-24"
+      className="relative flex h-full w-full flex-col justify-between overflow-y-auto px-4 pb-6 pt-20 sm:px-6 sm:pt-24 sm:pb-8 lg:px-8"
       style={{
         background:
           "linear-gradient(180deg, #b4d2f7 0%, #b4d2f7 38%, #a8c6eb 55%, #8baad3 70%, #6683a8 83%, #3f567d 93%, hsl(220 45% 20%) 100%)",
       }}
     >
-      <div className="pointer-events-none absolute -right-20 top-0 h-96 w-96 rounded-full bg-amber-400/25 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-20 left-0 h-96 w-96 rounded-full bg-blue-400/25 blur-3xl" />
+      {/* Ambient Lighting Blurs Matching Background */}
+      <div className="pointer-events-none absolute -right-20 top-0 h-96 w-96 rounded-full bg-amber-400/20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-20 left-0 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center">
+      {/* Main Container */}
+      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-between">
+        
+        {/* Editorial Header */}
         <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.7 }}
-          className="mb-8 flex items-end justify-between gap-4 px-1"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-3 sm:mb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-2 px-1 border-b border-slate-700/15 pb-2.5 flex-shrink-0"
         >
           <div>
-            <h2 className="mt-2 font-serif text-3xl font-bold text-slate-900 sm:text-4xl">Research in motion</h2>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-[0.16em] bg-white/80 border border-slate-300/80 text-slate-800 shadow-sm backdrop-blur-md">
+              <Sparkles className="w-3 h-3 text-amber-500 animate-pulse" />
+              National Student Spotlights
+            </span>
+            <h2 className="mt-1 font-serif text-2xl sm:text-3xl lg:text-4xl font-black italic text-slate-900 tracking-tight leading-tight">
+              Research &amp; Competition Excellence
+            </h2>
           </div>
-          <p className="hidden max-w-xs text-right text-sm font-medium leading-relaxed text-slate-800 sm:block">
-            Celebrating the curiosity, rigor, and imagination behind every achievement.
+          <p className="max-w-xs text-[11px] sm:text-xs font-medium leading-relaxed text-slate-700 sm:text-right hidden sm:block">
+            Celebrating the curiosity, rigor, and imagination behind every national achievement.
           </p>
         </motion.div>
 
-        <div className="grid gap-5 lg:grid-cols-2">
+        {/* ─── 3 POSTERS SIDE-BY-SIDE (ALL 3 VISIBLE AT ONCE) ─── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 flex-1 items-stretch pb-2">
           {spotlights.map((s, i) => {
             const CompIcon = s.competitionIcon === "microscope" ? Microscope : Award;
             const AchIcon = s.achievementIcon === "medal" ? Medal : Trophy;
+
             return (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.25 }}
-                transition={{ duration: 0.7, delay: i * 0.14 }}
-                whileHover={{ y: -8 }}
-                className={`group relative overflow-hidden rounded-[2rem] border ${s.accent.border} bg-white/95 ${s.accent.glow} transition-shadow duration-500 hover:shadow-2xl`}
+              <motion.article
+                key={s.studentName}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                whileHover={{ y: -4 }}
+                className={`group relative flex flex-col justify-between overflow-hidden rounded-[1.75rem] border ${s.accent.border} bg-white/95 ${s.accent.glow} p-5 sm:p-6 transition-all duration-300 hover:shadow-2xl`}
               >
-                <div className="absolute inset-x-8 top-0 h-1 bg-gradient-to-r from-transparent via-current to-transparent opacity-70" />
-                <div className="absolute -right-20 -top-20 h-52 w-52 rounded-full bg-blue-400/10 blur-3xl transition-transform duration-700 group-hover:scale-125" />
+                {/* Top Subtle Current Color Glow */}
+                <div className="absolute inset-x-8 top-0 h-1 bg-gradient-to-r from-transparent via-current to-transparent opacity-60" />
+                <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-blue-400/10 blur-2xl transition-transform duration-700 group-hover:scale-125" />
 
-                <div className="relative flex flex-col gap-5 p-5 sm:flex-row sm:items-stretch sm:p-6">
-                  {/* Compact event rail */}
-                  <div className="flex flex-shrink-0 flex-row items-center gap-4 border-b border-slate-200 pb-5 sm:w-[34%] sm:flex-col sm:items-center sm:justify-between sm:border-b-0 sm:border-r sm:pb-0 sm:pr-5">
-                    <div className="relative h-24 w-24 overflow-hidden rounded-full border-[5px] border-[#b4d2f7] bg-slate-100 shadow-lg sm:h-32 sm:w-32">
-                      <Image
-                        src={s.logo}
-                        alt={s.competition}
-                        fill
-                        sizes="(max-width: 640px) 96px, 128px"
-                        className="object-cover transition-transform duration-700 group-hover:scale-110"
-                      />
-                    </div>
-                    <div className="text-left sm:text-center">
-                      <div className={`flex items-center gap-2 sm:justify-center ${s.accent.text}`}>
-                        <CompIcon className="h-4 w-4" />
-                        <span className="text-[0.65rem] font-bold uppercase tracking-[0.2em]">{s.competition}</span>
-                      </div>
-                      <p className="mt-1 text-xs font-medium text-slate-700">{s.competitionDate}</p>
-                    </div>
+                {/* 1. Header Badges: Competition Tag + Achievement Award */}
+                <div className="relative z-10 flex items-center justify-between gap-2 flex-wrap">
+                  <div
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${s.accent.badgeBg} border ${s.accent.badgeBorder} ${s.accent.text}`}
+                  >
+                    <CompIcon className="h-3 w-3" />
+                    <span>{s.competition} · {s.competitionDate}</span>
                   </div>
-
-                  {/* Achievement content */}
-                  <div className="relative flex min-w-0 flex-1 flex-col justify-center">
-                    <div className="flex items-center gap-2">
-                      <AchIcon className={`h-5 w-5 ${s.accent.iconStroke}`} />
-                      <span className={`bg-gradient-to-r ${s.accent.achievementGradient} bg-clip-text text-xs font-extrabold uppercase tracking-[0.14em] text-transparent sm:text-sm`}>
-                        {s.achievement}
-                      </span>
-                    </div>
-
-                    <h3 className="mt-3 font-serif text-2xl font-bold leading-tight text-slate-900 sm:text-[1.7rem]">
-                      {s.studentName}
-                    </h3>
-                    <p className="mt-1 text-xs font-medium text-slate-700">{s.grade} · {s.school}</p>
-                    <p className={`mt-4 font-serif text-lg italic font-bold ${s.accent.text} leading-snug`}>
-                      {s.topic}
-                    </p>
-                    <p className="mt-3 text-sm font-medium italic leading-relaxed text-slate-800">{s.message}</p>
+                  <div className="flex items-center gap-1.5">
+                    <AchIcon className={`h-4 w-4 ${s.accent.iconStroke}`} />
+                    <span
+                      className={`bg-gradient-to-r ${s.accent.achievementGradient} bg-clip-text text-[11px] sm:text-xs font-black uppercase tracking-wider text-transparent`}
+                    >
+                      {s.achievement}
+                    </span>
                   </div>
                 </div>
-              </motion.div>
+
+                {/* 2. Center Poster Seal & Student Identifiers */}
+                <div className="relative z-10 my-3 sm:my-4 flex flex-col items-center text-center">
+                  <div
+                    className={`relative h-20 w-20 sm:h-24 sm:w-24 overflow-hidden rounded-full border-4 ${s.accent.circleBorder} bg-slate-50 shadow-lg transition-transform duration-500 group-hover:scale-105`}
+                  >
+                    <Image
+                      src={s.logo}
+                      alt={s.competition}
+                      fill
+                      sizes="96px"
+                      className="object-cover"
+                    />
+                  </div>
+
+                  <h3 className="mt-3 font-serif text-xl sm:text-2xl font-bold text-slate-900 leading-tight">
+                    {s.studentName}
+                  </h3>
+                  <p className="mt-0.5 text-[11px] sm:text-xs font-semibold text-slate-600">
+                    {s.grade} · {s.school}
+                  </p>
+                </div>
+
+                {/* 3. Research Topic */}
+                <div className="relative z-10 text-center px-1">
+                  <p
+                    className={`font-serif text-sm sm:text-[15px] italic font-bold ${s.accent.text} leading-snug line-clamp-2`}
+                  >
+                    &ldquo;{s.topic}&rdquo;
+                  </p>
+                </div>
+
+                {/* 4. Commendation Quote */}
+                <div className="relative z-10 mt-3 pl-3 border-l-2 border-slate-300/80 bg-slate-50/60 rounded-r-lg p-2.5">
+                  <p className="text-xs sm:text-[13px] italic leading-relaxed text-slate-700 font-medium line-clamp-3 sm:line-clamp-4">
+                    {s.message}
+                  </p>
+                </div>
+
+                {/* 5. Poster Footer / Signature */}
+                <div className="relative z-10 mt-3 pt-2.5 border-t border-slate-200/70 flex items-center justify-between">
+                  <span className={`text-[10px] font-bold tracking-[0.2em] ${s.accent.text}`}>
+                    — ACHARYA TEAM
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
+                    HONOR ROLL
+                  </span>
+                </div>
+              </motion.article>
             );
           })}
         </div>
+
       </div>
     </div>
   );
 }
+
+export default StudentSpotlights;
