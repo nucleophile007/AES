@@ -126,6 +126,11 @@ export default function EventsPage() {
   const isExternalLink = (href: string) => /^https?:\/\//i.test(href);
 
   const galleryImages = [
+    "/gallery/g1.jpeg",
+    "/gallery/g2.jpeg",
+    "/gallery/g4.jpeg",
+    "/gallery/g3.jpeg",
+    "/gallery/g5.jpeg",
     "/gallery/img1.jpg",
     "/gallery/img2.jpg",
     "/gallery/img3.jpg",
