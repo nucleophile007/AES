@@ -147,6 +147,7 @@ export function ProgramsHero() {
     title: "Programs",
     imageSrc: "/program-image/banner-tutoring.png",
     imageAlt: "AcharyaES programs",
+    hideArrowsOnMobile: true,
     customContent: <AnimatedProgramsHeroSlide />,
   };
 
