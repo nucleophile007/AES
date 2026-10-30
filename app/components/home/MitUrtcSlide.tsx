@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { ArrowUpRight, ExternalLink, Maximize2, X, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import mitUrtcLogo from "@/assets/mit_urtc_clear.png";
 
 interface LightboxData {
   src: string;
@@ -54,7 +55,7 @@ export function MitUrtcSlide() {
             Congratulations
           </h1>
           <p className="mt-2 text-xs font-black uppercase tracking-[0.14em] text-[#151515] sm:mt-3 sm:text-base">
-            Our student researchers are headed to <span className="text-[#e05a47]">MIT</span>
+            Our students are headed to <span className="text-[#e05a47]">MIT</span> for 2026 <span className="text-[#e05a47]">IEEE MIT URTC</span> in AI/ML and Mech Domains
           </p>
           <a
             href="https://urtc.mit.edu/"
@@ -71,10 +72,8 @@ export function MitUrtcSlide() {
           }`}
         >
           <Image
-            src="/mit_urtc.png"
+            src={mitUrtcLogo}
             alt="MIT Undergraduate Research Technology Conference"
-            width={1086}
-            height={362}
             priority
             className="h-auto w-full object-contain drop-shadow-md"
           />
@@ -116,26 +115,13 @@ export function MitUrtcSlide() {
             LEFT CARD: SOHAM DATERAO (MIT Charcoal/Black Wing)
            ══════════════════════════════════════════════════ */}
         <div
-          className={`relative flex-1 bg-[#121316] overflow-hidden flex flex-col justify-between p-5 sm:p-6 lg:p-7 border-b md:border-b-0 md:border-r border-white/10 group ${
+          className={`relative flex-1 bg-[#121316] overflow-hidden flex flex-col justify-center p-5 sm:p-6 lg:p-7 border-b md:border-b-0 md:border-r border-white/10 group ${
             mobileTab === "soham" ? "flex" : "hidden md:flex"
           }`}
         >
           {/* Subtle Ambient Red Glow & Angular Geometry */}
           <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-[#a31f34]/15 blur-3xl pointer-events-none" />
           <div className="absolute top-0 right-0 h-full w-14 lg:w-20 -skew-x-[12deg] bg-[#1a1b20] pointer-events-none" />
-
-          {/* Top Micro-Bar */}
-          <div className="relative z-10 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-[#e05a47] animate-pulse" />
-              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] text-[#e05a47]">
-                IEEE MIT URTC · PRESENTER
-              </span>
-            </div>
-            <span className="text-[9px] font-mono uppercase tracking-widest text-white/40 hidden sm:inline">
-              URTC-2026 // HARVESTING
-            </span>
-          </div>
 
           {/* Main Card Content: Typography Left + Multi-Layer Collage Right */}
           <div className="relative z-10 flex flex-row items-center justify-between gap-3 sm:gap-5 lg:gap-6 my-auto pt-1">
@@ -153,39 +139,14 @@ export function MitUrtcSlide() {
                 <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-[#f87171] block">
                   Piezoelectric Energy Harvesting
                 </span>
-                <p className="mt-1 text-xs sm:text-sm font-medium text-white/85 leading-snug line-clamp-3">
+                <p className="mt-1 text-base sm:text-xl lg:text-2xl font-bold text-white leading-snug line-clamp-4">
                   Dynamic Analysis of L-Shaped & U-Shaped Piezoelectric Harvesters
                 </p>
               </div>
-
-              {/* Action Trigger */}
-              <button
-                type="button"
-                onClick={() =>
-                  openLightbox({
-                    src: "/gallery/g3.jpeg",
-                    altSrc: "/gallery/g5.jpeg",
-                    altLabel: "View Poster Presentation",
-                    title: "Soham Daterao with Mentor at IEEE MIT URTC",
-                    student: "Soham Daterao",
-                    topic: "Piezoelectric Energy Harvesting",
-                    paper: "Dynamic Analysis of L-Shaped and U-Shaped Piezoelectric Harvesters",
-                    school: "Great Oak High School, CA",
-                  })
-                }
-                className="mt-3 sm:mt-4 inline-flex items-center gap-2 text-xs font-bold text-white hover:text-red-300 transition-colors group/btn cursor-pointer"
-              >
-                <span className="h-6 w-6 rounded-full bg-[#a31f34] flex items-center justify-center text-white text-[11px] group-hover/btn:scale-110 transition-transform shadow-md">
-                  <Maximize2 className="h-3 w-3" />
-                </span>
-                <span className="underline underline-offset-4 decoration-[#a31f34] font-semibold text-[11px] sm:text-xs">
-                  View MIT Conference Photo
-                </span>
-              </button>
             </div>
 
-            {/* Right: Innovative Collage Cluster (almost half the width of the card) */}
-            <div className="relative shrink-0 w-[47%] md:w-[49%] lg:w-[50%] max-w-[430px] mr-1 sm:mr-2 lg:mr-4 pb-2 sm:pb-3">
+            {/* Right: Photo Frame */}
+            <div className="relative shrink-0 w-[47%] md:w-[49%] lg:w-[50%] max-w-[430px] mr-1 sm:mr-2 lg:mr-4">
               {/* Conference Photo Frame */}
               <div
                 onClick={() =>
@@ -213,26 +174,9 @@ export function MitUrtcSlide() {
                 <div className="absolute top-2 right-2 bg-black/85 backdrop-blur-sm text-[8px] sm:text-[9px] font-black tracking-wider uppercase text-white/95 px-2 py-0.5 rounded border border-white/20">
                   URTC &apos;26
                 </div>
-                {/* Floating Tag Badge */}
-                <div className="absolute bottom-2 right-2 bg-[#a31f34] text-white text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md shadow-lg border border-white/30 pointer-events-none">
-                  Gold Sponsor
-                </div>
                 {/* Hover overlay */}
                 <div className="absolute inset-0 bg-black/35 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
                   <Maximize2 className="h-6 w-6 text-white drop-shadow-md" />
-                </div>
-              </div>
-
-              {/* Overlapping Student Avatar Badge (Collage Style at bottom left) */}
-              <div className="absolute -bottom-1 -left-2 sm:-bottom-2 sm:-left-3 lg:-bottom-3 lg:-left-4 z-20 flex items-center gap-2 bg-[#121316]/95 backdrop-blur-md p-1.5 sm:p-2 rounded-full border border-white/20 shadow-2xl">
-                <div className="relative w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-full overflow-hidden border-2 border-[#a31f34] bg-[#1e1e1e] ring-2 ring-white/30">
-                  <Image
-                    src="/soham.png"
-                    alt="Soham Daterao Portrait"
-                    fill
-                    className="object-cover object-top"
-                    sizes="80px"
-                  />
                 </div>
               </div>
             </div>
@@ -243,26 +187,13 @@ export function MitUrtcSlide() {
             RIGHT CARD: PRAGNA SURABATHULA (MIT Cardinal Wing)
            ══════════════════════════════════════════════════ */}
         <div
-          className={`relative flex-1 bg-[#8a1a2d] overflow-hidden flex flex-col justify-between p-5 sm:p-6 lg:p-7 group ${
+          className={`relative flex-1 bg-[#8a1a2d] overflow-hidden flex flex-col justify-center p-5 sm:p-6 lg:p-7 group ${
             mobileTab === "pragna" ? "flex" : "hidden md:flex"
           }`}
         >
           {/* Subtle Ambient Geometry & Bevel Highlight */}
           <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-black/25 blur-3xl pointer-events-none" />
           <div className="absolute left-0 top-0 h-full w-14 lg:w-20 skew-x-[12deg] bg-[#9a1d33] pointer-events-none" />
-
-          {/* Top Micro-Bar */}
-          <div className="relative z-10 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
-              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] text-white">
-                IEEE MIT URTC · PRESENTER
-              </span>
-            </div>
-            <span className="text-[9px] font-mono uppercase tracking-widest text-white/50 hidden sm:inline">
-              URTC-2026 // SPEECH-AI
-            </span>
-          </div>
 
           {/* Main Card Content: Typography Left + Multi-Layer Collage Right */}
           <div className="relative z-10 flex flex-row items-center justify-between gap-3 sm:gap-5 lg:gap-6 my-auto pt-1">
@@ -280,37 +211,14 @@ export function MitUrtcSlide() {
                 <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-[#ffd5dc] block">
                   Speech Denoising AI
                 </span>
-                <p className="mt-1 text-xs sm:text-sm font-medium text-white/95 leading-snug line-clamp-3">
+                <p className="mt-1 text-base sm:text-xl lg:text-2xl font-bold text-white leading-snug line-clamp-4">
                   Hearing it Clearly: Convolutional Autoencoders for Speech Denoising
                 </p>
               </div>
-
-              {/* Action Trigger */}
-              <button
-                type="button"
-                onClick={() =>
-                  openLightbox({
-                    src: "/gallery/g4.jpeg",
-                    title: "Pragna Surabathula with Poster at IEEE MIT URTC",
-                    student: "Pragna Surabathula",
-                    topic: "Speech Denoising AI",
-                    paper: "Hearing it Clearly: Convolutional Autoencoders for Speech Denoising",
-                    school: "Raleigh Charter High School, NC",
-                  })
-                }
-                className="mt-3 sm:mt-4 inline-flex items-center gap-2 text-xs font-bold text-white hover:text-white/80 transition-colors group/btn cursor-pointer"
-              >
-                <span className="h-6 w-6 rounded-full bg-black/40 flex items-center justify-center text-white text-[11px] group-hover/btn:scale-110 transition-transform shadow-md">
-                  <Maximize2 className="h-3 w-3" />
-                </span>
-                <span className="underline underline-offset-4 decoration-white/70 font-semibold text-[11px] sm:text-xs">
-                  View Poster Presentation
-                </span>
-              </button>
             </div>
 
-            {/* Right: Innovative Collage Cluster (almost half the width of the card) */}
-            <div className="relative shrink-0 w-[47%] md:w-[49%] lg:w-[50%] max-w-[430px] mr-1 sm:mr-2 lg:mr-4 pb-2 sm:pb-3">
+            {/* Right: Photo Frame */}
+            <div className="relative shrink-0 w-[47%] md:w-[49%] lg:w-[50%] max-w-[430px] mr-1 sm:mr-2 lg:mr-4">
               {/* Conference Photo Frame */}
               <div
                 onClick={() =>
@@ -336,26 +244,9 @@ export function MitUrtcSlide() {
                 <div className="absolute top-2 right-2 bg-black/85 backdrop-blur-sm text-[8px] sm:text-[9px] font-black tracking-wider uppercase text-white/95 px-2 py-0.5 rounded border border-white/20">
                   POSTER
                 </div>
-                {/* Floating Tag Badge */}
-                <div className="absolute bottom-2 right-2 bg-black/85 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md shadow-lg border border-white/30 pointer-events-none">
-                  Speech AI
-                </div>
                 {/* Hover overlay */}
                 <div className="absolute inset-0 bg-black/35 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
                   <Maximize2 className="h-6 w-6 text-white drop-shadow-md" />
-                </div>
-              </div>
-
-              {/* Overlapping Student Avatar Badge (Collage Style at bottom left) */}
-              <div className="absolute -bottom-1 -left-2 sm:-bottom-2 sm:-left-3 lg:-bottom-3 lg:-left-4 z-20 flex items-center gap-2 bg-[#8a1a2d]/95 backdrop-blur-md p-1.5 sm:p-2 rounded-full border border-white/30 shadow-2xl">
-                <div className="relative w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-full overflow-hidden border-2 border-white bg-[#1e1e1e] ring-2 ring-black/40">
-                  <Image
-                    src="/pragna.png"
-                    alt="Pragna Surabathula Portrait"
-                    fill
-                    className="object-cover object-top"
-                    sizes="80px"
-                  />
                 </div>
               </div>
             </div>
