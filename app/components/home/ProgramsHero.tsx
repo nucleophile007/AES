@@ -149,6 +149,7 @@ export function ProgramsHero() {
     title: "IEEE MIT URTC",
     imageSrc: "/logos/ieee-logo.svg",
     imageAlt: "IEEE logo",
+    hideArrowsOnMobile: true,
     customContent: <MitUrtcSlide />,
   };
 
