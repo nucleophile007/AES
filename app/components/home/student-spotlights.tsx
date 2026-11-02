@@ -137,34 +137,34 @@ export function StudentSpotlights() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 whileHover={{ y: -4 }}
-                className={`group relative flex flex-col justify-between overflow-hidden rounded-[1.75rem] border ${s.accent.border} bg-white/95 ${s.accent.glow} p-5 sm:p-6 transition-all duration-300 hover:shadow-2xl`}
+                className={`group relative flex flex-col overflow-hidden rounded-[1.75rem] border ${s.accent.border} bg-white/95 ${s.accent.glow} p-5 sm:p-6 transition-all duration-300 hover:shadow-2xl`}
               >
                 {/* Top Subtle Current Color Glow */}
                 <div className="absolute inset-x-8 top-0 h-1 bg-gradient-to-r from-transparent via-current to-transparent opacity-60" />
                 <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-blue-400/10 blur-2xl transition-transform duration-700 group-hover:scale-125" />
 
-                {/* 1. Logo → Conference → Achievement → Student → Project Title */}
+                {/* 1. Logo → Conference → Achievement */}
                 <div className="relative z-10 flex flex-col items-center text-center">
                   <div
-                    className={`relative h-20 w-20 sm:h-24 sm:w-24 overflow-hidden rounded-full border-4 ${s.accent.circleBorder} bg-slate-50 shadow-lg transition-transform duration-500 group-hover:scale-105`}
+                    className={`relative aspect-square h-[clamp(4.5rem,calc(23.7vh-5.6rem),11rem)] overflow-hidden rounded-full border-4 ${s.accent.circleBorder} bg-slate-50 shadow-lg transition-transform duration-500 group-hover:scale-105`}
                   >
                     <Image
                       src={s.logo}
                       alt={s.competition}
                       fill
-                      sizes="96px"
+                      sizes="176px"
                       className="object-cover"
                     />
                   </div>
 
-                  <h3 className={`mt-3 text-2xl sm:text-3xl font-black uppercase tracking-tight leading-tight ${s.accent.text}`}>
+                  <h3 className={`mt-[clamp(0.375rem,1.6vh,1.25rem)] text-2xl sm:text-3xl font-black uppercase tracking-tight leading-tight ${s.accent.text}`}>
                     {s.competition}
                     <span className="ml-2 align-middle text-xs sm:text-sm font-bold normal-case tracking-normal text-slate-500">
                       {s.competitionDate}
                     </span>
                   </h3>
 
-                  <div className="mt-2 flex items-center gap-1.5">
+                  <div className="mt-1.5 flex items-center gap-1.5">
                     <AchIcon className={`h-4 w-4 sm:h-5 sm:w-5 ${s.accent.iconStroke}`} />
                     <span
                       className={`bg-gradient-to-r ${s.accent.achievementGradient} bg-clip-text text-xs sm:text-sm font-black uppercase tracking-wider text-transparent`}
@@ -172,29 +172,36 @@ export function StudentSpotlights() {
                       {s.achievement}
                     </span>
                   </div>
+                </div>
 
-                  <p className="mt-2 font-serif text-xl sm:text-2xl font-bold text-slate-900 leading-tight">
+                {/* 2. Student */}
+                <div className="relative z-10 mt-[clamp(0.5rem,2.2vh,1.75rem)] flex flex-col items-center text-center">
+                  <div className="mb-[clamp(0.375rem,1.6vh,1.25rem)] h-px w-16 bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
+                  <p className="font-serif text-xl sm:text-2xl lg:text-[clamp(1.25rem,2.6vh,2rem)] font-bold text-slate-900 leading-tight">
                     {s.studentName}
                   </p>
-                  <p className="mt-0.5 text-[11px] sm:text-xs font-semibold text-slate-600">
+                  <p className="mt-1 text-[11px] sm:text-xs font-semibold text-slate-600">
                     {s.grade} · {s.school}
                   </p>
+                </div>
 
+                {/* 3. Project Title — fills and centres in the remaining space */}
+                <div className="relative z-10 flex flex-1 items-center justify-center py-[clamp(0.5rem,2vh,1.5rem)] text-center">
                   <p
-                    className={`mt-3 font-serif text-base sm:text-lg lg:text-xl italic font-bold ${s.accent.text} leading-snug line-clamp-3`}
+                    className={`font-serif text-base sm:text-lg lg:text-[clamp(1.05rem,2.5vh,1.875rem)] italic font-bold ${s.accent.text} leading-snug line-clamp-4`}
                   >
                     &ldquo;{s.topic}&rdquo;
                   </p>
                 </div>
 
-                {/* 2. Commendation Quote */}
-                <div className="relative z-10 mt-3 pl-3 border-l-2 border-slate-300/80 bg-slate-50/60 rounded-r-lg p-2.5">
-                  <p className="text-xs sm:text-[13px] italic leading-relaxed text-slate-700 font-medium line-clamp-3">
+                {/* 4. Commendation Quote */}
+                <div className="relative z-10 pl-3 border-l-2 border-slate-300/80 bg-slate-50/60 rounded-r-lg p-2.5 sm:p-3">
+                  <p className="text-xs sm:text-[13px] lg:text-[clamp(0.75rem,1.4vh,1rem)] italic leading-relaxed text-slate-700 font-medium line-clamp-4 [@media(min-width:1024px)_and_(min-height:850px)]:line-clamp-5">
                     {s.message}
                   </p>
                 </div>
 
-                {/* 3. Poster Footer / Signature */}
+                {/* 5. Poster Footer / Signature */}
                 <div className="relative z-10 mt-3 pt-2.5 border-t border-slate-200/70 flex items-center justify-between">
                   <span className={`text-[10px] font-bold tracking-[0.2em] ${s.accent.text}`}>
                     — ACHARYA TEAM

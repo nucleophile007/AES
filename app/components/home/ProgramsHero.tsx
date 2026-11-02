@@ -12,6 +12,7 @@ import { BannerItem } from "./banner-item";
 import { GridBackground } from "./grid-background";
 import { HeroSliderAlways, type Slide } from "./HeroSliderAlways";
 import { MitUrtcSlide } from "./MitUrtcSlide";
+import { SccurSlide } from "./SccurSlide";
 import { AnimatedProgramsHeroSlide } from "./AnimatedProgramsHeroSlide";
 import { StudentSpotlights } from "./student-spotlights";
 
@@ -136,6 +137,14 @@ export function ProgramsHero() {
     },
   ];
 
+  const sccurSlide: Slide = {
+    title: "SCCUR 2026",
+    imageSrc: "/program-image/banner-explorers.png",
+    imageAlt: "SCCUR 2026 undergraduate research conference",
+    hideArrowsOnMobile: true,
+    customContent: <SccurSlide />,
+  };
+
   const mitUrtcSlide: Slide = {
     title: "IEEE MIT URTC",
     imageSrc: "/logos/ieee-logo.svg",
@@ -244,7 +253,7 @@ export function ProgramsHero() {
     // },
   ];
 
-  const slides: Slide[] = [mitUrtcSlide, programsSlide, spotlightsSlide, ...programSlides];
+  const slides: Slide[] = [sccurSlide, mitUrtcSlide, programsSlide, spotlightsSlide, ...programSlides];
 
   return (
     <HeroSliderAlways
