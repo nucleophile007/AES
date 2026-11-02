@@ -19,6 +19,7 @@ export type Slide = {
   hideContent?: boolean;
   visualStyle?: "default" | "poster";
   hideArrows?: boolean;
+  hideArrowsOnMobile?: boolean;
   customContent?: React.ReactNode;
 };
 
@@ -284,7 +285,12 @@ export function HeroSliderAlways({
       )}
 
       {enableNav && !activeSlide.hideArrows && (
-        <div className="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-between z-20 px-4 md:px-8">
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-between z-20 px-4 md:px-8",
+            activeSlide.hideArrowsOnMobile && "hidden lg:flex"
+          )}
+        >
           <button
             type="button"
             aria-label="Previous slide"

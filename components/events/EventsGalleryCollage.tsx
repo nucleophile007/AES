@@ -30,46 +30,76 @@ interface PhotoCardData {
   widthClass: string;
 }
 
+const KNOWN_METADATA: Record<string, { title: string; widthClass: string }> = {
+  "/gallery/g1.jpeg": {
+    title: "MIT Stata Center · Academic & Research Mentorship",
+    widthClass: "w-[340px] sm:w-[420px] md:w-[480px]",
+  },
+  "/gallery/g2.jpeg": {
+    title: "IEEE MIT URTC · Gold Sponsor & Mentorship Partner",
+    widthClass: "w-[260px] sm:w-[300px] md:w-[340px]",
+  },
+  "/gallery/g4.jpeg": {
+    title: "Speech Denoising AI Poster · Pragna Surabathula at MIT URTC",
+    widthClass: "w-[270px] sm:w-[320px] md:w-[360px]",
+  },
+  "/gallery/g3.jpeg": {
+    title: "Student & Mentor Presentation · IEEE MIT URTC",
+    widthClass: "w-[260px] sm:w-[300px] md:w-[340px]",
+  },
+  "/gallery/g5.jpeg": {
+    title: "Piezoelectric Energy Harvesters · Soham Daterao at MIT URTC",
+    widthClass: "w-[270px] sm:w-[320px] md:w-[360px]",
+  },
+  "/gallery/img1.jpg": {
+    title: "Campus Highlights & Learning",
+    widthClass: "w-[440px] sm:w-[540px] md:w-[620px]",
+  },
+  "/gallery/img2.jpg": {
+    title: "Interactive Student Seminars & Workshops",
+    widthClass: "w-[340px] sm:w-[400px] md:w-[460px]",
+  },
+  "/gallery/img3.jpg": {
+    title: "Research & Mentorship Camps",
+    widthClass: "w-[340px] sm:w-[400px] md:w-[460px]",
+  },
+  "/gallery/img4.jpeg": {
+    title: "College Prep & Academic Celebrations",
+    widthClass: "w-[440px] sm:w-[540px] md:w-[620px]",
+  },
+};
+
+const DEFAULT_IMAGE_LIST: string[] = [
+  "/gallery/g1.jpeg",
+  "/gallery/g2.jpeg",
+  "/gallery/g4.jpeg",
+  "/gallery/g3.jpeg",
+  "/gallery/g5.jpeg",
+  "/gallery/img1.jpg",
+  "/gallery/img2.jpg",
+  "/gallery/img3.jpg",
+  "/gallery/img4.jpeg",
+];
+
 export function EventsGalleryCollage({ images }: EventsGalleryCollageProps) {
   const [activeLightbox, setActiveLightbox] = useState<{ src: string; title: string } | null>(null);
   const [isPaused, setIsPaused] = useState(false);
 
-  const imgs = [
-    (images && images[0]) || "/gallery/img1.jpg",
-    (images && images[1]) || "/gallery/img2.jpg",
-    (images && images[2]) || "/gallery/img3.jpg",
-    (images && images[3]) || "/gallery/img4.jpeg",
-  ];
+  const imageList = images && images.length > 0 ? images : DEFAULT_IMAGE_LIST;
 
-  const cards: PhotoCardData[] = [
-    {
-      id: "img1",
-      src: imgs[0],
-      title: "Campus Highlights & Learning",
-      widthClass: "w-[480px] sm:w-[600px] md:w-[700px]",
-    },
-    {
-      id: "img2",
-      src: imgs[1],
-      title: "Interactive Student Workshops",
-      widthClass: "w-[280px] sm:w-[340px] md:w-[400px]",
-    },
-    {
-      id: "img3",
-      src: imgs[2],
-      title: "Research & Mentorship Camps",
-      widthClass: "w-[280px] sm:w-[340px] md:w-[400px]",
-    },
-    {
-      id: "img4",
-      src: imgs[3],
-      title: "College Prep & Academic Celebrations",
-      widthClass: "w-[480px] sm:w-[600px] md:w-[700px]",
-    },
-  ];
+  const cards: PhotoCardData[] = imageList.map((src, idx) => {
+    const meta = KNOWN_METADATA[src];
+    return {
+      id: `photo-${idx}-${src.replace(/[^a-zA-Z0-9]/g, "_")}`,
+      src,
+      title: meta?.title || `AES Event Spotlight ${idx + 1}`,
+      widthClass: meta?.widthClass || "w-[340px] sm:w-[420px] md:w-[480px]",
+    };
+  });
 
   // Repeat for seamless infinite scroll
   const scrollItems = [...cards, ...cards, ...cards];
+  const scrollDuration = Math.max(30, cards.length * 6);
 
   return (
     <div className="relative w-full pt-20 pb-10 bg-[#080c14] overflow-hidden">
@@ -113,7 +143,7 @@ export function EventsGalleryCollage({ images }: EventsGalleryCollageProps) {
             x: {
               repeat: Infinity,
               repeatType: "loop",
-              duration: 28,
+              duration: scrollDuration,
               ease: "linear",
             },
           }}
