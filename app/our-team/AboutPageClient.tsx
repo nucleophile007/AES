@@ -115,7 +115,7 @@ export default function AboutPageClient({ mentors }: AboutPageClientProps) {
 
         {/* Full-height two-column layout */}
         <div
-          className="relative z-10 grid lg:grid-cols-[minmax(0,1.1fr)_minmax(420px,1.2fr)] gap-6 lg:gap-3 max-w-[1550px] mx-auto px-4 sm:px-8 lg:px-10"
+          className="relative z-10 grid lg:grid-cols-[minmax(0,1.2fr)_minmax(380px,1fr)] gap-8 lg:gap-6 max-w-[1550px] mx-auto px-4 sm:px-8 lg:px-10 items-start"
           style={{ minHeight: "calc(100vh - 154px)" }}
         >
           {/* ── LEFT: Editorial text content ── */}
@@ -123,7 +123,7 @@ export default function AboutPageClient({ mentors }: AboutPageClientProps) {
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="min-w-0 flex flex-col justify-start py-8 lg:py-10 lg:pr-2"
+            className="min-w-0 flex flex-col justify-start py-8 lg:py-10 lg:pr-4"
           >
             {/* Heading group */}
             <div className="mb-6">
@@ -181,33 +181,34 @@ export default function AboutPageClient({ mentors }: AboutPageClientProps) {
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 1, ease: "easeOut", delay: 0.15 }}
-            className="relative min-w-0 w-full h-[min(64vh,540px)] min-h-[360px] lg:h-[calc(100vh-200px)] lg:min-h-[480px] lg:sticky lg:top-[116px] self-start mt-0 lg:mt-8 lg:max-w-[700px] lg:ml-auto"
+            className="relative min-w-0 w-full lg:sticky lg:top-[96px] self-start flex flex-col items-center lg:items-end justify-center py-4 lg:py-6"
           >
-            {/* Transparent founder portrait placed directly into the page background */}
-            <div className="absolute inset-0 overflow-hidden -translate-y-14">
+            {/* Constrained founder portrait so the image is proportional and balanced */}
+            <div className="relative w-full max-w-[500px] xl:max-w-[540px]">
               <Image
                 src="/shanti-founder.png"
                 alt="Shanti Swaroop – Founder, ACHARYA Educational Services"
                 width={1284}
-                height={1200}
-                sizes="(max-width: 1024px) 100vw, 48vw"
-                className="absolute left-1/2 top-0 h-full w-auto max-w-none -translate-x-1/2 object-contain"
+                height={1225}
+                sizes="(max-width: 1024px) 100vw, 540px"
+                className="w-full h-auto object-contain drop-shadow-xl"
                 quality={100}
                 priority
               />
-            </div>
 
-            <div className="absolute right-[17%] bottom-[-0.5%] z-10 w-[56%] max-w-[560px] min-w-[260px] drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)] sm:w-[58%] md:w-[54%] lg:w-[52%] xl:w-[50%]">
-              <p
-                className="text-left text-[clamp(1.2rem,2.9vw,1.4rem)] leading-[0.94] text-yellow-100/95 italic"
-                style={{ fontFamily: '"Libre Caslon Text", Georgia, serif' }}
-              >
-                Don&apos;t just discover a passion. Pursue it for years, research it deeply, build something meaningful, and create a difference.
-              </p>
-              <p className="mt-4 text-left font-semibold uppercase tracking-[0.12em] leading-relaxed text-yellow-400 text-[0.62rem] sm:text-[0.72rem] lg:text-[0.82rem]">
-                <span className="block">Shanti Swaroop</span>
-                <span className="mt-1 block text-yellow-300/80">Founder, ACHARYA</span>
-              </p>
+              {/* Quote positioned from shoulder to shoulder across lower chest/torso */}
+              <div className="absolute left-[12%] right-[9%] bottom-[3%] z-10 drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]">
+                <p
+                  className="text-left text-[clamp(1.05rem,1.45vw,1.3rem)] leading-snug text-yellow-100/95 italic font-medium"
+                  style={{ fontFamily: '"Libre Caslon Text", Georgia, serif' }}
+                >
+                  Don&apos;t just discover a passion. Pursue it for years, research it deeply, build something meaningful, and create a difference.
+                </p>
+                <p className="mt-3 text-left font-semibold uppercase tracking-[0.14em] leading-relaxed text-yellow-400 text-[0.66rem] sm:text-[0.74rem] lg:text-[0.8rem]">
+                  <span className="block">Shanti Swaroop</span>
+                  <span className="mt-0.5 block text-yellow-300/80">Founder, ACHARYA</span>
+                </p>
+              </div>
             </div>
           </motion.div>
 
