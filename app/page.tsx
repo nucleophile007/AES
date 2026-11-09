@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Header from "@/components/home/Header";
 import ProgramsHero from "@/components/home/ProgramsHero";
 import MissionSection from "@/components/home/MissionSection";
-import HowItWorksSection from "@/components/home/HowItWorksSection";
 import FeaturesGridSection from "@/components/home/FeaturesGridSection";
 import CTASection from "@/components/home/CTASection";
 import SupportersCarousel from "@/components/home/SupportersCarousel";
@@ -38,7 +37,6 @@ export default function HomePage() {
       <Header />
       <ProgramsHero />
       <MissionSection />
-      <HowItWorksSection />
       <FeaturesGridSection />
       <CTASection />
       <TestimonialCarousel />
