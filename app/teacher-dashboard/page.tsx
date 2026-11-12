@@ -40,6 +40,7 @@ import CustomChatDialog from "../../components/CustomChatDialog";
 import StudentProgressModal from "../../components/teacher/RealStudentProgressModal";
 import ProgressReportManager from "@/components/teacher/ProgressReportManager";
 import MeetingMinutesManager from "@/components/teacher/MeetingMinutesManager";
+import TaskManager from "@/components/teacher/TaskManager";
 import MentorAvailabilityCalendar from "@/components/calendar/MentorAvailabilityCalendar";
 import DashboardLoadingSkeleton, { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
 import {
@@ -68,7 +69,8 @@ import {
   ExternalLink,
   BarChart3,
   Edit,
-  Trash2
+  Trash2,
+  CheckSquare
 } from "lucide-react";
 
 type ResourceCategory = "assignment" | "personal" | "general";
@@ -225,6 +227,7 @@ interface ResourceFormState {
 
 type TeacherDashboardTab =
   | "students"
+  | "tasks"
   | "assignments"
   | "submissions"
   | "resources"
@@ -235,6 +238,7 @@ type TeacherDashboardTab =
 
 const TEACHER_DASHBOARD_TABS: TeacherDashboardTab[] = [
   "students",
+  "tasks",
   "assignments",
   "submissions",
   "resources",
@@ -347,6 +351,7 @@ export default function TeacherDashboard() {
   const [assignmentsLoading, setAssignmentsLoading] = useState(false);
   const [tabLoadingState, setTabLoadingState] = useState<Record<TeacherDashboardTab, boolean>>({
     students: false,
+    tasks: false,
     assignments: false,
     submissions: false,
     resources: false,
@@ -1405,6 +1410,11 @@ export default function TeacherDashboard() {
       value: "students",
     },
     {
+      title: "Tasks",
+      icon: CheckSquare,
+      value: "tasks",
+    },
+    {
       title: "Assignments",
       icon: BookOpen,
       value: "assignments",
@@ -1446,6 +1456,11 @@ export default function TeacherDashboard() {
       title: "Students",
       description: "Track learners, groups, and direct communication with families.",
       icon: Users,
+    },
+    tasks: {
+      title: "Task Management",
+      description: "Assign, track, and review student responsibilities, outreach, and action items.",
+      icon: CheckSquare,
     },
     assignments: {
       title: "Assignments",
@@ -2081,6 +2096,18 @@ export default function TeacherDashboard() {
                     ))}
                   </div>
                 </div>
+              </motion.div>
+            )}
+
+            {/* Tasks Tab */}
+            {activeTab === "tasks" && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="min-w-0"
+              >
+                <TaskManager teacherEmail={teacherEmail} teacherName={teacher?.name} />
               </motion.div>
             )}
 

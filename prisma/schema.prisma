@@ -55,15 +55,15 @@ model Teacher {
   classSchedules          ClassSchedule[]
   meetingMinuteMeetings   MeetingMinuteMeeting[]
   mentorProfile           Mentor?
-  mentorAvailabilitySlots MentorAvailabilitySlot[]
   progressReports         ProgressReport[]
   resources               Resource[]
   studentGroups           StudentGroup[]
   submissionRemarks       StudentSubmissionRemark[]
-  StudentTask             StudentTask[]
-  Task                    Task[]
-  TaskTemplate            TaskTemplate[]
   students                TeacherStudent[]
+  createdTasks            Task[]                    @relation("MentorCreatedTasks")
+  reviewedTasks           StudentTask[]             @relation("MentorReviewedTasks")
+  taskTemplates           TaskTemplate[]
+  mentorAvailabilitySlots MentorAvailabilitySlot[]
 }
 
 model Student {
@@ -88,7 +88,6 @@ model Student {
   classSchedules        ClassSchedule[]
   enrollments           Enrollment[]
   meetingMinuteRequests MeetingMinuteRequest[]
-  mentorSlotBookings     MentorSlotBooking[]
   Payment               Payment[]
   progressReports       ProgressReport[]
   Research              Research[]
@@ -96,10 +95,11 @@ model Student {
   groupMemberships      StudentGroupMember[]
   assignedResources     StudentResource[]
   studentSubmissions    StudentSubmission[]
-  StudentTask           StudentTask[]
   submissions           Submission[]
   teacherLinks          TeacherStudent[]
   Testimonial           Testimonial[]
+  assignedTasks         StudentTask[]          @relation("StudentAssignedTasks")
+  mentorSlotBookings    MentorSlotBooking[]
 }
 
 model TeacherStudent {
@@ -159,7 +159,7 @@ model Assignment {
   resources           AssignmentResource[]
   assignmentTargets   AssignmentTarget[]
   submissions         Submission[]
-  Task                Task[]
+  linkedTasks         Task[]
 }
 
 model Submission {
@@ -215,7 +215,7 @@ model Resource {
   assignmentLinks    AssignmentResource[]
   teacher            Teacher              @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   studentAssignments StudentResource[]
-  Task               Task[]
+  linkedTasks        Task[]
 }
 
 model AssignmentResource {
@@ -343,7 +343,7 @@ model MeetingMinuteMeeting {
   classSchedule         ClassSchedule?         @relation(fields: [classScheduleId], references: [id])
   teacher               Teacher                @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   requests              MeetingMinuteRequest[]
-  Task                  Task[]
+  linkedTasks           Task[]
 
   @@unique([teacherId, googleCalendarEventId])
   @@unique([teacherId, classScheduleId])
@@ -813,188 +813,6 @@ model RefreshToken {
   @@index([userId, userRole])
 }
 
-model StudentTask {
-  id                          Int            @id @default(autoincrement())
-  taskId                      Int
-  studentId                   Int
-  status                      String         @default("TODO")
-  startedAt                   DateTime?
-  submittedAt                 DateTime?
-  completedAt                 DateTime?
-  submissionNote              String?
-  submissionUrl               String?
-  submissionFileUrl           String?
-  submissionFileName          String?
-  submissionExternalConfirmed Boolean        @default(false)
-  mentorFeedback              String?
-  reviewedAt                  DateTime?
-  reviewedById                Int?
-  createdAt                   DateTime       @default(now())
-  updatedAt                   DateTime
-  checklistDone               Json?
-  dueSoonReminderSentAt       DateTime?
-  overdueReminderSentAt       DateTime?
-  Teacher                     Teacher?       @relation(fields: [reviewedById], references: [id])
-  Student                     Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  Task                        Task           @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  TaskActivity                TaskActivity[]
-  TaskComment                 TaskComment[]
-
-  @@unique([taskId, studentId])
-  @@index([reviewedById])
-  @@index([status])
-  @@index([studentId, status])
-  @@index([taskId])
-}
-
-model Task {
-  id                          Int                   @id @default(autoincrement())
-  title                       String
-  description                 String
-  category                    String                @default("General")
-  priority                    String                @default("MEDIUM")
-  deadline                    DateTime?
-  creatorId                   Int
-  requireSubmissionNote       Boolean               @default(false)
-  requireFileUpload           Boolean               @default(false)
-  requireUrl                  Boolean               @default(false)
-  requireExternalConfirmation Boolean               @default(false)
-  externalConfirmationPrompt  String?
-  requireMentorApproval       Boolean               @default(false)
-  isCancelled                 Boolean               @default(false)
-  createdAt                   DateTime              @default(now())
-  updatedAt                   DateTime
-  checklist                   Json?
-  linkedAssignmentId          Int?
-  linkedMeetingId             Int?
-  linkedResourceId            Int?
-  nextOccurrenceCreatedAt     DateTime?
-  recurrence                  String?
-  recurrenceEndsAt            DateTime?
-  seriesId                    Int?
-  templateId                  Int?
-  StudentTask                 StudentTask[]
-  Teacher                     Teacher               @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  Assignment                  Assignment?           @relation(fields: [linkedAssignmentId], references: [id])
-  MeetingMinuteMeeting        MeetingMinuteMeeting? @relation(fields: [linkedMeetingId], references: [id])
-  Resource                    Resource?             @relation(fields: [linkedResourceId], references: [id])
-  TaskTemplate                TaskTemplate?         @relation(fields: [templateId], references: [id])
-
-  @@index([category])
-  @@index([creatorId])
-  @@index([deadline])
-  @@index([isCancelled])
-  @@index([priority])
-  @@index([recurrence, nextOccurrenceCreatedAt])
-  @@index([seriesId])
-}
-
-model TaskActivity {
-  id              Int         @id @default(autoincrement())
-  studentTaskId   Int
-  action          String
-  details         String?
-  performedById   Int
-  performedByRole String
-  performedByName String
-  createdAt       DateTime    @default(now())
-  StudentTask     StudentTask @relation(fields: [studentTaskId], references: [id], onDelete: Cascade)
-
-  @@index([createdAt])
-  @@index([studentTaskId])
-}
-
-model TaskComment {
-  id             Int         @id @default(autoincrement())
-  studentTaskId  Int
-  authorId       Int
-  authorRole     String
-  authorName     String
-  content        String
-  attachmentUrl  String?
-  attachmentName String?
-  createdAt      DateTime    @default(now())
-  StudentTask    StudentTask @relation(fields: [studentTaskId], references: [id], onDelete: Cascade)
-
-  @@index([createdAt])
-  @@index([studentTaskId])
-}
-
-model TaskSavedFilter {
-  id        Int      @id @default(autoincrement())
-  ownerId   Int
-  ownerRole String
-  name      String
-  query     String
-  createdAt DateTime @default(now())
-
-  @@unique([ownerRole, ownerId, name])
-  @@index([ownerRole, ownerId])
-}
-
-model TaskTemplate {
-  id                          Int      @id @default(autoincrement())
-  teacherId                   Int
-  name                        String
-  title                       String
-  description                 String
-  category                    String   @default("General")
-  priority                    String   @default("MEDIUM")
-  defaultDeadlineDays         Int?
-  requireSubmissionNote       Boolean  @default(false)
-  requireFileUpload           Boolean  @default(false)
-  requireUrl                  Boolean  @default(false)
-  requireExternalConfirmation Boolean  @default(false)
-  externalConfirmationPrompt  String?
-  requireMentorApproval       Boolean  @default(false)
-  checklist                   Json?
-  recurrence                  String?
-  usageCount                  Int      @default(0)
-  createdAt                   DateTime @default(now())
-  updatedAt                   DateTime
-  Task                        Task[]
-  Teacher                     Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-
-  @@unique([teacherId, name])
-  @@index([teacherId])
-}
-
-model MentorAvailabilitySlot {
-  id                Int                      @id @default(autoincrement())
-  teacherId         Int
-  startsAt          DateTime
-  endsAt            DateTime
-  timezone          String
-  status            MentorAvailabilityStatus @default(OPEN)
-  createdAt         DateTime                 @default(now())
-  updatedAt         DateTime                 @updatedAt
-  teacher           Teacher                  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  requests          MentorSlotBooking[]
-
-  @@index([startsAt, endsAt])
-  @@index([teacherId, status, startsAt])
-}
-
-model MentorSlotBooking {
-  id                     Int                     @id @default(autoincrement())
-  slotId                 Int
-  studentId              Int
-  classScheduleId        Int?                    @unique
-  status                 MentorSlotBookingStatus @default(PENDING)
-  message                String?
-  googleSyncError        String?
-  respondedAt            DateTime?
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime                @updatedAt
-  classSchedule    ClassSchedule?         @relation(fields: [classScheduleId], references: [id])
-  slot             MentorAvailabilitySlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
-  student          Student                @relation(fields: [studentId], references: [id], onDelete: Cascade)
-
-  @@unique([slotId, studentId])
-  @@index([status, createdAt])
-  @@index([studentId, status])
-}
-
 enum MeetingSource {
   GOOGLE
   AES_SCHEDULE
@@ -1009,6 +827,201 @@ enum MeetingMinuteStatus {
 enum MeetingMinuteCreationMode {
   STUDENT_ASSIGNED
   MENTOR_DIRECT
+}
+
+model Task {
+  id                          Int                   @id @default(autoincrement())
+  title                       String
+  description                 String                @db.Text
+  category                    String                @default("General")
+  priority                    String                @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  deadline                    DateTime?
+  creatorId                   Int
+  creator                     Teacher               @relation("MentorCreatedTasks", fields: [creatorId], references: [id], onDelete: Cascade)
+  requireSubmissionNote       Boolean               @default(false)
+  requireFileUpload           Boolean               @default(false)
+  requireUrl                  Boolean               @default(false)
+  requireExternalConfirmation Boolean               @default(false)
+  externalConfirmationPrompt  String?               @db.Text
+  requireMentorApproval       Boolean               @default(false)
+  /// Every checklist step must be ticked before the student can submit.
+  requireChecklistComplete    Boolean               @default(false)
+  isCancelled                 Boolean               @default(false)
+  /// Checklist definition: [{ id: string, title: string }]; completion is tracked per student.
+  checklist                   Json?
+  /// Recurrence: WEEKLY | BIWEEKLY | MONTHLY (requires a deadline).
+  recurrence                  String?
+  recurrenceEndsAt            DateTime?
+  /// First task of a recurring series (null for the first one itself).
+  seriesId                    Int?
+  /// Set once the next occurrence has been generated.
+  nextOccurrenceCreatedAt     DateTime?
+  templateId                  Int?
+  template                    TaskTemplate?         @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  linkedAssignmentId          Int?
+  linkedAssignment            Assignment?           @relation(fields: [linkedAssignmentId], references: [id], onDelete: SetNull)
+  linkedResourceId            Int?
+  linkedResource              Resource?             @relation(fields: [linkedResourceId], references: [id], onDelete: SetNull)
+  linkedMeetingId             Int?
+  linkedMeeting               MeetingMinuteMeeting? @relation(fields: [linkedMeetingId], references: [id], onDelete: SetNull)
+  createdAt                   DateTime              @default(now())
+  updatedAt                   DateTime              @updatedAt
+  studentTasks                StudentTask[]
+
+  @@index([creatorId])
+  @@index([seriesId])
+  @@index([recurrence, nextOccurrenceCreatedAt])
+  @@index([category])
+  @@index([priority])
+  @@index([deadline])
+  @@index([isCancelled])
+}
+
+model StudentTask {
+  id                          Int            @id @default(autoincrement())
+  taskId                      Int
+  studentId                   Int
+  status                      String         @default("TODO") // TODO, IN_PROGRESS, SUBMITTED, CHANGES_REQUESTED, COMPLETED
+  startedAt                   DateTime?
+  submittedAt                 DateTime?
+  completedAt                 DateTime?
+  submissionNote              String?        @db.Text
+  submissionUrl               String?        @db.Text
+  submissionFileUrl           String?        @db.Text
+  submissionFileName          String?
+  submissionExternalConfirmed Boolean        @default(false)
+  /// Ids of checklist items (from Task.checklist) this student has ticked.
+  checklistDone               Json?
+  dueSoonReminderSentAt       DateTime?
+  overdueReminderSentAt       DateTime?
+  mentorFeedback              String?        @db.Text
+  reviewedAt                  DateTime?
+  reviewedById                Int?
+  reviewedBy                  Teacher?       @relation("MentorReviewedTasks", fields: [reviewedById], references: [id], onDelete: SetNull)
+  createdAt                   DateTime       @default(now())
+  updatedAt                   DateTime       @updatedAt
+  task                        Task           @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  student                     Student        @relation("StudentAssignedTasks", fields: [studentId], references: [id], onDelete: Cascade)
+  comments                    TaskComment[]
+  activities                  TaskActivity[]
+
+  @@unique([taskId, studentId])
+  @@index([studentId, status])
+  @@index([taskId])
+  @@index([status])
+  @@index([reviewedById])
+}
+
+model TaskComment {
+  id             Int         @id @default(autoincrement())
+  studentTaskId  Int
+  authorId       Int
+  authorRole     String // "teacher" | "student"
+  authorName     String
+  content        String      @db.Text
+  attachmentUrl  String?     @db.Text
+  attachmentName String?
+  createdAt      DateTime    @default(now())
+  studentTask    StudentTask @relation(fields: [studentTaskId], references: [id], onDelete: Cascade)
+
+  @@index([studentTaskId])
+  @@index([createdAt])
+}
+
+model TaskActivity {
+  id              Int         @id @default(autoincrement())
+  studentTaskId   Int
+  action          String // CREATED, STATUS_CHANGED, SUBMITTED, CHANGES_REQUESTED, APPROVED, REOPENED, COMMENT_ADDED, CANCELLED
+  details         String?     @db.Text
+  performedById   Int
+  performedByRole String // "teacher" | "student"
+  performedByName String
+  createdAt       DateTime    @default(now())
+  studentTask     StudentTask @relation(fields: [studentTaskId], references: [id], onDelete: Cascade)
+
+  @@index([studentTaskId])
+  @@index([createdAt])
+}
+
+model TaskTemplate {
+  id                          Int      @id @default(autoincrement())
+  teacherId                   Int
+  teacher                     Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  name                        String
+  title                       String
+  description                 String   @db.Text
+  category                    String   @default("General")
+  priority                    String   @default("MEDIUM")
+  /// Days after creation the deadline falls on (null = no default deadline).
+  defaultDeadlineDays         Int?
+  requireSubmissionNote       Boolean  @default(false)
+  requireFileUpload           Boolean  @default(false)
+  requireUrl                  Boolean  @default(false)
+  requireExternalConfirmation Boolean  @default(false)
+  externalConfirmationPrompt  String?  @db.Text
+  requireMentorApproval       Boolean  @default(false)
+  /// Every checklist step must be ticked before the student can submit.
+  requireChecklistComplete    Boolean  @default(false)
+  checklist                   Json?
+  recurrence                  String?
+  usageCount                  Int      @default(0)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+  tasks                       Task[]
+
+  @@unique([teacherId, name])
+  @@index([teacherId])
+}
+
+model TaskSavedFilter {
+  id        Int      @id @default(autoincrement())
+  ownerId   Int
+  ownerRole String // "teacher" | "student"
+  name      String
+  /// URL query string of the filter state, e.g. "status=SUBMITTED&priority=HIGH"
+  query     String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@unique([ownerRole, ownerId, name])
+  @@index([ownerRole, ownerId])
+}
+
+// Mentor availability & slot booking (from main: mentor calendar feature)
+
+model MentorAvailabilitySlot {
+  id        Int                      @id @default(autoincrement())
+  teacherId Int
+  startsAt  DateTime
+  endsAt    DateTime
+  timezone  String
+  status    MentorAvailabilityStatus @default(OPEN)
+  createdAt DateTime                 @default(now())
+  updatedAt DateTime                 @updatedAt
+  teacher   Teacher                  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  requests  MentorSlotBooking[]
+
+  @@index([startsAt, endsAt])
+  @@index([teacherId, status, startsAt])
+}
+
+model MentorSlotBooking {
+  id              Int                     @id @default(autoincrement())
+  slotId          Int
+  studentId       Int
+  classScheduleId Int?                    @unique
+  status          MentorSlotBookingStatus @default(PENDING)
+  message         String?
+  googleSyncError String?
+  respondedAt     DateTime?
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  classSchedule   ClassSchedule?          @relation(fields: [classScheduleId], references: [id])
+  slot            MentorAvailabilitySlot  @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  student         Student                 @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([slotId, studentId])
+  @@index([status, createdAt])
+  @@index([studentId, status])
 }
 
 enum MentorAvailabilityStatus {

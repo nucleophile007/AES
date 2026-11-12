@@ -34,6 +34,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import ParentScheduleView from "../components/parent/ParentScheduleView";
 import ParentMentorCalendar from "@/components/calendar/ParentMentorCalendar";
 import ParentMeetingMinutes from "@/components/parent/ParentMeetingMinutes";
+import ParentTasks from "@/components/parent/ParentTasks";
 import { cn } from "@/lib/utils";
 import {
   Users,
@@ -62,6 +63,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar,
+  ListChecks,
 } from "lucide-react";
 import ProgressReportList from "@/components/common/ProgressReportList";
 import { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
@@ -114,7 +116,8 @@ type ParentDashboardTab =
   | "chat"
   | "calendar"
   | "mentor-calendar"
-  | "meeting-minutes";
+  | "meeting-minutes"
+  | "tasks";
 
 const createParentTabLoadingState = (): Record<ParentDashboardTab, boolean> => ({
   progress: false,
@@ -125,6 +128,7 @@ const createParentTabLoadingState = (): Record<ParentDashboardTab, boolean> => (
   calendar: false,
   "mentor-calendar": false,
   "meeting-minutes": false,
+  tasks: false,
 });
 
 const createParentTabReadyState = (): Record<ParentDashboardTab, boolean> => ({
@@ -136,6 +140,8 @@ const createParentTabReadyState = (): Record<ParentDashboardTab, boolean> => ({
   calendar: true,
   "mentor-calendar": false,
   "meeting-minutes": false,
+  // ParentTasks loads its own data and shows its own skeleton.
+  tasks: true,
 });
 
 // Admin Meet Calendar Component
@@ -922,6 +928,12 @@ export default function ParentDashboard() {
       icon: FileText,
       isActive: activeTab === "meeting-minutes",
       onClick: () => setActiveTab("meeting-minutes"),
+    },
+    {
+      title: "Tasks",
+      icon: ListChecks,
+      isActive: activeTab === "tasks",
+      onClick: () => setActiveTab("tasks"),
     },
   ];
 
@@ -1799,6 +1811,11 @@ export default function ParentDashboard() {
             {activeTab === "meeting-minutes" && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
                 <ParentMeetingMinutes />
+              </motion.div>
+            )}
+            {activeTab === "tasks" && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+                <ParentTasks />
               </motion.div>
             )}
               </>
