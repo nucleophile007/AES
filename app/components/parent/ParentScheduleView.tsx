@@ -77,11 +77,22 @@ const ParentScheduleView: React.FC<ParentScheduleViewProps> = ({ parentEmail }) 
           const [startH, startM] = event.startTime?.split(":").map(Number) || [0, 0];
           const [endH, endM] = event.endTime?.split(":").map(Number) || [0, 0];
 
-          const start = new Date(eventDate);
-          start.setHours(startH, startM, 0, 0);
+          const start = event.startDateTime ? new Date(event.startDateTime) : new Date(eventDate);
+          if (!event.startDateTime) start.setHours(startH, startM, 0, 0);
 
-          const end = new Date(eventDate);
-          end.setHours(endH, endM, 0, 0);
+          const end = event.endDateTime ? new Date(event.endDateTime) : new Date(eventDate);
+          if (!event.endDateTime) end.setHours(endH, endM, 0, 0);
+          const displayTimezone = event.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+          const displayStartTime = new Intl.DateTimeFormat('en-US', {
+            timeZone: displayTimezone,
+            hour: 'numeric',
+            minute: '2-digit',
+          }).format(start);
+          const displayEndTime = new Intl.DateTimeFormat('en-US', {
+            timeZone: displayTimezone,
+            hour: 'numeric',
+            minute: '2-digit',
+          }).format(end);
 
           return {
             id: event.id,
@@ -89,8 +100,8 @@ const ParentScheduleView: React.FC<ParentScheduleViewProps> = ({ parentEmail }) 
             description: event.description,
             start,
             end,
-            startTime: event.startTime,
-            endTime: event.endTime,
+            startTime: displayStartTime,
+            endTime: displayEndTime,
             subject: event.subject,
             location: event.location,
             meetingLink: event.meetingLink,

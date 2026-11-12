@@ -986,13 +986,7 @@ model TaskSavedFilter {
   @@index([ownerRole, ownerId])
 }
 
-// ---------------------------------------------------------------------------
-// Mentor availability & slot booking: added to the shared database by a
-// teammate (not yet in git). Mirrored here from `prisma db pull` so that
-// `db push` from this branch doesn't drop these tables. Relation field names
-// and @updatedAt aren't stored in the database; when the teammate's branch is
-// merged, prefer their definitions of these models.
-// ---------------------------------------------------------------------------
+// Mentor availability & slot booking (from main: mentor calendar feature)
 
 model MentorAvailabilitySlot {
   id        Int                      @id @default(autoincrement())
@@ -1004,7 +998,7 @@ model MentorAvailabilitySlot {
   createdAt DateTime                 @default(now())
   updatedAt DateTime                 @updatedAt
   teacher   Teacher                  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  bookings  MentorSlotBooking[]
+  requests  MentorSlotBooking[]
 
   @@index([startsAt, endsAt])
   @@index([teacherId, status, startsAt])

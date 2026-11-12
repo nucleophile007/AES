@@ -41,6 +41,7 @@ import StudentProgressModal from "../../components/teacher/RealStudentProgressMo
 import ProgressReportManager from "@/components/teacher/ProgressReportManager";
 import MeetingMinutesManager from "@/components/teacher/MeetingMinutesManager";
 import TaskManager from "@/components/teacher/TaskManager";
+import MentorAvailabilityCalendar from "@/components/calendar/MentorAvailabilityCalendar";
 import DashboardLoadingSkeleton, { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
 import {
   User,
@@ -232,6 +233,7 @@ type TeacherDashboardTab =
   | "resources"
   | "progress"
   | "schedule"
+  | "free-slot"
   | "meeting-minutes";
 
 const TEACHER_DASHBOARD_TABS: TeacherDashboardTab[] = [
@@ -242,6 +244,7 @@ const TEACHER_DASHBOARD_TABS: TeacherDashboardTab[] = [
   "resources",
   "progress",
   "schedule",
+  "free-slot",
   "meeting-minutes",
 ];
 
@@ -354,6 +357,7 @@ export default function TeacherDashboard() {
     resources: false,
     progress: false,
     schedule: false,
+    "free-slot": false,
     "meeting-minutes": false,
   });
   const router = useRouter();
@@ -1147,7 +1151,7 @@ export default function TeacherDashboard() {
 
   const warmTabData = async (tab: TeacherDashboardTab) => {
     if (!teacherEmail) return;
-    if (tab === "progress" || tab === "schedule" || tab === "meeting-minutes") return;
+    if (tab === "progress" || tab === "schedule" || tab === "free-slot" || tab === "meeting-minutes") return;
 
     setTabLoadingState((prev) => ({ ...prev, [tab]: true }));
     try {
@@ -1436,6 +1440,11 @@ export default function TeacherDashboard() {
       value: "schedule",
     },
     {
+      title: "Free Slot",
+      icon: Calendar,
+      value: "free-slot",
+    },
+    {
       title: "Meeting Minutes",
       icon: FileText,
       value: "meeting-minutes",
@@ -1476,6 +1485,11 @@ export default function TeacherDashboard() {
     schedule: {
       title: "Schedule",
       description: "Plan upcoming sessions and coordinate teaching availability.",
+      icon: Calendar,
+    },
+    "free-slot": {
+      title: "Free Slot",
+      description: "Publish future availability and respond to student booking requests.",
       icon: Calendar,
     },
     "meeting-minutes": {
@@ -3006,6 +3020,16 @@ export default function TeacherDashboard() {
                   })()}
                   </CardContent>
                 </Card>
+              </motion.div>
+            )}
+
+            {activeTab === "free-slot" && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <MentorAvailabilityCalendar />
               </motion.div>
             )}
 
