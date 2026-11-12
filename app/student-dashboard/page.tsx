@@ -80,6 +80,7 @@ import { cn } from "@/lib/utils";
 import ResourceLibrary from "@/components/student/ResourceLibrary";
 import MentorMessages from "../../components/student/MentorMessages";
 import StudentScheduleView from "@/components/student/StudentScheduleView";
+import StudentMentorCalendar from "@/components/calendar/StudentMentorCalendar";
 import StudentMeetingMinutes from "@/components/student/StudentMeetingMinutes";
 import ProgressReportList from "@/components/common/ProgressReportList";
 import DashboardLoadingSkeleton, { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
@@ -700,6 +701,7 @@ type StudentDashboardTab =
   | "submissions"
   | "grades"
   | "schedule"
+  | "free-slot"
   | "progress"
   | "resources"
   | "messages"
@@ -711,6 +713,7 @@ const createStudentTabLoadingState = (): Record<StudentDashboardTab, boolean> =>
   submissions: false,
   grades: false,
   schedule: false,
+  "free-slot": false,
   progress: false,
   resources: false,
   messages: false,
@@ -723,6 +726,7 @@ const createStudentTabReadyState = (): Record<StudentDashboardTab, boolean> => (
   submissions: false,
   grades: false,
   schedule: false,
+  "free-slot": false,
   progress: false,
   resources: false,
   messages: false,
@@ -926,6 +930,7 @@ export default function StudentDashboard() {
       "submissions",
       "grades",
       "schedule",
+      "free-slot",
       "progress",
       "resources",
       "messages",
@@ -959,6 +964,10 @@ export default function StudentDashboard() {
         if (scheduleResponse.ok && scheduleData.success && Array.isArray(scheduleData.schedules)) {
           setScheduleEvents(scheduleData.schedules);
         }
+      } else if (tab === "free-slot") {
+        const response = await fetch('/api/student/mentor-slots');
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to load mentor availability');
       } else if (tab === "resources") {
         await Promise.all([
           fetch(`/api/student/resources?studentEmail=${encodeURIComponent(studentEmail)}`),
@@ -1309,6 +1318,13 @@ export default function StudentDashboard() {
       icon: Calendar,
       isActive: activeTab === "schedule",
       onClick: () => setActiveTab("schedule"),
+    },
+    {
+      title: "Free Slot",
+      url: "#",
+      icon: Calendar,
+      isActive: activeTab === "free-slot",
+      onClick: () => setActiveTab("free-slot"),
     },
     {
       title: "Progress",
@@ -3231,6 +3247,16 @@ export default function StudentDashboard() {
                     </div>
 
                     {studentEmail && <StudentScheduleView studentEmail={studentEmail} />}
+                  </div>
+                )}
+
+                {activeTab === "free-slot" && (
+                  <div className="space-y-4 sm:space-y-6">
+                    <div>
+                      <h2 className="text-xl sm:text-2xl font-semibold text-slate-900">Free Slot</h2>
+                      <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Browse availability from your linked mentors and request a time.</p>
+                    </div>
+                    <StudentMentorCalendar />
                   </div>
                 )}
 

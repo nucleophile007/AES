@@ -32,6 +32,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import ParentScheduleView from "../components/parent/ParentScheduleView";
+import ParentMentorCalendar from "@/components/calendar/ParentMentorCalendar";
 import ParentMeetingMinutes from "@/components/parent/ParentMeetingMinutes";
 import { cn } from "@/lib/utils";
 import {
@@ -112,6 +113,7 @@ type ParentDashboardTab =
   | "testimonial"
   | "chat"
   | "calendar"
+  | "mentor-calendar"
   | "meeting-minutes";
 
 const createParentTabLoadingState = (): Record<ParentDashboardTab, boolean> => ({
@@ -121,6 +123,7 @@ const createParentTabLoadingState = (): Record<ParentDashboardTab, boolean> => (
   testimonial: false,
   chat: false,
   calendar: false,
+  "mentor-calendar": false,
   "meeting-minutes": false,
 });
 
@@ -131,6 +134,7 @@ const createParentTabReadyState = (): Record<ParentDashboardTab, boolean> => ({
   testimonial: true,
   chat: false,
   calendar: true,
+  "mentor-calendar": false,
   "meeting-minutes": false,
 });
 
@@ -640,6 +644,9 @@ export default function ParentDashboard() {
         await loadChatMessagesForContact(primaryContact);
       } else if (tab === "meeting-minutes") {
         await fetch('/api/parent/meeting-minutes');
+      } else if (tab === "mentor-calendar") {
+        const response = await fetch('/api/parent/mentor-calendar');
+        if (!response.ok) throw new Error('Failed to load child mentor booking status');
       }
       setTabReadyState((prev) => ({ ...prev, [tab]: true }));
     } finally {
@@ -903,6 +910,12 @@ export default function ParentDashboard() {
       icon: CalendarDays,
       isActive: activeTab === "calendar",
       onClick: () => setActiveTab("calendar"),
+    },
+    {
+      title: "Mentor Calendar",
+      icon: CalendarDays,
+      isActive: activeTab === "mentor-calendar",
+      onClick: () => setActiveTab("mentor-calendar"),
     },
     {
       title: "Meeting Minutes",
@@ -1772,6 +1785,15 @@ export default function ParentDashboard() {
                     <ParentScheduleView parentEmail={parentEmail} />
                   </CardContent>
                 </Card>
+              </motion.div>
+            )}
+            {activeTab === "mentor-calendar" && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <ParentMentorCalendar />
               </motion.div>
             )}
             {activeTab === "meeting-minutes" && (
