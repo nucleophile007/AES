@@ -75,12 +75,14 @@ import {
   LogOut,
   Maximize2,
   Minimize2,
+  CheckSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ResourceLibrary from "@/components/student/ResourceLibrary";
 import MentorMessages from "../../components/student/MentorMessages";
 import StudentScheduleView from "@/components/student/StudentScheduleView";
 import StudentMeetingMinutes from "@/components/student/StudentMeetingMinutes";
+import StudentTaskManager from "@/components/student/StudentTaskManager";
 import ProgressReportList from "@/components/common/ProgressReportList";
 import DashboardLoadingSkeleton, { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
 import { getUserTimezone, formatDateTime, formatDate } from "@/lib/timezone";
@@ -696,6 +698,7 @@ const normalizeStudentMcqConfig = (value: unknown): StudentMcqConfig | null => {
 
 type StudentDashboardTab =
   | "overview"
+  | "tasks"
   | "assignments"
   | "submissions"
   | "grades"
@@ -707,6 +710,7 @@ type StudentDashboardTab =
 
 const createStudentTabLoadingState = (): Record<StudentDashboardTab, boolean> => ({
   overview: false,
+  tasks: false,
   assignments: false,
   submissions: false,
   grades: false,
@@ -719,6 +723,7 @@ const createStudentTabLoadingState = (): Record<StudentDashboardTab, boolean> =>
 
 const createStudentTabReadyState = (): Record<StudentDashboardTab, boolean> => ({
   overview: false,
+  tasks: false,
   assignments: false,
   submissions: false,
   grades: false,
@@ -922,6 +927,7 @@ export default function StudentDashboard() {
     const tab = params.get("tab");
     const allowedTabs = new Set<StudentDashboardTab>([
       "overview",
+      "tasks",
       "assignments",
       "submissions",
       "grades",
@@ -1280,6 +1286,13 @@ export default function StudentDashboard() {
       icon: Home,
       isActive: activeTab === "overview",
       onClick: () => setActiveTab("overview"),
+    },
+    {
+      title: "My Tasks",
+      url: "#",
+      icon: CheckSquare,
+      isActive: activeTab === "tasks",
+      onClick: () => setActiveTab("tasks"),
     },
     {
       title: "Assignments",
@@ -1895,6 +1908,11 @@ export default function StudentDashboard() {
       description: "Snapshot of your assignments, grades, and upcoming work.",
       icon: Home,
     },
+    tasks: {
+      title: "My Tasks",
+      description: "Track action items, college prep, outreach, and responsibilities assigned by your mentors.",
+      icon: CheckSquare,
+    },
     assignments: {
       title: "Assignments",
       description: "Track deadlines and submit coursework with clarity.",
@@ -2092,7 +2110,7 @@ export default function StudentDashboard() {
               <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {sidebarItems.slice(0, 4).map((item) => {
+                  {sidebarItems.slice(0, 5).map((item) => {
                     return (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
@@ -2124,7 +2142,7 @@ export default function StudentDashboard() {
               <SidebarGroupLabel>Academic Tools</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {sidebarItems.slice(4, 7).map((item) => {
+                  {sidebarItems.slice(5, 8).map((item) => {
                     return (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
@@ -2156,7 +2174,7 @@ export default function StudentDashboard() {
               <SidebarGroupLabel>Communication</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {sidebarItems.slice(7).map((item) => {
+                  {sidebarItems.slice(8).map((item) => {
                     return (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
@@ -2436,6 +2454,17 @@ export default function StudentDashboard() {
                       </Card>
                     </div>
                   </div>
+                )}
+
+                {activeTab === "tasks" && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="min-w-0"
+                  >
+                    <StudentTaskManager studentEmail={studentEmail} studentName={student?.name} />
+                  </motion.div>
                 )}
 
                 {activeTab === "assignments" && (

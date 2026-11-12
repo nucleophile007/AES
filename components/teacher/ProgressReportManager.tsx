@@ -86,6 +86,37 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
   const [selectedReport, setSelectedReport] = useState<ProgressReport | null>(null);
   const [initialEditSnapshot, setInitialEditSnapshot] = useState<any | null>(null);
   const pendingDeleteTimeoutsRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+  const [fillingFromTasks, setFillingFromTasks] = useState(false);
+
+  // Pre-fill milestones / next steps / completion % from the student's tasks.
+  const fillFromTasks = async () => {
+    if (!formData.studentId) return;
+    setFillingFromTasks(true);
+    try {
+      const res = await fetch(`/api/teacher/tasks/summary?studentId=${formData.studentId}&days=30`, { credentials: "include" });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || "Could not load tasks");
+      if (!data.counts.completed && !data.counts.open) {
+        toast({ title: "No tasks found", description: "This student has no tasks from you in the last 30 days." });
+        return;
+      }
+      const append = (current: string, addition: string, heading: string) =>
+        addition ? [current.trim(), `${heading}\n${addition}`].filter(Boolean).join("\n\n") : current;
+      setFormData((prev) => ({
+        ...prev,
+        milestonesAchieved: append(prev.milestonesAchieved, data.milestonesText, "Tasks completed (last 30 days):"),
+        nextSteps: append(prev.nextSteps, data.nextStepsText, "Open tasks:"),
+        homeworkCompletion:
+          prev.homeworkCompletion || data.completionRate === null ? prev.homeworkCompletion : String(Math.round(data.completionRate * 100)),
+      }));
+      toast({ title: "Added task summary", description: `${data.counts.completed} completed, ${data.counts.open} open. Review before saving.` });
+    } catch (err) {
+      toast({ title: "Couldn't load tasks", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setFillingFromTasks(false);
+    }
+  };
+
   const [formData, setFormData] = useState({
     studentId: "",
     reportPeriod: "",
@@ -652,7 +683,20 @@ export default function ProgressReportManager({ teacherEmail }: ProgressReportMa
             <div className="space-y-4 py-4">
               {/* Student Selection */}
               <div className="space-y-2">
-                <Label htmlFor="student">Student *</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="student">Student *</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    disabled={!formData.studentId || fillingFromTasks}
+                    onClick={() => void fillFromTasks()}
+                    title="Add this student's completed and open tasks from the last 30 days"
+                  >
+                    {fillingFromTasks ? "Loading tasks…" : "Fill from tasks"}
+                  </Button>
+                </div>
                 <Select value={formData.studentId} onValueChange={(value) => setFormData({ ...formData, studentId: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a student" />

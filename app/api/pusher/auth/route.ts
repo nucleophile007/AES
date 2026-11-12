@@ -23,9 +23,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Task board channels: private-tasks-{teacher|student}-{id}. Only the owner may subscribe.
+    const taskMatch = channel_name.match(/^private-tasks-(teacher|student)-(\d+)$/);
+    if (taskMatch) {
+      const [, channelRole, channelId] = taskMatch;
+      if (user.role !== channelRole) {
+        return NextResponse.json({ error: 'Unauthorized channel access' }, { status: 403 });
+      }
+      const owner =
+        channelRole === 'teacher'
+          ? await prisma.teacher.findUnique({ where: { email: user.email }, select: { id: true } })
+          : await prisma.student.findUnique({ where: { email: user.email }, select: { id: true } });
+      if (!owner || owner.id !== Number(channelId)) {
+        return NextResponse.json({ error: 'Unauthorized channel access' }, { status: 403 });
+      }
+      return NextResponse.json(getPusherServer().authorizeChannel(socket_id, channel_name));
+    }
+
     // Extract participant IDs from channel name
     // Format: private-conversation-{id1}-{id2} (where IDs are numerically sorted)
-    const match = channel_name.match(/private-conversation-(\d+)-(\d+)/);
+    const match = channel_name.match(/^private-conversation-(\d+)-(\d+)$/);
     
     if (!match) {
       return NextResponse.json(
