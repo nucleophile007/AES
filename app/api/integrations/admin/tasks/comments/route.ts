@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { addTaskComment } from '@/lib/task-comments';
 import { authenticateAdminRequest, privateJson } from '@/lib/task-admin';
 
-/** An admin comments on an admin-created task. Mentor tasks are view-only (404). Text only for now. */
+/** An admin comments on any assignee's copy of a task. Text only for now. */
 export async function POST(request: NextRequest) {
   const auth = authenticateAdminRequest(request);
   if (auth.error) return auth.error;

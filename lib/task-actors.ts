@@ -1,7 +1,7 @@
 import type { Prisma } from '../generated/prisma';
 import { prisma } from './prisma';
 import type { AuthUser } from './auth';
-import { getApplicationUrl } from './academic-notifications';
+import { getApplicationUrl, sendAcademicNotification } from './academic-notifications';
 import type { TaskAssigneeRole } from './tasks';
 
 /**
@@ -160,6 +160,31 @@ export function creatorReviewUrl(creator: TaskCreatorContact, studentTaskId?: nu
   }
   const adminBase = process.env.ADMIN_APP_URL?.replace(/\/$/, '');
   return adminBase ? `${adminBase}/admin/tasks${studentTaskId ? `?open=${studentTaskId}` : ''}` : undefined;
+}
+
+/**
+ * Emails a mentor when an admin acts on a task the mentor created (edits it,
+ * reviews or comments on a student's copy). No-op for admin-created tasks.
+ * Fire-and-forget.
+ */
+export function notifyMentorOfAdminChange(
+  task: TaskCreatorFields & { id: number; title: string },
+  adminName: string,
+  what: string,
+  details: { label: string; value: string }[] = [],
+  studentTaskId?: number
+): void {
+  const creator = readCreator(task);
+  if (creator.role !== 'TEACHER' || !creator.email) return;
+  void sendAcademicNotification({
+    recipients: [{ email: creator.email, name: creator.name }],
+    subject: `Admin update on your task: ${task.title}`,
+    heading: 'An admin updated your task',
+    message: `${adminName} from the ACHARYA admin team ${what} on your task "${task.title}".`,
+    details,
+    actionLabel: 'Open task',
+    actionUrl: creatorReviewUrl(creator, studentTaskId),
+  }).catch((err) => console.error('Mentor notification failed:', err));
 }
 
 export const creatorInclude = { creator: { select: { id: true, name: true, email: true } } } satisfies Prisma.TaskInclude;

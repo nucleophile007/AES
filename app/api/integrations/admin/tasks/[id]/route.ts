@@ -6,10 +6,18 @@ import {
   parseOptionalDate,
   parseRecurrenceField,
   publishTaskEvent,
+  resolveAssignableStudents,
   rowAudience,
   mergeAudiences,
 } from '@/lib/task-server';
-import { assigneeColumns, assigneeTasksUrl, creatorInclude } from '@/lib/task-actors';
+import {
+  assigneeColumns,
+  assigneeTasksUrl,
+  creatorInclude,
+  notifyMentorOfAdminChange,
+  readCreator,
+  type TaskAssignee,
+} from '@/lib/task-actors';
 import {
   adminActivity,
   assigneeKey,
@@ -22,15 +30,26 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 const VALID_PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
 const notFound = () => privateJson({ success: false, error: 'Task not found' }, { status: 404 });
-const readOnly = () =>
-  privateJson({ success: false, error: 'Mentor-created tasks are view-only for admins.' }, { status: 403 });
+const mentorOnly = () =>
+  privateJson(
+    { success: false, error: 'Only the mentor can delete their task. You can cancel it instead.' },
+    { status: 403 }
+  );
+
+const toIds = (v: unknown) =>
+  Array.isArray(v) ? Array.from(new Set(v.map(Number).filter((n) => Number.isInteger(n) && n > 0))) : [];
 
 async function readTaskId(params: RouteContext['params']) {
   const id = Number((await params).id);
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 
-/** Any task on the platform, with every assignee's progress. `readOnly` is true for mentor-created tasks. */
+/**
+ * Any task on the platform, with every assignee's progress. On a mentor-created
+ * task the admin has the mentor's own permissions: edit, cancel, review,
+ * comment and add that mentor's students, but not delete (`canDelete`) and not
+ * add other students, mentors or parents (`mentorId` limits the picker).
+ */
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const auth = authenticateAdminRequest(request);
   if (auth.error) return auth.error;
@@ -57,14 +76,25 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       },
     });
     if (!task) return notFound();
-    return privateJson({ success: true, task, readOnly: task.creatorRole !== 'ADMIN' });
+    const mentorTask = task.creatorRole !== 'ADMIN';
+    return privateJson({
+      success: true,
+      task,
+      readOnly: false,
+      canDelete: !mentorTask,
+      mentorId: mentorTask ? task.creatorId : null,
+    });
   } catch (error) {
     console.error('Admin task detail failed:', error);
     return privateJson({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
-/** Edits an admin-created task: fields, cancel/restore, and adding assignees. */
+/**
+ * Edits a task: fields, cancel/restore, and adding assignees. On a mentor's
+ * task only that mentor's students can be added (same rule as the mentor's own
+ * edit endpoint), and the mentor is emailed about the change.
+ */
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
   const auth = authenticateAdminRequest(request);
   if (auth.error) return auth.error;
@@ -72,9 +102,13 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   try {
     const taskId = await readTaskId(params);
     if (!taskId) return notFound();
-    const existing = await prisma.task.findUnique({ where: { id: taskId }, include: { studentTasks: true } });
+    const existing = await prisma.task.findUnique({
+      where: { id: taskId },
+      include: { studentTasks: true, ...creatorInclude },
+    });
     if (!existing) return notFound();
-    if (existing.creatorRole !== 'ADMIN') return readOnly();
+    const mentorId = existing.creatorRole === 'ADMIN' ? null : existing.creatorId;
+    if (existing.creatorRole !== 'ADMIN' && !mentorId) return notFound();
 
     const body = await request.json().catch(() => null);
     if (!body || typeof body !== 'object') return privateJson({ success: false, error: 'Invalid request' }, { status: 400 });
@@ -120,17 +154,41 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       deadline !== undefined && (deadline?.getTime() ?? null) !== (existing.deadline?.getTime() ?? null);
 
     // New assignees (people already on the task are skipped).
-    const resolved = await resolveAdminAssignees(
-      { studentIds: body.addStudentIds, teacherIds: body.addTeacherIds, parentIds: body.addParentIds },
-      { allowEmpty: true }
-    );
-    if (!resolved.ok) return privateJson({ success: false, error: resolved.error }, { status: 400 });
+    let candidates: TaskAssignee[];
+    if (mentorId) {
+      // A mentor's task: same rule as the mentor's own edit, only their linked students.
+      if (toIds(body.addTeacherIds).length || toIds(body.addParentIds).length) {
+        return privateJson(
+          { success: false, error: "A mentor's task can only be given to that mentor's students." },
+          { status: 400 }
+        );
+      }
+      const studentIds = toIds(body.addStudentIds);
+      candidates = [];
+      if (studentIds.length) {
+        const linked = await resolveAssignableStudents(mentorId, studentIds, []);
+        if (!linked.ok) {
+          return privateJson(
+            { success: false, error: "You can only add students linked to this task's mentor." },
+            { status: 400 }
+          );
+        }
+        candidates = linked.students.map((st) => ({ role: 'STUDENT' as const, ...st }));
+      }
+    } else {
+      const resolved = await resolveAdminAssignees(
+        { studentIds: body.addStudentIds, teacherIds: body.addTeacherIds, parentIds: body.addParentIds },
+        { allowEmpty: true }
+      );
+      if (!resolved.ok) return privateJson({ success: false, error: resolved.error }, { status: 400 });
+      candidates = resolved.assignees;
+    }
     const current = new Set(
       existing.studentTasks.map((st) =>
         assigneeKey({ role: st.assigneeRole, id: st.studentId ?? st.assigneeTeacherId ?? st.assigneeParentId ?? 0 })
       )
     );
-    const added = resolved.assignees.filter((a) => !current.has(assigneeKey(a)));
+    const added = candidates.filter((a) => !current.has(assigneeKey(a)));
 
     const updated = await prisma.$transaction(
       async (tx) => {
@@ -180,7 +238,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
     publishTaskEvent(
       mergeAudiences([
-        ...existing.studentTasks.map((st) => rowAudience(st, null)),
+        ...existing.studentTasks.map((st) => rowAudience(st, mentorId)),
         {
           studentIds: added.filter((a) => a.role === 'STUDENT').map((a) => a.id),
           teacherIds: added.filter((a) => a.role === 'TEACHER').map((a) => a.id),
@@ -190,16 +248,31 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       { type: 'task.changed', taskId, actorRole: 'admin' }
     );
 
+    const mentorName = mentorId ? readCreator(existing).name : null;
     for (const a of added) {
       void sendAcademicNotification({
         recipients: [{ email: a.email, name: a.name }],
         subject: `New Task Assigned: ${updated.title}`,
         heading: 'New Task Assigned',
-        message: `The ACHARYA admin team (${admin.name}) has assigned you a task: "${updated.title}".`,
+        message: mentorName
+          ? `${admin.name} from the ACHARYA admin team has added you to your mentor ${mentorName}'s task: "${updated.title}".`
+          : `The ACHARYA admin team (${admin.name}) has assigned you a task: "${updated.title}".`,
         details: [{ label: 'Deadline', value: updated.deadline ? updated.deadline.toUTCString() : 'No deadline' }],
         actionLabel: 'View in My Tasks',
         actionUrl: assigneeTasksUrl(a.role),
       }).catch((err) => console.error('Admin task assignment email failed:', err));
+    }
+
+    if (mentorId) {
+      const changes: string[] = [];
+      if (cancelChanged) changes.push(body.isCancelled ? 'cancelled it' : 'reactivated it');
+      if (deadlineChanged) changes.push(deadline ? `set the deadline to ${deadline.toUTCString()}` : 'removed the deadline');
+      const otherFields = Object.keys(data).filter((k) => k !== 'isCancelled' && k !== 'deadline');
+      if (otherFields.length) changes.push('edited the task details');
+      if (added.length) changes.push(`added ${added.map((a) => a.name).join(', ')}`);
+      if (changes.length) {
+        notifyMentorOfAdminChange(existing, admin.name, 'made changes', [{ label: 'Changes', value: changes.join('; ') }]);
+      }
     }
 
     return privateJson({ success: true, task: updated, added: added.length });
@@ -209,7 +282,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   }
 }
 
-/** Deletes an admin-created task with all its rows, comments and activity. */
+/** Deletes an admin-created task with all its rows, comments and activity. Mentor tasks: only the mentor can delete. */
 export async function DELETE(request: NextRequest, { params }: RouteContext) {
   const auth = authenticateAdminRequest(request);
   if (auth.error) return auth.error;
@@ -224,7 +297,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
       },
     });
     if (!task) return notFound();
-    if (task.creatorRole !== 'ADMIN') return readOnly();
+    if (task.creatorRole !== 'ADMIN') return mentorOnly();
 
     await prisma.task.delete({ where: { id: taskId } });
     publishTaskEvent(mergeAudiences(task.studentTasks.map((st) => rowAudience(st, null))), {

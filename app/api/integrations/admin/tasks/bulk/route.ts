@@ -2,15 +2,26 @@ import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { canMentorPerform } from '@/lib/tasks';
 import { mergeAudiences, parseOptionalDate, publishTaskEvent, rowAudience } from '@/lib/task-server';
-import { assigneePeopleInclude } from '@/lib/task-actors';
+import { assigneePeopleInclude, notifyMentorOfAdminChange, readAssignee } from '@/lib/task-actors';
 import { feedbackAfterReview, notifyAssigneeOfReview, reviewerColumns } from '@/lib/task-review';
 import { adminActivity, adminReviewer, authenticateAdminRequest, privateJson } from '@/lib/task-admin';
 
 /**
- * Bulk actions on rows of admin-created tasks. Rows of mentor-created tasks
- * are skipped (view-only). Same actions as the mentor's bulk bar:
- * APPROVE, REQUEST_CHANGES, SET_DEADLINE, SHIFT_DEADLINE, SET_PRIORITY, CANCEL, RESTORE, UNASSIGN.
+ * Bulk actions on task rows, admin- or mentor-created. Same actions as the
+ * mentor's bulk bar (so an admin can do nothing on a mentor's task that the
+ * mentor couldn't): APPROVE, REQUEST_CHANGES, SET_DEADLINE, SHIFT_DEADLINE,
+ * SET_PRIORITY, CANCEL, RESTORE, UNASSIGN. Mentors are emailed when their tasks change.
  */
+const ACTION_WORDS: Record<string, string> = {
+  APPROVE: 'approved submissions',
+  REQUEST_CHANGES: 'requested changes',
+  SET_DEADLINE: 'changed the deadline',
+  SHIFT_DEADLINE: 'moved the deadline',
+  SET_PRIORITY: 'changed the priority',
+  CANCEL: 'cancelled the task',
+  RESTORE: 'reactivated the task',
+  UNASSIGN: 'removed people from the task',
+};
 const ACTIONS = ['APPROVE', 'REQUEST_CHANGES', 'SET_DEADLINE', 'SHIFT_DEADLINE', 'SET_PRIORITY', 'CANCEL', 'RESTORE', 'UNASSIGN'];
 const MAX_ITEMS = 500;
 
@@ -32,8 +43,23 @@ export async function POST(request: NextRequest) {
     }
 
     const items = await prisma.studentTask.findMany({
-      where: { id: { in: ids }, task: { creatorRole: 'ADMIN' } },
-      include: { task: { select: { id: true, title: true, deadline: true, isCancelled: true } }, ...assigneePeopleInclude },
+      where: { id: { in: ids } },
+      include: {
+        task: {
+          select: {
+            id: true,
+            title: true,
+            deadline: true,
+            isCancelled: true,
+            creatorRole: true,
+            creatorId: true,
+            creatorName: true,
+            creatorAdminEmail: true,
+            creator: { select: { id: true, name: true, email: true } },
+          },
+        },
+        ...assigneePeopleInclude,
+      },
     });
     const taskIds = Array.from(new Set(items.map((i) => i.taskId)));
     const now = new Date();
@@ -46,6 +72,8 @@ export async function POST(request: NextRequest) {
 
     let updated = 0;
     let skipped = ids.length - items.length;
+    // Rows actually changed (review actions skip ineligible rows), for the mentor emails.
+    let touched = items;
 
     if (action === 'APPROVE' || action === 'REQUEST_CHANGES') {
       const note = typeof body.feedback === 'string' ? body.feedback.trim() : '';
@@ -84,6 +112,7 @@ export async function POST(request: NextRequest) {
         }
       }, { timeout: 60_000 });
       updated = eligible.length;
+      touched = eligible;
       eligible.forEach((i) => notifyAssigneeOfReview(reviewer, i, action, newStatus, note));
     } else if (action === 'SET_DEADLINE' || action === 'SHIFT_DEADLINE') {
       const tasks = await prisma.task.findMany({
@@ -151,7 +180,24 @@ export async function POST(request: NextRequest) {
       updated = res.count;
     }
 
-    publishTaskEvent(mergeAudiences(items.map((i) => rowAudience(i, null))), { type: 'task.changed', actorRole: 'admin' });
+    publishTaskEvent(mergeAudiences(items.map((i) => rowAudience(i, i.task.creatorId))), {
+      type: 'task.changed',
+      actorRole: 'admin',
+    });
+
+    // One email per affected mentor task, listing whose copies were touched.
+    if (updated > 0) {
+      const byTask = new Map<number, typeof items>();
+      touched
+        .filter((i) => i.task.creatorRole !== 'ADMIN')
+        .forEach((i) => byTask.set(i.taskId, [...(byTask.get(i.taskId) ?? []), i]));
+      for (const rows of byTask.values()) {
+        const names = rows.map((r) => readAssignee(r)?.name).filter(Boolean).join(', ');
+        notifyMentorOfAdminChange(rows[0].task, admin.name, ACTION_WORDS[action] ?? 'made changes', [
+          ...(names ? [{ label: 'Students', value: names }] : []),
+        ]);
+      }
+    }
     return privateJson({ success: true, updated, skipped });
   } catch (error) {
     console.error('Admin bulk task action failed:', error);

@@ -8,6 +8,7 @@ import {
   assigneeTasksUrl,
   creatorInclude,
   creatorReviewUrl,
+  notifyMentorOfAdminChange,
   readAssignee,
   readCreator,
   type TaskActorRole,
@@ -34,8 +35,8 @@ const fail = (status: number, error: string): CommentResult => ({ status, body: 
 
 /**
  * Posts a comment on one assignee's copy of a task. The thread is between the
- * task's creator (mentor, or the admin team) and the assignee. Admins may only
- * comment on admin-created tasks.
+ * task's creator (mentor, or the admin team) and the assignee. Admins may
+ * comment on any task; on a mentor's task the mentor is emailed as well.
  */
 export async function addTaskComment(
   author: TaskCommentAuthor,
@@ -58,7 +59,7 @@ export async function addTaskComment(
   const assignee = readAssignee(item);
   const isCreator =
     (author.role === 'teacher' && creator.role === 'TEACHER' && creator.teacherId === author.id) ||
-    (author.role === 'admin' && creator.role === 'ADMIN');
+    author.role === 'admin';
   const isAssignee =
     !!assignee && author.role !== 'admin' && author.role === assignee.role.toLowerCase() && assignee.id === author.id;
   if (!isCreator && !isAssignee) return fail(404, 'Task not found');
@@ -126,6 +127,19 @@ export async function addTaskComment(
         actionLabel: 'Open task',
         actionUrl: recipient.url,
       }).catch((err) => console.error('Comment notification failed:', err));
+      // An admin commenting on a mentor's task: the mentor hears about it too.
+      if (author.role === 'admin' && creator.role === 'TEACHER') {
+        notifyMentorOfAdminChange(
+          item.task,
+          author.name,
+          'commented',
+          [
+            ...(assignee ? [{ label: 'On the copy of', value: assignee.name }] : []),
+            { label: 'Comment', value: text.length > 500 ? `${text.slice(0, 500)}…` : text || '(attachment)' },
+          ],
+          studentTaskId
+        );
+      }
     }
   }
 

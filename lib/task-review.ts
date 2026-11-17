@@ -2,11 +2,18 @@ import { prisma } from './prisma';
 import { sendAcademicNotification } from './academic-notifications';
 import { canMentorPerform, type MentorReviewAction } from './tasks';
 import { publishTaskEvent, rowAudience } from './task-server';
-import { assigneePeopleInclude, assigneeTasksUrl, readAssignee } from './task-actors';
+import {
+  assigneePeopleInclude,
+  assigneeTasksUrl,
+  creatorInclude,
+  notifyMentorOfAdminChange,
+  readAssignee,
+} from './task-actors';
 
 /**
- * Who reviews a task: the mentor who created it, or (for admin-created tasks)
- * any admin. Admins can only view mentor-created tasks, never review them.
+ * Who reviews a task: the mentor who created it, or any admin. Admins can
+ * review any task, including mentor-created ones (they act with the mentor's
+ * permissions there; see app/api/integrations/admin/tasks).
  */
 export type TaskReviewer =
   | { kind: 'teacher'; id: number; name: string; email: string }
@@ -18,13 +25,13 @@ export function isReviewAction(value: unknown): value is MentorReviewAction {
   return typeof value === 'string' && (REVIEW_ACTIONS as string[]).includes(value);
 }
 
-/** True when this reviewer owns the task (mentor: their own task; admin: any admin-created task). */
+/** True when this reviewer may review the task (mentor: their own task; admin: any task). */
 export function reviewerOwnsTask(
   reviewer: TaskReviewer,
   task: { creatorRole: string; creatorId: number | null }
 ): boolean {
   if (reviewer.kind === 'teacher') return task.creatorRole === 'TEACHER' && task.creatorId === reviewer.id;
-  return task.creatorRole === 'ADMIN';
+  return true;
 }
 
 export function reviewerActivity(reviewer: TaskReviewer) {
@@ -72,7 +79,7 @@ export async function reviewTaskItem(
 
   const item = await prisma.studentTask.findUnique({
     where: { id: studentTaskId },
-    include: { task: true, ...assigneePeopleInclude },
+    include: { task: { include: creatorInclude }, ...assigneePeopleInclude },
   });
   // 404 (not 403) so ids of other people's tasks can't be probed.
   if (!item || !reviewerOwnsTask(reviewer, item.task)) return fail(404, 'Task not found');
@@ -132,6 +139,20 @@ export async function reviewTaskItem(
   });
 
   notifyAssigneeOfReview(reviewer, item, action, newStatus, feedback);
+  if (reviewer.kind === 'admin') {
+    const assignee = readAssignee(item);
+    notifyMentorOfAdminChange(
+      item.task,
+      reviewer.name,
+      action === 'APPROVE' ? 'approved a submission' : action === 'REQUEST_CHANGES' ? 'requested changes' : 'reopened a submission',
+      [
+        ...(assignee ? [{ label: 'Student', value: assignee.name }] : []),
+        { label: 'Status', value: newStatus.replace(/_/g, ' ') },
+        ...(feedback ? [{ label: 'Feedback', value: feedback }] : []),
+      ],
+      studentTaskId
+    );
+  }
   return { status: 200, body: { success: true, studentTask: updated } };
 }
 

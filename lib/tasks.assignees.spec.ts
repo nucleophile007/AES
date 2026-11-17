@@ -119,12 +119,12 @@ describe('review ownership', () => {
   const admin = { kind: 'admin' as const, email: 'a@x.test', name: 'A' };
   const mentor = { kind: 'teacher' as const, id: 3, name: 'Jane', email: 'j@x.test' };
 
-  it('mentors review only their own tasks; admins only admin tasks', () => {
+  it('mentors review only their own tasks; admins review any task', () => {
     expect(reviewerOwnsTask(mentor, mentorTask)).toBe(true);
     expect(reviewerOwnsTask({ ...mentor, id: 4 }, mentorTask)).toBe(false);
     expect(reviewerOwnsTask(mentor, adminTask)).toBe(false);
     expect(reviewerOwnsTask(admin, adminTask)).toBe(true);
-    expect(reviewerOwnsTask(admin, mentorTask)).toBe(false);
+    expect(reviewerOwnsTask(admin, mentorTask)).toBe(true);
   });
 
   it('approving clears an earlier change request unless new feedback is given', () => {
@@ -139,7 +139,7 @@ describe('review ownership', () => {
     expect(reviewerColumns(mentor)).toEqual({ reviewedById: 3, reviewedByAdminEmail: null });
   });
 
-  it('admins cannot review a mentor task (404, nothing written)', async () => {
+  it('another mentor cannot review a mentor task (404, nothing written)', async () => {
     mocks.prisma.studentTask.findUnique.mockResolvedValue({
       ...row(),
       id: 1,
@@ -148,9 +148,31 @@ describe('review ownership', () => {
       task: { ...mentorTask, isCancelled: false, title: 'T' },
       student: { id: 7, name: 'Sam', email: 's@x.test' },
     });
-    const res = await reviewTaskItem(admin, 1, 'APPROVE', '');
+    const res = await reviewTaskItem({ ...mentor, id: 4 }, 1, 'APPROVE', '');
     expect(res.status).toBe(404);
     expect(mocks.prisma.studentTask.update).not.toHaveBeenCalled();
+  });
+
+  it('an admin reviews a mentor task; the student and the mentor are emailed', async () => {
+    mocks.prisma.studentTask.findUnique.mockResolvedValue({
+      ...row(),
+      id: 1,
+      taskId: 10,
+      status: 'SUBMITTED',
+      mentorFeedback: null,
+      completedAt: null,
+      task: { ...mentorTask, isCancelled: false, title: 'Essay', creator: { id: 3, name: 'Jane', email: 'j@x.test' } },
+      student: { id: 7, name: 'Sam', email: 's@x.test' },
+    });
+    mocks.prisma.studentTask.update.mockResolvedValue({ id: 1, status: 'COMPLETED' });
+    const res = await reviewTaskItem(admin, 1, 'APPROVE', '');
+    expect(res.status).toBe(200);
+    expect(mocks.prisma.taskActivity.create.mock.calls[0][0].data).toMatchObject({
+      performedByRole: 'admin',
+      details: 'Task approved by admin A',
+    });
+    const to = mocks.sendAcademicNotification.mock.calls.map((c) => (c as unknown as [{ recipients: { email: string }[] }])[0].recipients[0].email);
+    expect(to).toEqual(expect.arrayContaining(['s@x.test', 'j@x.test']));
   });
 
   it('admins approve admin tasks and the assignee is emailed', async () => {
@@ -213,15 +235,27 @@ describe('assignee actions', () => {
 });
 
 describe('comments', () => {
-  it('admins cannot comment on mentor tasks', async () => {
-    mocks.prisma.studentTask.findUnique.mockResolvedValue({
-      ...row(),
-      id: 1,
-      taskId: 10,
-      task: { ...mentorTask, title: 'T', creator: { id: 3, name: 'Jane', email: 'j@x.test' } },
-      student: { id: 7, name: 'Sam', email: 's@x.test' },
-    });
+  const mentorTaskRow = () => ({
+    ...row(),
+    id: 1,
+    taskId: 10,
+    task: { ...mentorTask, title: 'T', creator: { id: 3, name: 'Jane', email: 'j@x.test' } },
+    student: { id: 7, name: 'Sam', email: 's@x.test' },
+  });
+
+  it('an admin comments on a mentor task; the student and the mentor are emailed', async () => {
+    mocks.prisma.studentTask.findUnique.mockResolvedValue(mentorTaskRow());
+    mocks.prisma.taskComment.findFirst.mockResolvedValue(null);
+    mocks.prisma.taskComment.create.mockResolvedValue({ id: 5 });
     const res = await addTaskComment({ role: 'admin', id: 0, name: 'Ops', email: 'ops@x.test' }, 1, { content: 'hi' });
+    expect(res.status).toBe(200);
+    const to = mocks.sendAcademicNotification.mock.calls.map((c) => (c as unknown as [{ recipients: { email: string }[] }])[0].recipients[0].email);
+    expect(to).toEqual(['s@x.test', 'j@x.test']);
+  });
+
+  it('another mentor cannot comment on a mentor task', async () => {
+    mocks.prisma.studentTask.findUnique.mockResolvedValue(mentorTaskRow());
+    const res = await addTaskComment({ role: 'teacher', id: 4, name: 'Mo', email: 'mo@x.test' }, 1, { content: 'hi' });
     expect(res.status).toBe(404);
     expect(mocks.prisma.taskComment.create).not.toHaveBeenCalled();
   });

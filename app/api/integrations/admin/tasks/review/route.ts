@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { reviewTaskItem } from '@/lib/task-review';
 import { adminReviewer, authenticateAdminRequest, privateJson } from '@/lib/task-admin';
 
-/** Any admin reviews an assignee's copy of an admin-created task. Mentor tasks return 404. */
+/** Any admin reviews an assignee's copy of any task (on mentor tasks, the mentor is emailed too). */
 export async function POST(request: NextRequest) {
   const auth = authenticateAdminRequest(request);
   if (auth.error) return auth.error;
