@@ -30,6 +30,9 @@ export default function MissionSection() {
                   "Personalized Learning: Each lesson tailored to individual needs and learning pace",
                   "Flexible Options: Face-to-face and online learning to suit your schedule",
                   "Strong Foundation: Clear explanations, problem-solving strategies, and consistent support",
+                  "Expert Mentoring: One-on-one guidance from experienced educators with proven track records",
+                  "Affordable Excellence: Premium educational services at competitive rates with flexible payment options",
+                  "Consistent Progress: Regular assessments and progress tracking to ensure continuous improvement",
                 ].map((point, index) => (
                   <div key={index} className="flex items-start space-x-3">
                     <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400 mt-1 flex-shrink-0" />
