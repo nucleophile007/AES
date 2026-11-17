@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getApplicationUrl, sendAcademicNotification } from '@/lib/academic-notifications';
 import { formatTaskKey } from '@/lib/tasks';
 import { spawnNextOccurrence } from '@/lib/task-server';
+import { assigneePeopleInclude, assigneeTasksUrl, creatorInclude, creatorReviewUrl, readAssignee, readCreator } from '@/lib/task-actors';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -13,8 +14,8 @@ const OPEN_STATUSES = ['TODO', 'IN_PROGRESS', 'CHANGES_REQUESTED'];
 
 /**
  * Scheduled via QStash (suggested: hourly). Each run:
- *  1. emails students whose task is due within 24h (once per deadline),
- *  2. emails students (and a per-mentor digest) when a task becomes overdue (once),
+ *  1. emails assignees (students, mentors, parents) whose task is due within 24h (once per deadline),
+ *  2. emails assignees (and a digest per task creator) when a task becomes overdue (once),
  *  3. creates the next occurrence of recurring tasks whose deadline is within 24h.
  * Reminder flags are claimed before sending so overlapping runs never double-send.
  */
@@ -30,24 +31,26 @@ async function handler() {
       dueSoonReminderSentAt: null,
       task: { isCancelled: false, deadline: { gt: now, lte: in24h } },
     },
-    include: { student: { select: { name: true, email: true } }, task: { select: { id: true, title: true, deadline: true } } },
+    include: { ...assigneePeopleInclude, task: { select: { id: true, title: true, deadline: true } } },
     take: BATCH,
   });
   let dueSoonSent = 0;
   for (const st of dueSoon) {
+    const assignee = readAssignee(st);
+    if (!assignee) continue;
     const claimed = await prisma.studentTask.updateMany({
       where: { id: st.id, dueSoonReminderSentAt: null },
       data: { dueSoonReminderSentAt: now },
     });
     if (!claimed.count) continue;
     await sendAcademicNotification({
-      recipients: [{ email: st.student.email, name: st.student.name }],
+      recipients: [{ email: assignee.email, name: assignee.name }],
       subject: `Reminder: "${st.task.title}" is due soon`,
       heading: 'Task due within 24 hours',
-      message: `Hi ${st.student.name}, your task "${st.task.title}" (${formatTaskKey(st.task.id)}) is due soon.`,
+      message: `Hi ${assignee.name}, your task "${st.task.title}" (${formatTaskKey(st.task.id)}) is due soon.`,
       details: [{ label: 'Deadline', value: st.task.deadline!.toUTCString() }],
       actionLabel: 'Open My Tasks',
-      actionUrl: getApplicationUrl(`/student-dashboard?tab=tasks&open=${st.id}`),
+      actionUrl: assigneeTasksUrl(assignee.role, st.id),
     }).catch((err) => console.error('Due-soon reminder failed:', err));
     dueSoonSent += 1;
   }
@@ -60,45 +63,71 @@ async function handler() {
       task: { isCancelled: false, deadline: { lt: now, gte: overdueWindowStart } },
     },
     include: {
-      student: { select: { name: true, email: true } },
-      task: { select: { id: true, title: true, deadline: true, creator: { select: { id: true, name: true, email: true } } } },
+      ...assigneePeopleInclude,
+      task: {
+        select: {
+          id: true,
+          title: true,
+          deadline: true,
+          creatorRole: true,
+          creatorId: true,
+          creatorAdminEmail: true,
+          creatorName: true,
+          ...creatorInclude,
+        },
+      },
     },
     take: BATCH,
   });
-  const mentorDigest = new Map<number, { name: string; email: string; lines: string[] }>();
+  // One digest per creator (a mentor, or the admin who created the task), keyed by email.
+  const creatorDigest = new Map<string, { name: string; email: string; url?: string; lines: string[] }>();
   let overdueSent = 0;
   for (const st of overdue) {
+    const assignee = readAssignee(st);
+    if (!assignee) continue;
     const claimed = await prisma.studentTask.updateMany({
       where: { id: st.id, overdueReminderSentAt: null },
       data: { overdueReminderSentAt: now },
     });
     if (!claimed.count) continue;
+    const creator = readCreator(st.task);
     await sendAcademicNotification({
-      recipients: [{ email: st.student.email, name: st.student.name }],
+      recipients: [{ email: assignee.email, name: assignee.name }],
       subject: `Overdue: "${st.task.title}"`,
       heading: 'A task is overdue',
-      message: `Hi ${st.student.name}, "${st.task.title}" passed its deadline. Please finish it or message your mentor if you need more time.`,
+      message: `Hi ${assignee.name}, "${st.task.title}" passed its deadline. Please finish it or message ${
+        creator.role === 'ADMIN' ? 'the admin team' : 'your mentor'
+      } if you need more time.`,
       details: [{ label: 'Was due', value: st.task.deadline!.toUTCString() }],
       actionLabel: 'Open My Tasks',
-      actionUrl: getApplicationUrl(`/student-dashboard?tab=tasks&open=${st.id}`),
+      actionUrl: assigneeTasksUrl(assignee.role, st.id),
     }).catch((err) => console.error('Overdue reminder failed:', err));
     overdueSent += 1;
 
-    const m = st.task.creator;
-    const entry = mentorDigest.get(m.id) ?? { name: m.name, email: m.email, lines: [] };
-    entry.lines.push(`${st.student.name} — ${st.task.title} (${formatTaskKey(st.task.id)})`);
-    mentorDigest.set(m.id, entry);
+    if (!creator.email) continue;
+    const key = creator.email.toLowerCase();
+    const entry = creatorDigest.get(key) ?? {
+      name: creator.name,
+      email: creator.email,
+      url:
+        creator.role === 'TEACHER'
+          ? getApplicationUrl('/teacher-dashboard?tab=tasks&deadlineFilter=overdue')
+          : creatorReviewUrl(creator),
+      lines: [],
+    };
+    entry.lines.push(`${assignee.name} — ${st.task.title} (${formatTaskKey(st.task.id)})`);
+    creatorDigest.set(key, entry);
   }
-  for (const m of mentorDigest.values()) {
+  for (const m of creatorDigest.values()) {
     await sendAcademicNotification({
       recipients: [{ email: m.email, name: m.name }],
       subject: `${m.lines.length} task item(s) just became overdue`,
       heading: 'Overdue tasks',
-      message: 'These student tasks passed their deadline without being finished:',
+      message: 'These tasks passed their deadline without being finished:',
       details: m.lines.slice(0, 25).map((line, i) => ({ label: String(i + 1), value: line })),
       actionLabel: 'Open Task Board',
-      actionUrl: getApplicationUrl('/teacher-dashboard?tab=tasks&deadlineFilter=overdue'),
-    }).catch((err) => console.error('Mentor overdue digest failed:', err));
+      actionUrl: m.url,
+    }).catch((err) => console.error('Overdue digest failed:', err));
   }
 
   // 3. Recurring tasks
@@ -121,7 +150,7 @@ async function handler() {
     }
   }
 
-  return NextResponse.json({ success: true, dueSoonSent, overdueSent, mentorDigests: mentorDigest.size, spawned });
+  return NextResponse.json({ success: true, dueSoonSent, overdueSent, creatorDigests: creatorDigest.size, spawned });
 }
 
 export const POST = verifySignatureAppRouter(async () => {

@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { AtSign, Loader2, MessageSquare, Paperclip, Send, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { isSafeHttpUrl, TASK_UPLOAD_ALLOWED_TYPES } from "@/lib/tasks";
+import { isSafeHttpUrl, taskActorLabel, TASK_UPLOAD_ALLOWED_TYPES } from "@/lib/tasks";
 import { taskApi, uploadTaskFile } from "./api";
 import type { TaskCommentRecord } from "./types";
 
@@ -15,16 +15,31 @@ const ACCEPT = Object.entries(TASK_UPLOAD_ALLOWED_TYPES)
   .flatMap(([mime, exts]) => [mime, ...exts.map((e) => `.${e}`)])
   .join(",");
 
+/** Comment authors: mentors, students, parents, and the admin team. */
+export type CommentRole = "teacher" | "student" | "parent" | "admin";
+
+const ROLE_AVATAR: Record<string, string> = {
+  teacher: "bg-indigo-100 text-indigo-700",
+  admin: "bg-amber-100 text-amber-800",
+  parent: "bg-sky-100 text-sky-700",
+  student: "bg-emerald-100 text-emerald-700",
+};
+
+const roleTitle = (role: string) => {
+  const label = taskActorLabel(role);
+  return label.charAt(0).toUpperCase() + label.slice(1);
+};
+
 interface Participant {
   name: string;
-  role: "teacher" | "student";
+  role: CommentRole;
 }
 
 interface CommentThreadProps {
   studentTaskId: number;
   comments: TaskCommentRecord[];
   participants: Participant[];
-  currentRole: "teacher" | "student";
+  currentRole: CommentRole;
   /** Called after a comment is saved (the thread already shows it). */
   onPosted: (comment: TaskCommentRecord) => void;
   disabled?: boolean;
@@ -169,14 +184,14 @@ export function CommentThread({ studentTaskId, comments, participants, currentRo
             return (
               <div key={c.id} className={cn("flex gap-2", mine && "flex-row-reverse", sending && "opacity-60")}>
                 <Avatar className="h-7 w-7 text-[10px] shrink-0">
-                  <AvatarFallback className={cn("font-bold", c.authorRole === "teacher" ? "bg-indigo-100 text-indigo-700" : "bg-emerald-100 text-emerald-700")}>
+                  <AvatarFallback className={cn("font-bold", ROLE_AVATAR[c.authorRole] ?? ROLE_AVATAR.student)}>
                     {c.authorName.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className={cn("max-w-[80%] rounded-lg px-3 py-2 text-sm", mine ? "bg-indigo-50 border border-indigo-100" : "bg-slate-50 border")}>
                   <div className="flex items-center gap-2 text-[11px] text-slate-500 mb-0.5">
                     <span className="font-semibold text-slate-700">{c.authorName}</span>
-                    <span>{c.authorRole === "teacher" ? "Mentor" : "Student"}</span>
+                    <span>{roleTitle(c.authorRole)}</span>
                     <span>·</span>
                     {sending ? (
                       <span className="flex items-center gap-1">
@@ -242,7 +257,7 @@ export function CommentThread({ studentTaskId, comments, participants, currentRo
                   onClick={() => insertMention(p.name)}
                   className="text-xs px-2 py-1 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100"
                 >
-                  @{p.name} <span className="text-indigo-400">({p.role === "teacher" ? "mentor" : "student"})</span>
+                  @{p.name} <span className="text-indigo-400">({taskActorLabel(p.role)})</span>
                 </button>
               ))}
             </div>

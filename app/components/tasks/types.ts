@@ -13,7 +13,7 @@ export interface TaskCommentRecord {
   id: number;
   studentTaskId: number;
   authorId: number;
-  authorRole: "teacher" | "student" | string;
+  authorRole: "teacher" | "student" | "parent" | "admin" | string;
   authorName: string;
   content: string;
   attachmentUrl?: string | null;
@@ -45,8 +45,13 @@ export interface TaskRecordBase extends TaskLinkInfo {
   category: string;
   priority: TaskPriority;
   deadline?: string | null;
-  creatorId: number;
-  creator?: { id: number; name: string; email: string };
+  /** TEACHER (a mentor) or ADMIN (the admin team). */
+  creatorRole?: "TEACHER" | "ADMIN" | string;
+  /** Null for admin-created tasks. */
+  creatorId: number | null;
+  creator?: { id: number; name: string; email: string } | null;
+  creatorAdminEmail?: string | null;
+  creatorName?: string | null;
   requireSubmissionNote: boolean;
   requireFileUpload: boolean;
   requireUrl: boolean;
@@ -67,11 +72,25 @@ export interface TaskRecordBase extends TaskLinkInfo {
   updatedAt: string;
 }
 
-/** One student's copy of a task: the unit shown on boards, lists and calendars. */
+export interface TaskPersonInfo {
+  id: number;
+  name: string;
+  email: string;
+}
+
+/**
+ * One assignee's copy of a task: the unit shown on boards, lists and calendars.
+ * Mentor tasks always go to students; admin tasks can also go to mentors or parents.
+ */
 export interface TaskItem {
   id: number;
   taskId: number;
-  studentId: number;
+  assigneeRole?: "STUDENT" | "TEACHER" | "PARENT" | string;
+  studentId: number | null;
+  assigneeTeacherId?: number | null;
+  assigneeParentId?: number | null;
+  assigneeTeacher?: TaskPersonInfo | null;
+  assigneeParent?: TaskPersonInfo | null;
   status: TaskStatus;
   startedAt?: string | null;
   submittedAt?: string | null;
@@ -85,7 +104,7 @@ export interface TaskItem {
   mentorFeedback?: string | null;
   reviewedAt?: string | null;
   updatedAt?: string;
-  student?: TaskStudentInfo;
+  student?: TaskStudentInfo | null;
   task: TaskRecordBase;
   comments?: TaskCommentRecord[];
   activities?: TaskActivityRecord[];

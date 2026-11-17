@@ -62,6 +62,7 @@ model Teacher {
   students                TeacherStudent[]
   createdTasks            Task[]                    @relation("MentorCreatedTasks")
   reviewedTasks           StudentTask[]             @relation("MentorReviewedTasks")
+  assignedTasks           StudentTask[]             @relation("MentorAssignedTasks")
   taskTemplates           TaskTemplate[]
   mentorAvailabilitySlots MentorAvailabilitySlot[]
 }
@@ -562,15 +563,16 @@ model ContactSubmission {
 }
 
 model ParentAccount {
-  id          Int       @id @default(autoincrement())
-  name        String
-  email       String    @unique
-  phone       String?
-  password    String?
-  isActivated Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  students    Student[]
+  id            Int           @id @default(autoincrement())
+  name          String
+  email         String        @unique
+  phone         String?
+  password      String?
+  isActivated   Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  students      Student[]
+  assignedTasks StudentTask[] @relation("ParentAssignedTasks")
 }
 
 model TransactionReceipt {
@@ -836,8 +838,14 @@ model Task {
   category                    String                @default("General")
   priority                    String                @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
   deadline                    DateTime?
-  creatorId                   Int
-  creator                     Teacher               @relation("MentorCreatedTasks", fields: [creatorId], references: [id], onDelete: Cascade)
+  /// Who created the task: TEACHER (creatorId set) or ADMIN (creatorAdminEmail set).
+  /// Enforced by the Task_creator_check constraint in the database.
+  creatorRole                 String                @default("TEACHER")
+  creatorId                   Int?
+  creator                     Teacher?              @relation("MentorCreatedTasks", fields: [creatorId], references: [id], onDelete: Cascade)
+  creatorAdminEmail           String?
+  /// Display name of the creator, kept for admins (who have no Teacher row).
+  creatorName                 String?
   requireSubmissionNote       Boolean               @default(false)
   requireFileUpload           Boolean               @default(false)
   requireUrl                  Boolean               @default(false)
@@ -869,6 +877,7 @@ model Task {
   studentTasks                StudentTask[]
 
   @@index([creatorId])
+  @@index([creatorRole])
   @@index([seriesId])
   @@index([recurrence, nextOccurrenceCreatedAt])
   @@index([category])
@@ -877,10 +886,17 @@ model Task {
   @@index([isCancelled])
 }
 
+/// One assignee's copy of a task. Despite the name, the assignee can be a
+/// STUDENT (studentId), a mentor/TEACHER (assigneeTeacherId) or a PARENT
+/// (assigneeParentId); exactly one is set, matching assigneeRole. Enforced by
+/// the StudentTask_assignee_check constraint in the database.
 model StudentTask {
   id                          Int            @id @default(autoincrement())
   taskId                      Int
-  studentId                   Int
+  assigneeRole                String         @default("STUDENT")
+  studentId                   Int?
+  assigneeTeacherId           Int?
+  assigneeParentId            Int?
   status                      String         @default("TODO") // TODO, IN_PROGRESS, SUBMITTED, CHANGES_REQUESTED, COMPLETED
   startedAt                   DateTime?
   submittedAt                 DateTime?
@@ -898,15 +914,23 @@ model StudentTask {
   reviewedAt                  DateTime?
   reviewedById                Int?
   reviewedBy                  Teacher?       @relation("MentorReviewedTasks", fields: [reviewedById], references: [id], onDelete: SetNull)
+  /// Set instead of reviewedById when an admin reviewed the work.
+  reviewedByAdminEmail        String?
   createdAt                   DateTime       @default(now())
   updatedAt                   DateTime       @updatedAt
   task                        Task           @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  student                     Student        @relation("StudentAssignedTasks", fields: [studentId], references: [id], onDelete: Cascade)
+  student                     Student?       @relation("StudentAssignedTasks", fields: [studentId], references: [id], onDelete: Cascade)
+  assigneeTeacher             Teacher?       @relation("MentorAssignedTasks", fields: [assigneeTeacherId], references: [id], onDelete: Cascade)
+  assigneeParent              ParentAccount? @relation("ParentAssignedTasks", fields: [assigneeParentId], references: [id], onDelete: Cascade)
   comments                    TaskComment[]
   activities                  TaskActivity[]
 
   @@unique([taskId, studentId])
+  @@unique([taskId, assigneeTeacherId])
+  @@unique([taskId, assigneeParentId])
   @@index([studentId, status])
+  @@index([assigneeTeacherId, status])
+  @@index([assigneeParentId, status])
   @@index([taskId])
   @@index([status])
   @@index([reviewedById])

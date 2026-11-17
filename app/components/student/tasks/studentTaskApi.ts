@@ -19,8 +19,20 @@ export interface StudentTaskListResponse {
   metrics: StudentTaskMetrics;
   categories: string[];
   mentors: { id: number; name: string; email: string }[];
-  studentId: number;
+  /** /api/student/tasks */
+  studentId?: number;
+  /** /api/tasks/assigned (mentors and parents receiving admin tasks) */
+  assigneeId?: number;
 }
+
+/**
+ * The assignee workspace serves students (their mentor's and the admin team's
+ * tasks) and mentors/parents (tasks the admin team assigned to them).
+ */
+export type AssigneeViewerRole = "student" | "teacher" | "parent";
+
+export const STUDENT_TASKS_API = "/api/student/tasks";
+export const ASSIGNED_TASKS_API = "/api/tasks/assigned";
 
 export interface SubmissionPayload {
   submissionNote: string;
@@ -40,20 +52,21 @@ export const EMPTY_METRICS: StudentTaskMetrics = {
   overdue: 0,
 };
 
-export function fetchStudentTasks(apiQuery: string) {
-  return taskApi<StudentTaskListResponse>(`/api/student/tasks${apiQuery ? `?${apiQuery}` : ""}`);
+export function fetchStudentTasks(apiQuery: string, apiBase: string = STUDENT_TASKS_API) {
+  return taskApi<StudentTaskListResponse>(`${apiBase}${apiQuery ? `?${apiQuery}` : ""}`);
 }
 
-export function fetchStudentTaskDetail(studentTaskId: number) {
-  return taskApi<{ task: TaskItem }>(`/api/student/tasks/${studentTaskId}`);
+export function fetchStudentTaskDetail(studentTaskId: number, apiBase: string = STUDENT_TASKS_API) {
+  return taskApi<{ task: TaskItem }>(`${apiBase}/${studentTaskId}`);
 }
 
 export function patchStudentTask(
   studentTaskId: number,
   action: StudentTaskAction,
-  extra: Partial<SubmissionPayload> | { itemId: string; done: boolean } = {}
+  extra: Partial<SubmissionPayload> | { itemId: string; done: boolean } = {},
+  apiBase: string = STUDENT_TASKS_API
 ) {
-  return taskApi<{ task: Partial<TaskItem> }>(`/api/student/tasks/${studentTaskId}`, {
+  return taskApi<{ task: Partial<TaskItem> }>(`${apiBase}/${studentTaskId}`, {
     method: "PATCH",
     json: { action, ...extra },
   });

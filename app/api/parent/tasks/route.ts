@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest, hasRole } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { getChecklistProgress, isTaskOverdue } from '@/lib/tasks';
+import { getChecklistProgress, isTaskOverdue, taskCreatorName } from '@/lib/tasks';
 
 /**
  * Read-only view of the parent's children's tasks. Comments and submission
@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
   const normalizedEmail = user.email.trim().toLowerCase();
   const rows = await prisma.studentTask.findMany({
     where: {
+      assigneeRole: 'STUDENT',
       task: { isCancelled: false },
       student: {
         OR: [{ parentAccountId: user.id }, { parentEmail: { equals: normalizedEmail, mode: 'insensitive' } }],
@@ -38,6 +39,8 @@ export async function GET(request: NextRequest) {
           priority: true,
           deadline: true,
           checklist: true,
+          creatorRole: true,
+          creatorName: true,
           creator: { select: { name: true } },
         },
       },
@@ -46,7 +49,7 @@ export async function GET(request: NextRequest) {
     take: 500,
   });
 
-  const tasks = rows.map((r) => ({
+  const tasks = rows.flatMap((r) => (r.student ? [{
     id: r.id,
     taskId: r.task.id,
     studentId: r.student.id,
@@ -56,7 +59,8 @@ export async function GET(request: NextRequest) {
     category: r.task.category,
     priority: r.task.priority,
     deadline: r.task.deadline,
-    mentorName: r.task.creator.name,
+    mentorName: taskCreatorName(r.task),
+    fromAdmin: r.task.creatorRole === 'ADMIN',
     status: r.status,
     isOverdue: isTaskOverdue(r.task.deadline, r.status),
     startedAt: r.startedAt,
@@ -65,7 +69,7 @@ export async function GET(request: NextRequest) {
     // Only approval feedback is shared; change requests stay between mentor and student.
     mentorFeedback: r.status === 'COMPLETED' ? r.mentorFeedback : null,
     checklist: getChecklistProgress(r.task.checklist, r.checklistDone),
-  }));
+  }] : []));
 
   return NextResponse.json({ success: true, tasks });
 }

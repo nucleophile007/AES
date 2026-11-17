@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
   const [insight] = computeStudentInsights(
     rows.map((r) => ({
       studentId,
-      studentName: r.student.name,
+      studentName: r.student?.name ?? '',
       status: r.status,
       deadline: r.task.deadline,
       submittedAt: r.submittedAt,

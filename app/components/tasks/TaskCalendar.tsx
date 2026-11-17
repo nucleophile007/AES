@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { formatTaskKey, isTaskOverdue } from "@/lib/tasks";
+import { formatTaskKey, isTaskOverdue, taskAssigneeName } from "@/lib/tasks";
 import type { TaskItem } from "./types";
 
 const localizer = momentLocalizer(moment);
@@ -45,7 +45,7 @@ export function TaskCalendar({ items, perspective, onOpen }: TaskCalendarProps) 
         .filter((i) => i.task.deadline)
         .map((i) => {
           const d = new Date(i.task.deadline as string);
-          const who = perspective === "mentor" ? i.student?.name : null;
+          const who = perspective === "mentor" ? taskAssigneeName(i) : null;
           return {
             id: i.id,
             title: `${formatTaskKey(i.task.id)} ${i.task.title}${who ? ` · ${who}` : ""}`,

@@ -271,7 +271,7 @@ export function TaskDetailDialog({
                   {task.studentTasks.length} student{task.studentTasks.length === 1 ? "" : "s"}
                 </DialogDescription>
                 <div className="flex flex-wrap gap-1.5 pt-1">
-                  <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => onEdit(task, task.studentTasks.map((st) => st.studentId))}>
+                  <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => onEdit(task, task.studentTasks.flatMap((st) => (st.studentId ? [st.studentId] : [])))}>
                     <Pencil className="h-3.5 w-3.5" /> Edit / assign more
                   </Button>
                   <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => onDuplicate(task)}>

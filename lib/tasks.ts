@@ -82,6 +82,62 @@ export function formatTaskKey(id: number): string {
   return `TSK-${id}`;
 }
 
+// ---------------------------------------------------------------------------
+// Who creates and who receives tasks
+// ---------------------------------------------------------------------------
+
+/** Mentors create tasks from their dashboard; admins create them from the admin app. */
+export const TASK_CREATOR_ROLES = ['TEACHER', 'ADMIN'] as const;
+export type TaskCreatorRole = (typeof TASK_CREATOR_ROLES)[number];
+
+/** Mentor tasks always go to students; admin tasks can go to students, mentors or parents. */
+export const TASK_ASSIGNEE_ROLES = ['STUDENT', 'TEACHER', 'PARENT'] as const;
+export type TaskAssigneeRole = (typeof TASK_ASSIGNEE_ROLES)[number];
+
+export function isTaskAssigneeRole(value: unknown): value is TaskAssigneeRole {
+  return typeof value === 'string' && (TASK_ASSIGNEE_ROLES as readonly string[]).includes(value);
+}
+
+export function isAdminCreatedTask(task: { creatorRole?: string | null }): boolean {
+  return task.creatorRole === 'ADMIN';
+}
+
+/** Name to show for whoever assigned a task (admins have no Teacher row, so their name is stored on the task). */
+export function taskCreatorName(task: {
+  creatorRole?: string | null;
+  creatorName?: string | null;
+  creator?: { name: string } | null;
+}): string {
+  if (task.creator?.name) return task.creator.name;
+  if (task.creatorName?.trim()) return task.creatorName.trim();
+  return isAdminCreatedTask(task) ? 'ACHARYA Admin' : 'Your mentor';
+}
+
+/** Name of whoever a task row is assigned to (student, mentor or parent). */
+export function taskAssigneeName(item: {
+  student?: { name: string } | null;
+  assigneeTeacher?: { name: string } | null;
+  assigneeParent?: { name: string } | null;
+}): string | undefined {
+  return item.student?.name ?? item.assigneeTeacher?.name ?? item.assigneeParent?.name;
+}
+
+/** Short role word for activity and comment labels ("teacher" is shown as "mentor"). */
+export function taskActorLabel(role: string): string {
+  switch (role) {
+    case 'teacher':
+      return 'mentor';
+    case 'admin':
+      return 'admin';
+    case 'parent':
+      return 'parent';
+    case 'student':
+      return 'student';
+    default:
+      return role;
+  }
+}
+
 /** Statuses where the student still owes work (a submitted task is waiting on the mentor). */
 export const STUDENT_OPEN_STATUSES: TaskStatus[] = ['TODO', 'IN_PROGRESS', 'CHANGES_REQUESTED'];
 

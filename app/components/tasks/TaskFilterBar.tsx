@@ -33,9 +33,11 @@ interface TaskFilterBarProps {
   overdueCount?: number;
   reviewCount?: number;
   perspective: "mentor" | "student";
+  /** Overrides the "Needs my review" / "Awaiting review" quick filter label (e.g. read-only views). */
+  reviewLabel?: string;
 }
 
-export function TaskFilterBar({ f, categories, students, overdueCount = 0, reviewCount = 0, perspective }: TaskFilterBarProps) {
+export function TaskFilterBar({ f, categories, students, overdueCount = 0, reviewCount = 0, perspective, reviewLabel }: TaskFilterBarProps) {
   const { toast } = useToast();
   const [saved, setSaved] = useState<SavedFilter[]>([]);
   const [savingName, setSavingName] = useState<string | null>(null);
@@ -253,7 +255,7 @@ export function TaskFilterBar({ f, categories, students, overdueCount = 0, revie
         </button>
         <button type="button" onClick={() => toggle("status", "SUBMITTED")} className={chip(f.filters.status === "SUBMITTED", "amber")}>
           <ShieldAlert className="h-3 w-3 text-amber-500" />
-          {perspective === "mentor" ? "Needs my review" : "Awaiting review"}
+          {reviewLabel ?? (perspective === "mentor" ? "Needs my review" : "Awaiting review")}
           {reviewCount > 0 && <span className="px-1.5 rounded-full text-[10px] bg-amber-600 text-white font-bold">{reviewCount}</span>}
         </button>
         <button type="button" onClick={() => toggle("status", "CHANGES_REQUESTED")} className={chip(f.filters.status === "CHANGES_REQUESTED", "rose")}>

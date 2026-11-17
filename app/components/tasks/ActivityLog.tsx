@@ -2,6 +2,7 @@
 
 import React from "react";
 import { History } from "lucide-react";
+import { taskActorLabel } from "@/lib/tasks";
 import type { TaskActivityRecord } from "./types";
 
 const ACTION_LABELS: Record<string, string> = {
@@ -31,7 +32,7 @@ export function ActivityLog({ activities }: { activities: TaskActivityRecord[] }
               <History className="h-3 w-3" /> {ACTION_LABELS[a.action] ?? a.action}
             </span>
             <span>
-              {a.performedByName} ({a.performedByRole === "teacher" ? "mentor" : a.performedByRole})
+              {a.performedByName} ({taskActorLabel(a.performedByRole)})
             </span>
             <time dateTime={a.createdAt}>{new Date(a.createdAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}</time>
           </div>

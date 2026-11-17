@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { ChecklistView } from "@/components/tasks/Checklist";
-import { CommentThread } from "@/components/tasks/CommentThread";
+import { CommentThread, type CommentRole } from "@/components/tasks/CommentThread";
 import { ActivityLog } from "@/components/tasks/ActivityLog";
 import { LinkedItems } from "@/components/tasks/LinkedItems";
 import type { TaskItem } from "@/components/tasks/types";
@@ -19,15 +19,23 @@ import {
   formatTaskKey,
   getDeadlineLabel,
   isTaskOverdue,
+  isAdminCreatedTask,
   isTaskRecurrence,
   readChecklist,
+  taskCreatorName,
   readChecklistDone,
   type StudentTaskAction,
 } from "@/lib/tasks";
 import { AlertCircle, AlertTriangle, CheckCircle2, History, Loader2, MessageSquare, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SubmissionForm } from "./SubmissionForm";
-import { fetchStudentTaskDetail, patchStudentTask, type SubmissionPayload } from "./studentTaskApi";
+import {
+  fetchStudentTaskDetail,
+  patchStudentTask,
+  STUDENT_TASKS_API,
+  type AssigneeViewerRole,
+  type SubmissionPayload,
+} from "./studentTaskApi";
 
 interface StudentTaskDetailDialogProps {
   /** studentTask id to show; null closes the dialog. */
@@ -35,6 +43,10 @@ interface StudentTaskDetailDialogProps {
   /** List copy of the item, shown immediately while the full detail loads. */
   summary?: TaskItem | null;
   studentName?: string;
+  /** Who is viewing (the assignee): student, mentor or parent. */
+  viewerRole?: AssigneeViewerRole;
+  /** Detail/action endpoint base (see StudentTaskWorkspace). */
+  apiBase?: string;
   /** Bump to reload the detail (e.g. on a realtime event). */
   reloadSignal: number;
   onClose: () => void;
@@ -45,7 +57,7 @@ interface StudentTaskDetailDialogProps {
 const SUCCESS_MESSAGES: Record<string, { title: string; description: string }> = {
   START: { title: "Task started", description: "Status changed to In Progress." },
   SAVE_DRAFT: { title: "Draft saved", description: "Your responses have been saved." },
-  SUBMITTED: { title: "Task submitted!", description: "Your work has been sent to your mentor for review." },
+  SUBMITTED: { title: "Task submitted!", description: "Your work has been sent for review." },
   COMPLETED: { title: "Task completed!", description: "Great job! The task is marked as completed." },
 };
 
@@ -53,6 +65,8 @@ export function StudentTaskDetailDialog({
   studentTaskId,
   summary,
   studentName,
+  viewerRole = "student",
+  apiBase = STUDENT_TASKS_API,
   reloadSignal,
   onClose,
   onChanged,
@@ -72,7 +86,7 @@ export function StudentTaskDetailDialog({
     const seq = ++requestSeq.current;
     setLoading(true);
     try {
-      const data = await fetchStudentTaskDetail(id);
+      const data = await fetchStudentTaskDetail(id, apiBase);
       if (seq !== requestSeq.current || pendingWrites.current > 0) return;
       setDetail(data.task);
       setError(null);
@@ -82,7 +96,7 @@ export function StudentTaskDetailDialog({
     } finally {
       if (seq === requestSeq.current) setLoading(false);
     }
-  }, []);
+  }, [apiBase]);
 
   // Reset when switching tasks, then load.
   useEffect(() => {
@@ -127,7 +141,7 @@ export function StudentTaskDetailDialog({
     setDetail({ ...item, ...expected });
     setBusy(true);
     try {
-      const res = await patchStudentTask(item.id, action, payload ?? {});
+      const res = await patchStudentTask(item.id, action, payload ?? {}, apiBase);
       const newStatus = res.task?.status;
       const message =
         action === "SUBMIT" || action === "COMPLETE_DIRECT"
@@ -164,7 +178,7 @@ export function StudentTaskDetailDialog({
     setChecklistBusy(itemId);
     pendingWrites.current += 1;
     try {
-      await patchStudentTask(item.id, "TOGGLE_CHECKLIST", { itemId, done });
+      await patchStudentTask(item.id, "TOGGLE_CHECKLIST", { itemId, done }, apiBase);
       onChanged();
     } catch (err) {
       const previousStatus = item.status;
@@ -212,6 +226,7 @@ export function StudentTaskDetailDialog({
             busy={busy}
             checklistBusy={checklistBusy}
             studentName={studentName}
+            viewerRole={viewerRole}
             onAction={runAction}
             onToggleChecklist={toggleChecklist}
             onReload={() => void load(item.id)}
@@ -234,6 +249,7 @@ interface TaskDetailBodyProps {
   busy: boolean;
   checklistBusy: string | null;
   studentName?: string;
+  viewerRole: AssigneeViewerRole;
   onAction: (action: Exclude<StudentTaskAction, "TOGGLE_CHECKLIST">, payload?: SubmissionPayload) => Promise<boolean>;
   onToggleChecklist: (itemId: string, done: boolean) => void;
   onReload: () => void;
@@ -248,6 +264,7 @@ function TaskDetailBody({
   busy,
   checklistBusy,
   studentName,
+  viewerRole,
   onAction,
   onToggleChecklist,
   onReload,
@@ -262,16 +279,21 @@ function TaskDetailBody({
   const checklistDone = readChecklistDone(item.checklistDone, checklist);
   // Toggles are optimistic on the loaded detail, so wait for it before enabling them.
   const canToggle = detailLoaded && !task.isCancelled && canStudentPerform("TOGGLE_CHECKLIST", item.status);
-  const mentorName = task.creator?.name || "Your mentor";
+  const fromAdmin = isAdminCreatedTask(task);
+  const mentorName = taskCreatorName(task);
   const recurrenceLabel = task.recurrence
     ? isTaskRecurrence(task.recurrence)
       ? TASK_RECURRENCES[task.recurrence].label
       : "Recurring"
     : null;
 
-  const participants: { name: string; role: "teacher" | "student" }[] = [
-    { name: studentName?.trim() || "Student", role: "student" },
-    ...(task.creator?.name ? [{ name: task.creator.name, role: "teacher" as const }] : []),
+  const participants: { name: string; role: CommentRole }[] = [
+    { name: studentName?.trim() || (viewerRole === "teacher" ? "Mentor" : viewerRole === "parent" ? "Parent" : "Student"), role: viewerRole },
+    ...(fromAdmin
+      ? [{ name: mentorName, role: "admin" as const }]
+      : task.creator?.name
+        ? [{ name: task.creator.name, role: "teacher" as const }]
+        : []),
   ];
 
   return (
@@ -306,6 +328,7 @@ function TaskDetailBody({
         <DialogTitle className="text-xl font-bold text-slate-900 pr-6">{task.title}</DialogTitle>
         <DialogDescription className="text-xs text-slate-500">
           {task.category} · Assigned by {mentorName}
+          {fromAdmin && " (ACHARYA admin team)"}
         </DialogDescription>
       </DialogHeader>
 
@@ -382,7 +405,7 @@ function TaskDetailBody({
                   studentTaskId={item.id}
                   comments={item.comments ?? []}
                   participants={participants}
-                  currentRole="student"
+                  currentRole={viewerRole}
                   onPosted={onCommentPosted}
                   disabled={task.isCancelled}
                 />
@@ -427,8 +450,9 @@ function TaskDetailBody({
             </MetaRow>
           )}
           <Separator />
-          <MetaRow label="Mentor">
+          <MetaRow label={fromAdmin ? "Assigned by" : "Mentor"}>
             <p className="font-semibold text-slate-800">{mentorName}</p>
+            {fromAdmin && <p className="text-[10px] text-slate-500">ACHARYA admin team</p>}
             {task.creator?.email && <p className="text-[10px] text-slate-500 break-all">{task.creator.email}</p>}
           </MetaRow>
           <MetaRow label="Category">

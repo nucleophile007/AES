@@ -2,16 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUserFromRequest } from '@/lib/auth';
 import { sanitizeFilterQuery } from '@/lib/tasks';
+import { loadAssignee } from '@/lib/task-actors';
 
 const MAX_SAVED = 20;
 
 async function getOwner(request: NextRequest) {
   const user = await getUserFromRequest(request);
-  if (!user || (user.role !== 'teacher' && user.role !== 'student')) return null;
-  const owner =
-    user.role === 'teacher'
-      ? await prisma.teacher.findUnique({ where: { email: user.email }, select: { id: true } })
-      : await prisma.student.findUnique({ where: { email: user.email }, select: { id: true } });
+  if (!user) return null;
+  // Mentors, students and parents (who can receive admin tasks) each keep their own saved filters.
+  const owner = await loadAssignee(user);
   return owner ? { ownerId: owner.id, ownerRole: user.role } : null;
 }
 

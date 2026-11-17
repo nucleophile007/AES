@@ -8,29 +8,65 @@ import {
   readChecklist,
   type TaskRecurrence,
 } from './tasks';
+import {
+  assigneeColumns,
+  assigneeWhere,
+  type AssignmentOwnerFields,
+  type TaskActorRole,
+  type TaskAssignee,
+} from './task-actors';
 
 // ---------------------------------------------------------------------------
 // Real-time
 // ---------------------------------------------------------------------------
 
-export const taskChannel = (role: 'teacher' | 'student', id: number) => `private-tasks-${role}-${id}`;
+export type TaskChannelRole = 'teacher' | 'student' | 'parent';
+export const taskChannel = (role: TaskChannelRole, id: number) => `private-tasks-${role}-${id}`;
 
 export interface TaskRealtimeEvent {
   type: 'task.changed' | 'task.deleted' | 'comment.added';
   taskId?: number;
   studentTaskId?: number;
-  actorRole?: 'teacher' | 'student';
+  actorRole?: TaskActorRole;
 }
 
-/** Fire-and-forget notification to the boards of the given mentors/students. */
-export function publishTaskEvent(
-  audience: { teacherIds?: number[]; studentIds?: number[] },
-  event: TaskRealtimeEvent
-): void {
+export interface TaskAudience {
+  teacherIds?: (number | null | undefined)[];
+  studentIds?: (number | null | undefined)[];
+  parentIds?: (number | null | undefined)[];
+}
+
+/**
+ * Everyone whose board shows this row: the mentor who created the task (admins
+ * have no realtime channel; the admin app refreshes on its own) and the assignee.
+ */
+export function rowAudience(row: AssignmentOwnerFields, creatorTeacherId: number | null | undefined): TaskAudience {
+  return {
+    teacherIds: [creatorTeacherId, row.assigneeTeacherId],
+    studentIds: [row.studentId],
+    parentIds: [row.assigneeParentId],
+  };
+}
+
+/** Merges the audiences of many rows of possibly different tasks. */
+export function mergeAudiences(audiences: TaskAudience[]): TaskAudience {
+  return {
+    teacherIds: audiences.flatMap((a) => a.teacherIds ?? []),
+    studentIds: audiences.flatMap((a) => a.studentIds ?? []),
+    parentIds: audiences.flatMap((a) => a.parentIds ?? []),
+  };
+}
+
+const realIds = (ids: (number | null | undefined)[] | undefined) =>
+  Array.from(new Set((ids ?? []).filter((id): id is number => typeof id === 'number' && id > 0)));
+
+/** Fire-and-forget notification to the boards of the given mentors/students/parents. */
+export function publishTaskEvent(audience: TaskAudience, event: TaskRealtimeEvent): void {
   if (!process.env.PUSHER_APP_ID || !process.env.PUSHER_SECRET) return;
   const channels = [
-    ...Array.from(new Set(audience.teacherIds ?? [])).map((id) => taskChannel('teacher', id)),
-    ...Array.from(new Set(audience.studentIds ?? [])).map((id) => taskChannel('student', id)),
+    ...realIds(audience.teacherIds).map((id) => taskChannel('teacher', id)),
+    ...realIds(audience.studentIds).map((id) => taskChannel('student', id)),
+    ...realIds(audience.parentIds).map((id) => taskChannel('parent', id)),
   ];
   if (!channels.length) return;
   try {
@@ -141,9 +177,16 @@ export function buildStudentTaskWhere(
     const keyMatch = q.search.match(/^tsk-?(\d+)$/i);
     if (keyMatch) or.push({ taskId: Number(keyMatch[1]) });
     if (opts.searchStudents) {
-      or.push({ student: { name: contains } }, { student: { email: contains } });
+      or.push(
+        { student: { name: contains } },
+        { student: { email: contains } },
+        { assigneeTeacher: { name: contains } },
+        { assigneeTeacher: { email: contains } },
+        { assigneeParent: { name: contains } },
+        { assigneeParent: { email: contains } }
+      );
     } else {
-      or.push({ task: { creator: { name: contains } } });
+      or.push({ task: { creator: { name: contains } } }, { task: { creatorName: contains } });
     }
     and.push({ OR: or });
   }
@@ -155,6 +198,8 @@ export function buildStudentTaskWhere(
 /** Lightweight shape for boards/lists: no full comment/activity history. */
 export const studentTaskListInclude = {
   student: { select: { id: true, name: true, email: true, grade: true, program: true, schoolName: true } },
+  assigneeTeacher: { select: { id: true, name: true, email: true } },
+  assigneeParent: { select: { id: true, name: true, email: true } },
   task: {
     include: {
       creator: { select: { id: true, name: true, email: true } },
@@ -293,7 +338,10 @@ export async function spawnNextOccurrence(taskId: number): Promise<number | null
   return prisma.$transaction(async (tx) => {
     const task = await tx.task.findUnique({
       where: { id: taskId },
-      include: { studentTasks: { select: { studentId: true } }, creator: { select: { id: true, name: true } } },
+      include: {
+        studentTasks: { select: { assigneeRole: true, studentId: true, assigneeTeacherId: true, assigneeParentId: true } },
+        creator: { select: { id: true, name: true } },
+      },
     });
     if (!task || task.isCancelled || task.nextOccurrenceCreatedAt || !task.deadline) return null;
     if (!isTaskRecurrence(task.recurrence)) return null;
@@ -315,7 +363,10 @@ export async function spawnNextOccurrence(taskId: number): Promise<number | null
         category: task.category,
         priority: task.priority,
         deadline: nextDeadline,
+        creatorRole: task.creatorRole,
         creatorId: task.creatorId,
+        creatorAdminEmail: task.creatorAdminEmail,
+        creatorName: task.creatorName,
         requireSubmissionNote: task.requireSubmissionNote,
         requireFileUpload: task.requireFileUpload,
         requireUrl: task.requireUrl,
@@ -334,16 +385,26 @@ export async function spawnNextOccurrence(taskId: number): Promise<number | null
       },
     });
 
-    for (const { studentId } of task.studentTasks) {
-      const st = await tx.studentTask.create({ data: { taskId: next.id, studentId, status: 'TODO' } });
+    const byAdmin = task.creatorRole === 'ADMIN';
+    for (const row of task.studentTasks) {
+      const assignee =
+        row.assigneeRole === 'TEACHER'
+          ? { role: 'TEACHER' as const, id: row.assigneeTeacherId }
+          : row.assigneeRole === 'PARENT'
+            ? { role: 'PARENT' as const, id: row.assigneeParentId }
+            : { role: 'STUDENT' as const, id: row.studentId };
+      if (!assignee.id) continue;
+      const st = await tx.studentTask.create({
+        data: { taskId: next.id, ...assigneeColumns({ role: assignee.role, id: assignee.id }), status: 'TODO' },
+      });
       await tx.taskActivity.create({
         data: {
           studentTaskId: st.id,
           action: 'CREATED',
           details: `Recurring task created automatically (next in series after TSK-${task.id})`,
-          performedById: task.creator.id,
-          performedByRole: 'teacher',
-          performedByName: task.creator.name,
+          performedById: byAdmin ? 0 : (task.creator?.id ?? 0),
+          performedByRole: byAdmin ? 'admin' : 'teacher',
+          performedByName: byAdmin ? task.creatorName || 'ACHARYA Admin' : (task.creator?.name ?? 'Mentor'),
         },
       });
     }
@@ -395,6 +456,29 @@ export interface StudentTaskMetrics {
   changesRequested: number;
   completed: number;
   overdue: number;
+}
+
+/** Every assignee board counter in a single query (cancelled tasks are hidden from assignees). */
+export async function getAssigneeTaskMetrics(assignee: Pick<TaskAssignee, 'role' | 'id'>): Promise<StudentTaskMetrics> {
+  const [row] = await prisma.$queryRaw<StudentTaskMetrics[]>`
+    SELECT
+      COUNT(*)::int AS "totalTasks",
+      COUNT(*) FILTER (WHERE st.status = 'TODO')::int AS "todo",
+      COUNT(*) FILTER (WHERE st.status = 'IN_PROGRESS')::int AS "inProgress",
+      COUNT(*) FILTER (WHERE st.status = 'SUBMITTED')::int AS "submitted",
+      COUNT(*) FILTER (WHERE st.status = 'CHANGES_REQUESTED')::int AS "changesRequested",
+      COUNT(*) FILTER (WHERE st.status = 'COMPLETED')::int AS "completed",
+      COUNT(*) FILTER (
+        WHERE st.status IN ('TODO', 'IN_PROGRESS', 'CHANGES_REQUESTED') AND t.deadline < NOW()
+      )::int AS "overdue"
+    FROM "StudentTask" st
+    JOIN "Task" t ON t.id = st."taskId"
+    WHERE st."assigneeRole" = ${assignee.role}
+      -- Exactly one assignee column is set, matching assigneeRole (StudentTask_assignee_check).
+      AND COALESCE(st."studentId", st."assigneeTeacherId", st."assigneeParentId") = ${assignee.id}
+      AND t."isCancelled" = false
+  `;
+  return row;
 }
 
 /** Every student board counter in a single query (cancelled tasks are hidden from students). */
@@ -464,4 +548,18 @@ export async function getStudentTaskLookups(studentId: number) {
     }),
   ]);
   return { categories: categories.map((c) => c.category).filter(Boolean), mentors };
+}
+
+/** Categories and the people who assigned this person's tasks (mentors and admins). */
+export async function getAssigneeTaskLookups(assignee: Pick<TaskAssignee, 'role' | 'id'>) {
+  const mine = assigneeWhere(assignee);
+  const tasks = await prisma.task.findMany({
+    where: { isCancelled: false, studentTasks: { some: mine } },
+    distinct: ['category', 'creatorId', 'creatorAdminEmail'],
+    select: { category: true, creatorRole: true, creatorName: true, creator: { select: { id: true, name: true, email: true } } },
+  });
+  const categories = Array.from(new Set(tasks.map((t) => t.category).filter(Boolean)));
+  const mentors = new Map<number, { id: number; name: string; email: string }>();
+  tasks.forEach((t) => t.creator && mentors.set(t.creator.id, t.creator));
+  return { categories, mentors: Array.from(mentors.values()) };
 }

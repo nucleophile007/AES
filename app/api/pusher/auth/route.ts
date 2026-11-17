@@ -23,8 +23,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Task board channels: private-tasks-{teacher|student}-{id}. Only the owner may subscribe.
-    const taskMatch = channel_name.match(/^private-tasks-(teacher|student)-(\d+)$/);
+    // Task board channels: private-tasks-{teacher|student|parent}-{id}. Only the owner may subscribe.
+    const taskMatch = channel_name.match(/^private-tasks-(teacher|student|parent)-(\d+)$/);
     if (taskMatch) {
       const [, channelRole, channelId] = taskMatch;
       if (user.role !== channelRole) {
@@ -33,7 +33,9 @@ export async function POST(req: NextRequest) {
       const owner =
         channelRole === 'teacher'
           ? await prisma.teacher.findUnique({ where: { email: user.email }, select: { id: true } })
-          : await prisma.student.findUnique({ where: { email: user.email }, select: { id: true } });
+          : channelRole === 'student'
+            ? await prisma.student.findUnique({ where: { email: user.email }, select: { id: true } })
+            : await prisma.parentAccount.findUnique({ where: { email: user.email }, select: { id: true } });
       if (!owner || owner.id !== Number(channelId)) {
         return NextResponse.json({ error: 'Unauthorized channel access' }, { status: 403 });
       }
