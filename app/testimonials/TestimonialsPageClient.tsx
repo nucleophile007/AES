@@ -1,6 +1,7 @@
 "use client";
 
 import TestimonialSection from "@/components/testimonials/testimonial-section";
+import VideoTestimonialSection, { type VideoTestimonial } from "@/components/testimonials/video-testimonial-section";
 import StudentSpotlightsSwiper from "@/components/testimonials/StudentSpotlightsSwiper";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
@@ -123,8 +124,10 @@ type SectionsType = {
 
 export default function TestimonialsPageClient({
   sections,
+  videoTestimonials = [],
 }: {
   sections: SectionsType;
+  videoTestimonials?: VideoTestimonial[];
 }) {
   // Filter out college admissions from spotlights
   const filteredSpotlights = studentSpotlights.filter(
@@ -166,6 +169,11 @@ export default function TestimonialsPageClient({
           spotlights swiper (Research first). */}
 
       <div className="container mx-auto px-4 py-20 space-y-24">
+        {/* Section 1: only rendered when at least one visible video exists. */}
+        {videoTestimonials.length > 0 && (
+          <VideoTestimonialSection videos={videoTestimonials} />
+        )}
+
         <TestimonialSection
           title="Research Program"
           description="Discover your passion for academic research"

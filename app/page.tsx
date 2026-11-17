@@ -5,7 +5,6 @@ import MissionSection from "@/components/home/MissionSection";
 import FeaturesGridSection from "@/components/home/FeaturesGridSection";
 import CTASection from "@/components/home/CTASection";
 import SupportersCarousel from "@/components/home/SupportersCarousel";
-import TestimonialCarousel from "@/components/home/TestimonialCarousel";
 import Chatbot from "@/components/home/Chatbot";
 import Footer from "@/components/home/Footer";
 
@@ -39,7 +38,6 @@ export default function HomePage() {
       <MissionSection />
       <FeaturesGridSection />
       <CTASection />
-      <TestimonialCarousel />
       <SupportersCarousel />
       <Chatbot />
       <Footer />

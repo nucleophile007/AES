@@ -5,15 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Compare } from "@/components/ui/compare";
 import { cn } from "@/lib/utils";
 import useSWR from "swr";
-import {
-  IconAdjustmentsBolt,
-  IconCloud,
-  IconCurrencyDollar,
-  IconEaseInOut,
-  IconHeart,
-  IconRouteAltLeft,
-  IconTerminal2,
-} from "@tabler/icons-react";
+import ParentTestimonialCoverflow from "@/components/home/ParentTestimonialCoverflow";
 
 /* ---------------- Fetcher ---------------- */
 
@@ -23,61 +15,6 @@ const fetcher = (url: string) =>
 /* ---------------- Component ---------------- */
 
 export default function FeaturesGridSection() {
-  /* ---------- Features (24/7 removed) ---------- */
-
-  const allFeatures = React.useMemo(
-    () => [
-      {
-        title: "Personalized Learning",
-        description:
-          "Customized educational approaches tailored to each student's unique learning style and pace.",
-        icon: <IconTerminal2 size={28} stroke={1.5} />,
-      },
-      {
-        title: "Expert Mentoring",
-        description:
-          "One-on-one guidance from experienced educators with proven track records.",
-        icon: <IconEaseInOut size={28} stroke={1.5} />,
-      },
-      {
-        title: "Affordable Excellence",
-        description:
-          "Premium educational services at competitive rates with flexible payment options.",
-        icon: <IconCurrencyDollar size={28} stroke={1.5} />,
-      },
-      {
-        title: "Consistent Progress",
-        description:
-          "Regular assessments and progress tracking to ensure continuous improvement.",
-        icon: <IconCloud size={28} stroke={1.5} />,
-      },
-      {
-        title: "Flexible Scheduling",
-        description:
-          "Online and in-person sessions that adapt to your busy family schedule.",
-        icon: <IconRouteAltLeft size={28} stroke={1.5} />,
-      },
-      {
-        title: "Success Guarantee",
-        description:
-          "We're committed to your child's academic success with measurable results.",
-        icon: <IconAdjustmentsBolt size={28} stroke={1.5} />,
-      },
-      {
-        title: "College Preparation",
-        description:
-          "Comprehensive preparation for standardized tests and college applications.",
-        icon: <IconHeart size={28} stroke={1.5} />,
-      },
-      {
-        title: "Interactive Learning",
-        description:
-          "Engaging hands-on activities and dynamic teaching methods that make learning exciting.",
-        icon: <IconTerminal2 size={28} stroke={1.5} />,
-      },
-    ],
-    []
-  );
   const [sliderProgress, setSliderProgress] = React.useState(50);
 
   /* ---------- Fetch Before/After ---------- */
@@ -95,10 +32,6 @@ export default function FeaturesGridSection() {
   const afterText = (story?.after || "").trim();
   const beforeActive = sliderProgress >= 50;
   const afterActive = !beforeActive;
-  const visibleFeatures = React.useMemo(
-    () => (hasStoryPanel ? allFeatures.slice(0, 4) : allFeatures),
-    [allFeatures, hasStoryPanel]
-  );
 
   const storyTextSettings = React.useMemo(() => {
     const maxLength = Math.max(beforeText.length, afterText.length);
@@ -159,26 +92,10 @@ export default function FeaturesGridSection() {
         </div>
 
         {/* Layout */}
-        <div className={hasStoryPanel ? "grid lg:grid-cols-2 gap-12 items-start" : ""}>
-          {/* FEATURES */}
-          <div className={hasStoryPanel ? "grid grid-cols-1 sm:grid-cols-2 gap-6" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"}>
-            {visibleFeatures.map((feature) => (
-                <div
-                  key={feature.title}
-                  className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm p-6 rounded-2xl border border-gray-700/30 hover:border-yellow-400/30 transition-all duration-300"
-                >
-                  <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-xl flex items-center justify-center text-gray-900 mb-4">
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-lg font-semibold theme-text-light mb-3">
-                    {feature.title}
-                  </h3>
-                  <p className="theme-text-muted text-sm leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              ))}
-          </div>
+        <div className={hasStoryPanel ? "grid lg:grid-cols-2 gap-12 items-center" : ""}>
+          {/* LEFT SIDE - parent testimonials in a 3D carousel
+              (replaces the old standalone "What Parents Say About Us" section). */}
+          <ParentTestimonialCoverflow className={hasStoryPanel ? "w-full min-w-0 lg:-top-6" : "mx-auto w-full max-w-2xl"} />
 
           {/* RIGHT SIDE - BEFORE / AFTER STORY */}
           {hasStoryPanel && (
