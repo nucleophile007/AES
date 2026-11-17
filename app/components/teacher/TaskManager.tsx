@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { DEFAULT_TASK_CATEGORIES, canMentorPerform, type MentorReviewAction, type TaskStatus } from "@/lib/tasks";
+import { DEFAULT_TASK_CATEGORIES, TASK_FILTER_KEYS, canMentorPerform, type MentorReviewAction, type TaskStatus } from "@/lib/tasks";
 import {
   AlertCircle,
   BarChart3,
@@ -13,6 +13,8 @@ import {
   CheckCircle2,
   CheckSquare,
   Clock,
+  Eye,
+  Inbox,
   Kanban,
   LayoutTemplate,
   ListTodo,
@@ -40,6 +42,9 @@ import { TaskDetailDialog, type DetailTask } from "./tasks/TaskDetailDialog";
 import { BulkActionBar } from "./tasks/BulkActionBar";
 import { TaskInsights } from "./tasks/TaskInsights";
 import { TemplatesDialog } from "./tasks/TemplatesDialog";
+import { MentorAdminTasksView } from "./tasks/MentorAdminTasksView";
+import { StudentTaskWorkspace } from "@/components/student/tasks/StudentTaskWorkspace";
+import { ASSIGNED_TASKS_API } from "@/components/student/tasks/studentTaskApi";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -563,6 +568,69 @@ function TaskManagerInner(_props: TaskManagerProps) {
   );
 }
 
+const SPACES = [
+  { value: "created", label: "Assigned by me", icon: Kanban },
+  { value: "assigned", label: "Assigned to me", icon: Inbox },
+  { value: "admin", label: "From admin", icon: Eye },
+] as const;
+type MentorTaskSpace = (typeof SPACES)[number]["value"];
+
+/**
+ * The mentor's Tasks tab has three spaces (kept in ?space=):
+ *  - created:  tasks this mentor assigned (the full board)
+ *  - assigned: tasks the admin team assigned to this mentor
+ *  - admin:    admin tasks given to this mentor's students (read-only)
+ */
+function MentorTaskSpaces(props: TaskManagerProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const raw = searchParams?.get("space");
+  const space: MentorTaskSpace = raw === "assigned" || raw === "admin" ? raw : "created";
+
+  const switchTo = (next: MentorTaskSpace) => {
+    if (next === space) return;
+    // Filters and open dialogs belong to one space; keep only the dashboard's own params (e.g. tab).
+    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    [...TASK_FILTER_KEYS, "open", "space"].forEach((k) => params.delete(k));
+    if (next !== "created") params.set("space", next);
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="inline-flex flex-wrap items-center rounded-lg border bg-white p-1 shadow-sm" role="tablist" aria-label="Task space">
+        {SPACES.map((s) => {
+          const active = s.value === space;
+          const Icon = s.icon;
+          return (
+            <Button
+              key={s.value}
+              role="tab"
+              aria-selected={active}
+              variant={active ? "default" : "ghost"}
+              size="sm"
+              onClick={() => switchTo(s.value)}
+              className={cn("h-8 gap-1.5 px-3 text-xs", active && "bg-slate-900 text-white hover:bg-slate-800")}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {s.label}
+            </Button>
+          );
+        })}
+      </div>
+      {space === "assigned" ? (
+        <StudentTaskWorkspace key="assigned" viewerRole="teacher" apiBase={ASSIGNED_TASKS_API} studentName={props.teacherName} />
+      ) : space === "admin" ? (
+        <MentorAdminTasksView key="admin" />
+      ) : (
+        <TaskManagerInner key="created" {...props} />
+      )}
+    </div>
+  );
+}
+
 export default function TaskManager(props: TaskManagerProps) {
   return (
     <Suspense
@@ -572,7 +640,7 @@ export default function TaskManager(props: TaskManagerProps) {
         </div>
       }
     >
-      <TaskManagerInner {...props} />
+      <MentorTaskSpaces {...props} />
     </Suspense>
   );
 }

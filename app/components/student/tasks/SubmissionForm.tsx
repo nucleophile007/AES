@@ -17,6 +17,7 @@ import {
   taskHasSubmissionRequirements,
   requiresChecklistCompletion,
   type StudentTaskAction,
+  isAdminCreatedTask,
 } from "@/lib/tasks";
 import {
   AlertTriangle,
@@ -85,6 +86,10 @@ export function SubmissionForm({ item, busy, onAction }: SubmissionFormProps) {
     task.requireSubmissionNote || task.requireFileUpload || task.requireUrl || task.requireExternalConfirmation;
   const needsAllSteps = requiresChecklistCompletion(task);
   const completeDirect = !hasRequirements && !task.requireMentorApproval;
+  // Admin-created tasks are reviewed by the admin team, not a mentor.
+  const fromAdmin = isAdminCreatedTask(task);
+  const reviewerNoun = fromAdmin ? "admin" : "mentor";
+  const reviewerWho = fromAdmin ? "the admin team" : "your mentor";
 
   const update = (patch: Partial<SubmissionPayload>) => {
     setForm((f) => ({ ...f, ...patch }));
@@ -129,7 +134,7 @@ export function SubmissionForm({ item, busy, onAction }: SubmissionFormProps) {
         <div className="flex items-center gap-2">
           {task.requireMentorApproval && (
             <span className="text-[11px] text-amber-700 font-medium flex items-center gap-1">
-              <ShieldAlert className="h-3 w-3" /> Requires mentor approval
+              <ShieldAlert className="h-3 w-3" /> Requires {reviewerNoun} approval
             </span>
           )}
           {canStudentPerform("START", status) && !task.isCancelled && (
@@ -289,10 +294,10 @@ export function SubmissionForm({ item, busy, onAction }: SubmissionFormProps) {
         <p className="text-xs text-slate-600 bg-white p-3 rounded-lg border">
           {needsAllSteps
             ? `This task doesn't need any files or links. Tick every checklist step above, then ${
-                task.requireMentorApproval ? "submit it for your mentor to review" : "mark it as completed"
+                task.requireMentorApproval ? `submit it for ${reviewerWho} to review` : "mark it as completed"
               }.`
             : task.requireMentorApproval
-              ? "This task doesn't need any files or links. Do the requested action, then submit it for your mentor to review."
+              ? `This task doesn't need any files or links. Do the requested action, then submit it for ${reviewerWho} to review.`
               : "This task doesn't need any files or links. Do the requested action and mark it as completed."}
         </p>
       )}
@@ -315,7 +320,7 @@ export function SubmissionForm({ item, busy, onAction }: SubmissionFormProps) {
             className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs h-9 gap-1.5"
           >
             {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-            {task.requireMentorApproval ? "Submit for mentor review" : "Mark as completed"}
+            {task.requireMentorApproval ? `Submit for ${reviewerNoun} review` : "Mark as completed"}
           </Button>
           {needsFields && (
             <Button
@@ -336,7 +341,7 @@ export function SubmissionForm({ item, busy, onAction }: SubmissionFormProps) {
         <div className="p-3 bg-amber-50 text-amber-900 border border-amber-200 rounded-lg text-xs flex items-center gap-2">
           <ShieldAlert className="h-4 w-4 text-amber-600 shrink-0" />
           <span>
-            <strong>Submitted!</strong> Your work is with your mentor for review. You&apos;ll be notified once it&apos;s reviewed.
+            <strong>Submitted!</strong> Your work is with {reviewerWho} for review. You&apos;ll be notified once it&apos;s reviewed.
           </span>
         </div>
       )}

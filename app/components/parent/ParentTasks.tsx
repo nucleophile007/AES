@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ShimmerSkeleton } from "@/components/ui/dashboard-loading-skeleton";
 import { taskApi } from "@/components/tasks/api";
 import {
+  TASK_FILTER_KEYS,
   TASK_PRIORITIES,
   TASK_STATUSES,
   formatTaskKey,
@@ -14,7 +16,9 @@ import {
   type TaskPriority,
   type TaskStatus,
 } from "@/lib/tasks";
-import { AlertCircle, CheckCircle2, ClipboardList, Inbox, ListChecks, RefreshCw, User } from "lucide-react";
+import { AlertCircle, CheckCircle2, ClipboardList, Inbox, ListChecks, RefreshCw, User, UserCheck, Users } from "lucide-react";
+import { StudentTaskWorkspace, StudentTaskWorkspaceSkeleton } from "@/components/student/tasks/StudentTaskWorkspace";
+import { ASSIGNED_TASKS_API } from "@/components/student/tasks/studentTaskApi";
 import { cn } from "@/lib/utils";
 
 interface ParentTask {
@@ -28,6 +32,8 @@ interface ParentTask {
   priority: TaskPriority;
   deadline: string | null;
   mentorName: string;
+  /** Assigned by the admin team rather than a mentor. */
+  fromAdmin?: boolean;
   status: TaskStatus;
   isOverdue: boolean;
   startedAt: string | null;
@@ -58,7 +64,7 @@ function formatDate(value: string | null): string {
 }
 
 /** Read-only overview of the tasks mentors have assigned to the parent's children. */
-export default function ParentTasks() {
+function ChildrenTasks() {
   const [tasks, setTasks] = useState<ParentTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -354,7 +360,8 @@ function ParentTaskCard({ task: t, showChild }: { task: ParentTask; showChild: b
             </span>
           )}
           <span>
-            Mentor: <span className="font-medium text-slate-800">{t.mentorName}</span>
+            {t.fromAdmin ? "Assigned by" : "Mentor"}: <span className="font-medium text-slate-800">{t.mentorName}</span>
+            {t.fromAdmin && " (admin team)"}
           </span>
           {t.status === "COMPLETED" && t.completedAt ? (
             <span className="text-emerald-700 font-medium flex items-center gap-1">
@@ -405,5 +412,70 @@ function ParentTaskCard({ task: t, showChild }: { task: ParentTask; showChild: b
         )}
       </CardContent>
     </Card>
+  );
+}
+
+type ParentTaskSpace = "children" | "assigned";
+
+/**
+ * Parents see their children's tasks (read-only), and in "For you" the tasks
+ * the admin team assigned to the parent themself, which they work on like a student.
+ */
+function ParentTaskSpaces() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const space: ParentTaskSpace = searchParams?.get("space") === "assigned" ? "assigned" : "children";
+
+  const switchTo = (next: ParentTaskSpace) => {
+    if (next === space) return;
+    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    [...TASK_FILTER_KEYS, "open", "space"].forEach((k) => params.delete(k));
+    if (next === "assigned") params.set("space", "assigned");
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
+
+  const tabs: { value: ParentTaskSpace; label: string; icon: typeof Users }[] = [
+    { value: "children", label: "My children's tasks", icon: Users },
+    { value: "assigned", label: "For you", icon: UserCheck },
+  ];
+
+  return (
+    <div className="space-y-5">
+      <div className="inline-flex flex-wrap items-center rounded-lg border bg-white p-1 shadow-sm" role="tablist" aria-label="Task space">
+        {tabs.map((t) => {
+          const active = t.value === space;
+          const Icon = t.icon;
+          return (
+            <Button
+              key={t.value}
+              role="tab"
+              aria-selected={active}
+              variant={active ? "default" : "ghost"}
+              size="sm"
+              onClick={() => switchTo(t.value)}
+              className={cn("h-8 gap-1.5 px-3 text-xs", active && "bg-slate-900 text-white hover:bg-slate-800")}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {t.label}
+            </Button>
+          );
+        })}
+      </div>
+      {space === "assigned" ? (
+        <StudentTaskWorkspace key="assigned" viewerRole="parent" apiBase={ASSIGNED_TASKS_API} />
+      ) : (
+        <ChildrenTasks key="children" />
+      )}
+    </div>
+  );
+}
+
+export default function ParentTasks() {
+  return (
+    <Suspense fallback={<StudentTaskWorkspaceSkeleton />}>
+      <ParentTaskSpaces />
+    </Suspense>
   );
 }

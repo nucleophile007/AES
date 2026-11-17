@@ -120,7 +120,7 @@ export function useTaskFilters(defaultView: string = "board") {
  * anything on their board changes. No-op if Pusher isn't configured.
  */
 export function useTaskRealtime(
-  role: "teacher" | "student",
+  role: "teacher" | "student" | "parent",
   ownerId: number | null | undefined,
   onEvent: (event: { type: string; studentTaskId?: number; taskId?: number }) => void
 ) {

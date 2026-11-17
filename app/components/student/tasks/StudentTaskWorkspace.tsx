@@ -22,6 +22,8 @@ import {
   fetchStudentTasks,
   patchStudentTask,
   resolveBoardDrop,
+  STUDENT_TASKS_API,
+  type AssigneeViewerRole,
   type StudentTaskListResponse,
 } from "./studentTaskApi";
 
@@ -33,7 +35,7 @@ const VIEWS = [
 
 const MOVE_MESSAGES: Record<"START" | "SUBMIT" | "COMPLETE_DIRECT", { title: string; description: string }> = {
   START: { title: "Task started", description: "Moved to In Progress." },
-  SUBMIT: { title: "Task submitted", description: "Sent to your mentor for review." },
+  SUBMIT: { title: "Task submitted", description: "Sent for review." },
   COMPLETE_DIRECT: { title: "Task completed", description: "Nice work! Marked as completed." },
 };
 
@@ -45,7 +47,20 @@ function withStatus(data: StudentTaskListResponse, item: TaskItem, to: TaskStatu
   return { ...data, columnCounts: counts, items: data.items.map((i) => (i.id === item.id ? { ...i, status: to } : i)) };
 }
 
-export function StudentTaskWorkspace({ studentName }: { studentName?: string }) {
+interface StudentTaskWorkspaceProps {
+  /** The signed-in person's name (used in comments). */
+  studentName?: string;
+  /** Who is working on these tasks; mentors and parents receive tasks from the admin team. */
+  viewerRole?: AssigneeViewerRole;
+  /** List/detail endpoint: /api/student/tasks for students, /api/tasks/assigned for mentors and parents. */
+  apiBase?: string;
+}
+
+export function StudentTaskWorkspace({
+  studentName,
+  viewerRole = "student",
+  apiBase = STUDENT_TASKS_API,
+}: StudentTaskWorkspaceProps) {
   const f = useTaskFilters("board");
   const { toast } = useToast();
   const router = useRouter();
@@ -63,7 +78,16 @@ export function StudentTaskWorkspace({ studentName }: { studentName?: string }) 
     const seq = ++requestSeq.current;
     setLoading(true);
     try {
-      const res = await fetchStudentTasks(f.apiQuery);
+      let res: StudentTaskListResponse;
+      try {
+        res = await fetchStudentTasks(f.apiQuery, apiBase);
+      } catch {
+        // One quiet retry: a dashboard load fires many requests at once and the
+        // database connection occasionally fails one of them.
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        if (seq !== requestSeq.current) return;
+        res = await fetchStudentTasks(f.apiQuery, apiBase);
+      }
       if (seq !== requestSeq.current) return;
       setData(res);
       setError(null);
@@ -73,13 +97,13 @@ export function StudentTaskWorkspace({ studentName }: { studentName?: string }) 
     } finally {
       if (seq === requestSeq.current) setLoading(false);
     }
-  }, [f.apiQuery]);
+  }, [f.apiQuery, apiBase]);
 
   useEffect(() => {
     void loadList();
   }, [loadList]);
 
-  useTaskRealtime("student", data?.studentId, () => {
+  useTaskRealtime(viewerRole, data?.studentId ?? data?.assigneeId, () => {
     void loadList();
     setDetailReload((n) => n + 1);
   });
@@ -134,7 +158,7 @@ export function StudentTaskWorkspace({ studentName }: { studentName?: string }) 
       const optimistic: TaskStatus = intent === "START" ? "IN_PROGRESS" : intent === "SUBMIT" ? "SUBMITTED" : "COMPLETED";
       setData((d) => (d ? withStatus(d, item, optimistic) : d));
       try {
-        await patchStudentTask(item.id, intent);
+        await patchStudentTask(item.id, intent, {}, apiBase);
         toast(MOVE_MESSAGES[intent]);
       } catch (err) {
         toast({ title: "Couldn't move task", description: (err as Error).message, variant: "destructive" });
@@ -143,7 +167,7 @@ export function StudentTaskWorkspace({ studentName }: { studentName?: string }) 
         if (openId === item.id) setDetailReload((n) => n + 1);
       }
     },
-    [toast, loadList, openId]
+    [toast, loadList, openId, apiBase]
   );
 
   const metrics = data?.metrics ?? EMPTY_METRICS;
@@ -273,7 +297,11 @@ export function StudentTaskWorkspace({ studentName }: { studentName?: string }) 
           <StateCard
             icon={<Inbox className="h-8 w-8 text-indigo-400" />}
             title="No tasks yet"
-            description="When your mentor assigns you a task, it will show up here."
+            description={
+              viewerRole === "student"
+                ? "When your mentor or the admin team assigns you a task, it will show up here."
+                : "When the ACHARYA admin team assigns you a task, it will show up here."
+            }
           />
         )
       ) : f.view === "list" ? (
@@ -296,6 +324,8 @@ export function StudentTaskWorkspace({ studentName }: { studentName?: string }) 
         studentTaskId={openId}
         summary={summary}
         studentName={studentName}
+        viewerRole={viewerRole}
+        apiBase={apiBase}
         reloadSignal={detailReload}
         onClose={closeDetail}
         onChanged={() => void loadList()}

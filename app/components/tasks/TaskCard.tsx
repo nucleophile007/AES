@@ -3,13 +3,7 @@
 import React from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  TASK_PRIORITIES,
-  formatTaskKey,
-  getChecklistProgress,
-  getDeadlineLabel,
-  isTaskOverdue,
-} from "@/lib/tasks";
+import { TASK_PRIORITIES, formatTaskKey, getChecklistProgress, getDeadlineLabel, isTaskOverdue, isAdminCreatedTask, taskAssigneeName, taskCreatorName } from "@/lib/tasks";
 import {
   AlertCircle,
   ListChecks,
@@ -52,7 +46,7 @@ export function TaskCard({
   const deadlineInfo = getDeadlineLabel(task.deadline);
   const progress = getChecklistProgress(task.checklist, item.checklistDone);
   const commentCount = item._count?.comments ?? item.comments?.length ?? 0;
-  const person = perspective === "mentor" ? item.student?.name : task.creator?.name;
+  const person = perspective === "mentor" ? taskAssigneeName(item) : taskCreatorName(task);
 
   return (
     <div
@@ -84,7 +78,7 @@ export function TaskCard({
               <Checkbox
                 checked={selected}
                 onCheckedChange={(v) => onSelectChange?.(item, v === true)}
-                aria-label={`Select ${formatTaskKey(task.id)} for ${item.student?.name ?? "student"}`}
+                aria-label={`Select ${formatTaskKey(task.id)} for ${taskAssigneeName(item) ?? "student"}`}
                 className="h-3.5 w-3.5"
               />
             </span>
@@ -144,6 +138,11 @@ export function TaskCard({
                 </AvatarFallback>
               </Avatar>
               <span className="text-[11px] font-medium text-slate-700 truncate max-w-[90px]">{person}</span>
+              {perspective === "student" && isAdminCreatedTask(task) && (
+                <span className="text-[9px] font-semibold uppercase tracking-wide px-1 py-px rounded bg-amber-50 text-amber-700 border border-amber-200">
+                  Admin
+                </span>
+              )}
             </>
           )}
           {commentCount > 0 && (

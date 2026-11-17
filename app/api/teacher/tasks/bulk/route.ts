@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUserFromRequest, hasRole } from '@/lib/auth';
-import { sendAcademicNotification } from '@/lib/academic-notifications';
 import { canMentorPerform } from '@/lib/tasks';
 import { parseOptionalDate, publishTaskEvent } from '@/lib/task-server';
+import { assigneePeopleInclude } from '@/lib/task-actors';
+import { feedbackAfterReview, notifyAssigneeOfReview } from '@/lib/task-review';
 
 /**
  * Bulk actions on student task items (board cards / list rows).
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
       where: { id: { in: ids }, task: { creatorId: teacher.id } },
       include: {
         task: { select: { id: true, title: true, deadline: true, isCancelled: true } },
-        student: { select: { id: true, name: true, email: true } },
+        ...assigneePeopleInclude,
       },
     });
     const taskIds = Array.from(new Set(items.map((i) => i.taskId)));
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
             where: { id: item.id },
             data: {
               status: newStatus,
-              mentorFeedback: note || item.mentorFeedback,
+              mentorFeedback: feedbackAfterReview(action, note, item.mentorFeedback),
               reviewedAt: now,
               reviewedById: teacher.id,
               completedAt: action === 'APPROVE' ? item.completedAt || now : null,
@@ -105,20 +106,9 @@ export async function POST(request: NextRequest) {
       });
       updated = eligible.length;
 
-      eligible.forEach((i) => {
-        void sendAcademicNotification({
-          recipients: [{ email: i.student.email, name: i.student.name }],
-          subject: `Task Update: ${i.task.title}`,
-          heading: action === 'APPROVE' ? 'Task Approved!' : 'Changes Requested on Task',
-          message: `Your mentor ${teacher.name} has reviewed your task "${i.task.title}".`,
-          details: [
-            ...(note ? [{ label: 'Mentor Feedback', value: note }] : []),
-            { label: 'Status', value: newStatus.replace(/_/g, ' ') },
-          ],
-          actionLabel: 'View Task in Dashboard',
-          actionUrl: `${process.env.NEXT_PUBLIC_APP_URL || ''}/student-dashboard?tab=tasks`,
-        }).catch((err) => console.error('Bulk review email failed:', err));
-      });
+      eligible.forEach((i) =>
+        notifyAssigneeOfReview({ kind: 'teacher', id: teacher.id, name: teacher.name, email: user.email }, i, action, newStatus, note)
+      );
     } else if (action === 'SET_DEADLINE' || action === 'SHIFT_DEADLINE') {
       const tasks = await prisma.task.findMany({
         where: { id: { in: taskIds } },

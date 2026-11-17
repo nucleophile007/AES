@@ -3,7 +3,7 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { TASK_PRIORITIES, TASK_STATUSES, formatTaskKey, getChecklistProgress, getDeadlineLabel, isTaskOverdue } from "@/lib/tasks";
+import { TASK_PRIORITIES, TASK_STATUSES, formatTaskKey, getChecklistProgress, getDeadlineLabel, isTaskOverdue, taskAssigneeName, taskCreatorName } from "@/lib/tasks";
 import { AlertCircle, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TaskItem } from "./types";
@@ -77,7 +77,7 @@ export function TaskListTable({ items, perspective, onOpen, selectable, selected
                     </span>
                   </td>
                   <td className="py-3 px-4 whitespace-nowrap font-medium text-slate-800">
-                    {perspective === "mentor" ? item.student?.name : task.creator?.name}
+                    {perspective === "mentor" ? taskAssigneeName(item) : taskCreatorName(task)}
                   </td>
                   <td className="py-3 px-4">
                     <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium border whitespace-nowrap", statusMeta.color)}>

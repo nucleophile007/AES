@@ -37,8 +37,8 @@ export async function GET(request: NextRequest) {
     });
 
     const flat = rows.map((r) => ({
-      studentId: r.studentId,
-      studentName: r.student.name,
+      studentId: r.studentId ?? 0,
+      studentName: r.student?.name ?? '',
       status: r.status,
       deadline: r.task.deadline,
       submittedAt: r.submittedAt,
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
         studentTaskId: r.id,
         taskId: r.task.id,
         title: r.task.title,
-        studentName: r.student.name,
+        studentName: r.student?.name ?? '',
         status: r.status,
         since: r.updatedAt,
       }))

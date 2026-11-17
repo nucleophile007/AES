@@ -15,7 +15,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
     }
 
-    if (user.role !== 'teacher' && user.role !== 'student') {
+    // Parents upload too: the admin team can assign them tasks that need a file.
+    if (user.role !== 'teacher' && user.role !== 'student' && user.role !== 'parent') {
       return NextResponse.json({ success: false, error: 'Unauthorized role' }, { status: 403 });
     }
 
