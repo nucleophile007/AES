@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import TestimonialsPageClient from "./TestimonialsPageClient";
 import { hardcodedTutoringTestimonials } from "./hardcodedTutoringTestimonials";
+import type { VideoTestimonial } from "@/components/testimonials/video-testimonial-section";
 
 export const revalidate = 60;
 
@@ -133,8 +134,33 @@ async function getTestimonials(): Promise<SectionsType> {
   }
 }
 
-export default async function Page() {
-  const sections = await getTestimonials();
+async function getVideoTestimonials(): Promise<VideoTestimonial[]> {
+  try {
+    return await prisma.videoTestimonial.findMany({
+      where: { isVisible: true },
+      select: {
+        id: true,
+        name: true,
+        designation: true,
+        program: true,
+        description: true,
+        videoUrl: true,
+        mimeType: true,
+      },
+      orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
+    });
+  } catch (error) {
+    // Hide the section instead of breaking the page (e.g. before the migration is applied).
+    console.error("Error fetching video testimonials:", error);
+    return [];
+  }
+}
 
-  return <TestimonialsPageClient sections={sections} />;
+export default async function Page() {
+  const [sections, videoTestimonials] = await Promise.all([
+    getTestimonials(),
+    getVideoTestimonials(),
+  ]);
+
+  return <TestimonialsPageClient sections={sections} videoTestimonials={videoTestimonials} />;
 }

@@ -1036,3 +1036,22 @@ enum MentorSlotBookingStatus {
   DECLINED
   CANCELLED
 }
+
+/// Video testimonials uploaded from AES-Admin. Files live in the R2 bucket under "video-testimonials/".
+model VideoTestimonial {
+  id           Int      @id @default(autoincrement())
+  name         String
+  designation  String?
+  program      String?
+  description  String?
+  videoKey     String   @unique
+  videoUrl     String
+  mimeType     String
+  fileSize     Int
+  isVisible    Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([isVisible, displayOrder])
+}
